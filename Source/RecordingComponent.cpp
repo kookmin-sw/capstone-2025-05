@@ -6,6 +6,7 @@ RecordingComponent::RecordingComponent()
         onSongSelected(song);
     });
     addAndMakeVisible(songSelector.get());
+    setAlpha(1.0f);
 }
 
 RecordingComponent::~RecordingComponent()
@@ -14,16 +15,17 @@ RecordingComponent::~RecordingComponent()
 
 void RecordingComponent::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xFF121212));
 }
 
 void RecordingComponent::resized()
 {
-    songSelector->setBounds(getLocalBounds());
+    if (songSelector != nullptr)
+    {
+        songSelector->setBounds(getLocalBounds());
+    }
 }
 
 void RecordingComponent::onSongSelected([[maybe_unused]] const SongInfo& song)
 {
     // TODO: Implement recording screen for the selected song
-    // This will be implemented in the next step
 } 
