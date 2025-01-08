@@ -12,9 +12,17 @@ StartScreenComponent::StartScreenComponent(std::function<void(Screen)> callback)
     uploadButton.onClick = [this]() { screenChangeCallback(Screen::Upload); };
     addAndMakeVisible(uploadButton);
 
-    // Add mouse listeners for hover effects
     recordButton.addMouseListener(this, false);
     uploadButton.addMouseListener(this, false);
+
+    // Set up fonts
+    logoFont.setHeight(72.0f);
+    
+    // Load Roboto font
+    auto robotoFont = juce::Typeface::createSystemTypefaceFor(BinaryData::RobotoRegular_ttf,
+                                                             BinaryData::RobotoRegular_ttfSize);
+    materialFont = juce::Font(robotoFont);
+    materialFont.setHeight(16.0f);
 }
 
 StartScreenComponent::~StartScreenComponent()
@@ -23,68 +31,71 @@ StartScreenComponent::~StartScreenComponent()
 
 void StartScreenComponent::paint(juce::Graphics& g)
 {
-    // Background gradient
-    g.setGradientFill(juce::ColourGradient(
-        juce::Colour(0xFF1E1E1E),
-        0.0f, 0.0f,
-        juce::Colour(0xFF2D2D2D),
-        0.0f, (float)getHeight(),
-        false));
-    g.fillAll();
+    // Material background color
+    g.fillAll(juce::Colour(0xFF121212));  // Material Dark theme background
 
     // Draw MAPLE logo
     g.setFont(logoFont);
-    g.setColour(juce::Colours::white);
+    g.setColour(juce::Colour(0xFFE0E0E0));  // Material light text color
     auto logoBounds = getLocalBounds().removeFromTop(120);
     g.drawText("MAPLE", logoBounds, juce::Justification::centred, true);
 
-    // Draw custom buttons
+    // Draw material buttons
     auto buttonArea = getLocalBounds().withTrimmedTop(120);
     auto leftHalf = buttonArea.removeFromLeft(buttonArea.getWidth() / 2);
     
-    drawButton(g, recordButton.getBounds(), "Record", recordButtonMouseOver);
-    drawButton(g, uploadButton.getBounds(), "Upload", uploadButtonMouseOver);
+    drawButton(g, recordButton.getBounds(), "Record", 
+               recordButtonMouseOver, recordButtonMouseDown);
+    drawButton(g, uploadButton.getBounds(), "Upload", 
+               uploadButtonMouseOver, uploadButtonMouseDown);
+}
+
+void StartScreenComponent::drawShadow(juce::Graphics& g, juce::Rectangle<float> bounds, float elevation)
+{
+    // Material Design elevation shadows
+    float shadowOffset = elevation * 0.5f;
+    float shadowBlur = elevation * 2.0f;
+    
+    g.setColour(juce::Colours::black.withAlpha(0.3f));
+    g.drawRoundedRectangle(bounds.translated(0, shadowOffset).expanded(2),
+                          4.0f, shadowBlur);
 }
 
 void StartScreenComponent::drawButton(juce::Graphics& g, juce::Rectangle<int> bounds, 
-                                    const juce::String& text, bool isMouseOver)
+                                    const juce::String& text, bool isMouseOver, bool isMouseDown)
 {
-    // Button background with gradient
-    juce::ColourGradient gradient(
-        juce::Colour(0xFF4A90E2),
-        bounds.getX(), bounds.getY(),
-        juce::Colour(0xFF357ABD),
-        bounds.getX(), bounds.getBottom(),
-        false);
+    auto buttonBounds = bounds.toFloat().reduced(10);
     
+    // Draw shadow
+    float elevation = isMouseDown ? 2.0f : (isMouseOver ? 8.0f : 4.0f);
+    drawShadow(g, buttonBounds, elevation);
+
+    // Button color from Material Design palette
+    juce::Colour buttonColor = juce::Colour(0xFF6200EE);  // Material Purple 500
     if (isMouseOver)
-    {
-        gradient = juce::ColourGradient(
-            juce::Colour(0xFF5BA1F3),
-            bounds.getX(), bounds.getY(),
-            juce::Colour(0xFF4689D6),
-            bounds.getX(), bounds.getBottom(),
-            false);
-    }
+        buttonColor = buttonColor.brighter(0.2f);
+    if (isMouseDown)
+        buttonColor = buttonColor.darker(0.2f);
 
-    g.setGradientFill(gradient);
-    g.fillRoundedRectangle(bounds.toFloat(), 10.0f);
+    // Draw button background
+    g.setColour(buttonColor);
+    g.fillRoundedRectangle(buttonBounds, 4.0f);
 
-    // Button text
+    // Draw text
     g.setColour(juce::Colours::white);
-    g.setFont(20.0f);
-    g.drawText(text, bounds, juce::Justification::centred, true);
+    g.setFont(materialFont.withHeight(14.0f));
+    g.drawText(text.toUpperCase(), buttonBounds, juce::Justification::centred, true);
 }
 
 void StartScreenComponent::resized()
 {
     auto bounds = getLocalBounds();
-    auto buttonArea = bounds.withTrimmedTop(120);  // Space for logo
+    auto buttonArea = bounds.withTrimmedTop(120);
     auto leftHalf = buttonArea.removeFromLeft(buttonArea.getWidth() / 2);
     
-    // Button size and positioning
-    auto buttonWidth = 180;
-    auto buttonHeight = 60;
+    // Material Design recommended touch target size (48dp)
+    auto buttonWidth = 160;
+    auto buttonHeight = 48;
     
     recordButton.setBounds(leftHalf.getCentreX() - buttonWidth/2,
                           leftHalf.getCentreY() - buttonHeight/2,
@@ -95,7 +106,22 @@ void StartScreenComponent::resized()
                           buttonWidth, buttonHeight);
 }
 
-// Add these mouse event handlers
+void StartScreenComponent::mouseDown(const juce::MouseEvent& event)
+{
+    if (event.eventComponent == &recordButton)
+        recordButtonMouseDown = true;
+    else if (event.eventComponent == &uploadButton)
+        uploadButtonMouseDown = true;
+    repaint();
+}
+
+void StartScreenComponent::mouseUp(const juce::MouseEvent& event)
+{
+    recordButtonMouseDown = false;
+    uploadButtonMouseDown = false;
+    repaint();
+}
+
 void StartScreenComponent::mouseEnter(const juce::MouseEvent& event)
 {
     if (event.eventComponent == &recordButton)

@@ -3,7 +3,16 @@
 <JUCERPROJECT id="gTSFFC" name="MAPLE" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="xfRtt1" name="MAPLE">
+    <GROUP id="{C396F500-EB81-586F-FFC7-6A8B9BA2D692}" name="Resources">
+      <FILE id="UFWBuA" name="Roboto-Regular.ttf" compile="0" resource="1"
+            file="C:/Users/lovel/Downloads/Roboto/Roboto-Regular.ttf"/>
+    </GROUP>
     <GROUP id="{4BADECDE-D975-B680-D314-3F10541C53A7}" name="Source">
+      <FILE id="wsjB4B" name="Screen.h" compile="0" resource="0" file="Source/Screen.h"/>
+      <FILE id="GSVElO" name="StartScreenComponent.cpp" compile="1" resource="0"
+            file="Source/StartScreenComponent.cpp"/>
+      <FILE id="WPL2rU" name="StartScreenComponent.h" compile="0" resource="0"
+            file="Source/StartScreenComponent.h"/>
       <FILE id="EHURYH" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <FILE id="jlvSsA" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
       <FILE id="BVbjBZ" name="MainComponent.cpp" compile="1" resource="0"
@@ -28,7 +37,7 @@
   <EXPORTFORMATS>
     <VS2022 targetFolder="Builds/VisualStudio2022">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="MAPLE" libraryPath="D:\develop\vst3-library\asiosdk\common"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="MAPLE" headerPath="D:\develop\vst3-library\asiosdk\common"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="MAPLE"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
