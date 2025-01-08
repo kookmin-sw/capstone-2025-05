@@ -19,6 +19,8 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
 
+    juce::AudioDeviceManager& getAudioDeviceManager() { return deviceManager; }
+
 private:
     // Grid layout properties
     static constexpr int thumbnailSize = 180;
@@ -26,10 +28,13 @@ private:
     static constexpr int gridSpacing = 40;
     static constexpr int columns = 3;
 
-    class SongThumbnail : public juce::Component
+    class SongThumbnail : public juce::Component,
+                         private juce::Timer
     {
     public:
-        SongThumbnail(const SongInfo& info, std::function<void()> onClick);
+        SongThumbnail(const SongInfo& info, std::function<void()> onClick, juce::AudioDeviceManager& deviceManager);
+        ~SongThumbnail() override;
+
         void paint(juce::Graphics&) override;
         void mouseEnter(const juce::MouseEvent& event) override;
         void mouseExit(const juce::MouseEvent& event) override;
@@ -37,11 +42,24 @@ private:
         void mouseUp(const juce::MouseEvent& event) override;
 
     private:
+        void timerCallback() override;
+        void startPreview();
+        void stopPreview();
+
         SongInfo songInfo;
         std::function<void()> onClick;
         bool isMouseOver = false;
         bool isMouseDown = false;
         juce::Image albumArt;
+
+        // Audio preview members
+        std::unique_ptr<juce::AudioFormatManager> formatManager;
+        std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+        std::unique_ptr<juce::AudioTransportSource> transportSource;
+        const int previewDelay = 500; // ?∏Î≤ÑÎß???0.5Ï¥??ÑÏóê ?¨ÏÉù ?úÏûë
+
+        juce::AudioDeviceManager& audioDeviceManager;
+        std::unique_ptr<juce::AudioSourcePlayer> audioSourcePlayer;
     };
 
     void loadSongs();
@@ -54,6 +72,8 @@ private:
     juce::File resourcesFolder;
     juce::File getSongsFolder() const;
     juce::File getAlbumArtFolder() const;
+
+    juce::AudioDeviceManager deviceManager;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SongSelectionComponent)
 }; 

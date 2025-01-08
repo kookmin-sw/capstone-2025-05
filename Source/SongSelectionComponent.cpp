@@ -3,6 +3,9 @@
 SongSelectionComponent::SongSelectionComponent(std::function<void(const SongInfo&)> onSongSelected)
     : songSelectedCallback(std::move(onSongSelected))
 {
+    // Initialize audio device
+    deviceManager.initialiseWithDefaultDevices(0, 2);
+    
     // Get project root directory
     auto exeFile = juce::File::getSpecialLocation(juce::File::currentExecutableFile);
     auto projectDir = exeFile.getParentDirectory()  // Debug
@@ -108,16 +111,29 @@ void SongSelectionComponent::createThumbnails()
     {
         auto thumbnail = std::make_unique<SongThumbnail>(song, [this, song]() {
             songSelectedCallback(song);
-        });
+        }, deviceManager);
         addAndMakeVisible(thumbnail.get());
         thumbnails.push_back(std::move(thumbnail));
     }
 }
 
 // SongThumbnail implementation
-SongSelectionComponent::SongThumbnail::SongThumbnail(const SongInfo& info, std::function<void()> onClick)
-    : songInfo(info), onClick(std::move(onClick))
+SongSelectionComponent::SongThumbnail::SongThumbnail(
+    const SongInfo& info, 
+    std::function<void()> onClick,
+    juce::AudioDeviceManager& deviceManager)
+    : songInfo(info)
+    , onClick(std::move(onClick))
+    , audioDeviceManager(deviceManager)
 {
+    // Initialize audio format manager
+    formatManager = std::make_unique<juce::AudioFormatManager>();
+    formatManager->registerBasicFormats();
+
+    // Initialize audio source player
+    audioSourcePlayer = std::make_unique<juce::AudioSourcePlayer>();
+    audioDeviceManager.addAudioCallback(audioSourcePlayer.get());
+
     if (songInfo.albumArtFile.existsAsFile())
     {
         albumArt = juce::ImageFileFormat::loadFrom(songInfo.albumArtFile);
@@ -132,6 +148,13 @@ SongSelectionComponent::SongThumbnail::SongThumbnail(const SongInfo& info, std::
         g.setColour(juce::Colours::white);
         g.drawText("No Image", albumArt.getBounds(), juce::Justification::centred, true);
     }
+}
+
+SongSelectionComponent::SongThumbnail::~SongThumbnail()
+{
+    stopTimer();
+    stopPreview();
+    audioDeviceManager.removeAudioCallback(audioSourcePlayer.get());
 }
 
 void SongSelectionComponent::SongThumbnail::paint(juce::Graphics& g)
@@ -209,12 +232,15 @@ void SongSelectionComponent::SongThumbnail::paint(juce::Graphics& g)
 void SongSelectionComponent::SongThumbnail::mouseEnter(const juce::MouseEvent&)
 {
     isMouseOver = true;
+    startTimer(previewDelay);  // Start timer for preview delay
     repaint();
 }
 
 void SongSelectionComponent::SongThumbnail::mouseExit(const juce::MouseEvent&)
 {
     isMouseOver = false;
+    stopTimer();
+    stopPreview();
     repaint();
 }
 
@@ -230,4 +256,59 @@ void SongSelectionComponent::SongThumbnail::mouseUp(const juce::MouseEvent& even
     if (event.getNumberOfClicks() == 1 && contains(event.getPosition()))
         onClick();
     repaint();
+}
+
+void SongSelectionComponent::SongThumbnail::timerCallback()
+{
+    stopTimer();
+    if (isMouseOver)
+    {
+        startPreview();
+    }
+}
+
+void SongSelectionComponent::SongThumbnail::startPreview()
+{
+    if (!transportSource)
+    {
+        transportSource = std::make_unique<juce::AudioTransportSource>();
+
+        // Debug: Print file path and existence
+        DBG("Trying to load audio file: " + songInfo.audioFile.getFullPathName());
+        DBG("File exists: " + juce::String(songInfo.audioFile.existsAsFile() ? "yes" : "no"));
+
+        if (auto* reader = formatManager->createReaderFor(songInfo.audioFile))
+        {
+            DBG("Successfully created reader for: " + songInfo.title);
+            readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
+            transportSource->setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+            
+            const double thirtySeconds = 30.0;
+            const double startPosition = std::min(thirtySeconds, transportSource->getLengthInSeconds() / 2);
+            transportSource->setPosition(startPosition);
+
+            audioSourcePlayer->setSource(transportSource.get());
+        }
+        else
+        {
+            DBG("Failed to create reader for: " + songInfo.title);
+        }
+    }
+
+    if (transportSource)
+    {
+        transportSource->start();
+    }
+}
+
+void SongSelectionComponent::SongThumbnail::stopPreview()
+{
+    if (transportSource)
+    {
+        transportSource->stop();
+        audioSourcePlayer->setSource(nullptr);
+        transportSource->setSource(nullptr);
+        transportSource.reset();
+        readerSource.reset();
+    }
 } 
