@@ -24,3 +24,9 @@ JuceLibraryCode/
 # 기타
 .DS_Store
 Thumbs.db
+
+# 프로젝트 파일
+*.jucer
+
+# Resource 폴더
+Resources/
