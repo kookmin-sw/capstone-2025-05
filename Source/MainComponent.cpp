@@ -39,12 +39,11 @@ void MainComponent::showScreen(Screen screen)
             break;
             
         case Screen::Record:
-            // TODO: RecordingComponent 구현 필요
-            showScreen(Screen::Start);
+            currentScreen = std::make_unique<RecordingComponent>();
             break;
             
         case Screen::Upload:
-            // TODO: UploadComponent 구현 필요
+            // TODO: Implement UploadComponent
             showScreen(Screen::Start);
             break;
     }

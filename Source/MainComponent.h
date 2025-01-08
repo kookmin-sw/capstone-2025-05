@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "Screen.h"
 #include "StartScreenComponent.h"
+#include "RecordingComponent.h"
 
 class MainComponent : public juce::Component
 {
