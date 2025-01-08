@@ -30,3 +30,9 @@ Thumbs.db
 
 # Resource 폴더
 Resources/
+
+# Resources
+Resources/Songs/*
+Resources/AlbumArt/*
+!Resources/Songs/.gitkeep
+!Resources/AlbumArt/.gitkeep
