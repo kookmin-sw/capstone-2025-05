@@ -1,0 +1,26 @@
+# JUCE 관련
+Builds/
+JuceLibraryCode/
+*.exe
+*.dll
+
+# IDE 관련
+.vs/
+.idea/
+*.user
+*.suo
+*.sdf
+*.opensdf
+
+# 빌드 결과물
+*.o
+*.d
+*.mov
+*.a
+*.lib
+*.dylib
+*.so
+
+# 기타
+.DS_Store
+Thumbs.db
