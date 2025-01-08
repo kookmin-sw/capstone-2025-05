@@ -28,10 +28,7 @@ Thumbs.db
 # 프로젝트 파일
 *.jucer
 
-# Resource 폴더
-Resources/
-
-# Resources
+# Resources - 특정 파일만 제외
 Resources/Songs/*
 Resources/AlbumArt/*
 !Resources/Songs/.gitkeep
