@@ -22,7 +22,8 @@ public:
 private:
     // Grid layout properties
     static constexpr int thumbnailSize = 180;
-    static constexpr int padding = 20;
+    static constexpr int thumbnailPadding = 15;
+    static constexpr int gridSpacing = 40;
     static constexpr int columns = 3;
 
     class SongThumbnail : public juce::Component

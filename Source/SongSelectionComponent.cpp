@@ -41,17 +41,35 @@ void SongSelectionComponent::paint(juce::Graphics& g)
 
 void SongSelectionComponent::resized()
 {
-    // Calculate grid layout
-    auto bounds = getLocalBounds().reduced(padding);
+    const int maxElevation = 8;  // ?? ??? ??
+    
+    // Calculate total grid padding with top margin for elevation
+    int horizontalPadding = gridSpacing * 2;
+    int topPadding = gridSpacing * 2 + maxElevation;  // ??? ?? ?? ??
+    
+    // Calculate grid layout with different top/side padding
+    auto bounds = getLocalBounds();
+    bounds.removeFromTop(topPadding);  // ?? ?? ??
+    bounds.reduce(horizontalPadding, 0);  // ?? ??
+    
     int row = 0;
     int col = 0;
 
+    // Calculate grid metrics
+    int availableWidth = bounds.getWidth();
+    int effectiveWidth = (availableWidth - (gridSpacing * (columns - 1))) / columns;
+    int actualThumbnailSize = std::min(thumbnailSize, effectiveWidth);
+    
+    // Center the grid
+    int totalGridWidth = (columns * actualThumbnailSize) + ((columns - 1) * gridSpacing);
+    int startX = bounds.getX() + (availableWidth - totalGridWidth) / 2;
+
     for (auto& thumbnail : thumbnails)
     {
-        int x = bounds.getX() + col * (thumbnailSize + padding);
-        int y = bounds.getY() + row * (thumbnailSize + padding);
+        int x = startX + (col * (actualThumbnailSize + gridSpacing));
+        int y = bounds.getY() + (row * (actualThumbnailSize + gridSpacing));
 
-        thumbnail->setBounds(x, y, thumbnailSize, thumbnailSize);
+        thumbnail->setBounds(x, y, actualThumbnailSize, actualThumbnailSize);
 
         col++;
         if (col >= columns)
@@ -73,7 +91,13 @@ void SongSelectionComponent::loadSongs()
             "Younha", 
             albumArtFolder.getChildFile("26.jpg"),
             songsFolder.getChildFile("26.mp3")
-        }
+        },
+        {
+            "Sunfish", 
+            "Younha", 
+            albumArtFolder.getChildFile("Sunfish.jpg"),
+            songsFolder.getChildFile("Sunfish.mp3")
+        },
         // ... more songs
     };
 }
@@ -112,23 +136,37 @@ SongSelectionComponent::SongThumbnail::SongThumbnail(const SongInfo& info, std::
 
 void SongSelectionComponent::SongThumbnail::paint(juce::Graphics& g)
 {
-    auto bounds = getLocalBounds().toFloat();
     float elevation = isMouseDown ? 2.0f : (isMouseOver ? 8.0f : 4.0f);
+    
+    // ?? ???? ??? elevation?? ??? ? ??
+    auto bounds = getLocalBounds().toFloat().reduced(thumbnailPadding).withTrimmedTop(elevation);
+    
+    // Calculate content bounds
+    auto contentBounds = bounds;
+    if (isMouseOver)
+    {
+        contentBounds = contentBounds.translated(0, -elevation);
+    }
 
-    // Draw shadow with lighter color
-    g.setColour(juce::Colours::black.withAlpha(0.2f));
-    g.drawRoundedRectangle(bounds.translated(0, elevation).expanded(2),
-                          4.0f, elevation * 2.0f);
+    // Draw shadow
+    g.setColour(juce::Colours::black.withAlpha(0.3f));
+    g.fillRoundedRectangle(bounds.expanded(elevation), 4.0f);
 
-    // Draw card background
-    g.setColour(juce::Colour(0xFF2D2D2D));  // Slightly lighter background
-    g.fillRoundedRectangle(bounds, 4.0f);
+    // Draw card background with hover effect
+    if (isMouseOver)
+    {
+        g.setColour(juce::Colour(0xFF3D3D3D));
+    }
+    else
+    {
+        g.setColour(juce::Colour(0xFF2D2D2D));
+    }
+    g.fillRoundedRectangle(contentBounds, 4.0f);
 
     // Draw album art or placeholder
-    auto imageArea = bounds.withTrimmedBottom(30.0f).reduced(8);  // Add padding
+    auto imageArea = contentBounds.withTrimmedBottom(30.0f).reduced(8);
     if (albumArt.isValid())
     {
-        // Draw with better quality settings and fit entire image
         g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
         g.drawImage(albumArt, 
                    imageArea, 
@@ -140,26 +178,31 @@ void SongSelectionComponent::SongThumbnail::paint(juce::Graphics& g)
         g.fillRoundedRectangle(imageArea, 4.0f);
     }
 
-    // Draw title and artist with improved visibility
-    auto textArea = bounds.removeFromBottom(30.0f);
-    g.setColour(juce::Colours::white);
+    // Draw title and artist
+    auto textArea = contentBounds.removeFromBottom(30.0f);
     
     // Draw artist name
     g.setFont(12.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.7f));  // ?„í‹°?¤íŠ¸ ?´ë¦„?€ ?½ê°„ ?¬ëª…?˜ê²Œ
     g.drawText(songInfo.artist, textArea.removeFromTop(12.0f),
                juce::Justification::centred, true);
                
-    // Draw title with slightly larger font
+    // Draw title
     g.setFont(14.0f);
-    g.setColour(juce::Colours::white.withAlpha(0.9f));  // Slightly transparent for hierarchy
+    g.setColour(juce::Colours::white);  // ?œëª©?€ ?„ì „ ë¶ˆíˆ¬ëª…í•˜ê²?
     g.drawText(songInfo.title, textArea,
                juce::Justification::centred, true);
 
-    // Draw hover effect
+    // Add subtle highlight effect on hover
     if (isMouseOver)
     {
-        g.setColour(juce::Colours::white.withAlpha(0.1f));
-        g.fillRoundedRectangle(bounds, 4.0f);
+        g.setGradientFill(juce::ColourGradient(
+            juce::Colours::white.withAlpha(0.1f),
+            contentBounds.getTopLeft(),
+            juce::Colours::transparentWhite,
+            contentBounds.getBottomRight(),
+            true));
+        g.fillRoundedRectangle(contentBounds, 4.0f);
     }
 }
 
