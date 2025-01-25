@@ -4,6 +4,7 @@
 #include "Screen.h"
 #include "StartScreenComponent.h"
 #include "RecordingComponent.h"
+#include "HomeComponent.h"
 
 class MainComponent : public juce::Component,
                      private juce::Timer

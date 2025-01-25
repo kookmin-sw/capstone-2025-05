@@ -3,26 +3,28 @@
 StartScreenComponent::StartScreenComponent(std::function<void(Screen)> callback)
     : screenChangeCallback(std::move(callback))
 {
-    // Setup buttons
-    recordButton.setButtonText("Record");
-    recordButton.onClick = [this]() { screenChangeCallback(Screen::Record); };
-    addAndMakeVisible(recordButton);
-    
-    uploadButton.setButtonText("Upload");
-    uploadButton.onClick = [this]() { screenChangeCallback(Screen::Upload); };
-    addAndMakeVisible(uploadButton);
-
-    recordButton.addMouseListener(this, false);
-    uploadButton.addMouseListener(this, false);
-
     // Set up fonts
-    logoFont.setHeight(72.0f);
-    
-    // Load Roboto font
-    auto robotoFont = juce::Typeface::createSystemTypefaceFor(BinaryData::RobotoRegular_ttf,
-                                                             BinaryData::RobotoRegular_ttfSize);
-    materialFont = juce::Font(robotoFont);
-    materialFont.setHeight(16.0f);
+    titleFont = juce::Font(juce::Font::getDefaultSansSerifFontName(), 72.0f, juce::Font::plain);
+    descriptionFont = juce::Font(juce::Font::getDefaultSansSerifFontName(), 20.0f, juce::Font::plain);
+
+    // Enable mouse events
+    setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    addMouseListener(this, true);
+
+    // Load logo image
+    auto logoFile = juce::File::getSpecialLocation(juce::File::currentExecutableFile)
+                        .getParentDirectory()
+                        .getParentDirectory()
+                        .getParentDirectory()
+                        .getParentDirectory()
+                        .getParentDirectory()
+                        .getParentDirectory()
+                        .getChildFile("Resources/Images/start-screen.png");
+                        
+    if (logoFile.existsAsFile())
+    {
+        logoImage = juce::ImageFileFormat::loadFrom(logoFile);
+    }
 }
 
 StartScreenComponent::~StartScreenComponent()
@@ -31,111 +33,172 @@ StartScreenComponent::~StartScreenComponent()
 
 void StartScreenComponent::paint(juce::Graphics& g)
 {
-    // Material background color
-    g.fillAll(juce::Colour(0xFF121212));  // Material Dark theme background
+    g.fillAll(juce::Colours::white);
 
-    // Draw MAPLE logo
-    g.setFont(logoFont);
-    g.setColour(juce::Colour(0xFFE0E0E0));  // Material light text color
-    auto logoBounds = getLocalBounds().removeFromTop(120);
-    g.drawText("MAPLE", logoBounds, juce::Justification::centred, true);
+    auto bounds = getLocalBounds();
+    auto leftHalf = bounds.removeFromLeft(bounds.getWidth() / 2);
 
-    // Draw material buttons
-    auto buttonArea = getLocalBounds().withTrimmedTop(120);
-    auto leftHalf = buttonArea.removeFromLeft(buttonArea.getWidth() / 2);
-    
-    drawButton(g, recordButton.getBounds(), "Record", 
-               recordButtonMouseOver, recordButtonMouseDown);
-    drawButton(g, uploadButton.getBounds(), "Upload", 
-               uploadButtonMouseOver, uploadButtonMouseDown);
+    // Left panel: logo image
+    if (logoImage.isValid())
+    {
+        g.drawImage(logoImage, 
+                   leftHalf.reduced(50).toFloat(),
+                   juce::RectanglePlacement::centred);
+    }
+
+    // Right panel
+    drawRightPanel(g, bounds);
+
+    // Draw login button
+    drawLoginButton(g);
 }
 
-void StartScreenComponent::drawShadow(juce::Graphics& g, juce::Rectangle<float> bounds, float elevation)
+void StartScreenComponent::drawRightPanel(juce::Graphics& g, juce::Rectangle<int> bounds)
 {
-    // Material Design elevation shadows
-    float shadowOffset = elevation * 0.5f;
-    float shadowBlur = elevation * 2.0f;
+    auto area = bounds.reduced(50);
     
-    g.setColour(juce::Colours::black.withAlpha(0.3f));
-    g.drawRoundedRectangle(bounds.translated(0, shadowOffset).expanded(2),
-                          4.0f, shadowBlur);
+    // Calculate total content height
+    const int totalContentHeight = 100 + 20 + 1 + 40 + 100;  // title + top margin + line + middle margin + description
+    
+    // Calculate vertical center alignment starting position
+    int startY = (area.getHeight() - totalContentHeight) / 2;
+    area.setY(area.getY() + startY);
+    
+    // Project title
+    g.setFont(titleFont);
+    g.setColour(juce::Colour(0xFF333333));
+    auto titleBounds = area.removeFromTop(100);
+    g.drawText("MAPLE", titleBounds, juce::Justification::centred, true);
+
+    // Divider line
+    area.removeFromTop(20);
+    g.setColour(juce::Colour(0x33000000));
+    auto lineArea = area.removeFromTop(1);
+    g.fillRect(lineArea.withSizeKeepingCentre(area.getWidth() * 0.8f, 1));
+
+    // Project description
+    area.removeFromTop(40);
+    g.setFont(descriptionFont);
+    g.setColour(juce::Colour(0xFF666666));
+    auto descriptionBounds = area.removeFromTop(100);
+    
+    g.drawFittedText(projectDescription, 
+                    descriptionBounds,
+                    juce::Justification::centred,
+                    3);
 }
 
-void StartScreenComponent::drawButton(juce::Graphics& g, juce::Rectangle<int> bounds, 
-                                    const juce::String& text, bool isMouseOver, bool isMouseDown)
+void StartScreenComponent::drawLoginButton(juce::Graphics& g)
 {
-    auto buttonBounds = bounds.toFloat().reduced(10);
+    // Improved shadow effect
+    float elevation = isLoginButtonMouseOver ? 12.0f : 6.0f;
+    auto shadowBounds = loginButtonBounds.toFloat().translated(0.0f, elevation);
     
-    // Draw shadow
-    float elevation = isMouseDown ? 2.0f : (isMouseOver ? 8.0f : 4.0f);
-    drawShadow(g, buttonBounds, elevation);
-
-    // Button color from Material Design palette
-    juce::Colour buttonColor = juce::Colour(0xFF6200EE);  // Material Purple 500
-    if (isMouseOver)
-        buttonColor = buttonColor.brighter(0.2f);
-    if (isMouseDown)
-        buttonColor = buttonColor.darker(0.2f);
-
-    // Draw button background
-    g.setColour(buttonColor);
-    g.fillRoundedRectangle(buttonBounds, 4.0f);
-
-    // Draw text
+    // Smooth shadow effect
+    for (float i = 0.0f; i < elevation; i += 0.5f)
+    {
+        float alpha = (elevation - i) / (elevation * 2.0f);
+        g.setColour(juce::Colours::black.withAlpha(alpha * 0.2f));
+        g.drawRoundedRectangle(shadowBounds.expanded(i + 2), 10.0f, 1.0f);
+    }
+    
+    // Button background
+    auto buttonBounds = loginButtonBounds.toFloat();
+    if (!isLoginButtonMouseOver)
+        buttonBounds = buttonBounds.translated(0.0f, elevation);
+        
+    // White background with subtle gradient effect
+    juce::ColourGradient gradient(
+        juce::Colours::white,
+        buttonBounds.getTopLeft(),
+        juce::Colours::white.withBrightness(0.95f),
+        buttonBounds.getBottomLeft(),
+        false);
+    g.setGradientFill(gradient);
+    g.fillRoundedRectangle(buttonBounds, 10.0f);
+    
+    // White border
     g.setColour(juce::Colours::white);
-    g.setFont(materialFont.withHeight(14.0f));
-    g.drawText(text.toUpperCase(), buttonBounds, juce::Justification::centred, true);
+    g.drawRoundedRectangle(buttonBounds, 10.0f, 1.0f);
+    
+    // Button text with hover effect
+    juce::Colour textColour;
+    if (isLoginButtonDown)
+        textColour = juce::Colour(0xFF666666);  // Darker grey when pressed
+    else if (isLoginButtonMouseOver)
+        textColour = juce::Colour(0xFF808080);  // Lighter grey on hover
+    else
+        textColour = juce::Colour(0xFF999999);  // Default grey
+
+    g.setColour(textColour);
+    g.setFont(descriptionFont.withHeight(16.0f));
+    g.drawText("LOGIN", buttonBounds, juce::Justification::centred, false);
 }
 
 void StartScreenComponent::resized()
 {
     auto bounds = getLocalBounds();
-    auto buttonArea = bounds.withTrimmedTop(120);
-    auto leftHalf = buttonArea.removeFromLeft(buttonArea.getWidth() / 2);
+    auto rightHalf = bounds.removeFromRight(bounds.getWidth() / 2);
     
-    // Material Design recommended touch target size (48dp)
-    auto buttonWidth = 160;
-    auto buttonHeight = 48;
+    // Position login button below content
+    auto buttonArea = rightHalf.reduced(50);
+    auto contentHeight = 100 + 20 + 1 + 40 + 100;
+    int startY = (buttonArea.getHeight() - contentHeight) / 2;
+    buttonArea.removeFromTop(startY + contentHeight + 50);
     
-    recordButton.setBounds(leftHalf.getCentreX() - buttonWidth/2,
-                          leftHalf.getCentreY() - buttonHeight/2,
-                          buttonWidth, buttonHeight);
-    
-    uploadButton.setBounds(buttonArea.getCentreX() - buttonWidth/2,
-                          buttonArea.getCentreY() - buttonHeight/2,
-                          buttonWidth, buttonHeight);
+    // Set wider button size
+    loginButtonBounds = buttonArea.removeFromTop(50).withSizeKeepingCentre(300, 50);  // width increased to 300
 }
 
-void StartScreenComponent::mouseDown(const juce::MouseEvent& event)
+void StartScreenComponent::mouseMove(const juce::MouseEvent& event)
 {
-    if (event.eventComponent == &recordButton)
-        recordButtonMouseDown = true;
-    else if (event.eventComponent == &uploadButton)
-        uploadButtonMouseDown = true;
-    repaint();
-}
-
-void StartScreenComponent::mouseUp(const juce::MouseEvent& event)
-{
-    recordButtonMouseDown = false;
-    uploadButtonMouseDown = false;
-    repaint();
+    bool wasOver = isLoginButtonMouseOver;
+    isLoginButtonMouseOver = isMouseOverButton(event.position);
+    
+    if (wasOver != isLoginButtonMouseOver)
+    {
+        repaint();
+    }
 }
 
 void StartScreenComponent::mouseEnter(const juce::MouseEvent& event)
 {
-    if (event.eventComponent == &recordButton)
-        recordButtonMouseOver = true;
-    else if (event.eventComponent == &uploadButton)
-        uploadButtonMouseOver = true;
-    repaint();
+    bool wasOver = isLoginButtonMouseOver;
+    isLoginButtonMouseOver = isMouseOverButton(event.position);
+    
+    if (wasOver != isLoginButtonMouseOver)
+    {
+        repaint();
+    }
 }
 
 void StartScreenComponent::mouseExit(const juce::MouseEvent& event)
 {
-    if (event.eventComponent == &recordButton)
-        recordButtonMouseOver = false;
-    else if (event.eventComponent == &uploadButton)
-        uploadButtonMouseOver = false;
+    isLoginButtonMouseOver = false;
     repaint();
+}
+
+void StartScreenComponent::mouseDown(const juce::MouseEvent& event)
+{
+    if (isMouseOverButton(event.position))
+    {
+        isLoginButtonDown = true;
+        repaint();
+    }
+}
+
+void StartScreenComponent::mouseUp(const juce::MouseEvent& event)
+{
+    if (isLoginButtonDown && isMouseOverButton(event.position))
+    {
+        // Login ë²„íŠ¼ ?´ë¦­ ??Home ?”ë©´?¼ë¡œ ?´ë™
+        screenChangeCallback(Screen::Home);
+    }
+    isLoginButtonDown = false;
+    repaint();
+}
+
+bool StartScreenComponent::isMouseOverButton(const juce::Point<float>& position) const
+{
+    return loginButtonBounds.toFloat().contains(position);
 } 

@@ -2,7 +2,9 @@
 
 MainComponent::MainComponent()
 {
-    setSize(1280, 720);
+    // 고정 해상도 설정
+    setSize(1920, 1080);
+    
     transitionProgress = 0.0f;
     showScreen(Screen::Start);
 }
@@ -122,6 +124,13 @@ void MainComponent::showScreen(Screen screen)
             
         case Screen::Record:
             newScreen = std::make_unique<RecordingComponent>();
+            break;
+            
+        case Screen::Home:
+            newScreen = std::make_unique<HomeComponent>([this](Screen nextScreen)
+            {
+                showScreen(nextScreen);
+            });
             break;
             
         case Screen::Upload:

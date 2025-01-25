@@ -4,5 +4,6 @@ enum class Screen
 {
     Start,
     Record,
-    Upload
+    Upload,
+    Home
 }; 
