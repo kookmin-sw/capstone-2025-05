@@ -21,33 +21,37 @@ void SongThumbnail::paint(juce::Graphics& g)
     // Draw background
     if (isMouseOver)
     {
-        g.setColour(juce::Colour(0xFF2A2A2A));
+        g.setColour(juce::Colour(0xFFE6D5C5));  // Lighter mocha for hover
         g.fillRoundedRectangle(bounds.toFloat(), 10.0f);
     }
     
+    // Calculate image and text areas
+    auto imageArea = bounds.removeFromTop(bounds.getHeight() - 60);  // 하단에 60픽셀 공간 확보
+    auto textArea = bounds;
+
     // Draw thumbnail
-    auto imageBounds = bounds.removeFromTop(bounds.getWidth()).reduced(10);
     if (thumbnail.isValid())
     {
-        g.drawImage(thumbnail, imageBounds.toFloat(), juce::RectanglePlacement::centred);
+        g.drawImage(thumbnail, imageArea.reduced(10).toFloat(), juce::RectanglePlacement::centred);
     }
     else
     {
         g.setColour(juce::Colour(0xFF1A1A1A));
-        g.fillRoundedRectangle(imageBounds.toFloat(), 5.0f);
+        g.fillRoundedRectangle(imageArea.reduced(10).toFloat(), 5.0f);
     }
     
-    bounds.removeFromTop(10);
+    // Draw title and artist
+    textArea = textArea.reduced(10, 0);  // 좌우 여백
     
-    // Draw title
-    g.setColour(juce::Colours::white);
-    g.setFont(titleFont);
-    g.drawText(title, bounds.removeFromTop(20), juce::Justification::centred);
+    // Title (bold)
+    g.setFont(titleFont.boldened());
+    g.setColour(juce::Colours::black);
+    g.drawText(title, textArea.removeFromTop(30), juce::Justification::centred);
     
-    // Draw artist
-    g.setColour(juce::Colour(0xFFAAAAAA));
+    // Artist
     g.setFont(artistFont);
-    g.drawText(artist, bounds.removeFromTop(20), juce::Justification::centred);
+    g.setColour(juce::Colour(0xFF666666));  // Gray for artist name
+    g.drawText(artist, textArea, juce::Justification::centred);
 }
 
 void SongThumbnail::mouseEnter(const juce::MouseEvent&)

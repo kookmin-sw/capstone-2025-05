@@ -23,12 +23,12 @@ SidebarButton::SidebarButton(const juce::String& buttonName, const juce::String&
 void SidebarButton::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().reduced(5);
-    auto iconBounds = bounds.removeFromLeft(bounds.getHeight()).reduced(2);
+    auto iconBounds = bounds.removeFromLeft(25).reduced(2);
     
     // Draw background if mouse is over
     if (isMouseOver)
     {
-        g.setColour(juce::Colour(0xFF2A2A2A));
+        g.setColour(juce::Colour(0xFFE6D5C5));  // Lighter mocha for hover
         g.fillRoundedRectangle(getLocalBounds().toFloat(), 5.0f);
     }
     
@@ -37,10 +37,19 @@ void SidebarButton::paint(juce::Graphics& g)
     {
         g.drawImage(icon, iconBounds.toFloat(), juce::RectanglePlacement::centred);
     }
-    
-    // Draw text
-    g.setColour(isMouseOver ? juce::Colours::white : juce::Colour(0xFFAAAAAA));
-    g.setFont(16.0f);
+
+    if(name == "MAPLE")
+    {
+        g.setColour(juce::Colours::black);
+        g.setFont(juce::Font(20.0f).boldened());
+    }
+    else
+    {
+        g.setColour(juce::Colours::black);
+        g.setFont(juce::Font(14.0f).boldened());
+    }
+
+    bounds.removeFromLeft(5);
     g.drawText(name, bounds, juce::Justification::centredLeft);
 }
 

@@ -14,7 +14,7 @@ void FriendActivityItem::paint(juce::Graphics& g)
     auto bounds = getLocalBounds().reduced(10);
     
     // Draw friend name
-    g.setColour(juce::Colours::white);
+    g.setColour(juce::Colours::black);
     g.setFont(nameFont);
     g.drawText(friendName, bounds.removeFromTop(20), juce::Justification::topLeft);
     
