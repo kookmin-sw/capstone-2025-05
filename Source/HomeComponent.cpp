@@ -20,24 +20,32 @@ void HomeComponent::paint(juce::Graphics& g)
 {
     // Fill background
     g.fillAll(juce::Colour(0xFF121212));  // Dark theme background
-}
 
-void HomeComponent::createLeftSidebar()
-{
-    auto addButton = [this](const juce::String& name, const juce::String& iconPath) {
-        auto button = std::make_unique<SidebarButton>(name, iconPath);
-        addAndMakeVisible(*button);
-        sidebarButtons.push_back(std::move(button));
-    };
+    // Draw section titles
+    g.setFont(titleFont);
+    g.setColour(juce::Colours::white);
 
-    // Add sidebar buttons
-    addButton("MAPLE", "Resources/Icons/playback.png");
-    addButton("Record", "Resources/Icons/record.png");
-    addButton("Playback", "Resources/Icons/playback.png");
-    addButton("Settings", "Resources/Icons/settings.png");
-    addButton("Profile", "Resources/Icons/profile.png");
-    addButton("Download", "Resources/Icons/download.png");
-    addButton("Log out", "Resources/Icons/logout.png");
+    auto bounds = getLocalBounds();
+    auto leftSidebar = bounds.removeFromLeft(bounds.getWidth() / 5);
+    auto rightSidebar = bounds.removeFromRight(bounds.getWidth() / 4);
+    auto mainContent = bounds;
+
+    // Friend Activity title
+    auto rightArea = rightSidebar.reduced(10);
+    g.drawText("Friend Activity", rightArea.removeFromTop(40), juce::Justification::left);
+
+    // Recent Songs title
+    auto contentArea = mainContent.reduced(20);
+    auto recentArea = contentArea.removeFromTop(contentArea.getHeight() / 3);
+    g.drawText("Recent Songs", recentArea.removeFromTop(40), juce::Justification::left);
+
+    // Progress bar
+    auto progressArea = contentArea.removeFromTop(100);
+    drawProgressBar(g, progressArea);
+
+    // Trending Songs title
+    auto trendingArea = contentArea;
+    g.drawText("Trending Songs", trendingArea.removeFromTop(40), juce::Justification::left);
 }
 
 void HomeComponent::resized()
@@ -69,22 +77,93 @@ void HomeComponent::resized()
     // Right sidebar (1/4 of width)
     auto rightSidebar = bounds.removeFromRight(bounds.getWidth() / 4);
     
+    // Layout friend activities
+    auto activityArea = rightSidebar.reduced(10);
+    int activityHeight = 80;
+    int activityMargin = 10;
+    
+    // Skip title area
+    activityArea.removeFromTop(60);  // Title + margin
+
+    // Position friend activities
+    for (auto& activity : friendActivities)
+    {
+        activity->setBounds(activityArea.removeFromTop(activityHeight));
+        activityArea.removeFromTop(activityMargin);
+    }
+    
     // Main content area
     auto mainContent = bounds;
-    
-    // Layout main content
     auto contentArea = mainContent.reduced(20);
     
-    // Recent songs grid
+    // Recent songs section
     auto recentSongsArea = contentArea.removeFromTop(contentArea.getHeight() / 3);
-    // ... Layout recent songs grid
+    recentSongsArea.removeFromTop(60);  // Title + margin
+
+    // Layout recent songs in a grid
+    int thumbnailSize = 200;
+    int thumbnailMargin = 20;
+    int columns = recentSongsArea.getWidth() / (thumbnailSize + thumbnailMargin);
+    int x = 0, y = 0;
     
-    // Progress bar
+    for (auto& song : recentSongs)
+    {
+        song->setBounds(recentSongsArea.getX() + x * (thumbnailSize + thumbnailMargin),
+                       recentSongsArea.getY() + y,
+                       thumbnailSize,
+                       thumbnailSize);
+        
+        x++;
+        if (x >= columns)
+        {
+            x = 0;
+            y += thumbnailSize + thumbnailMargin;
+        }
+    }
+    
+    // Progress bar area
     auto progressArea = contentArea.removeFromTop(100);
     
-    // Trending songs grid
+    // Trending songs section
     auto trendingArea = contentArea;
-    // ... Layout trending songs grid
+    trendingArea.removeFromTop(60);  // Title + margin
+
+    // Layout trending songs in a grid
+    x = 0;
+    y = 0;
+    
+    for (auto& song : trendingSongs)
+    {
+        song->setBounds(trendingArea.getX() + x * (thumbnailSize + thumbnailMargin),
+                       trendingArea.getY() + y,
+                       thumbnailSize,
+                       thumbnailSize);
+        
+        x++;
+        if (x >= columns)
+        {
+            x = 0;
+            y += thumbnailSize + thumbnailMargin;
+        }
+    }
+}
+
+void HomeComponent::createLeftSidebar()
+{
+    auto addButton = [this](const juce::String& name, const juce::String& iconPath) {
+        auto button = std::make_unique<SidebarButton>(name, iconPath);
+        addAndMakeVisible(*button);
+        sidebarButtons.push_back(std::move(button));
+    };
+
+    // Add sidebar buttons
+    addButton("MAPLE", "Resources/Icons/playback.png");
+    addButton("Record", "Resources/Icons/record.png");
+    addButton("Playback", "Resources/Icons/playback.png");
+    addButton("Settings", "Resources/Icons/settings.png");
+    addButton("Profile", "Resources/Icons/profile.png");
+    addButton("Download", "Resources/Icons/download.png");
+    addButton("Log out", "Resources/Icons/logout.png");
 }
 
 void HomeComponent::createRightSidebar()
