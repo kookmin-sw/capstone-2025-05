@@ -1,11 +1,12 @@
-#include "StartScreenComponent.h"
+﻿#include "StartScreenComponent.h"
 
 StartScreenComponent::StartScreenComponent(std::function<void(Screen)> callback)
     : screenChangeCallback(std::move(callback))
 {
     // Set up fonts
-    titleFont = juce::Font(juce::Font::getDefaultSansSerifFontName(), 72.0f, juce::Font::plain);
-    descriptionFont = juce::Font(juce::Font::getDefaultSansSerifFontName(), 20.0f, juce::Font::plain);
+    auto options = juce::Font::getDefaultSansSerifFontName();
+    titleFont = juce::Font(options, 72.0f, juce::Font::plain);
+    descriptionFont = juce::Font(options, 20.0f, juce::Font::plain);
 
     // Enable mouse events
     setMouseCursor(juce::MouseCursor::PointingHandCursor);
@@ -33,126 +34,123 @@ StartScreenComponent::~StartScreenComponent()
 
 void StartScreenComponent::paint(juce::Graphics &g)
 {
-    // Fill background with F5F5F0 color
+    // 전체 배경을 F5F5F0 색상으로 채움
     g.fillAll(juce::Colour(0xFFF5F5F0));
 
+    // 전체 화면을 좌우 절반으로 분할
     auto bounds = getLocalBounds();
-    auto leftHalf = bounds.removeFromLeft(bounds.getWidth() / 2);
+    auto leftHalf = bounds.removeFromLeft(bounds.getWidth() / 2); // 왼쪽 절반 영역 분리
 
-    // Left panel: Fill with D9C5B2 color with rounded corners
+    // 왼쪽 패널: 베이지색 배경과 둥근 모서리 적용
     g.setColour(juce::Colour(0xFFD9C5B2));
-    g.fillRoundedRectangle(leftHalf.toFloat(), 20.0f);
+    g.fillRoundedRectangle(leftHalf.toFloat(), 20.0f); // 20픽셀 반경의 둥근 모서리
 
-    // Left panel: logo image
+    // 로고 이미지를 왼쪽 패널 중앙에 배치 (50픽셀 여백)
     if (logoImage.isValid())
     {
         g.drawImage(logoImage,
-                    leftHalf.reduced(50).toFloat(),
+                    leftHalf.reduced(50).toFloat(), // 모든 방향에서 50픽셀 여백
                     juce::RectanglePlacement::centred);
     }
 
-    // Right panel
+    // 오른쪽 패널과 로그인 버튼 그리기
     drawRightPanel(g, bounds);
-
-    // Draw login button
     drawLoginButton(g);
 }
 
 void StartScreenComponent::drawRightPanel(juce::Graphics &g, juce::Rectangle<int> bounds)
 {
+    // 전체 패널에 50픽셀 여백 적용
     auto area = bounds.reduced(50);
 
-    // Calculate total content height
-    const int totalContentHeight = 100 + 20 + 1 + 40 + 100; // title + top margin + line + middle margin + description
+    // 헤더 섹션 (150픽셀 높이)
+    auto headerArea = area.removeFromTop(150);
 
-    // Calculate vertical center alignment starting position
-    int startY = (area.getHeight() - totalContentHeight) / 2;
-    area.setY(area.getY() + startY);
-
-    // Project title
+    // "MAPLE" 로고 (상단 100픽셀)
     g.setFont(titleFont);
-    g.setColour(juce::Colour(0xFF333333));
-    auto titleBounds = area.removeFromTop(100);
-    g.drawText("MAPLE", titleBounds, juce::Justification::centred, true);
+    g.setColour(juce::Colours::black);
+    g.drawText(juce::String("MAPLE"), headerArea.removeFromTop(100), juce::Justification::topRight, true);
 
-    // Divider line
-    area.removeFromTop(20);
-    g.setColour(juce::Colour(0x33000000));
-    auto lineArea = area.removeFromTop(1);
-    g.fillRect(lineArea.withSizeKeepingCentre(area.getWidth() * 0.8f, 1));
-
-    // Project description
-    area.removeFromTop(40);
+    // "Music Analysis" 텍스트 (남은 50픽셀)
     g.setFont(descriptionFont);
     g.setColour(juce::Colour(0xFF666666));
-    auto descriptionBounds = area.removeFromTop(100);
+    g.drawText(juce::String("Music Analysis"), headerArea, juce::Justification::topRight, true);
 
-    g.drawFittedText(projectDescription,
-                     descriptionBounds,
-                     juce::Justification::centred,
-                     3);
+    // 로그인 섹션과 헤더 사이 50픽셀 여백
+    area.removeFromTop(50);
+    auto loginArea = area;
+
+    // "Log in" 제목 (60픽셀 높이)
+    g.setFont(titleFont.withHeight(48.0f));
+    g.setColour(juce::Colours::black);
+    g.drawText(juce::String("Log in"), loginArea.removeFromTop(60), juce::Justification::left, true);
+
+    // "Customization Settings" 텍스트 (30픽셀 여백 + 30픽셀 높이)
+    loginArea.removeFromTop(30); // 여백
+    g.setFont(descriptionFont);
+    g.drawText(juce::String("Customization Settings"), loginArea.removeFromTop(30), juce::Justification::left, true);
+
+    // 기타 상세 입력 필드 (20픽셀 여백 + 50픽셀 높이)
+    loginArea.removeFromTop(20);                                 // 여백
+    auto inputField = loginArea.removeFromTop(50).reduced(0, 5); // 상하 5픽셀 여백
+    g.setColour(juce::Colours::white);
+    g.fillRoundedRectangle(inputField.toFloat(), 10.0f);       // 10픽셀 반경의 둥근 모서리
+    g.setColour(juce::Colour(0xFFCCCCCC));                     // 테두리 색상
+    g.drawRoundedRectangle(inputField.toFloat(), 10.0f, 1.0f); // 1픽셀 두께 테두리
+    g.setColour(juce::Colour(0xFFAAAAAA));                     // 플레이스홀더 텍스트 색상
+    g.setFont(descriptionFont);
+    g.drawText(juce::String("Enter your guitar details"), inputField.reduced(15, 0), juce::Justification::left, true);
+
+    // 비밀번호 레이블 (30픽셀 여백 + 30픽셀 높이)
+    loginArea.removeFromTop(30); // 여백
+    g.setColour(juce::Colours::black);
+    g.drawText(juce::String("Password"), loginArea.removeFromTop(30), juce::Justification::left, true);
+
+    // 비밀번호 입력 필드 (10픽셀 여백 + 50픽셀 높이)
+    loginArea.removeFromTop(10);                            // 여백
+    inputField = loginArea.removeFromTop(50).reduced(0, 5); // 상하 5픽셀 여백
+    g.setColour(juce::Colours::white);
+    g.fillRoundedRectangle(inputField.toFloat(), 10.0f);
+    g.setColour(juce::Colour(0xFFCCCCCC));
+    g.drawRoundedRectangle(inputField.toFloat(), 10.0f, 1.0f);
+    g.setColour(juce::Colour(0xFFAAAAAA));
+    g.drawText(juce::String("•••••••••••••"), inputField.reduced(15, 0), juce::Justification::left, true);
+
+    // "Forgot your password?" 링크 (20픽셀 여백 + 30픽셀 높이)
+    loginArea.removeFromTop(20); // 여백
+    g.setColour(juce::Colours::black);
+    g.setFont(descriptionFont);
+    g.drawText(juce::String("Forgot your password?"), loginArea.removeFromTop(30), juce::Justification::left, true);
 }
 
 void StartScreenComponent::drawLoginButton(juce::Graphics &g)
 {
-    // Improved shadow effect
-    float elevation = isLoginButtonMouseOver ? 12.0f : 6.0f;
-    auto shadowBounds = loginButtonBounds.toFloat().translated(0.0f, elevation);
-
-    // Smooth shadow effect
-    for (float i = 0.0f; i < elevation; i += 0.5f)
-    {
-        float alpha = (elevation - i) / (elevation * 2.0f);
-        g.setColour(juce::Colours::black.withAlpha(alpha * 0.2f));
-        g.drawRoundedRectangle(shadowBounds.expanded(i + 2), 10.0f, 1.0f);
-    }
+    auto buttonBounds = loginButtonBounds.toFloat();
 
     // Button background
-    auto buttonBounds = loginButtonBounds.toFloat();
-    if (!isLoginButtonMouseOver)
-        buttonBounds = buttonBounds.translated(0.0f, elevation);
-
-    // White background with subtle gradient effect
-    juce::ColourGradient gradient(
-        juce::Colours::white,
-        buttonBounds.getTopLeft(),
-        juce::Colours::white.withBrightness(0.95f),
-        buttonBounds.getBottomLeft(),
-        false);
-    g.setGradientFill(gradient);
+    g.setColour(juce::Colour(0xFFD9C5B2));
     g.fillRoundedRectangle(buttonBounds, 10.0f);
 
-    // White border
+    // Button text
     g.setColour(juce::Colours::white);
-    g.drawRoundedRectangle(buttonBounds, 10.0f, 1.0f);
-
-    // Button text with hover effect
-    juce::Colour textColour;
-    if (isLoginButtonDown)
-        textColour = juce::Colour(0xFF666666); // Darker grey when pressed
-    else if (isLoginButtonMouseOver)
-        textColour = juce::Colour(0xFF808080); // Lighter grey on hover
-    else
-        textColour = juce::Colour(0xFF999999); // Default grey
-
-    g.setColour(textColour);
     g.setFont(descriptionFont.withHeight(16.0f));
-    g.drawText("LOGIN", buttonBounds, juce::Justification::centred, false);
+    g.drawText("Log in", buttonBounds, juce::Justification::centred, false);
 }
 
 void StartScreenComponent::resized()
 {
+    // 전체 화면을 좌우로 분할
     auto bounds = getLocalBounds();
     auto rightHalf = bounds.removeFromRight(bounds.getWidth() / 2);
 
-    // Position login button below content
-    auto buttonArea = rightHalf.reduced(50);
-    auto contentHeight = 100 + 20 + 1 + 40 + 100;
-    int startY = (buttonArea.getHeight() - contentHeight) / 2;
-    buttonArea.removeFromTop(startY + contentHeight + 50);
+    // 로그인 버튼 위치 계산
+    auto buttonArea = rightHalf.reduced(50);                   // 50픽셀 여백
+    auto contentHeight = 100 + 20 + 1 + 40 + 100;              // 콘텐츠의 총 높이
+    int startY = (buttonArea.getHeight() - contentHeight) / 2; // 수직 중앙 정렬
+    buttonArea.removeFromTop(startY + contentHeight + 50);     // 콘텐츠 아래 위치
 
-    // Set wider button size
-    loginButtonBounds = buttonArea.removeFromTop(50).withSizeKeepingCentre(300, 50); // width increased to 300
+    // 로그인 버튼 크기 설정 (300x50 픽셀)
+    loginButtonBounds = buttonArea.removeFromTop(50).withSizeKeepingCentre(300, 50);
 }
 
 void StartScreenComponent::mouseMove(const juce::MouseEvent &event)
@@ -196,7 +194,7 @@ void StartScreenComponent::mouseUp(const juce::MouseEvent &event)
 {
     if (isLoginButtonDown && isMouseOverButton(event.position))
     {
-        // Login 버튼 ?�릭 ??Home ?�면?�로 ?�동
+        // Navigate to Home screen when login button is clicked
         screenChangeCallback(Screen::Home);
     }
     isLoginButtonDown = false;
