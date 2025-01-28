@@ -62,6 +62,7 @@ void StartScreenComponent::drawRightPanel(juce::Graphics &g, juce::Rectangle<int
 {
     // 전체 패널에 50픽셀 여백 적용
     auto area = bounds.reduced(50);
+    auto panelWidth = area.getWidth(); // 오른쪽 패널의 너비
 
     // 헤더 섹션 (150픽셀 높이)
     auto headerArea = area.removeFromTop(150);
@@ -79,36 +80,39 @@ void StartScreenComponent::drawRightPanel(juce::Graphics &g, juce::Rectangle<int
     // 로그인 섹션과 헤더 사이 50픽셀 여백
     area.removeFromTop(50);
     auto loginArea = area;
+    auto inputFieldWidth = panelWidth / 2; // 입력 필드 너비를 패널 너비의 절반으로 설정
 
     // "Log in" 제목 (60픽셀 높이)
     g.setFont(titleFont.withHeight(48.0f));
     g.setColour(juce::Colours::black);
-    g.drawText(juce::String("Log in"), loginArea.removeFromTop(60), juce::Justification::left, true);
+    g.drawText(juce::String("Log in"), loginArea.removeFromTop(60).reduced((panelWidth - inputFieldWidth) / 2, 5), juce::Justification::left, true);
 
     // "Customization Settings" 텍스트 (30픽셀 여백 + 30픽셀 높이)
     loginArea.removeFromTop(30); // 여백
     g.setFont(descriptionFont);
-    g.drawText(juce::String("Customization Settings"), loginArea.removeFromTop(30), juce::Justification::left, true);
+    g.drawText(juce::String("ID"), loginArea.removeFromTop(30).reduced((panelWidth - inputFieldWidth) / 2, 0), juce::Justification::left, true);
 
     // 기타 상세 입력 필드 (20픽셀 여백 + 50픽셀 높이)
-    loginArea.removeFromTop(20);                                 // 여백
-    auto inputField = loginArea.removeFromTop(50).reduced(0, 5); // 상하 5픽셀 여백
+    loginArea.removeFromTop(10);
+    // 입력 필드 너비 조정: reduced 함수의 첫 번째 인수를 사용하여 좌우 여백 설정
+    auto inputField = loginArea.removeFromTop(50).reduced((panelWidth - inputFieldWidth) / 2, 0);
     g.setColour(juce::Colours::white);
-    g.fillRoundedRectangle(inputField.toFloat(), 10.0f);       // 10픽셀 반경의 둥근 모서리
-    g.setColour(juce::Colour(0xFFCCCCCC));                     // 테두리 색상
-    g.drawRoundedRectangle(inputField.toFloat(), 10.0f, 1.0f); // 1픽셀 두께 테두리
-    g.setColour(juce::Colour(0xFFAAAAAA));                     // 플레이스홀더 텍스트 색상
+    g.fillRoundedRectangle(inputField.toFloat(), 10.0f);
+    g.setColour(juce::Colour(0xFFCCCCCC));
+    g.drawRoundedRectangle(inputField.toFloat(), 10.0f, 1.0f);
+    g.setColour(juce::Colour(0xFFAAAAAA));
     g.setFont(descriptionFont);
     g.drawText(juce::String("Enter your guitar details"), inputField.reduced(15, 0), juce::Justification::left, true);
 
     // 비밀번호 레이블 (30픽셀 여백 + 30픽셀 높이)
     loginArea.removeFromTop(30); // 여백
     g.setColour(juce::Colours::black);
-    g.drawText(juce::String("Password"), loginArea.removeFromTop(30), juce::Justification::left, true);
+    g.drawText(juce::String("Password"), loginArea.removeFromTop(30).reduced((panelWidth - inputFieldWidth) / 2, 5), juce::Justification::left, true);
 
     // 비밀번호 입력 필드 (10픽셀 여백 + 50픽셀 높이)
-    loginArea.removeFromTop(10);                            // 여백
-    inputField = loginArea.removeFromTop(50).reduced(0, 5); // 상하 5픽셀 여백
+    loginArea.removeFromTop(10);
+    // 입력 필드 너비 조정: reduced 함수의 첫 번째 인수를 사용하여 좌우 여백 설정
+    inputField = loginArea.removeFromTop(50).reduced((panelWidth - inputFieldWidth) / 2, 0);
     g.setColour(juce::Colours::white);
     g.fillRoundedRectangle(inputField.toFloat(), 10.0f);
     g.setColour(juce::Colour(0xFFCCCCCC));
@@ -120,7 +124,7 @@ void StartScreenComponent::drawRightPanel(juce::Graphics &g, juce::Rectangle<int
     loginArea.removeFromTop(20); // 여백
     g.setColour(juce::Colours::black);
     g.setFont(descriptionFont);
-    g.drawText(juce::String("Forgot your password?"), loginArea.removeFromTop(30), juce::Justification::left, true);
+    g.drawText(juce::String("Forgot your password?"), loginArea.removeFromTop(30).reduced((panelWidth - inputFieldWidth) / 2, 5), juce::Justification::left, true);
 }
 
 void StartScreenComponent::drawLoginButton(juce::Graphics &g)
@@ -145,7 +149,7 @@ void StartScreenComponent::resized()
 
     // 로그인 버튼 위치 계산
     auto buttonArea = rightHalf.reduced(50);                   // 50픽셀 여백
-    auto contentHeight = 100 + 20 + 1 + 40 + 100;              // 콘텐츠의 총 높이
+    auto contentHeight = 100;              // 콘텐츠의 총 높이
     int startY = (buttonArea.getHeight() - contentHeight) / 2; // 수직 중앙 정렬
     buttonArea.removeFromTop(startY + contentHeight + 50);     // 콘텐츠 아래 위치
 
