@@ -11,6 +11,7 @@ JuceLibraryCode/
 *.suo
 *.sdf
 *.opensdf
+*.vcxproj
 
 # 빌드 결과물
 *.o
