@@ -3,7 +3,7 @@
 MainComponent::MainComponent()
 {
     // 고정 해상도 설정
-    setSize(1920, 1200);
+    setSize(1440, 900);
 
     transitionProgress = 0.0f;
     showScreen(Screen::Start);

@@ -50,10 +50,10 @@ HomeComponent::HomeComponent(std::function<void(Screen)> callback)
 
     // Real-time Analysis ?? ???
     analysisCards = {
-        {"Relaxing", "Technique", {}},
-        {"Smooth", "Weekend", {}},
-        {"Relaxation", "Rock Riffs", {}},
-        {"Classic", "Masterpiece", {}}};
+        {"26", "Younha", {}},
+        {"Sunfish", "Younha", {}},
+        {"tbh", "QWER", {}},
+        {"Symphony No.5", "Beethoven", {}}};
 
     // Discover new ?? ???
     discoverCards = {
@@ -77,7 +77,7 @@ HomeComponent::HomeComponent(std::function<void(Screen)> callback)
                              .getParentDirectory()
                              .getParentDirectory()
                              .getParentDirectory()
-                             .getChildFile("Resources/Images/" + name + ".png");
+                             .getChildFile("Resources/AlbumArt/" + name + ".jpg");
 
         if (imageFile.existsAsFile())
             return juce::ImageFileFormat::loadFrom(imageFile);
@@ -86,7 +86,7 @@ HomeComponent::HomeComponent(std::function<void(Screen)> callback)
 
     // ? ??? ?? ??? ??
     for (size_t i = 0; i < analysisCards.size(); ++i)
-        analysisCards[i].background = loadImage("analysis_" + juce::String(i + 1));
+        analysisCards[i].background = loadImage(analysisCards[i].title);
 
     for (size_t i = 0; i < discoverCards.size(); ++i)
         discoverCards[i].background = loadImage("discover_" + juce::String(i + 1));
@@ -105,13 +105,13 @@ HomeComponent::~HomeComponent()
 
 void HomeComponent::paint(juce::Graphics &g)
 {
-    // ?? ??
-    g.fillAll(juce::Colour(0xFFF5F5F5));
+    // ?? ??? F5F5F0? ??
+    g.fillAll(juce::Colour(0xFFF5F5F0));
 
     auto bounds = getLocalBounds();
 
-    // ?? ????? ??
-    auto navBounds = bounds.removeFromLeft(250);
+    // ?? ????? ?? (?? ??? 1/4)
+    auto navBounds = bounds.removeFromLeft(bounds.getWidth() / 4);
     drawNavigationMenu(g);
 
     // ?? ??? ??
@@ -120,11 +120,23 @@ void HomeComponent::paint(juce::Graphics &g)
 
 void HomeComponent::drawNavigationMenu(juce::Graphics &g)
 {
-    auto bounds = getLocalBounds().removeFromLeft(250);
+    // ?? ??? 1/4 ??
+    auto bounds = getLocalBounds().removeFromLeft(getWidth() / 4);
 
-    // ????? ??
-    g.setColour(juce::Colour(0xFFE6D5C5));
-    g.fillRect(bounds);
+    // ????? ???? D9C5B2? ???? ??? ???? ??? ??
+    g.setColour(juce::Colour(0xFFD9C5B2));
+
+    juce::Path path;
+    path.addRoundedRectangle(bounds.getX(), bounds.getY(),
+                             bounds.getWidth(), bounds.getHeight(),
+                             20.0f, // ??? ??
+                             20.0f, // ??? ??
+                             false, // ?? ? ???
+                             true,  // ??? ? ???
+                             false, // ?? ?? ???
+                             true); // ??? ?? ???
+
+    g.fillPath(path);
 
     // GuitarPr ??
     g.setFont(titleFont);
@@ -157,7 +169,8 @@ void HomeComponent::drawNavigationMenu(juce::Graphics &g)
 
 void HomeComponent::drawMainContent(juce::Graphics &g)
 {
-    auto bounds = getLocalBounds().withTrimmedLeft(250).reduced(40);
+    // ?? ?? ??(1/4)?? ??? ?? ??
+    auto bounds = getLocalBounds().withTrimmedLeft(getWidth() / 4).reduced(40);
 
     // Real-time Analysis ??
     g.setFont(titleFont);
@@ -192,14 +205,32 @@ void HomeComponent::drawRealTimeAnalysis(juce::Graphics &g, juce::Rectangle<int>
         // ?? ??
         if (card.background.isValid())
         {
-            g.drawImage(card.background, cardBounds.toFloat(),
+            // ???? ??? ?? ??? ?? ??
+            juce::Path clipPath;
+            clipPath.addRoundedRectangle(cardBounds.toFloat(), 10.0f);
+            g.saveState();
+            g.reduceClipRegion(clipPath);
+
+            // ??? ??? ?? ??? ?? ???? ???
+            g.drawImage(card.background,
+                        cardBounds.toFloat(),
                         juce::RectanglePlacement::fillDestination);
+
+            g.restoreState();
+
+            // ?? ??? ?? (????)
+            g.setColour(juce::Colours::white.withAlpha(0.1f));
+            g.drawRoundedRectangle(cardBounds.toFloat(), 10.0f, 1.0f);
         }
         else
         {
             g.setColour(juce::Colour(0xFFE6D5C5));
             g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
         }
+
+        // ??? ???? ?? (??? ???? ??)
+        g.setColour(juce::Colours::black.withAlpha(0.3f));
+        g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
 
         // ?? ???
         auto textBounds = cardBounds.reduced(20);
