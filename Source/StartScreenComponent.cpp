@@ -8,8 +8,38 @@ StartScreenComponent::StartScreenComponent(std::function<void(Screen)> callback)
     titleFont = juce::Font(options, 72.0f, juce::Font::plain);
     descriptionFont = juce::Font(options, 20.0f, juce::Font::plain);
 
+    // ID 필드 설정
+    addAndMakeVisible(idField);
+    idField.setLookAndFeel(&roundedLookAndFeel);
+    idField.setTextToShowWhenEmpty("Enter your username", juce::Colours::grey);
+    idField.setFont(descriptionFont);
+    idField.setColour(juce::TextEditor::backgroundColourId, juce::Colours::white);
+    idField.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xFFCCCCCC));
+    idField.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xFFCCCCCC));
+    idField.setColour(juce::TextEditor::textColourId, juce::Colours::black);
+    idField.setColour(juce::CaretComponent::caretColourId, juce::Colours::black);
+    idField.setMultiLine(false);
+    idField.setReturnKeyStartsNewLine(false);
+    idField.setIndents(10, 5);
+    idField.setJustification(juce::Justification::centredLeft);
+
+    // 비밀번호 필드 설정
+    addAndMakeVisible(passwordField);
+    passwordField.setLookAndFeel(&roundedLookAndFeel);
+    passwordField.setTextToShowWhenEmpty("Password", juce::Colours::grey);
+    passwordField.setFont(descriptionFont);
+    passwordField.setPasswordCharacter('•');
+    passwordField.setColour(juce::TextEditor::backgroundColourId, juce::Colours::white);
+    passwordField.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xFFCCCCCC));
+    passwordField.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xFFCCCCCC));
+    passwordField.setColour(juce::TextEditor::textColourId, juce::Colours::black);
+    passwordField.setColour(juce::CaretComponent::caretColourId, juce::Colours::black);
+    passwordField.setMultiLine(false);
+    passwordField.setReturnKeyStartsNewLine(false);
+    passwordField.setIndents(10, 5);
+    passwordField.setJustification(juce::Justification::centredLeft);
+
     // Enable mouse events
-    setMouseCursor(juce::MouseCursor::PointingHandCursor);
     addMouseListener(this, true);
 
     // Load logo image
@@ -30,6 +60,8 @@ StartScreenComponent::StartScreenComponent(std::function<void(Screen)> callback)
 
 StartScreenComponent::~StartScreenComponent()
 {
+    idField.setLookAndFeel(nullptr);
+    passwordField.setLookAndFeel(nullptr);
 }
 
 void StartScreenComponent::paint(juce::Graphics &g)
@@ -62,7 +94,8 @@ void StartScreenComponent::drawRightPanel(juce::Graphics &g, juce::Rectangle<int
 {
     // 전체 패널에 50픽셀 여백 적용
     auto area = bounds.reduced(50);
-    auto panelWidth = area.getWidth(); // 오른쪽 패널의 너비
+    auto panelWidth = area.getWidth();
+    auto inputFieldWidth = panelWidth / 2;
 
     // 헤더 섹션 (150픽셀 높이)
     auto headerArea = area.removeFromTop(150);
@@ -80,48 +113,32 @@ void StartScreenComponent::drawRightPanel(juce::Graphics &g, juce::Rectangle<int
     // 로그인 섹션과 헤더 사이 50픽셀 여백
     area.removeFromTop(50);
     auto loginArea = area;
-    auto inputFieldWidth = panelWidth / 2; // 입력 필드 너비를 패널 너비의 절반으로 설정
 
     // "Log in" 제목 (60픽셀 높이)
     g.setFont(titleFont.withHeight(48.0f));
     g.setColour(juce::Colours::black);
     g.drawText(juce::String("Log in"), loginArea.removeFromTop(60).reduced((panelWidth - inputFieldWidth) / 2, 5), juce::Justification::left, true);
 
-    // "Customization Settings" 텍스트 (30픽셀 여백 + 30픽셀 높이)
-    loginArea.removeFromTop(30); // 여백
+    // "Username" 텍스트
+    loginArea.removeFromTop(30);
     g.setFont(descriptionFont);
-    g.drawText(juce::String("ID"), loginArea.removeFromTop(30).reduced((panelWidth - inputFieldWidth) / 2, 0), juce::Justification::left, true);
+    g.drawText(juce::String("Username"), loginArea.removeFromTop(30).reduced((panelWidth - inputFieldWidth) / 2, 0), juce::Justification::left, true);
 
-    // 기타 상세 입력 필드 (20픽셀 여백 + 50픽셀 높이)
+    // ID 필드 공간 (여기서는 아무것도 그리지 않음)
     loginArea.removeFromTop(10);
-    // 입력 필드 너비 조정: reduced 함수의 첫 번째 인수를 사용하여 좌우 여백 설정
-    auto inputField = loginArea.removeFromTop(50).reduced((panelWidth - inputFieldWidth) / 2, 0);
-    g.setColour(juce::Colours::white);
-    g.fillRoundedRectangle(inputField.toFloat(), 10.0f);
-    g.setColour(juce::Colour(0xFFCCCCCC));
-    g.drawRoundedRectangle(inputField.toFloat(), 10.0f, 1.0f);
-    g.setColour(juce::Colour(0xFFAAAAAA));
-    g.setFont(descriptionFont);
-    g.drawText(juce::String("Enter your guitar details"), inputField.reduced(15, 0), juce::Justification::left, true);
+    loginArea.removeFromTop(50);
 
-    // 비밀번호 레이블 (30픽셀 여백 + 30픽셀 높이)
-    loginArea.removeFromTop(30); // 여백
+    // "Password" 텍스트
+    loginArea.removeFromTop(30);
     g.setColour(juce::Colours::black);
     g.drawText(juce::String("Password"), loginArea.removeFromTop(30).reduced((panelWidth - inputFieldWidth) / 2, 5), juce::Justification::left, true);
 
-    // 비밀번호 입력 필드 (10픽셀 여백 + 50픽셀 높이)
+    // 비밀번호 필드 공간 (여기서는 아무것도 그리지 않음)
     loginArea.removeFromTop(10);
-    // 입력 필드 너비 조정: reduced 함수의 첫 번째 인수를 사용하여 좌우 여백 설정
-    inputField = loginArea.removeFromTop(50).reduced((panelWidth - inputFieldWidth) / 2, 0);
-    g.setColour(juce::Colours::white);
-    g.fillRoundedRectangle(inputField.toFloat(), 10.0f);
-    g.setColour(juce::Colour(0xFFCCCCCC));
-    g.drawRoundedRectangle(inputField.toFloat(), 10.0f, 1.0f);
-    g.setColour(juce::Colour(0xFFAAAAAA));
-    g.drawText(juce::String("•••••••••••••"), inputField.reduced(15, 0), juce::Justification::left, true);
+    loginArea.removeFromTop(50);
 
-    // "Forgot your password?" 링크 (20픽셀 여백 + 30픽셀 높이)
-    loginArea.removeFromTop(20); // 여백
+    // "Forgot your password?" 링크
+    loginArea.removeFromTop(20);
     g.setColour(juce::Colours::black);
     g.setFont(descriptionFont);
     g.drawText(juce::String("Forgot your password?"), loginArea.removeFromTop(30).reduced((panelWidth - inputFieldWidth) / 2, 5), juce::Justification::left, true);
@@ -147,11 +164,33 @@ void StartScreenComponent::resized()
     auto bounds = getLocalBounds();
     auto rightHalf = bounds.removeFromRight(bounds.getWidth() / 2);
 
+    // 오른쪽 패널 영역 계산
+    auto area = rightHalf.reduced(50);
+    auto panelWidth = area.getWidth();
+    auto inputFieldWidth = panelWidth / 2;
+
+    // 헤더와 "Log in" 제목 공간 확보
+    auto loginArea = area;
+    loginArea.removeFromTop(150 + 50 + 60 + 30); // header + spacing + "Log in" + spacing
+
+    // ID 필드 위치 설정
+    loginArea.removeFromTop(30); // "Username" label
+    loginArea.removeFromTop(10); // spacing
+    auto idBounds = loginArea.removeFromTop(50).reduced((panelWidth - inputFieldWidth) / 2, 0);
+    idField.setBounds(idBounds);
+
+    // 비밀번호 필드 위치 설정
+    loginArea.removeFromTop(30); // spacing
+    loginArea.removeFromTop(30); // "Password" label
+    loginArea.removeFromTop(10); // spacing
+    auto passwordBounds = loginArea.removeFromTop(50).reduced((panelWidth - inputFieldWidth) / 2, 0);
+    passwordField.setBounds(passwordBounds);
+
     // 로그인 버튼 위치 계산
-    auto buttonArea = rightHalf.reduced(50);                   // 50픽셀 여백
-    auto contentHeight = 100;              // 콘텐츠의 총 높이
-    int startY = (buttonArea.getHeight() - contentHeight) / 2; // 수직 중앙 정렬
-    buttonArea.removeFromTop(startY + contentHeight + 50);     // 콘텐츠 아래 위치
+    auto buttonArea = rightHalf.reduced(50);
+    auto contentHeight = 100;
+    int startY = (buttonArea.getHeight() - contentHeight) / 2;
+    buttonArea.removeFromTop(startY + contentHeight + 50);
 
     // 로그인 버튼 크기 설정 (300x50 픽셀)
     loginButtonBounds = buttonArea.removeFromTop(50).withSizeKeepingCentre(300, 50);
@@ -161,6 +200,16 @@ void StartScreenComponent::mouseMove(const juce::MouseEvent &event)
 {
     bool wasOver = isLoginButtonMouseOver;
     isLoginButtonMouseOver = isMouseOverButton(event.position);
+
+    // 로그인 버튼 위에 있을 때만 커서 변경
+    if (isLoginButtonMouseOver)
+    {
+        setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    }
+    else
+    {
+        setMouseCursor(juce::MouseCursor::NormalCursor);
+    }
 
     if (wasOver != isLoginButtonMouseOver)
     {
