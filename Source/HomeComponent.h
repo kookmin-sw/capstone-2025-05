@@ -6,7 +6,8 @@
 #include "FriendActivityItem.h"
 #include "SongThumbnail.h"
 
-class HomeComponent : public juce::Component
+class HomeComponent : public juce::Component,
+                      public juce::Timer
 {
 public:
     HomeComponent(std::function<void(Screen)> screenChangeCallback);
@@ -14,6 +15,13 @@ public:
 
     void paint(juce::Graphics &) override;
     void resized() override;
+
+    // 타이머 콜백 추가
+    void timerCallback() override;
+
+    // 마우스 이벤트 핸들러 추가
+    void mouseMove(const juce::MouseEvent &event) override;
+    void mouseExit(const juce::MouseEvent &event) override;
 
 private:
     void drawNavigationMenu(juce::Graphics &g);
@@ -49,6 +57,8 @@ private:
         juce::String title;
         juce::String subtitle;
         juce::Image background;
+        bool isMouseOver = false;
+        float hoverAlpha = 0.0f; // 호버 애니메이션을 위한 알파값
     };
 
     std::vector<AnalysisCard> analysisCards;
@@ -89,6 +99,9 @@ private:
     juce::Typeface::Ptr boldTypeface;
 
     std::function<void(Screen)> screenChangeCallback;
+
+    // 마우스 위치 확인 함수 추가
+    bool isMouseOverCard(const juce::Point<float> &position, const juce::Rectangle<int> &cardBounds) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HomeComponent)
 };

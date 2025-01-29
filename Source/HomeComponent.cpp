@@ -97,6 +97,9 @@ HomeComponent::HomeComponent(std::function<void(Screen)> callback)
     createLeftSidebar();
     createRightSidebar();
     createMainContent();
+
+    // ??? ??
+    startTimer(16); // ? 60fps
 }
 
 HomeComponent::~HomeComponent()
@@ -197,42 +200,42 @@ void HomeComponent::drawMainContent(juce::Graphics &g)
 
 void HomeComponent::drawRealTimeAnalysis(juce::Graphics &g, juce::Rectangle<int> bounds)
 {
-    int cardWidth = (bounds.getWidth() - 30) / 4; // 4?? ??? ??
+    int cardWidth = (bounds.getWidth() - 30) / 4;
     auto cardBounds = bounds.removeFromLeft(cardWidth);
 
     for (const auto &card : analysisCards)
     {
-        // ?? ??
         if (card.background.isValid())
         {
-            // ???? ??? ?? ??? ?? ??
+            // ??? ?? ??
             juce::Path clipPath;
             clipPath.addRoundedRectangle(cardBounds.toFloat(), 10.0f);
             g.saveState();
             g.reduceClipRegion(clipPath);
 
-            // ??? ??? ?? ??? ?? ???? ???
-            g.drawImage(card.background,
-                        cardBounds.toFloat(),
+            // ??? ???
+            g.drawImage(card.background, cardBounds.toFloat(),
                         juce::RectanglePlacement::fillDestination);
 
             g.restoreState();
 
-            // ?? ??? ?? (????)
-            g.setColour(juce::Colours::white.withAlpha(0.1f));
-            g.drawRoundedRectangle(cardBounds.toFloat(), 10.0f, 1.0f);
-        }
-        else
-        {
-            g.setColour(juce::Colour(0xFFE6D5C5));
-            g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
+            // ?? ??
+            if (card.hoverAlpha > 0.0f)
+            {
+                g.setColour(juce::Colours::white.withAlpha(0.3f * card.hoverAlpha));
+                g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
+
+                // ??? ??
+                g.setColour(juce::Colours::white.withAlpha(card.hoverAlpha));
+                g.drawRoundedRectangle(cardBounds.toFloat(), 10.0f, 2.0f);
+            }
         }
 
-        // ??? ???? ?? (??? ???? ??)
+        // ??? ????
         g.setColour(juce::Colours::black.withAlpha(0.3f));
         g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
 
-        // ?? ???
+        // ???
         auto textBounds = cardBounds.reduced(20);
         g.setColour(juce::Colours::white);
         g.setFont(regularFont);
@@ -402,4 +405,81 @@ void HomeComponent::drawProgressBar(juce::Graphics &g, juce::Rectangle<int> boun
     g.drawText(juce::String(static_cast<int>(learningProgress * 100)) + "% Complete",
                progressBounds,
                juce::Justification::centred);
+}
+
+void HomeComponent::timerCallback()
+{
+    bool needsRepaint = false;
+
+    // ? ??? ?? ????? ????
+    for (auto &card : analysisCards)
+    {
+        float targetAlpha = card.isMouseOver ? 1.0f : 0.0f;
+        float currentAlpha = card.hoverAlpha;
+
+        if (currentAlpha != targetAlpha)
+        {
+            // ???? ?????? ?? ??
+            float step = 0.1f;
+            if (currentAlpha < targetAlpha)
+                card.hoverAlpha = std::min(currentAlpha + step, targetAlpha);
+            else
+                card.hoverAlpha = std::max(currentAlpha - step, targetAlpha);
+
+            needsRepaint = true;
+        }
+    }
+
+    if (needsRepaint)
+        repaint();
+}
+
+void HomeComponent::mouseMove(const juce::MouseEvent &event)
+{
+    auto bounds = getLocalBounds().withTrimmedLeft(getWidth() / 4).reduced(40);
+    auto analysisBounds = bounds.removeFromTop(300);
+    analysisBounds.removeFromTop(40); // ?? ?? ??
+
+    int cardWidth = (analysisBounds.getWidth() - 30) / 4;
+    auto cardBounds = analysisBounds.removeFromLeft(cardWidth);
+
+    bool needsRepaint = false;
+
+    // ? ??? ?? ??? ?? ?? ??
+    for (size_t i = 0; i < analysisCards.size(); ++i)
+    {
+        bool wasOver = analysisCards[i].isMouseOver;
+        analysisCards[i].isMouseOver = isMouseOverCard(event.position.toFloat(), cardBounds);
+
+        if (wasOver != analysisCards[i].isMouseOver)
+            needsRepaint = true;
+
+        analysisBounds.removeFromLeft(10);
+        cardBounds = analysisBounds.removeFromLeft(cardWidth);
+    }
+
+    if (needsRepaint)
+        repaint();
+}
+
+void HomeComponent::mouseExit(const juce::MouseEvent &)
+{
+    bool needsRepaint = false;
+
+    for (auto &card : analysisCards)
+    {
+        if (card.isMouseOver)
+        {
+            card.isMouseOver = false;
+            needsRepaint = true;
+        }
+    }
+
+    if (needsRepaint)
+        repaint();
+}
+
+bool HomeComponent::isMouseOverCard(const juce::Point<float> &position, const juce::Rectangle<int> &cardBounds) const
+{
+    return cardBounds.toFloat().contains(position);
 }
