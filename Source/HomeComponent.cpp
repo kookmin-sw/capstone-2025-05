@@ -219,21 +219,18 @@ void HomeComponent::drawRealTimeAnalysis(juce::Graphics &g, juce::Rectangle<int>
 
             g.restoreState();
 
+            // ??? ???? (?? ? ??? ??)
+            g.setColour(juce::Colours::black.withAlpha(0.3f * (1.0f - card.hoverAlpha)));
+            g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
+
             // ?? ??
             if (card.hoverAlpha > 0.0f)
             {
-                g.setColour(juce::Colours::white.withAlpha(0.3f * card.hoverAlpha));
-                g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
-
-                // ??? ??
-                g.setColour(juce::Colours::white.withAlpha(card.hoverAlpha));
+                // ?? ??? ??
+                g.setColour(juce::Colours::white.withAlpha(card.hoverAlpha * 0.8f));
                 g.drawRoundedRectangle(cardBounds.toFloat(), 10.0f, 2.0f);
             }
         }
-
-        // ??? ????
-        g.setColour(juce::Colours::black.withAlpha(0.3f));
-        g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
 
         // ???
         auto textBounds = cardBounds.reduced(20);
