@@ -207,38 +207,45 @@ void HomeComponent::drawRealTimeAnalysis(juce::Graphics &g, juce::Rectangle<int>
     {
         if (card.background.isValid())
         {
+            // ?? ??? ?? ??? ??
+            auto centeredBounds = cardBounds.toFloat();
+            float scaleAmount = (card.scale - 1.0f);
+            float expandX = centeredBounds.getWidth() * scaleAmount;
+            float expandY = centeredBounds.getHeight() * scaleAmount;
+            centeredBounds.expand(expandX / 2, expandY / 2);
+
             // ??? ?? ??
             juce::Path clipPath;
-            clipPath.addRoundedRectangle(cardBounds.toFloat(), 10.0f);
+            clipPath.addRoundedRectangle(centeredBounds, 10.0f);
             g.saveState();
             g.reduceClipRegion(clipPath);
 
             // ??? ???
-            g.drawImage(card.background, cardBounds.toFloat(),
+            g.drawImage(card.background, centeredBounds,
                         juce::RectanglePlacement::fillDestination);
 
             g.restoreState();
 
             // ??? ???? (?? ? ??? ??)
             g.setColour(juce::Colours::black.withAlpha(0.3f * (1.0f - card.hoverAlpha)));
-            g.fillRoundedRectangle(cardBounds.toFloat(), 10.0f);
+            g.fillRoundedRectangle(centeredBounds, 10.0f);
 
             // ?? ??
             if (card.hoverAlpha > 0.0f)
             {
                 // ?? ??? ??
                 g.setColour(juce::Colours::white.withAlpha(card.hoverAlpha * 0.8f));
-                g.drawRoundedRectangle(cardBounds.toFloat(), 10.0f, 2.0f);
+                g.drawRoundedRectangle(centeredBounds, 10.0f, 2.0f);
             }
-        }
 
-        // ???
-        auto textBounds = cardBounds.reduced(20);
-        g.setColour(juce::Colours::white);
-        g.setFont(regularFont);
-        g.drawText(card.title, textBounds.removeFromBottom(60), juce::Justification::centred);
-        g.setFont(smallFont);
-        g.drawText(card.subtitle, textBounds.removeFromBottom(30), juce::Justification::centred);
+            // ???
+            auto textBounds = centeredBounds.reduced(20);
+            g.setColour(juce::Colours::white);
+            g.setFont(regularFont);
+            g.drawText(card.title, textBounds.removeFromBottom(60), juce::Justification::centred);
+            g.setFont(smallFont);
+            g.drawText(card.subtitle, textBounds.removeFromBottom(30), juce::Justification::centred);
+        }
 
         bounds.removeFromLeft(10);
         cardBounds = bounds.removeFromLeft(cardWidth);
@@ -413,15 +420,27 @@ void HomeComponent::timerCallback()
     {
         float targetAlpha = card.isMouseOver ? 1.0f : 0.0f;
         float currentAlpha = card.hoverAlpha;
+        float targetScale = card.isMouseOver ? 1.05f : 1.0f; // ?? ? 5% ??
 
         if (currentAlpha != targetAlpha)
         {
-            // ???? ?????? ?? ??
             float step = 0.1f;
             if (currentAlpha < targetAlpha)
                 card.hoverAlpha = std::min(currentAlpha + step, targetAlpha);
             else
                 card.hoverAlpha = std::max(currentAlpha - step, targetAlpha);
+
+            needsRepaint = true;
+        }
+
+        // ??? ????? ????
+        if (card.scale != targetScale)
+        {
+            float scaleStep = 0.005f; // ??? ?? ??
+            if (card.scale < targetScale)
+                card.scale = std::min(card.scale + scaleStep, targetScale);
+            else
+                card.scale = std::max(card.scale - scaleStep, targetScale);
 
             needsRepaint = true;
         }

@@ -59,6 +59,7 @@ private:
         juce::Image background;
         bool isMouseOver = false;
         float hoverAlpha = 0.0f; // 호버 애니메이션을 위한 알파값
+        float scale = 1.0f;      // 카드 크기 애니메이션을 위한 스케일값
     };
 
     std::vector<AnalysisCard> analysisCards;
