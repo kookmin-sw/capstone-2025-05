@@ -41,6 +41,14 @@ jobs:
         
         if ($PROJUCER_PATH) {
             echo "Found Projucer at: $PROJUCER_PATH"
+            
+            # JUCE 모듈 경로 설정
+            $JUCE_MODULES_PATH = Join-Path (Split-Path $PROJUCER_PATH -Parent) "modules"
+            echo "Setting JUCE modules path: $JUCE_MODULES_PATH"
+            
+            # Projucer 명령줄 도구를 사용하여 모듈 경로 설정
+            & $PROJUCER_PATH --set-global-search-path windows defaultJuceModulePath "$JUCE_MODULES_PATH"
+            
             echo "Generating Visual Studio solution..."
             & $PROJUCER_PATH --resave "MAPLE.jucer"
             
