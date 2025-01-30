@@ -21,7 +21,7 @@
 			"_UNICODE",
 			"JUCE_DISPLAY_SPLASH_SCREEN=1",
 			"JUCE_USE_DARK_SPLASH_SCREEN=1",
-			"JUCE_PROJUCER_VERSION=0x70007"
+			"JUCE_PROJUCER_VERSION=0x80006"
 		],
 		"C_Cpp.default.windowsSdkVersion": "10.0.22000.0",
 		"C_Cpp.default.cStandard": "c17",
