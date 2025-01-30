@@ -63,7 +63,7 @@ jobs:
             )
             
             foreach ($module in $modules) {
-                $module_path = "../../JUCE/modules/$module"
+                $module_path = "JUCE/modules/$module"
                 echo "Setting path for $module to: $module_path"
                 $pattern = "(<MODULE\s+id=`"$module`"[^>]*?)(/>|>)"
                 $replacement = "`$1 path=`"$module_path`"/>"
