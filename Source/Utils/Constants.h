@@ -2,9 +2,11 @@
 
 namespace Constants
 {
-    const int WINDOW_WIDTH = 1440;
-    const int WINDOW_HEIGHT = 900;
-    const int SIDEBAR_WIDTH = 200;
+    const int WINDOW_WIDTH = 1920;
+    const int WINDOW_HEIGHT = 1200;
+    const int HEADER_HEIGHT = 70;
+    const int FOOTER_HEIGHT = 50;
+    const int SIDEBAR_WIDTH = 400;
 
     namespace Colors
     {

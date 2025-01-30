@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "../../UI/Common/Button/MapleButton.h"
 
 class SidebarComponent : public juce::Component
 {
@@ -11,12 +12,5 @@ public:
     void resized() override;
 
 private:
-    juce::TextButton homeButton;
-    juce::TextButton libraryButton;
-    juce::TextButton coursesButton;
-    juce::TextButton exploreButton;
-    juce::TextButton settingsButton;
-    juce::TextButton profileButton;
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SidebarComponent)
 };

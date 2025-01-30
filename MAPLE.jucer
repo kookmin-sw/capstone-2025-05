@@ -21,6 +21,7 @@
         <GROUP id="Pages" name="Pages">
           <FILE id="HomePage" name="HomePage.cpp" compile="1" resource="0" file="Source/Components/Pages/HomePage.cpp"/>
           <FILE id="HomePage" name="HomePage.h" compile="0" resource="0" file="Source/Components/Pages/HomePage.h"/>
+          <FILE id="Page" name="Page.h" compile="0" resource="0" file="Source/Components/Pages/Page.h"/>
         </GROUP>
       </GROUP>
       <GROUP id="UI" name="UI">

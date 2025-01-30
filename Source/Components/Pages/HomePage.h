@@ -1,21 +1,16 @@
 #pragma once
-#include <JuceHeader.h>
-#include "../../UI/Common/Button/MapleButton.h"
+#include "Page.h"
 
-class HomePage : public juce::Component
+class HomePage : public Page
 {
 public:
     HomePage();
     ~HomePage() override;
 
-    void paint(juce::Graphics &g) override;
+    juce::String getPageName() const override { return "Home"; }
     void resized() override;
 
 private:
-    juce::Label titleLabel;
-    juce::Label welcomeLabel;
-    MapleButton continueButton;
-    MapleButton newCourseButton;
-
+    // 페이지 컴포넌트들...
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HomePage)
 };

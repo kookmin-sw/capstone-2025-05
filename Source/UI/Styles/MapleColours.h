@@ -6,6 +6,7 @@ namespace MapleColours
     struct Theme
     {
         juce::Colour background;
+        juce::Colour panel;
         juce::Colour foreground;
         juce::Colour buttonNormal;
         juce::Colour buttonHover;
@@ -18,7 +19,8 @@ namespace MapleColours
     namespace Dark
     {
         const Theme theme{
-            juce::Colour(0xFF121212), // background
+            juce::Colour(0xFF000000), // background
+            juce::Colour(0xFF1E1E1E), // panel
             juce::Colour(0xFF1E1E1E), // foreground
             juce::Colour(0xFF007AFF), // buttonNormal
             juce::Colour(0xFF3395FF), // buttonHover
