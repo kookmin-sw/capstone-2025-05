@@ -31,87 +31,47 @@ jobs:
         Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/7.0.9/juce-7.0.9-windows.zip" -OutFile "juce.zip"
         
         echo "Extracting JUCE..."
-        Expand-Archive -Path "juce.zip" -DestinationPath "JUCE" -Force
+        Expand-Archive -Path "juce.zip" -DestinationPath "." -Force
         
-        # JUCE 디렉토리 구조 확인
-        echo "JUCE directory structure:"
-        Get-ChildItem "JUCE" -Recurse | ForEach-Object {
-            $indent = "  " * ($_.FullName.Split("\").Count - ($pwd.Path.Split("\").Count + 2))
-            if ($_.PSIsContainer) {
-                echo "${indent}[D] $($_.Name)"
-            } else {
-                echo "${indent}[F] $($_.Name)"
+        # JUCE 모듈 경로 설정 및 확인
+        $JUCE_MODULES_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\modules"
+        echo "Checking JUCE modules path: $JUCE_MODULES_PATH"
+        
+        if (Test-Path $JUCE_MODULES_PATH) {
+            echo "JUCE modules directory exists"
+            echo "Modules directory contents:"
+            Get-ChildItem $JUCE_MODULES_PATH | ForEach-Object {
+                echo "  $($_.Name)"
             }
-        }
-        
-        # Projucer 찾기
-        $PROJUCER_PATH = Get-ChildItem -Path "JUCE" -Recurse -Filter "Projucer.exe" | Select-Object -First 1 -ExpandProperty FullName
-        
-        if ($PROJUCER_PATH) {
-            echo "Found Projucer at: $PROJUCER_PATH"
             
-            # JUCE 모듈 경로 설정 및 확인
-            $JUCE_MODULES_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\JUCE\modules"
-            echo "Checking JUCE modules path: $JUCE_MODULES_PATH"
+            # Projucer 전역 설정
+            $PROJUCER_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\Projucer.exe"
+            echo "Setting JUCE modules path in Projucer..."
+            & $PROJUCER_PATH --set-global-search-path windows defaultJuceModulePath "$JUCE_MODULES_PATH"
             
-            if (Test-Path $JUCE_MODULES_PATH) {
-                echo "JUCE modules directory exists"
-                echo "Modules directory contents:"
-                Get-ChildItem $JUCE_MODULES_PATH | ForEach-Object {
-                    echo "  $($_.Name)"
-                }
-                
-                # 필요한 모듈이 모두 있는지 확인
-                $required_modules = @(
-                    "juce_core",
-                    "juce_data_structures",
-                    "juce_events",
-                    "juce_graphics",
-                    "juce_gui_basics"
-                )
-                
-                $missing_modules = @()
-                foreach ($module in $required_modules) {
-                    if (-not (Test-Path "$JUCE_MODULES_PATH\$module")) {
-                        $missing_modules += $module
-                    }
-                }
-                
-                if ($missing_modules.Count -gt 0) {
-                    echo "Missing modules: $($missing_modules -join ', ')"
-                    exit 1
-                }
-                
-                # Projucer 전역 설정
-                echo "Setting JUCE modules path in Projucer..."
-                & $PROJUCER_PATH --set-global-search-path windows defaultJuceModulePath "$JUCE_MODULES_PATH"
-                
-                # .jucer 파일 수정
-                echo "Updating .jucer file with correct module paths..."
-                $jucer_content = Get-Content "MAPLE.jucer" -Raw
-                foreach ($module in $required_modules) {
-                    $module_path = "$JUCE_MODULES_PATH\$module" -replace "\\", "/"
-                    $pattern = "(<MODULE\s+id=`"$module`"[^>]*?)(/>|>)"
-                    $replacement = "`$1 path=`"$module_path`"/>"
-                    $jucer_content = $jucer_content -replace $pattern, $replacement
-                }
-                $jucer_content | Set-Content "MAPLE.jucer" -NoNewline
-                
-                echo "Generating Visual Studio solution..."
-                & $PROJUCER_PATH --resave "MAPLE.jucer"
-                
-                if (Test-Path "Builds\VisualStudio2022\MAPLE.sln") {
-                    echo "Solution file generated successfully"
-                } else {
-                    echo "Solution file not found after generation"
-                    exit 1
-                }
-            } else {
-                echo "JUCE modules directory does not exist at: $JUCE_MODULES_PATH"
-                exit 1
+            # .jucer 파일 수정
+            echo "Updating .jucer file with correct module paths..."
+            $jucer_content = Get-Content "MAPLE.jucer" -Raw
+            $modules = @(
+                "juce_core",
+                "juce_data_structures",
+                "juce_events",
+                "juce_graphics",
+                "juce_gui_basics"
+            )
+            
+            foreach ($module in $modules) {
+                $module_path = "$JUCE_MODULES_PATH\$module" -replace "\\", "/"
+                $pattern = "(<MODULE\s+id=`"$module`"[^>]*?)(/>|>)"
+                $replacement = "`$1 path=`"$module_path`"/>"
+                $jucer_content = $jucer_content -replace $pattern, $replacement
             }
+            $jucer_content | Set-Content "MAPLE.jucer" -NoNewline
+            
+            echo "Re-saving project..."
+            & $PROJUCER_PATH --resave "MAPLE.jucer"
         } else {
-            echo "Projucer.exe not found in extracted files"
+            echo "JUCE modules directory does not exist at: $JUCE_MODULES_PATH"
             exit 1
         }
 
