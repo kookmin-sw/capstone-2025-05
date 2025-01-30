@@ -34,7 +34,7 @@ jobs:
         Expand-Archive -Path "juce.zip" -DestinationPath "." -Force
         
         # JUCE 모듈 경로 설정 및 확인
-        $JUCE_MODULES_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\modules"
+        $JUCE_MODULES_PATH = ".\JUCE\modules"
         echo "Checking JUCE modules path: $JUCE_MODULES_PATH"
         
         if (Test-Path $JUCE_MODULES_PATH) {
@@ -45,17 +45,15 @@ jobs:
             }
             
             # Projucer 전역 설정
-            $PROJUCER_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\Projucer.exe"
-            echo "Setting JUCE modules path in Projucer..."
-            & $PROJUCER_PATH --set-global-search-path windows defaultJuceModulePath "$JUCE_MODULES_PATH"
-            
-            # .jucer 파일 내용 확인
-            echo "Current .jucer file content:"
-            Get-Content "MAPLE.jucer"
+            $PROJUCER_PATH = ".\JUCE\Projucer.exe"
             
             # .jucer 파일 수정
             echo "Updating .jucer file with correct module paths..."
             $jucer_content = Get-Content "MAPLE.jucer" -Raw
+            
+            # useGlobalPath를 0으로 변경하고 상대 경로 설정
+            $jucer_content = $jucer_content -replace 'useGlobalPath="1"', 'useGlobalPath="0"'
+            
             $modules = @(
                 "juce_core",
                 "juce_data_structures",
@@ -65,7 +63,7 @@ jobs:
             )
             
             foreach ($module in $modules) {
-                $module_path = "$JUCE_MODULES_PATH\$module" -replace "\\", "/"
+                $module_path = "../../JUCE/modules/$module"
                 echo "Setting path for $module to: $module_path"
                 $pattern = "(<MODULE\s+id=`"$module`"[^>]*?)(/>|>)"
                 $replacement = "`$1 path=`"$module_path`"/>"
