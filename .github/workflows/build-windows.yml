@@ -25,6 +25,25 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
+    - name: Download Projucer
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/7.0.9/juce-7.0.9-windows.zip" -OutFile "juce.zip"
+        Expand-Archive -Path "juce.zip" -DestinationPath "D:\a\maple-client-desktop\maple-client-desktop\JUCE"
+
+    - name: Generate Visual Studio Solution
+      run: |
+        $PROJUCER_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\JUCE\Projucer.exe"
+        echo "Projucer path: $PROJUCER_PATH"
+        if (Test-Path $PROJUCER_PATH) {
+            echo "Projucer exists at specified path"
+        } else {
+            echo "Projucer not found at specified path"
+            echo "Listing JUCE directory contents:"
+            dir "D:\a\maple-client-desktop\maple-client-desktop\JUCE" -Recurse
+            exit 1
+        }
+        & $PROJUCER_PATH --resave "MAPLE.jucer"
+
     - name: Check Solution Path
       run: |
         echo "Current directory:"
