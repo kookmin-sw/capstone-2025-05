@@ -429,9 +429,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# VS Code files for those working on multiple tools
-*.code-workspace
-
 # Local History for Visual Studio Code
 
 # Windows Installer files from build outputs
