@@ -32,17 +32,30 @@ jobs:
 
     - name: Generate Visual Studio Solution
       run: |
-        $PROJUCER_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\JUCE\Projucer.exe"
-        echo "Projucer path: $PROJUCER_PATH"
-        if (Test-Path $PROJUCER_PATH) {
-            echo "Projucer exists at specified path"
+        echo "Listing JUCE directory contents:"
+        dir "D:\a\maple-client-desktop\maple-client-desktop\JUCE" -Recurse
+        
+        # JUCE 압축 해제 후의 실제 Projucer 경로 확인
+        $POSSIBLE_PATHS = @(
+            "D:\a\maple-client-desktop\maple-client-desktop\JUCE\JUCE\Projucer.exe",
+            "D:\a\maple-client-desktop\maple-client-desktop\JUCE\Projucer.exe"
+        )
+        
+        $PROJUCER_PATH = $null
+        foreach ($path in $POSSIBLE_PATHS) {
+            if (Test-Path $path) {
+                $PROJUCER_PATH = $path
+                break
+            }
+        }
+        
+        if ($PROJUCER_PATH) {
+            echo "Found Projucer at: $PROJUCER_PATH"
+            & $PROJUCER_PATH --resave "MAPLE.jucer"
         } else {
-            echo "Projucer not found at specified path"
-            echo "Listing JUCE directory contents:"
-            dir "D:\a\maple-client-desktop\maple-client-desktop\JUCE" -Recurse
+            echo "Projucer not found in any expected location"
             exit 1
         }
-        & $PROJUCER_PATH --resave "MAPLE.jucer"
 
     - name: Check Solution Path
       run: |
