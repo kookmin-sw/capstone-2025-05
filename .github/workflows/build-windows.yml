@@ -33,8 +33,15 @@ jobs:
         echo "Extracting JUCE..."
         Expand-Archive -Path "juce.zip" -DestinationPath "JUCE" -Force
         
-        echo "Listing JUCE directory contents:"
-        Get-ChildItem "JUCE" -Recurse | Where-Object { -not $_.PSIsContainer } | Select-Object FullName
+        echo "Listing JUCE directory structure:"
+        Get-ChildItem "JUCE" -Recurse | ForEach-Object {
+            $indent = "  " * ($_.FullName.Split("\").Count - ($pwd.Path.Split("\").Count + 2))
+            if ($_.PSIsContainer) {
+                echo "${indent}[D] $($_.Name)"
+            } else {
+                echo "${indent}[F] $($_.Name)"
+            }
+        }
         
         # Projucer 찾기
         $PROJUCER_PATH = Get-ChildItem -Path "JUCE" -Recurse -Filter "Projucer.exe" | Select-Object -First 1 -ExpandProperty FullName
@@ -42,18 +49,41 @@ jobs:
         if ($PROJUCER_PATH) {
             echo "Found Projucer at: $PROJUCER_PATH"
             
-            # JUCE 모듈 경로 설정
-            $JUCE_MODULES_PATH = Join-Path (Split-Path $PROJUCER_PATH -Parent) "modules"
-            echo "Setting JUCE modules path: $JUCE_MODULES_PATH"
+            # JUCE 모듈 경로 찾기 (여러 가능한 위치 확인)
+            $POSSIBLE_MODULE_PATHS = @(
+                "D:\a\maple-client-desktop\maple-client-desktop\JUCE\JUCE\modules",
+                "D:\a\maple-client-desktop\maple-client-desktop\JUCE\modules",
+                (Join-Path (Split-Path $PROJUCER_PATH -Parent) "modules"),
+                (Join-Path (Split-Path (Split-Path $PROJUCER_PATH -Parent) -Parent) "modules")
+            )
             
-            # Projucer 명령줄 도구를 사용하여 모듈 경로 설정
-            & $PROJUCER_PATH --set-global-search-path windows defaultJuceModulePath "$JUCE_MODULES_PATH"
+            $JUCE_MODULES_PATH = $null
+            foreach ($path in $POSSIBLE_MODULE_PATHS) {
+                if (Test-Path $path) {
+                    echo "Found JUCE modules at: $path"
+                    $JUCE_MODULES_PATH = $path
+                    break
+                }
+            }
             
-            echo "Generating Visual Studio solution..."
-            & $PROJUCER_PATH --resave "MAPLE.jucer"
-            
-            if ($LASTEXITCODE -ne 0) {
-                echo "Projucer failed to generate solution"
+            if ($JUCE_MODULES_PATH) {
+                echo "Setting JUCE modules path: $JUCE_MODULES_PATH"
+                & $PROJUCER_PATH --set-global-search-path windows defaultJuceModulePath "$JUCE_MODULES_PATH"
+                
+                # .jucer 파일에서 모듈 경로 직접 수정
+                $jucer_content = Get-Content "MAPLE.jucer" -Raw
+                $jucer_content = $jucer_content -replace 'path="[^"]*"', "path=`"$($JUCE_MODULES_PATH -replace '\\', '/')`""
+                $jucer_content | Set-Content "MAPLE.jucer" -NoNewline
+                
+                echo "Generating Visual Studio solution..."
+                & $PROJUCER_PATH --resave "MAPLE.jucer"
+                
+                if ($LASTEXITCODE -ne 0) {
+                    echo "Projucer failed to generate solution"
+                    exit 1
+                }
+            } else {
+                echo "Could not find JUCE modules directory"
                 exit 1
             }
         } else {
