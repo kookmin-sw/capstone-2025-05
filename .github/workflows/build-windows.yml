@@ -13,15 +13,21 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        submodules: recursive  # JUCE 서브모듈을 포함하여 모든 서브모듈을 가져옵니다
+        submodules: recursive
         
     - name: Setup Visual Studio
       uses: microsoft/setup-msbuild@v1.1
+      
+    - name: Build Projucer
+      run: |
+        echo "Building Projucer..."
+        cd JUCE\extras\Projucer\Builds\VisualStudio2022
+        msbuild Projucer.sln /p:Configuration=Release /p:Platform=x64
         
     - name: Generate Solution
       run: |
-        # Projucer로 솔루션 생성
-        $PROJUCER_PATH = ".\JUCE\extras\Projucer\Builds\VisualStudio2022\x64\Debug\App\Projucer.exe"
+        $PROJUCER_PATH = ".\JUCE\extras\Projucer\Builds\VisualStudio2022\x64\Release\App\Projucer.exe"
+        echo "Using Projucer at: $PROJUCER_PATH"
         & $PROJUCER_PATH --resave "MAPLE.jucer"
         
     - name: Build Solution
