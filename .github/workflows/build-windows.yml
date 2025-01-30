@@ -25,35 +25,31 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
-    - name: Download Projucer
+    - name: Setup JUCE
       run: |
+        echo "Downloading JUCE..."
         Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/7.0.9/juce-7.0.9-windows.zip" -OutFile "juce.zip"
-        Expand-Archive -Path "juce.zip" -DestinationPath "D:\a\maple-client-desktop\maple-client-desktop\JUCE"
-
-    - name: Generate Visual Studio Solution
-      run: |
+        
+        echo "Extracting JUCE..."
+        Expand-Archive -Path "juce.zip" -DestinationPath "JUCE" -Force
+        
         echo "Listing JUCE directory contents:"
-        dir "D:\a\maple-client-desktop\maple-client-desktop\JUCE" -Recurse
+        Get-ChildItem "JUCE" -Recurse | Where-Object { -not $_.PSIsContainer } | Select-Object FullName
         
-        # JUCE 압축 해제 후의 실제 Projucer 경로 확인
-        $POSSIBLE_PATHS = @(
-            "D:\a\maple-client-desktop\maple-client-desktop\JUCE\JUCE\Projucer.exe",
-            "D:\a\maple-client-desktop\maple-client-desktop\JUCE\Projucer.exe"
-        )
-        
-        $PROJUCER_PATH = $null
-        foreach ($path in $POSSIBLE_PATHS) {
-            if (Test-Path $path) {
-                $PROJUCER_PATH = $path
-                break
-            }
-        }
+        # Projucer 찾기
+        $PROJUCER_PATH = Get-ChildItem -Path "JUCE" -Recurse -Filter "Projucer.exe" | Select-Object -First 1 -ExpandProperty FullName
         
         if ($PROJUCER_PATH) {
             echo "Found Projucer at: $PROJUCER_PATH"
+            echo "Generating Visual Studio solution..."
             & $PROJUCER_PATH --resave "MAPLE.jucer"
+            
+            if ($LASTEXITCODE -ne 0) {
+                echo "Projucer failed to generate solution"
+                exit 1
+            }
         } else {
-            echo "Projucer not found in any expected location"
+            echo "Projucer.exe not found in extracted files"
             exit 1
         }
 
