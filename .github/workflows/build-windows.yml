@@ -49,6 +49,10 @@ jobs:
             echo "Setting JUCE modules path in Projucer..."
             & $PROJUCER_PATH --set-global-search-path windows defaultJuceModulePath "$JUCE_MODULES_PATH"
             
+            # .jucer 파일 내용 확인
+            echo "Current .jucer file content:"
+            Get-Content "MAPLE.jucer"
+            
             # .jucer 파일 수정
             echo "Updating .jucer file with correct module paths..."
             $jucer_content = Get-Content "MAPLE.jucer" -Raw
@@ -62,14 +66,26 @@ jobs:
             
             foreach ($module in $modules) {
                 $module_path = "$JUCE_MODULES_PATH\$module" -replace "\\", "/"
+                echo "Setting path for $module to: $module_path"
                 $pattern = "(<MODULE\s+id=`"$module`"[^>]*?)(/>|>)"
                 $replacement = "`$1 path=`"$module_path`"/>"
                 $jucer_content = $jucer_content -replace $pattern, $replacement
             }
             $jucer_content | Set-Content "MAPLE.jucer" -NoNewline
             
+            echo "Modified .jucer file content:"
+            Get-Content "MAPLE.jucer"
+            
             echo "Re-saving project..."
             & $PROJUCER_PATH --resave "MAPLE.jucer"
+            
+            if (Test-Path "Builds\VisualStudio2022\MAPLE.sln") {
+                echo "Solution file generated successfully"
+            } else {
+                echo "Solution file generation failed. Checking Projucer output..."
+                & $PROJUCER_PATH --resave "MAPLE.jucer" 2>&1 | Out-String | ForEach-Object { echo $_ }
+                exit 1
+            }
         } else {
             echo "JUCE modules directory does not exist at: $JUCE_MODULES_PATH"
             exit 1
