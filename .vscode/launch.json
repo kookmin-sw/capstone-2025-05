@@ -1,0 +1,18 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Build and Run MAPLE",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/Builds/VisualStudio2022/x64/Debug/App/MAPLE.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "preLaunchTask": "Build JUCE Project"
+        }
+    ]
+}

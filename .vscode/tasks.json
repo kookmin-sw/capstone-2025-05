@@ -1,0 +1,20 @@
+// .vscode/tasks.json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build JUCE Project",
+            "type": "shell",
+            "command": "MSBuild.exe",
+            "args": [
+                "Builds/VisualStudio2022/MAPLE.sln",
+                "/p:Configuration=Debug",
+                "/p:AdditionalOptions=/utf-8"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
