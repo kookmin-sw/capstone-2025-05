@@ -1,10 +1,10 @@
 #pragma once
 #include <JuceHeader.h>
 
-class CustomButton : public juce::Component
+class MapleButton : public juce::Component
 {
 public:
-    CustomButton(const juce::String &buttonText = {});
+    MapleButton(const juce::String &buttonText = {});
 
     void setText(const juce::String &newText);
     void setOnClick(std::function<void()> callback);
@@ -23,5 +23,5 @@ private:
     bool isMouseDown = false;
     std::function<void()> onClick;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomButton)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MapleButton)
 };

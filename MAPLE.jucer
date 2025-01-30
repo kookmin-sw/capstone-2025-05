@@ -23,6 +23,18 @@
           <FILE id="HomePage" name="HomePage.h" compile="0" resource="0" file="Source/Components/Pages/HomePage.h"/>
         </GROUP>
       </GROUP>
+      <GROUP id="UI" name="UI">
+        <GROUP id="Common" name="Common">
+          <GROUP id="{1A0D1C1B-89A6-9B72-3D40-F4D9C008F361}" name="Button">
+            <FILE id="MapleButton" name="MapleButton.cpp" compile="1" resource="0" file="Source/UI/Common/Button/MapleButton.cpp"/>
+            <FILE id="MapleButton" name="MapleButton.h" compile="0" resource="0" file="Source/UI/Common/Button/MapleButton.h"/>
+          </GROUP>
+        </GROUP>
+        <GROUP id="Styles" name="Styles">
+          <FILE id="MapleColours" name="MapleColours.h" compile="0" resource="0" file="Source/UI/Styles/MapleColours.h"/>
+          <FILE id="MapleTypography" name="MapleTypography.h" compile="0" resource="0" file="Source/UI/Styles/MapleTypography.h"/>
+        </GROUP>
+      </GROUP>
       <GROUP id="Utils" name="Utils">
         <FILE id="Constants" name="Constants.h" compile="0" resource="0" file="Source/Utils/Constants.h"/>
       </GROUP>

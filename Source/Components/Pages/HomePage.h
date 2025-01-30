@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../../UI/Common/Button/CustomButton.h"
+#include "../../UI/Common/Button/MapleButton.h"
 
 class HomePage : public juce::Component
 {
@@ -14,8 +14,8 @@ public:
 private:
     juce::Label titleLabel;
     juce::Label welcomeLabel;
-    CustomButton continueButton;
-    CustomButton newCourseButton;
+    MapleButton continueButton;
+    MapleButton newCourseButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HomePage)
 };

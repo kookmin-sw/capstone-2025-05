@@ -1,7 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-namespace Colours
+namespace MapleColours
 {
     const juce::Colour buttonNormal = juce::Colour(0xFF007AFF);
     const juce::Colour buttonHover = juce::Colour(0xFF3395FF);
