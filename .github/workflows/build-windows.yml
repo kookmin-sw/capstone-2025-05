@@ -33,21 +33,59 @@ jobs:
         echo "Extracting JUCE..."
         Expand-Archive -Path "juce.zip" -DestinationPath "JUCE" -Force
         
+        # .jucer 파일 내용 확인
+        echo "Current .jucer file content:"
+        Get-Content "MAPLE.jucer"
+        
         # Projucer 찾기
         $PROJUCER_PATH = Get-ChildItem -Path "JUCE" -Recurse -Filter "Projucer.exe" | Select-Object -First 1 -ExpandProperty FullName
+        $JUCE_MODULES_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\JUCE\modules"
         
         if ($PROJUCER_PATH) {
             echo "Found Projucer at: $PROJUCER_PATH"
+            echo "JUCE modules path: $JUCE_MODULES_PATH"
             
-            # JUCE 모듈 경로 설정
-            $JUCE_MODULES_PATH = "D:\a\maple-client-desktop\maple-client-desktop\JUCE\JUCE\modules"
-            echo "Setting JUCE modules path: $JUCE_MODULES_PATH"
+            # JUCE 모듈 디렉토리 확인
+            echo "JUCE modules directory contents:"
+            if (Test-Path $JUCE_MODULES_PATH) {
+                Get-ChildItem $JUCE_MODULES_PATH
+            } else {
+                echo "JUCE modules directory does not exist!"
+            }
+            
+            # .jucer 파일 수정
+            echo "Modifying .jucer file..."
+            $jucer_content = Get-Content "MAPLE.jucer" -Raw
+            
+            # 모든 JUCE 모듈 경로를 새 경로로 업데이트
+            $modules = @("juce_core", "juce_audio_basics", "juce_audio_devices", "juce_audio_formats", 
+                        "juce_audio_processors", "juce_audio_utils", "juce_data_structures", "juce_events", 
+                        "juce_graphics", "juce_gui_basics", "juce_gui_extra")
+            
+            foreach ($module in $modules) {
+                $pattern = "<MODULE\s+id=`"$module`"[^>]*>"
+                $replacement = "<MODULE id=`"$module`" showAllCode=`"1`" useLocalCopy=`"0`" useGlobalPath=`"1`">"
+                $jucer_content = $jucer_content -replace $pattern, $replacement
+            }
+            
+            # 전역 경로 설정 업데이트
+            $pattern = "<JUCEOPTIONS\s+[^>]*>"
+            $replacement = "<JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER=`"1`" JUCE_VST3_CAN_REPLACE_VST2=`"0`"/>"
+            $jucer_content = $jucer_content -replace $pattern, $replacement
+            
+            # 수정된 내용 저장
+            $jucer_content | Set-Content "MAPLE.jucer" -NoNewline
+            
+            echo "Modified .jucer file content:"
+            Get-Content "MAPLE.jucer"
+            
+            # Projucer 전역 설정
             & $PROJUCER_PATH --set-global-search-path windows defaultJuceModulePath "$JUCE_MODULES_PATH"
             
             echo "Generating Visual Studio solution..."
             & $PROJUCER_PATH --resave "MAPLE.jucer"
             
-            # 솔루션 파일이 생성되었는지 확인
+            # 솔루션 파일 확인
             if (Test-Path "Builds\VisualStudio2022\MAPLE.sln") {
                 echo "Solution file generated successfully"
             } else {
