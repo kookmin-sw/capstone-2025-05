@@ -25,7 +25,7 @@
       </GROUP>
       <GROUP id="UI" name="UI">
         <GROUP id="Common" name="Common">
-          <GROUP id="{1A0D1C1B-89A6-9B72-3D40-F4D9C008F361}" name="Button">
+          <GROUP id="Button" name="Button">
             <FILE id="MapleButton" name="MapleButton.cpp" compile="1" resource="0"
                   file="Source/UI/Common/Button/MapleButton.cpp"/>
             <FILE id="MapleButton" name="MapleButton.h" compile="0" resource="0"
@@ -33,6 +33,8 @@
           </GROUP>
         </GROUP>
         <GROUP id="Styles" name="Styles">
+          <FILE id="MapleColours" name="MapleColours.cpp" compile="1" resource="0"
+                file="Source/UI/Styles/MapleColours.cpp"/>
           <FILE id="MapleColours" name="MapleColours.h" compile="0" resource="0"
                 file="Source/UI/Styles/MapleColours.h"/>
           <FILE id="MapleTypography" name="MapleTypography.h" compile="0" resource="0"

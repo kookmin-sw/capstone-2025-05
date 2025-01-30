@@ -18,15 +18,15 @@ jobs:
     - name: Setup Visual Studio
       uses: microsoft/setup-msbuild@v1.1
       
-    - name: Build Projucer
+    - name: Download Projucer
       run: |
-        echo "Building Projucer..."
-        cd JUCE\extras\Projucer\Builds\VisualStudio2022
-        msbuild Projucer.sln /p:Configuration=Release /p:Platform=x64
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/7.0.9/juce-7.0.9-windows.zip" -OutFile "juce-windows.zip"
+        Expand-Archive -Path "juce-windows.zip" -DestinationPath "."
         
     - name: Generate Solution
       run: |
-        $PROJUCER_PATH = ".\JUCE\extras\Projucer\Builds\VisualStudio2022\x64\Release\App\Projucer.exe"
+        $PROJUCER_PATH = ".\JUCE\Projucer.exe"
         echo "Using Projucer at: $PROJUCER_PATH"
         & $PROJUCER_PATH --resave "MAPLE.jucer"
         
