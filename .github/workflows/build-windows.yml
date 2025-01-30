@@ -21,7 +21,7 @@ jobs:
     - name: Download Projucer
       run: |
         $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/7.0.9/juce-7.0.9-windows.zip" -OutFile "juce-windows.zip"
+        Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/8.0.6/juce-8.0.6-windows.zip" -OutFile "juce-windows.zip"
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         $zip = [System.IO.Compression.ZipFile]::OpenRead("juce-windows.zip")
         $projucerEntry = $zip.Entries | Where-Object { $_.Name -eq "Projucer.exe" }
