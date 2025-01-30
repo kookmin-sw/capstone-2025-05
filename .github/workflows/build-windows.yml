@@ -6,100 +6,24 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  SOLUTION_FILE_PATH: Builds\VisualStudio2022\MAPLE.sln
-  BUILD_CONFIGURATION: Release
-
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: windows-latest
-
+    
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
       with:
-        submodules: recursive
-
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-
-    - name: Setup JUCE
-      run: |
-        echo "Downloading JUCE..."
-        Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/7.0.9/juce-7.0.9-windows.zip" -OutFile "juce.zip"
+        submodules: recursive  # JUCE 서브모듈을 포함하여 모든 서브모듈을 가져옵니다
         
-        echo "Extracting JUCE..."
-        Expand-Archive -Path "juce.zip" -DestinationPath "." -Force
+    - name: Setup Visual Studio
+      uses: microsoft/setup-msbuild@v1.1
         
-        # JUCE 모듈 경로 설정 및 확인
-        $JUCE_MODULES_PATH = ".\JUCE\modules"
-        echo "Checking JUCE modules path: $JUCE_MODULES_PATH"
+    - name: Generate Solution
+      run: |
+        # Projucer로 솔루션 생성
+        $PROJUCER_PATH = ".\JUCE\extras\Projucer\Builds\VisualStudio2022\x64\Debug\App\Projucer.exe"
+        & $PROJUCER_PATH --resave "MAPLE.jucer"
         
-        if (Test-Path $JUCE_MODULES_PATH) {
-            echo "JUCE modules directory exists"
-            echo "Modules directory contents:"
-            Get-ChildItem $JUCE_MODULES_PATH | ForEach-Object {
-                echo "  $($_.Name)"
-            }
-            
-            # Projucer 전역 설정
-            $PROJUCER_PATH = ".\JUCE\Projucer.exe"
-            
-            # .jucer 파일 수정
-            echo "Updating .jucer file with correct module paths..."
-            $jucer_content = Get-Content "MAPLE.jucer" -Raw
-            
-            # useGlobalPath를 0으로 변경하고 상대 경로 설정
-            $jucer_content = $jucer_content -replace 'useGlobalPath="1"', 'useGlobalPath="0"'
-            
-            $modules = @(
-                "juce_core",
-                "juce_data_structures",
-                "juce_events",
-                "juce_graphics",
-                "juce_gui_basics"
-            )
-            
-            foreach ($module in $modules) {
-                $module_path = "JUCE/modules/$module"
-                echo "Setting path for $module to: $module_path"
-                $pattern = "(<MODULE\s+id=`"$module`"[^>]*?)(/>|>)"
-                $replacement = "`$1 path=`"$module_path`"/>"
-                $jucer_content = $jucer_content -replace $pattern, $replacement
-            }
-            $jucer_content | Set-Content "MAPLE.jucer" -NoNewline
-            
-            echo "Modified .jucer file content:"
-            Get-Content "MAPLE.jucer"
-            
-            echo "Re-saving project..."
-            & $PROJUCER_PATH --resave "MAPLE.jucer"
-            
-            if (Test-Path "Builds\VisualStudio2022\MAPLE.sln") {
-                echo "Solution file generated successfully"
-            } else {
-                echo "Solution file generation failed. Checking Projucer output..."
-                & $PROJUCER_PATH --resave "MAPLE.jucer" 2>&1 | Out-String | ForEach-Object { echo $_ }
-                exit 1
-            }
-        } else {
-            echo "JUCE modules directory does not exist at: $JUCE_MODULES_PATH"
-            exit 1
-        }
-
-    - name: Check Solution Path
+    - name: Build Solution
       run: |
-        echo "Checking solution file..."
-        if (Test-Path ${{env.SOLUTION_FILE_PATH}}) {
-            echo "Solution file exists at: ${{env.SOLUTION_FILE_PATH}}"
-            dir Builds\VisualStudio2022
-        } else {
-            echo "Solution file not found at: ${{env.SOLUTION_FILE_PATH}}"
-            exit 1
-        }
-
-    - name: Build
-      run: |
-        msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+        msbuild /m /p:Configuration=Release "Builds\VisualStudio2022\MAPLE.sln"
