@@ -19,13 +19,13 @@ HomePage::HomePage()
 
     // Continue 버튼
     addAndMakeVisible(continueButton);
-    continueButton.setButtonText("Continue Learning");
+    continueButton.setText("Continue Learning");
     continueButton.setColour(juce::TextButton::buttonColourId, Constants::Colors::primary);
     continueButton.setColour(juce::TextButton::textColourOffId, Constants::Colors::text);
 
     // New Course 버튼
     addAndMakeVisible(newCourseButton);
-    newCourseButton.setButtonText("Start New Course");
+    newCourseButton.setText("Start New Course");
     newCourseButton.setColour(juce::TextButton::buttonColourId, Constants::Colors::primary);
     newCourseButton.setColour(juce::TextButton::textColourOffId, Constants::Colors::text);
 }

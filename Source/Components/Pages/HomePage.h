@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "../../UI/Common/Button/CustomButton.h"
 
 class HomePage : public juce::Component
 {
@@ -13,8 +14,8 @@ public:
 private:
     juce::Label titleLabel;
     juce::Label welcomeLabel;
-    juce::TextButton continueButton;
-    juce::TextButton newCourseButton;
+    CustomButton continueButton;
+    CustomButton newCourseButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HomePage)
 };
