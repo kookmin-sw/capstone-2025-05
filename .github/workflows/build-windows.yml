@@ -22,11 +22,15 @@ jobs:
       run: |
         $ProgressPreference = 'SilentlyContinue'
         Invoke-WebRequest -Uri "https://github.com/juce-framework/JUCE/releases/download/7.0.9/juce-7.0.9-windows.zip" -OutFile "juce-windows.zip"
-        Expand-Archive -Path "juce-windows.zip" -DestinationPath "."
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [System.IO.Compression.ZipFile]::OpenRead("juce-windows.zip")
+        $projucerEntry = $zip.Entries | Where-Object { $_.Name -eq "Projucer.exe" }
+        [System.IO.Compression.ZipFileExtensions]::ExtractToFile($projucerEntry, ".\Projucer.exe", $true)
+        $zip.Dispose()
         
     - name: Generate Solution
       run: |
-        $PROJUCER_PATH = ".\JUCE\Projucer.exe"
+        $PROJUCER_PATH = ".\Projucer.exe"
         echo "Using Projucer at: $PROJUCER_PATH"
         & $PROJUCER_PATH --resave "MAPLE.jucer"
         
