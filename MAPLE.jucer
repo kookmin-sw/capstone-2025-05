@@ -66,16 +66,28 @@
               file="Resources/Fonts/Montserrat-Medium.ttf"/>
         <FILE id="Z6YEZX" name="Montserrat-Regular.ttf" compile="0" resource="1"
               file="Resources/Fonts/Montserrat-Regular.ttf"/>
+        <FILE id="kjvu4r" name="Montserrat-SemiBold.ttf" compile="0" resource="1"
+              file="Resources/Fonts/Montserrat-SemiBold.ttf"/>
         <FILE id="nWU8i4" name="Pretendard-Bold.ttf" compile="0" resource="1"
               file="Resources/Fonts/Pretendard-Bold.ttf"/>
         <FILE id="dEgrvf" name="Pretendard-Medium.ttf" compile="0" resource="1"
               file="Resources/Fonts/Pretendard-Medium.ttf"/>
         <FILE id="WGG3do" name="Pretendard-Regular.ttf" compile="0" resource="1"
               file="Resources/Fonts/Pretendard-Regular.ttf"/>
+        <FILE id="Hziell" name="Pretendard-SemiBold.ttf" compile="0" resource="1"
+              file="Resources/Fonts/Pretendard-SemiBold.ttf"/>
       </GROUP>
       <GROUP id="Icons" name="Icons">
+        <FILE id="BONNsj" name="courses.svg" compile="0" resource="1" file="Resources/Icons/courses.svg"/>
+        <FILE id="QVmbW5" name="explore.svg" compile="0" resource="1" file="Resources/Icons/explore.svg"/>
+        <FILE id="rdPcYe" name="home.svg" compile="0" resource="1" file="Resources/Icons/home.svg"/>
+        <FILE id="nrMhCl" name="library.svg" compile="0" resource="1" file="Resources/Icons/library.svg"/>
         <FILE id="logo.svg" name="logo.svg" compile="0" resource="1" file="Resources/Icons/logo.svg"/>
+        <FILE id="MjRtrE" name="logout.svg" compile="0" resource="1" file="Resources/Icons/logout.svg"/>
+        <FILE id="c5V5V4" name="profile.svg" compile="0" resource="1" file="Resources/Icons/profile.svg"/>
         <FILE id="Fe66dQ" name="search.svg" compile="0" resource="1" file="Resources/Icons/search.svg"/>
+        <FILE id="HhhvHb" name="settings.svg" compile="0" resource="1" file="Resources/Icons/settings.svg"/>
+        <FILE id="xu9uki" name="upload.svg" compile="0" resource="1" file="Resources/Icons/upload.svg"/>
       </GROUP>
     </GROUP>
   </MAINGROUP>

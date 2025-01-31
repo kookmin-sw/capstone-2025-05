@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <JuceHeader.h>
 
 namespace MapleColours
@@ -25,7 +25,7 @@ namespace MapleColours
             juce::Colour(0xFF111111), // panel
             juce::Colour(0xFF1E1E1E), // foreground
             juce::Colour(0xFF007AFF), // buttonNormal
-            juce::Colour(0xFF3395FF), // buttonHover
+            juce::Colour(0xFFFEFEFE), // buttonHover
             juce::Colour(0xFF0056B3), // buttonPressed
             juce::Colour(0xFFFFFFFF), // buttonText
             juce::Colour(0xFFB3B3B3), // text

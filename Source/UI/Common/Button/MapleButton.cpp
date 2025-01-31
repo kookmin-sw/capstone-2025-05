@@ -1,4 +1,4 @@
-﻿#include "MapleButton.h"
+#include "MapleButton.h"
 #include "../../Styles/MapleColours.h"
 #include "../../Styles/MapleTypography.h"
 

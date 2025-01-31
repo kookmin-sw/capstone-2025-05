@@ -13,7 +13,7 @@ HeaderComponent::HeaderComponent()
     // 프로젝트 이름 설정
     addAndMakeVisible(projectNameLabel);
     projectNameLabel.setText(u8"MAPLE", juce::dontSendNotification);
-    projectNameLabel.setFont(MapleTypography::getMontserratBold(36.0f));
+    projectNameLabel.setFont(MapleTypography::getMontserratSemiBold(36.0f));
     projectNameLabel.setColour(juce::Label::textColourId, MapleColours::currentTheme.logo);
     projectNameLabel.setJustificationType(juce::Justification::centredLeft);
 

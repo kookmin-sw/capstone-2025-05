@@ -17,14 +17,17 @@ namespace MapleTypography
         {
             pretendardRegular = juce::Typeface::createSystemTypefaceFor(BinaryData::PretendardRegular_ttf, BinaryData::PretendardRegular_ttfSize);
             pretendardMedium = juce::Typeface::createSystemTypefaceFor(BinaryData::PretendardMedium_ttf, BinaryData::PretendardMedium_ttfSize);
+            pretendardSemiBold = juce::Typeface::createSystemTypefaceFor(BinaryData::PretendardSemiBold_ttf, BinaryData::PretendardSemiBold_ttfSize);
             pretendardBold = juce::Typeface::createSystemTypefaceFor(BinaryData::PretendardBold_ttf, BinaryData::PretendardBold_ttfSize);
+
             montserratRegular = juce::Typeface::createSystemTypefaceFor(BinaryData::MontserratRegular_ttf, BinaryData::MontserratRegular_ttfSize);
             montserratMedium = juce::Typeface::createSystemTypefaceFor(BinaryData::MontserratMedium_ttf, BinaryData::MontserratMedium_ttfSize);
+            montserratSemiBold = juce::Typeface::createSystemTypefaceFor(BinaryData::MontserratSemiBold_ttf, BinaryData::MontserratSemiBold_ttfSize);
             montserratBold = juce::Typeface::createSystemTypefaceFor(BinaryData::MontserratBold_ttf, BinaryData::MontserratBold_ttfSize);
         }
 
-        juce::Typeface::Ptr pretendardRegular, pretendardMedium, pretendardBold;
-        juce::Typeface::Ptr montserratRegular, montserratMedium, montserratBold;
+        juce::Typeface::Ptr pretendardRegular, pretendardMedium, pretendardSemiBold, pretendardBold;
+        juce::Typeface::Ptr montserratRegular, montserratMedium, montserratSemiBold, montserratBold;
     };
 
     inline void loadCustomFonts()
@@ -63,6 +66,16 @@ namespace MapleTypography
         return juce::Font(fonts.pretendardMedium).withHeight(size);
     }
 
+    inline juce::Font getPretendardSemiBold(float size = LARGE)
+    {
+        static CustomFonts &fonts = []() -> CustomFonts &
+        {
+            static CustomFonts f;
+            return f;
+        }();
+        return juce::Font(fonts.pretendardSemiBold).withHeight(size);
+    }
+
     inline juce::Font getPretendardBold(float size = LARGE)
     {
         static CustomFonts &fonts = []() -> CustomFonts &
@@ -91,6 +104,16 @@ namespace MapleTypography
             return f;
         }();
         return juce::Font(fonts.montserratMedium).withHeight(size);
+    }
+
+    inline juce::Font getMontserratSemiBold(float size = LARGE)
+    {
+        static CustomFonts &fonts = []() -> CustomFonts &
+        {
+            static CustomFonts f;
+            return f;
+        }();
+        return juce::Font(fonts.montserratSemiBold).withHeight(size);
     }
 
     inline juce::Font getMontserratBold(float size = LARGE)
