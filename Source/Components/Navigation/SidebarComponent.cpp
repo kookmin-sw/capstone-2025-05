@@ -1,4 +1,4 @@
-#include "SidebarComponent.h"
+﻿#include "SidebarComponent.h"
 #include "../../UI/Styles/MapleColours.h"
 #include "../../Utils/Constants.h"
 

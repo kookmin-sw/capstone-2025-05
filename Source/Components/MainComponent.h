@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <JuceHeader.h>
 #include "Navigation/SidebarComponent.h"
 #include "Layout/HeaderComponent.h"

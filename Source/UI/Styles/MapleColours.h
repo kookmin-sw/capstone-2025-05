@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <JuceHeader.h>
 
 namespace MapleColours
@@ -14,20 +14,22 @@ namespace MapleColours
         juce::Colour buttonText;
         juce::Colour text;
         juce::Colour border;
+        juce::Colour logo;
     };
 
     namespace Dark
     {
         const Theme theme{
             juce::Colour(0xFF000000), // background
-            juce::Colour(0xFF1E1E1E), // panel
+            juce::Colour(0xFF111111), // panel
             juce::Colour(0xFF1E1E1E), // foreground
             juce::Colour(0xFF007AFF), // buttonNormal
             juce::Colour(0xFF3395FF), // buttonHover
             juce::Colour(0xFF0056B3), // buttonPressed
             juce::Colour(0xFFFFFFFF), // buttonText
             juce::Colour(0xFFE0E0E0), // text
-            juce::Colour(0xFF2D2D2D)  // border
+            juce::Colour(0xFF2D2D2D), // border
+            juce::Colour(0xFF2ECC71)  // logo
         };
     }
 
@@ -41,7 +43,8 @@ namespace MapleColours
             juce::Colour(0xFF0056B3), // buttonPressed
             juce::Colour(0xFFFFFFFF), // buttonText
             juce::Colour(0xFF000000), // text
-            juce::Colour(0xFFE0E0E0)  // border
+            juce::Colour(0xFFE0E0E0), // border
+            juce::Colour(0xFF2ECC71)  // logo
         };
     }
 

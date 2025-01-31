@@ -1,20 +1,20 @@
-#include "MainComponent.h"
+﻿#include "MainComponent.h"
 #include "../Utils/Constants.h"
 #include "../UI/Styles/MapleColours.h"
 
 MainComponent::MainComponent()
 {
-    // 헤더 초기화
+    // 헤더 컴포넌트 초기화 및 표시
     addAndMakeVisible(headerComponent);
 
-    // 사이드바 초기화
+    // 사이드바 컴포넌트 초기화 및 표시
     addAndMakeVisible(sidebarComponent);
 
-    // 메인 패널 초기화
+    // 메인 패널 컴포넌트 초기화 및 표시 (홈페이지)
     mainPanel = std::make_unique<HomePage>();
     addAndMakeVisible(mainPanel.get());
 
-    // 푸터 초기화
+    // 푸터 컴포넌트 초기화 및 표시
     addAndMakeVisible(footerComponent);
 }
 
@@ -30,24 +30,24 @@ void MainComponent::paint(juce::Graphics &g)
 void MainComponent::resized()
 {
     const int margin = 10;
-    auto bounds = getLocalBounds().reduced(margin); // 윈도우 전체 마진
+    auto bounds = getLocalBounds().reduced(margin); // 전체 컴포넌트에 마진 적용
 
-    // 헤더 영역 (상단)
+    // 헤더 영역 설정 (상단)
     headerComponent.setBounds(bounds.removeFromTop(Constants::HEADER_HEIGHT));
-    bounds.removeFromTop(margin); // 헤더와 메인 영역 사이 마진
+    bounds.removeFromTop(margin); // 헤더와 메인 영역 사이 여백
 
-    // 푸터 영역 (하단)
+    // 푸터 영역 설정 (하단)
     auto footerBounds = bounds.removeFromBottom(Constants::FOOTER_HEIGHT);
-    bounds.removeFromBottom(margin); // 메인 영역과 푸터 사이 마진
+    bounds.removeFromBottom(margin); // 메인 영역과 푸터 사이 여백
     footerComponent.setBounds(footerBounds);
 
-    // 메인 영역 (사이드바 + 메인 패널)
+    // 남은 공간을 메인 영역으로 사용
     auto mainArea = bounds;
 
-    // 사이드바 영역 (왼쪽)
+    // 사이드바 영역 설정 (좌측)
     sidebarComponent.setBounds(mainArea.removeFromLeft(Constants::SIDEBAR_WIDTH));
-    mainArea.removeFromLeft(margin); // 사이드바와 메인 패널 사이 마진
+    mainArea.removeFromLeft(margin); // 사이드바와 메인 패널 사이 여백
 
-    // 메인 패널 영역 (오른쪽)
+    // 메인 패널 영역 설정 (우측)
     mainPanel->setBounds(mainArea);
 }

@@ -1,4 +1,4 @@
-#include <JuceHeader.h>
+﻿#include <JuceHeader.h>
 #include "../Components/MainComponent.h"
 #include "../Utils/Constants.h"
 
