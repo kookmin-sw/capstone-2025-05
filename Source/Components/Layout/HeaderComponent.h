@@ -1,6 +1,7 @@
-﻿#pragma once
+#pragma once
 #include <JuceHeader.h>
 #include "../../UI/Styles/MapleColours.h"
+#include "../../UI/Common/SearchBox/MapleSearchBox.h"
 
 class HeaderComponent : public juce::Component
 {
@@ -19,7 +20,7 @@ private:
     juce::Label projectNameLabel;
 
     // 검색창
-    juce::TextEditor searchBox;
+    MapleSearchBox searchBox;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HeaderComponent)
 };

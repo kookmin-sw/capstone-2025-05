@@ -1,4 +1,4 @@
-﻿#include "HeaderComponent.h"
+#include "HeaderComponent.h"
 #include "BinaryData.h"
 #include "../../UI/Styles/MapleTypography.h"
 
@@ -14,24 +14,15 @@ HeaderComponent::HeaderComponent()
     addAndMakeVisible(projectNameLabel);
     projectNameLabel.setText(u8"MAPLE", juce::dontSendNotification);
     projectNameLabel.setFont(MapleTypography::getMontserratBold(36.0f));
-    projectNameLabel.setColour(juce::Label::textColourId, juce::Colour(0xFF2ECC71)); // 녹색 로고
+    projectNameLabel.setColour(juce::Label::textColourId, MapleColours::currentTheme.logo);
     projectNameLabel.setJustificationType(juce::Justification::centredLeft);
 
     // 검색창 설정
     addAndMakeVisible(searchBox);
-    searchBox.setTextToShowWhenEmpty(juce::String::fromUTF8(u8"어떤 곡을 연습하고 싶으신가요?"), juce::Colours::grey);
-    searchBox.setFont(MapleTypography::getPretendardMedium(18.0f));
-    searchBox.setColour(juce::TextEditor::backgroundColourId, juce::Colours::black);
-    searchBox.setColour(juce::TextEditor::textColourId, juce::Colours::white);
-    searchBox.setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
-    searchBox.setJustification(juce::Justification::centredLeft);
 }
 
 void HeaderComponent::paint(juce::Graphics &g)
 {
-    g.setColour(MapleColours::currentTheme.panel);
-    g.fillRoundedRectangle(getLocalBounds().toFloat(), 10.0f);
-
     // 로고 그리기
     if (logoDrawable != nullptr)
     {
@@ -58,5 +49,8 @@ void HeaderComponent::resized()
 
     // 중앙 검색창 (양쪽에 여백을 주어 중앙에 위치)
     auto centerSection = bounds.reduced(bounds.getWidth() / 4, 0);
-    searchBox.setBounds(centerSection);
+    // 검색창 높이를 55으로 설정하고 수직 중앙 정렬
+    auto searchBoxBounds = centerSection.withHeight(55).withCentre(centerSection.getCentre());
+    searchBoxBounds.setWidth(searchBoxBounds.getWidth() * 2 / 3);
+    searchBox.setBounds(searchBoxBounds);
 }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <JuceHeader.h>
 
 namespace MapleColours
@@ -15,6 +15,7 @@ namespace MapleColours
         juce::Colour text;
         juce::Colour border;
         juce::Colour logo;
+        juce::Colour searchBox;
     };
 
     namespace Dark
@@ -27,9 +28,10 @@ namespace MapleColours
             juce::Colour(0xFF3395FF), // buttonHover
             juce::Colour(0xFF0056B3), // buttonPressed
             juce::Colour(0xFFFFFFFF), // buttonText
-            juce::Colour(0xFFE0E0E0), // text
+            juce::Colour(0xFFB3B3B3), // text
             juce::Colour(0xFF2D2D2D), // border
-            juce::Colour(0xFF2ECC71)  // logo
+            juce::Colour(0xFF2ECC71), // logo
+            juce::Colour(0xFF1F1F1F)  // searchBox
         };
     }
 
@@ -44,7 +46,8 @@ namespace MapleColours
             juce::Colour(0xFFFFFFFF), // buttonText
             juce::Colour(0xFF000000), // text
             juce::Colour(0xFFE0E0E0), // border
-            juce::Colour(0xFF2ECC71)  // logo
+            juce::Colour(0xFF2ECC71), // logo
+            juce::Colour(0xFF3A3A3A)  // searchBox
         };
     }
 

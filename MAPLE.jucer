@@ -32,6 +32,12 @@
       </GROUP>
       <GROUP id="UI" name="UI">
         <GROUP id="Common" name="Common">
+          <GROUP id="{E0221542-A6AA-2767-BDFD-12B80A1E9968}" name="SearchBox">
+            <FILE id="EqdPlU" name="MapleSearchBox.cpp" compile="1" resource="0"
+                  file="Source/UI/Common/SearchBox/MapleSearchBox.cpp"/>
+            <FILE id="Lq2XBa" name="MapleSearchBox.h" compile="0" resource="0"
+                  file="Source/UI/Common/SearchBox/MapleSearchBox.h"/>
+          </GROUP>
           <GROUP id="Button" name="Button">
             <FILE id="MapleButton" name="MapleButton.cpp" compile="1" resource="0"
                   file="Source/UI/Common/Button/MapleButton.cpp"/>
@@ -69,6 +75,7 @@
       </GROUP>
       <GROUP id="Icons" name="Icons">
         <FILE id="logo.svg" name="logo.svg" compile="0" resource="1" file="Resources/Icons/logo.svg"/>
+        <FILE id="Fe66dQ" name="search.svg" compile="0" resource="1" file="Resources/Icons/search.svg"/>
       </GROUP>
     </GROUP>
   </MAINGROUP>
