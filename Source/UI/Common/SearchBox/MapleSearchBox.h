@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <JuceHeader.h>
 #include "../../Styles/MapleColours.h"
 #include "../../Styles/MapleTypography.h"

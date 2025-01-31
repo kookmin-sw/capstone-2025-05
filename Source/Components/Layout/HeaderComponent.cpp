@@ -1,4 +1,4 @@
-#include "HeaderComponent.h"
+﻿#include "HeaderComponent.h"
 #include "BinaryData.h"
 #include "../../UI/Styles/MapleTypography.h"
 
