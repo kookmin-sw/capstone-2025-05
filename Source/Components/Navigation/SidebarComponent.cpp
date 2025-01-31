@@ -77,7 +77,7 @@ void SidebarComponent::drawMenuItem(juce::Graphics &g, const MenuItem &item, con
     // 아이콘 그리기
     if (item.icon != nullptr)
     {
-        auto iconBounds = bounds.reduced(12).withWidth(28); // 아이콘 크기를 28x28로 증가
+        auto iconBounds = bounds.reduced(12).withWidth(24); // 아이콘 크기를 28x28로 증가
         item.icon->drawWithin(g, iconBounds.toFloat(),
                               juce::RectanglePlacement::centred,
                               0.8f + (0.2f * item.alpha));

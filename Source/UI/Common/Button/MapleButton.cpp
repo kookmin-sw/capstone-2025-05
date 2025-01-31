@@ -18,19 +18,23 @@ void MapleButton::setOnClick(std::function<void()> callback)
     onClick = callback;
 }
 
+void MapleButton::setFont(const juce::Font &newFont)
+{
+    font = newFont;
+    repaint();
+}
+
 void MapleButton::paint(juce::Graphics &g)
 {
     auto bounds = getLocalBounds().toFloat();
 
     // 배경 그리기
-    g.setColour(isMouseDown   ? MapleColours::Dark::theme.buttonPressed
-                : isMouseOver ? MapleColours::Dark::theme.buttonHover
-                              : MapleColours::Dark::theme.buttonNormal);
+    g.setColour(findColour(backgroundColourId));
     g.fillRoundedRectangle(bounds, 8.0f);
 
     // 텍스트 그리기
-    g.setFont(MapleTypography::button);
-    g.setColour(MapleColours::Dark::theme.buttonText);
+    g.setFont(font);
+    g.setColour(findColour(textColourId));
     g.drawText(text, bounds, juce::Justification::centred);
 }
 
