@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Page.h"
 #include "../../UI/Common/Button/MapleButton.h"
 #include "../../UI/Styles/MapleTypography.h"

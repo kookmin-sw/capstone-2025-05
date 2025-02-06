@@ -1,36 +1,33 @@
 ﻿#include "MainComponent.h"
 #include "../Utils/Constants.h"
 #include "../UI/Styles/MapleColours.h"
+#include "Pages/HomePage.h"
 
 MainComponent::MainComponent()
 {
-    // 헤더 컴포넌트 초기화 및 표시
+    // 메인 UI 구성 요소 초기화
     addAndMakeVisible(headerComponent);
-
-    // 사이드바 컴포넌트 초기화 및 표시
     addAndMakeVisible(sidebarComponent);
+    addAndMakeVisible(footerComponent);
 
-    // 메인 패널 컴포넌트 초기화 및 표시 (홈페이지)
     mainPanel = std::make_unique<HomePage>();
     addAndMakeVisible(mainPanel.get());
-
-    // 푸터 컴포넌트 초기화 및 표시
-    addAndMakeVisible(footerComponent);
 }
 
 MainComponent::~MainComponent()
 {
 }
 
-void MainComponent::paint(juce::Graphics &g)
+void MainComponent::paint(juce::Graphics& g)
 {
+    // 메인 UI 배경
     g.fillAll(MapleColours::currentTheme.background);
 }
 
 void MainComponent::resized()
 {
     const int margin = 10;
-    auto bounds = getLocalBounds().reduced(margin); // 전체 컴포넌트에 마진 적용
+    auto bounds = getLocalBounds().reduced(margin);
 
     // 헤더 영역 설정 (상단)
     headerComponent.setBounds(bounds.removeFromTop(Constants::HEADER_HEIGHT));

@@ -4,10 +4,20 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" maxBinaryFileSize="20971520">
   <MAINGROUP id="YOUR_GROUP_ID" name="MAPLE">
     <GROUP id="Source" name="Source">
+      <GROUP id="{21F6EEBE-B575-A11D-3501-31806AD18C92}" name="Windows">
+        <FILE id="HyPcHO" name="LoginWindow.cpp" compile="1" resource="0" file="Source/Windows/LoginWindow.cpp"/>
+        <FILE id="LnYVog" name="LoginWindow.h" compile="0" resource="0" file="Source/Windows/LoginWindow.h"/>
+      </GROUP>
       <GROUP id="App" name="App">
         <FILE id="Main" name="Main.cpp" compile="1" resource="0" file="Source/App/Main.cpp"/>
       </GROUP>
       <GROUP id="Components" name="Components">
+        <GROUP id="{27559EAA-E860-42B2-85D1-C161BB708F92}" name="Login">
+          <FILE id="B0n8mS" name="LoginComponent.cpp" compile="1" resource="0"
+                file="Source/Components/Login/LoginComponent.cpp"/>
+          <FILE id="V4dSw8" name="LoginComponent.h" compile="0" resource="0"
+                file="Source/Components/Login/LoginComponent.h"/>
+        </GROUP>
         <GROUP id="Layout" name="Layout">
           <FILE id="HeaderComponent" name="HeaderComponent.cpp" compile="1" resource="0"
                 file="Source/Components/Layout/HeaderComponent.cpp"/>
