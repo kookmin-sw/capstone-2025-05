@@ -1,4 +1,5 @@
 ﻿#include "LoginComponent.h"
+#include "../../Services/AuthService.h"
 
 LoginComponent::LoginComponent(std::function<void()> loginCallback)
     : onLoginSuccess(std::move(loginCallback))
@@ -116,6 +117,19 @@ void LoginComponent::resized()
     {
         forgotPasswordLink->setBounds(rightContent.removeFromTop(30));
     }
+
+    // 에러 메시지 레이아웃
+    if (errorLabel != nullptr)
+    {
+        rightContent.removeFromTop(40); // 로그인 타이틀 공간
+        rightContent.removeFromTop(40); // 간격
+        
+        // 에러 메시지를 로그인 버튼 위에 배치
+        auto errorBounds = rightContent;
+        errorBounds.setHeight(20);
+        errorBounds.translate(0, -25);
+        errorLabel->setBounds(errorBounds);
+    }
 }
 
 void LoginComponent::initializeComponents()
@@ -180,7 +194,7 @@ void LoginComponent::initializeComponents()
     addAndMakeVisible(loginButton.get());
     loginButton->setColour(juce::TextButton::buttonColourId, MapleColours::currentTheme.buttonNormal);
     loginButton->setColour(juce::TextButton::textColourOffId, MapleColours::currentTheme.buttonText);
-    loginButton->onClick = [this]() { onLoginSuccess(); };
+    loginButton->onClick = [this]() { handleLoginAttempt(); };
     
     forgotPasswordLink.reset(new juce::HyperlinkButton(juce::String::fromUTF8(u8"Forgot your password?"), juce::URL("https://example.com/forgot-password")));
     addAndMakeVisible(forgotPasswordLink.get());
@@ -191,4 +205,59 @@ void LoginComponent::initializeComponents()
 void LoginComponent::setupLayout()
 {
     setSize(900, 600);
+}
+
+void LoginComponent::handleLoginAttempt()
+{
+    // 입력값 가져오기
+    juce::String username = guitarDetailsInput->getText();
+    juce::String password = passwordInput->getText();
+
+    // 기본적인 유효성 검사
+    if (username.isEmpty() || password.isEmpty())
+    {
+        showErrorMessage(juce::String::fromUTF8(u8"Please fill in all fields"));
+        return;
+    }
+
+    // UI 업데이트는 현재 스레드(메인 스레드)에서 수행
+    loginButton->setEnabled(false);
+    loginButton->setButtonText(juce::String::fromUTF8(u8"Logging in..."));
+
+    // 네트워크 요청과 응답 처리를 별도 스레드에서 수행
+    std::thread([this, username, password]()
+    {
+        AuthService::LoginRequest request{ username, password };
+        auto response = AuthService::login(request);
+
+        // UI 업데이트는 다시 메인 스레드에서
+        juce::MessageManager::callAsync([this, response]()
+        {
+            if (response.success)
+            {
+                onLoginSuccess();
+            }
+            else
+            {
+                showErrorMessage(response.message);
+                loginButton->setEnabled(true);
+                loginButton->setButtonText(juce::String::fromUTF8(u8"Log in"));
+            }
+        });
+    }).detach();
+}
+
+void LoginComponent::showErrorMessage(const juce::String& message)
+{
+    if (errorLabel == nullptr)
+    {
+        errorLabel.reset(new juce::Label());
+        addAndMakeVisible(errorLabel.get());
+        errorLabel->setColour(juce::Label::textColourId, juce::Colours::red);
+        errorLabel->setFont(juce::Font(14.0f));
+        errorLabel->setJustificationType(juce::Justification::centred);
+    }
+
+    errorLabel->setText(message, juce::dontSendNotification);
+    resized();  // 레이아웃 업데이트
 } 

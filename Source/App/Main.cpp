@@ -2,6 +2,7 @@
 #include "../Components/MainComponent.h"
 #include "../Utils/Constants.h"
 #include "../Windows/LoginWindow.h"
+#include "../Config/AppConfig.h"
 
 class MapleApplication : public juce::JUCEApplication
 {
@@ -13,6 +14,8 @@ public:
 
     void initialise(const juce::String& commandLine) override
     {
+        AppConfig::init();  // 환경 변수 초기화
+
         juce::Desktop::getInstance().setDefaultLookAndFeel(&lookAndFeel);  // 기본 스타일 설정
         
         // 로그인 윈도우 생성
