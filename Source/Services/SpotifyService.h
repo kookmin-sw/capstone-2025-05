@@ -11,6 +11,7 @@ public:
         juce::String artist;
         juce::String coverUrl;
         std::unique_ptr<juce::Image> coverImage;
+        float alpha = 0.0f;
 
         Album(const Album& other)
             : id(other.id)
@@ -18,6 +19,7 @@ public:
             , artist(other.artist)
             , coverUrl(other.coverUrl)
             , coverImage(other.coverImage ? std::make_unique<juce::Image>(*other.coverImage) : nullptr)
+            , alpha(other.alpha)
         {}
 
         Album& operator=(const Album& other)
@@ -27,6 +29,7 @@ public:
             artist = other.artist;
             coverUrl = other.coverUrl;
             coverImage = other.coverImage ? std::make_unique<juce::Image>(*other.coverImage) : nullptr;
+            alpha = other.alpha;
             return *this;
         }
 

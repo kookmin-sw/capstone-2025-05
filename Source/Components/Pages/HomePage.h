@@ -32,5 +32,24 @@ private:
     juce::TextButton searchButton;
     juce::Array<SpotifyService::Album> albums;
 
+    float imageAlpha = 0.0f;
+    std::unique_ptr<juce::Timer> fadeAnimator;
+
+    class FadeTimer : public juce::Timer
+    {
+    public:
+        FadeTimer(HomePage& parent) : owner(parent) {}
+        void timerCallback() override 
+        {
+            owner.updateFadeAnimation();
+        }
+    private:
+        HomePage& owner;
+    };
+
+    void updateFadeAnimation();
+
+    void loadAlbumCover(int index);
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HomePage)
 };

@@ -11,8 +11,12 @@ HomePage::HomePage()
     addAndMakeVisible(createProjectBtn.get());
 
     // 컴포넌트가 생성될 때 앨범 검색 시작
-    searchAlbums("guitar");
+    searchAlbums("Younha");
     DBG("Started album search");
+
+    // 페이드 애니메이션 타이머 설정
+    fadeAnimator = std::make_unique<FadeTimer>(*this);
+    fadeAnimator->startTimer(16);  // 항상 실행
 }
 
 HomePage::~HomePage()
@@ -152,13 +156,16 @@ void HomePage::drawRecommendedSection(juce::Graphics& g, juce::Rectangle<int> bo
 
         if (albums[i].coverImage)
         {
-            // 이미지 영역 (위쪽)
             auto imageArea = albumBounds.removeFromTop(imageSize);
+            
+            // 각 앨범의 개별 알파값 사용
+            g.setOpacity(albums[i].alpha);
             g.drawImage(*albums[i].coverImage,
                        imageArea.toFloat(),
                        juce::RectanglePlacement::centred);
+            g.setOpacity(1.0f);
 
-            // 텍스트 영역 (아래쪽)
+            // 텍스트는 항상 완전 불투명하게
             g.setColour(MapleColours::currentTheme.text);
             g.setFont(MapleTypography::getPretendardMedium(12.0f));
             g.drawText(albums[i].name,
@@ -177,16 +184,70 @@ void HomePage::resized()
     createProjectBtn->setBounds(projectButtonArea.reduced(10).withHeight(160));
 }
 
+void HomePage::updateFadeAnimation()
+{
+    bool needsRepaint = false;
+    const float fadeSpeed = 0.08f;  // 페이드 속도 더 증가
+    
+    for (auto& album : albums)
+    {
+        if (album.coverImage && album.alpha < 1.0f)
+        {
+            album.alpha = juce::jmin(1.0f, album.alpha + fadeSpeed);
+            needsRepaint = true;
+        }
+    }
+    
+    if (needsRepaint)
+        repaint();
+}
+
 void HomePage::searchAlbums(const juce::String& query)
 {
     DBG("Searching albums for query: " + query);
     std::thread([this, query]() {
         auto results = SpotifyService::searchAlbums(query);
         DBG("Found " + juce::String(results.size()) + " albums");
+        
         juce::MessageManager::callAsync([this, results]() mutable {
             albums = std::move(results);
-            DBG("Albums updated, repainting");
             repaint();
+            
+            // 모든 이미지를 병렬로 로드 시작
+            for (int i = 0; i < albums.size(); ++i)
+            {
+                loadAlbumCover(i);
+            }
         });
+    }).detach();
+}
+
+void HomePage::loadAlbumCover(int index)
+{
+    if (index >= albums.size()) return;
+    
+    std::thread([this, index]() {
+        if (!albums[index].coverUrl.isEmpty())
+        {
+            juce::Thread::sleep(index * 20);
+            
+            auto coverImage = SpotifyService::loadAlbumCover(albums[index].coverUrl);
+            
+            if (coverImage != nullptr)
+            {
+                auto* comp = this;
+                auto* img = coverImage.release();
+                
+                juce::MessageManager::callAsync([comp, index, img]() {
+                    std::unique_ptr<juce::Image> image(img);
+                    if (index < comp->albums.size())
+                    {
+                        comp->albums.getReference(index).coverImage = std::move(image);
+                        comp->albums.getReference(index).alpha = 0.0f;
+                        comp->repaint();
+                    }
+                });
+            }
+        }
     }).detach();
 }
