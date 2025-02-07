@@ -14,12 +14,12 @@ LoginComponent::~LoginComponent()
 void LoginComponent::paint(juce::Graphics& g)
 {
     // 배경 그리기
-    g.fillAll(backgroundColour);
+    g.fillAll(MapleColours::currentTheme.background);
     
     // 오른쪽 패널 배경
     auto bounds = getLocalBounds();
     auto rightPanel = bounds.removeFromRight(bounds.getWidth() / 2);
-    g.setColour(rightPanelColour);
+    g.setColour(MapleColours::currentTheme.panel);
     g.fillRect(rightPanel);
 
     // 입력 필드 밑줄 그리기
@@ -30,7 +30,7 @@ void LoginComponent::paint(juce::Graphics& g)
 
     // 기타 디테일 입력 필드 밑줄
     auto inputBounds = rightContent.removeFromTop(40);
-    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    g.setColour(MapleColours::currentTheme.border);
     g.drawLine(inputBounds.getX(), inputBounds.getBottom(),
                inputBounds.getRight(), inputBounds.getBottom(), 1.0f);
 
@@ -39,7 +39,7 @@ void LoginComponent::paint(juce::Graphics& g)
 
     // 패스워드 입력 필드 밑줄
     inputBounds = rightContent.removeFromTop(40);
-    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    g.setColour(MapleColours::currentTheme.border);
     g.drawLine(inputBounds.getX(), inputBounds.getBottom(),
                inputBounds.getRight(), inputBounds.getBottom(), 1.0f);
 }
@@ -127,61 +127,65 @@ void LoginComponent::initializeComponents()
     
     titleLabel.reset(new juce::Label());
     addAndMakeVisible(titleLabel.get());
-    titleLabel->setText("GuitarPro offers real-time analysis tools.", juce::dontSendNotification);
+    titleLabel->setText(juce::String::fromUTF8(u8"GuitarPro offers real-time analysis tools."), juce::dontSendNotification);
     titleLabel->setFont(juce::Font(28.0f, juce::Font::bold));
     titleLabel->setJustificationType(juce::Justification::centred);
+
+    titleLabel->setColour(juce::Label::textColourId, MapleColours::currentTheme.buttonText);
     
     descriptionLabel.reset(new juce::Label());
     addAndMakeVisible(descriptionLabel.get());
-    descriptionLabel->setText("Enhance your guitar skills with MAPLE: a cutting-edge platform for real-time music", juce::dontSendNotification);
+    descriptionLabel->setText(juce::String::fromUTF8(u8"Enhance your guitar skills with MAPLE: a cutting-edge platform for real-time music"), juce::dontSendNotification);
     descriptionLabel->setFont(juce::Font(16.0f));
     descriptionLabel->setJustificationType(juce::Justification::centred);
+
+    descriptionLabel->setColour(juce::Label::textColourId, MapleColours::currentTheme.text);
 
     // 오른쪽 패널 초기화
     loginTitleLabel.reset(new juce::Label());
     addAndMakeVisible(loginTitleLabel.get());
-    loginTitleLabel->setText("Log in", juce::dontSendNotification);
+    loginTitleLabel->setText(juce::String::fromUTF8(u8"Log in"), juce::dontSendNotification);
     loginTitleLabel->setFont(juce::Font(24.0f, juce::Font::bold));
+    loginTitleLabel->setColour(juce::Label::textColourId, MapleColours::currentTheme.buttonText);
     
     customizationLabel.reset(new juce::Label());
     addAndMakeVisible(customizationLabel.get());
-    customizationLabel->setText("Customization Settings", juce::dontSendNotification);
+    customizationLabel->setText(juce::String::fromUTF8(u8"Customization Settings"), juce::dontSendNotification);
     customizationLabel->setFont(juce::Font(16.0f));
+    customizationLabel->setColour(juce::Label::textColourId, MapleColours::currentTheme.text);
     
-    guitarDetailsInput.reset(new juce::TextEditor());
+    guitarDetailsInput.reset(new MapleTextEditor());
     addAndMakeVisible(guitarDetailsInput.get());
-    guitarDetailsInput->setTextToShowWhenEmpty("Enter your guitar details", juce::Colours::grey);
+    guitarDetailsInput->setTextToShowWhenEmpty(juce::String::fromUTF8(u8"Enter your guitar details"), juce::Colours::grey);
     guitarDetailsInput->setFont(juce::Font(16.0f));
-    guitarDetailsInput->setColour(juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
-    guitarDetailsInput->setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
-    guitarDetailsInput->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::transparentBlack);
-    guitarDetailsInput->setColour(juce::TextEditor::textColourId, juce::Colours::black);
-    guitarDetailsInput->setColour(juce::CaretComponent::caretColourId, juce::Colours::black);
+    guitarDetailsInput->setColour(juce::TextEditor::textColourId, MapleColours::currentTheme.buttonText);
+    guitarDetailsInput->setColour(juce::CaretComponent::caretColourId, MapleColours::currentTheme.buttonText);
     
     passwordLabel.reset(new juce::Label());
     addAndMakeVisible(passwordLabel.get());
-    passwordLabel->setText("Password", juce::dontSendNotification);
+    passwordLabel->setText(juce::String::fromUTF8(u8"Password"), juce::dontSendNotification);
     passwordLabel->setFont(juce::Font(16.0f));
+    passwordLabel->setColour(juce::Label::textColourId, MapleColours::currentTheme.text);
     
-    passwordInput.reset(new juce::TextEditor());
+    passwordInput.reset(new MapleTextEditor());
     addAndMakeVisible(passwordInput.get());
-    passwordInput->setPasswordCharacter('•');
+    passwordInput->setPasswordCharacter(juce::juce_wchar(0x2022));  // 유니코드 bullet point •
     passwordInput->setFont(juce::Font(16.0f));
-    passwordInput->setTextToShowWhenEmpty("Enter your password", juce::Colours::grey);
-    passwordInput->setColour(juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
-    passwordInput->setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
-    passwordInput->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::transparentBlack);
-    passwordInput->setColour(juce::TextEditor::textColourId, juce::Colours::black);
-    passwordInput->setColour(juce::CaretComponent::caretColourId, juce::Colours::black);
+    passwordInput->setTextToShowWhenEmpty(juce::String::fromUTF8(u8"Enter your password"), juce::Colours::grey);
+    passwordInput->setColour(juce::TextEditor::textColourId, MapleColours::currentTheme.buttonText);
+
+    passwordInput->setColour(juce::CaretComponent::caretColourId, MapleColours::currentTheme.buttonText);
     
-    loginButton.reset(new juce::TextButton("Log in"));
+    loginButton.reset(new juce::TextButton(juce::String::fromUTF8(u8"Log in")));
     addAndMakeVisible(loginButton.get());
-    loginButton->setColour(juce::TextButton::buttonColourId, juce::Colour(0xFFD3C1B9));
+    loginButton->setColour(juce::TextButton::buttonColourId, MapleColours::currentTheme.buttonNormal);
+    loginButton->setColour(juce::TextButton::textColourOffId, MapleColours::currentTheme.buttonText);
     loginButton->onClick = [this]() { onLoginSuccess(); };
     
-    forgotPasswordLink.reset(new juce::HyperlinkButton("Forgot your password?", juce::URL("https://example.com/forgot-password")));
+    forgotPasswordLink.reset(new juce::HyperlinkButton(juce::String::fromUTF8(u8"Forgot your password?"), juce::URL("https://example.com/forgot-password")));
     addAndMakeVisible(forgotPasswordLink.get());
     forgotPasswordLink->setFont(juce::Font(14.0f), false);
+    forgotPasswordLink->setColour(juce::HyperlinkButton::textColourId, MapleColours::currentTheme.buttonNormal);
 }
 
 void LoginComponent::setupLayout()

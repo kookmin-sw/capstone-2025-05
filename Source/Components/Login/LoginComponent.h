@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include <JuceHeader.h>
+#include "../../UI/Styles/MapleColours.h"  // 테마 헤더 추가
+#include "../../UI/Common/TextEditor/MapleTextEditor.h"  // 경로 수정
 
 class LoginComponent : public juce::Component
 {
@@ -26,15 +28,11 @@ private:
     // 오른쪽 패널 컴포넌트들
     std::unique_ptr<juce::Label> loginTitleLabel;
     std::unique_ptr<juce::Label> customizationLabel;
-    std::unique_ptr<juce::TextEditor> guitarDetailsInput;
+    std::unique_ptr<MapleTextEditor> guitarDetailsInput;
     std::unique_ptr<juce::Label> passwordLabel;
-    std::unique_ptr<juce::TextEditor> passwordInput;
+    std::unique_ptr<MapleTextEditor> passwordInput;
     std::unique_ptr<juce::TextButton> loginButton;
     std::unique_ptr<juce::HyperlinkButton> forgotPasswordLink;
-
-    // 배경색 설정
-    juce::Colour backgroundColour { juce::Colour(0xFFF5E6E6) };  // 베이지색
-    juce::Colour rightPanelColour { juce::Colours::white };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LoginComponent)
 };

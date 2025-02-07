@@ -42,6 +42,12 @@
       </GROUP>
       <GROUP id="UI" name="UI">
         <GROUP id="Common" name="Common">
+          <GROUP id="{1A0D1C1B-89A6-9B72-3D40-F4D9C008F361}" name="TextEditor">
+            <FILE id="alZktL" name="MapleTextEditor.cpp" compile="1" resource="0"
+                  file="Source/UI/Common/TextEditor/MapleTextEditor.cpp"/>
+            <FILE id="bf7o33" name="MapleTextEditor.h" compile="0" resource="0"
+                  file="Source/UI/Common/TextEditor/MapleTextEditor.h"/>
+          </GROUP>
           <GROUP id="{E0221542-A6AA-2767-BDFD-12B80A1E9968}" name="SearchBox">
             <FILE id="EqdPlU" name="MapleSearchBox.cpp" compile="1" resource="0"
                   file="Source/UI/Common/SearchBox/MapleSearchBox.cpp"/>
