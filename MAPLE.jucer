@@ -11,6 +11,10 @@
       <GROUP id="{0223E54F-6191-8053-6696-CC66608792C2}" name="Services">
         <FILE id="JcsqxP" name="AuthService.cpp" compile="1" resource="0" file="Source/Services/AuthService.cpp"/>
         <FILE id="aJ8V6N" name="AuthService.h" compile="0" resource="0" file="Source/Services/AuthService.h"/>
+        <FILE id="rpARvk" name="SpotifyService.cpp" compile="1" resource="0"
+              file="Source/Services/SpotifyService.cpp"/>
+        <FILE id="dW80E5" name="SpotifyService.h" compile="0" resource="0"
+              file="Source/Services/SpotifyService.h"/>
       </GROUP>
       <GROUP id="{21F6EEBE-B575-A11D-3501-31806AD18C92}" name="Windows">
         <FILE id="HyPcHO" name="LoginWindow.cpp" compile="1" resource="0" file="Source/Windows/LoginWindow.cpp"/>

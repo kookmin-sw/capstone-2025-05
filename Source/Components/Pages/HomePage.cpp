@@ -1,6 +1,7 @@
 ﻿#include "HomePage.h"
 #include "../../UI/Styles/MapleColours.h"
 #include "../../UI/Styles/MapleTypography.h"
+#include "../../Services/SpotifyService.h"
 
 HomePage::HomePage()
 {
@@ -8,6 +9,10 @@ HomePage::HomePage()
     createProjectBtn->setColour(MapleButton::backgroundColourId, juce::Colours::black);
     createProjectBtn->setColour(MapleButton::textColourId, MapleColours::currentTheme.text);
     addAndMakeVisible(createProjectBtn.get());
+
+    // 컴포넌트가 생성될 때 앨범 검색 시작
+    searchAlbums("guitar");
+    DBG("Started album search");
 }
 
 HomePage::~HomePage()
@@ -32,9 +37,9 @@ void HomePage::paint(juce::Graphics &g)
     drawSection(g, juce::String::fromUTF8(u8"RECENTLY"), recentlySection);
     bounds.removeFromTop(40); // 섹션 간 간격
 
-    // Recommended 섹션
+    // Recommended 섹션 (앨범 표시)
     auto recommendedSection = bounds.removeFromTop(240);
-    drawSection(g, juce::String::fromUTF8(u8"RECOMMENDED"), recommendedSection);
+    drawRecommendedSection(g, recommendedSection);
     bounds.removeFromTop(40); // 섹션 간 간격
 
     // Practice Courses 섹션
@@ -119,6 +124,50 @@ void HomePage::drawSectionHeader(juce::Graphics &g, const juce::String &title,
     }
 }
 
+void HomePage::drawRecommendedSection(juce::Graphics& g, juce::Rectangle<int> bounds)
+{
+    // 섹션 헤더 그리기
+    auto headerBounds = bounds.removeFromTop(40);
+    drawSectionHeader(g, juce::String::fromUTF8(u8"RECOMMENDED"), headerBounds, true);
+
+    // 앨범 표시 영역
+    auto contentBounds = bounds;
+    const int albumSize = 200;  // 앨범 전체 크기
+    const int spacing = 20;     // 앨범 간 간격
+    const int textHeight = 30;  // 텍스트 영역 높이
+    const int imageSize = albumSize - textHeight;  // 이미지 크기
+
+    // 앨범 간 간격을 고려한 전체 너비 계산
+    int totalWidth = (albumSize * 6) + (spacing * 5);
+    int startX = (contentBounds.getWidth() - totalWidth) / 2;  // 중앙 정렬
+
+    for (int i = 0; i < juce::jmin(6, albums.size()); ++i)
+    {
+        auto albumBounds = juce::Rectangle<int>(
+            contentBounds.getX() + startX + (i * (albumSize + spacing)),
+            contentBounds.getY(),
+            albumSize,
+            albumSize
+        );
+
+        if (albums[i].coverImage)
+        {
+            // 이미지 영역 (위쪽)
+            auto imageArea = albumBounds.removeFromTop(imageSize);
+            g.drawImage(*albums[i].coverImage,
+                       imageArea.toFloat(),
+                       juce::RectanglePlacement::centred);
+
+            // 텍스트 영역 (아래쪽)
+            g.setColour(MapleColours::currentTheme.text);
+            g.setFont(MapleTypography::getPretendardMedium(12.0f));
+            g.drawText(albums[i].name,
+                      albumBounds,
+                      juce::Justification::centred, true);
+        }
+    }
+}
+
 void HomePage::resized()
 {
     auto bounds = getLocalBounds().reduced(20);
@@ -126,4 +175,18 @@ void HomePage::resized()
     // 프로젝트 시작 버튼 크기 및 위치 설정
     auto projectButtonArea = bounds.removeFromTop(200);
     createProjectBtn->setBounds(projectButtonArea.reduced(10).withHeight(160));
+}
+
+void HomePage::searchAlbums(const juce::String& query)
+{
+    DBG("Searching albums for query: " + query);
+    std::thread([this, query]() {
+        auto results = SpotifyService::searchAlbums(query);
+        DBG("Found " + juce::String(results.size()) + " albums");
+        juce::MessageManager::callAsync([this, results]() mutable {
+            albums = std::move(results);
+            DBG("Albums updated, repainting");
+            repaint();
+        });
+    }).detach();
 }

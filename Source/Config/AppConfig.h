@@ -15,6 +15,11 @@ public:
         return getConfigValue("MAPLE_API_URL", defaultUrl);
     }
 
+    static juce::String getConfigValue(const juce::String& key, const juce::String& defaultValue)
+    {
+        return configMap.contains(key) ? configMap[key] : defaultValue;
+    }
+
 private:
     static void loadEnvFile()
     {
@@ -39,11 +44,6 @@ private:
                 }
             }
         }
-    }
-
-    static juce::String getConfigValue(const juce::String& key, const juce::String& defaultValue)
-    {
-        return configMap.contains(key) ? configMap[key] : defaultValue;
     }
 
     static inline juce::HashMap<juce::String, juce::String> configMap;
