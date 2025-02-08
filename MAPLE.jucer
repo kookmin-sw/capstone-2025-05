@@ -106,6 +106,10 @@
               file="Resources/Fonts/Pretendard-SemiBold.ttf"/>
       </GROUP>
       <GROUP id="Icons" name="Icons">
+        <FILE id="GB4PrE" name="chevron-left.svg" compile="0" resource="1"
+              file="Resources/Icons/chevron-left.svg"/>
+        <FILE id="rCWNDh" name="chevron-right.svg" compile="0" resource="1"
+              file="Resources/Icons/chevron-right.svg"/>
         <FILE id="BONNsj" name="courses.svg" compile="0" resource="1" file="Resources/Icons/courses.svg"/>
         <FILE id="QVmbW5" name="explore.svg" compile="0" resource="1" file="Resources/Icons/explore.svg"/>
         <FILE id="rdPcYe" name="home.svg" compile="0" resource="1" file="Resources/Icons/home.svg"/>

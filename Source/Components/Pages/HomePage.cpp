@@ -17,6 +17,47 @@ HomePage::HomePage()
     // 페이드 애니메이션 타이머 설정
     fadeAnimator = std::make_unique<FadeTimer>(*this);
     fadeAnimator->startTimer(16);  // 항상 실행
+
+    // Viewport와 컨테이너 생성
+    albumViewport = std::make_unique<juce::Viewport>("album scroll");
+    albumContainer = std::make_unique<AlbumContainer>(*this);
+    
+    albumViewport->setViewedComponent(albumContainer.get(), false);
+    albumViewport->setScrollBarsShown(true, false);  // 가로 스크롤바만 표시
+    albumViewport->setScrollOnDragEnabled(true);     // 드래그로 스크롤 가능
+    albumViewport->setSingleStepSizes(20, 20);       // 스크롤 스텝 크기 설정
+    addAndMakeVisible(albumViewport.get());
+
+    // 네비게이션 버튼은 제거 (스크롤로 대체)
+    prevAlbumBtn.reset();
+    nextAlbumBtn.reset();
+
+    // 스크롤 버튼 생성
+    scrollLeftBtn = std::make_unique<MapleButton>(juce::String::fromUTF8(u8"<"));
+    scrollRightBtn = std::make_unique<MapleButton>(juce::String::fromUTF8(u8">"));
+    
+    // 버튼 색상을 더 밝은 회색으로 변경
+    auto buttonColour = juce::Colours::black.brighter(0.2f);
+    scrollLeftBtn->setColour(MapleButton::backgroundColourId, buttonColour);
+    scrollRightBtn->setColour(MapleButton::backgroundColourId, buttonColour);
+    
+    addAndMakeVisible(scrollLeftBtn.get());
+    addAndMakeVisible(scrollRightBtn.get());
+    
+    scrollAnimator = std::make_unique<ScrollAnimator>(*this);
+    
+    scrollLeftBtn->setOnClick([this]() { 
+        auto newPosition = albumViewport->getViewPositionX() - 660;  // 3개의 앨범씩 이동 (220 * 3)
+        newPosition = juce::jmax(0, newPosition);
+        scrollAnimator->startScrolling(newPosition);
+    });
+    
+    scrollRightBtn->setOnClick([this]() {
+        auto newPosition = albumViewport->getViewPositionX() + 660;  // 3개의 앨범씩 이동
+        newPosition = juce::jmin(newPosition, 
+                               albumContainer->getWidth() - albumViewport->getWidth());
+        scrollAnimator->startScrolling(newPosition);
+    });
 }
 
 HomePage::~HomePage()
@@ -130,58 +171,39 @@ void HomePage::drawSectionHeader(juce::Graphics &g, const juce::String &title,
 
 void HomePage::drawRecommendedSection(juce::Graphics& g, juce::Rectangle<int> bounds)
 {
-    // 섹션 헤더 그리기
+    // 섹션 헤더만 그리기
     auto headerBounds = bounds.removeFromTop(40);
     drawSectionHeader(g, juce::String::fromUTF8(u8"RECOMMENDED"), headerBounds, true);
-
-    // 앨범 표시 영역
-    auto contentBounds = bounds;
-    const int albumSize = 200;  // 앨범 전체 크기
-    const int spacing = 20;     // 앨범 간 간격
-    const int textHeight = 30;  // 텍스트 영역 높이
-    const int imageSize = albumSize - textHeight;  // 이미지 크기
-
-    // 앨범 간 간격을 고려한 전체 너비 계산
-    int totalWidth = (albumSize * 6) + (spacing * 5);
-    int startX = (contentBounds.getWidth() - totalWidth) / 2;  // 중앙 정렬
-
-    for (int i = 0; i < juce::jmin(6, albums.size()); ++i)
-    {
-        auto albumBounds = juce::Rectangle<int>(
-            contentBounds.getX() + startX + (i * (albumSize + spacing)),
-            contentBounds.getY(),
-            albumSize,
-            albumSize
-        );
-
-        if (albums[i].coverImage)
-        {
-            auto imageArea = albumBounds.removeFromTop(imageSize);
-            
-            // 각 앨범의 개별 알파값 사용
-            g.setOpacity(albums[i].alpha);
-            g.drawImage(*albums[i].coverImage,
-                       imageArea.toFloat(),
-                       juce::RectanglePlacement::centred);
-            g.setOpacity(1.0f);
-
-            // 텍스트는 항상 완전 불투명하게
-            g.setColour(MapleColours::currentTheme.text);
-            g.setFont(MapleTypography::getPretendardMedium(12.0f));
-            g.drawText(albums[i].name,
-                      albumBounds,
-                      juce::Justification::centred, true);
-        }
-    }
 }
 
 void HomePage::resized()
 {
     auto bounds = getLocalBounds().reduced(20);
 
-    // 프로젝트 시작 버튼 크기 및 위치 설정
+    // 프로젝트 시작 버튼
     auto projectButtonArea = bounds.removeFromTop(200);
     createProjectBtn->setBounds(projectButtonArea.reduced(10).withHeight(160));
+
+    bounds.removeFromTop(40);
+    auto recentlySection = bounds.removeFromTop(240);
+    bounds.removeFromTop(40);
+
+    // Recommended 섹션의 Viewport 위치 설정
+    auto recommendedSection = bounds.removeFromTop(240);
+    auto viewportBounds = recommendedSection.removeFromTop(200);
+    albumViewport->setBounds(viewportBounds.reduced(40, 0));  // 양쪽에 버튼 공간 확보
+    
+    // 스크롤 버튼 위치 설정
+    const int buttonSize = 40;
+    const int buttonY = viewportBounds.getY() + (viewportBounds.getHeight() - buttonSize) / 2;
+    scrollLeftBtn->setBounds(viewportBounds.getX(), buttonY, buttonSize, buttonSize);
+    scrollRightBtn->setBounds(viewportBounds.getRight() - buttonSize, buttonY, buttonSize, buttonSize);
+
+    // 컨테이너 크기 설정
+    const int albumSize = 200;
+    const int spacing = 20;
+    const int totalWidth = (albumSize + spacing) * albums.size();
+    albumContainer->setBounds(0, 0, totalWidth, albumViewport->getHeight());
 }
 
 void HomePage::updateFadeAnimation()
@@ -209,13 +231,22 @@ void HomePage::searchAlbums(const juce::String& query)
         auto results = SpotifyService::searchAlbums(query);
         DBG("Found " + juce::String(results.size()) + " albums");
         
-        juce::MessageManager::callAsync([this, results]() mutable {
-            albums = std::move(results);
-            repaint();
+        juce::MessageManager::callAsync([this, results = std::move(results)]() {
+            albums.clear();
+            albums.reserve(results.size());
+            for (auto& album : results) {
+                albums.push_back(std::move(album));
+            }
             
-            // 모든 이미지를 병렬로 로드 시작
-            for (int i = 0; i < albums.size(); ++i)
-            {
+            // 컨테이너 크기 업데이트
+            const int albumSize = 200;
+            const int spacing = 20;
+            const int totalWidth = (albumSize + spacing) * albums.size();
+            albumContainer->setBounds(0, 0, totalWidth, albumViewport->getHeight());
+            
+            albumContainer->repaint();  // 컨테이너 다시 그리기
+            
+            for (int i = 0; i < albums.size(); ++i) {
                 loadAlbumCover(i);
             }
         });
@@ -242,12 +273,73 @@ void HomePage::loadAlbumCover(int index)
                     std::unique_ptr<juce::Image> image(img);
                     if (index < comp->albums.size())
                     {
-                        comp->albums.getReference(index).coverImage = std::move(image);
-                        comp->albums.getReference(index).alpha = 0.0f;
-                        comp->repaint();
+                        comp->albums[index].coverImage = std::move(image);
+                        comp->albums[index].alpha = 0.0f;
+                        comp->albumContainer->repaint();
                     }
                 });
             }
         }
     }).detach();
+}
+
+void HomePage::paintAlbumContainer(juce::Graphics& g)
+{
+    const int albumSize = 200;
+    const int spacing = 20;
+    const int textHeight = 30;
+    const int imageSize = albumSize - textHeight;
+
+    for (int i = 0; i < albums.size(); ++i)
+    {
+        auto albumBounds = juce::Rectangle<int>(
+            i * (albumSize + spacing), 0,
+            albumSize, albumSize
+        );
+
+        auto imageArea = albumBounds.removeFromTop(imageSize);
+
+        // 플레이스홀더 박스 그리기
+        g.setColour(juce::Colours::black);
+        g.fillRoundedRectangle(imageArea.toFloat(), 8.0f);
+
+        if (albums[i].coverImage)
+        {
+            g.setOpacity(albums[i].alpha);
+            g.drawImage(*albums[i].coverImage,
+                       imageArea.toFloat(),
+                       juce::RectanglePlacement::centred);
+            g.setOpacity(1.0f);
+
+            g.setColour(MapleColours::currentTheme.text);
+            g.setFont(MapleTypography::getPretendardMedium(12.0f));
+            g.drawText(albums[i].name,
+                      albumBounds,
+                      juce::Justification::centred, true);
+        }
+        else
+        {
+            g.setColour(MapleColours::currentTheme.text.withAlpha(0.5f));
+            g.setFont(MapleTypography::getPretendardMedium(14.0f));
+            g.drawText(juce::String::fromUTF8(u8"로딩중..."),
+                      imageArea,
+                      juce::Justification::centred, true);
+        }
+    }
+}
+
+void HomePage::scrollAlbums(bool scrollRight)
+{
+    const int scrollAmount = 220;  // 한 번에 스크롤할 픽셀 양 (앨범 크기 + 간격)
+    auto currentPosition = albumViewport->getViewPositionX();
+    auto targetPosition = scrollRight ? 
+        currentPosition + scrollAmount : 
+        currentPosition - scrollAmount;
+    
+    // 범위 제한
+    targetPosition = juce::jlimit(0, 
+                                albumContainer->getWidth() - albumViewport->getWidth(),
+                                targetPosition);
+    
+    albumViewport->setViewPosition(targetPosition, albumViewport->getViewPositionY());
 }
