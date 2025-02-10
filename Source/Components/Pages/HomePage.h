@@ -25,6 +25,9 @@ private:
     void searchAlbums(const juce::String& query);
     void displayAlbums();
 
+    void drawAlbumCover(juce::Graphics& g, const SpotifyService::Album& album, int x, int y);
+    void loadAlbumCovers();
+
     class FadeTimer : public juce::Timer
     {
     public:

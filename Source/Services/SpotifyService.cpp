@@ -3,8 +3,20 @@
 
 const juce::String SpotifyService::API_BASE_URL = "https://api.spotify.com/v1";
 
+// 정적 멤버 변수 초기화
+std::unordered_map<juce::String, std::shared_ptr<juce::Image>> SpotifyService::imageCache;
+std::unordered_map<juce::String, juce::Array<SpotifyService::Album>> SpotifyService::searchCache;
+
 juce::Array<SpotifyService::Album> SpotifyService::searchAlbums(const juce::String& query)
 {
+    // 캐시된 검색 결과가 있는지 확인
+    auto it = searchCache.find(query);
+    if (it != searchCache.end())
+    {
+        DBG("Using cached search results for query: " + query);
+        return it->second;
+    }
+
     juce::Array<Album> albums;
     auto token = getAccessToken();
     
@@ -51,11 +63,21 @@ juce::Array<SpotifyService::Album> SpotifyService::searchAlbums(const juce::Stri
         }
     }
     
+    // 검색 결과를 캐시에 저장
+    searchCache[query] = albums;
     return albums;
 }
 
-std::unique_ptr<juce::Image> SpotifyService::loadAlbumCover(const juce::String& url)
+std::shared_ptr<juce::Image> SpotifyService::loadAlbumCover(const juce::String& url)
 {
+    // 캐시에서 이미지 찾기
+    auto it = imageCache.find(url);
+    if (it != imageCache.end())
+    {
+        DBG("Using cached image for URL: " + url);
+        return it->second;
+    }
+
     DBG("Loading album cover from URL: " + url);
     juce::URL imageUrl(url);
     
@@ -82,7 +104,11 @@ std::unique_ptr<juce::Image> SpotifyService::loadAlbumCover(const juce::String& 
             " Size: " + juce::String(image.getWidth()) + "x" + juce::String(image.getHeight()));
             
         if (image.isValid())
-            return std::make_unique<juce::Image>(image);
+        {
+            auto imagePtr = std::make_shared<juce::Image>(image);
+            imageCache[url] = imagePtr;  // 캐시에 저장
+            return imagePtr;
+        }
     }
     else
     {

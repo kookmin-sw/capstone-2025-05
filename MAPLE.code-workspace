@@ -100,9 +100,9 @@
 		},
 		"C_Cpp.default.includePath": [
 			"${workspaceFolder}/JuceLibraryCode",
-			"${workspaceFolder}/Source",
 			"${workspaceFolder}/JUCE/modules",
-			"${workspaceFolder}"
+			"${workspaceFolder}/Source",
+			"${workspaceFolder}/Resources"
 		],
 		"C_Cpp.default.defines": [
 			"_DEBUG",
@@ -119,8 +119,9 @@
 		"C_Cpp.intelliSenseEngine": "default",
 		"C_Cpp.default.browse.path": [
 			"${workspaceFolder}/JuceLibraryCode",
+			"${workspaceFolder}/JUCE/modules",
 			"${workspaceFolder}/Source",
-			"${workspaceFolder}/JUCE/modules"
+			"${workspaceFolder}/Resources"
 		]
 	}
 }

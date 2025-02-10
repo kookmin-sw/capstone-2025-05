@@ -255,32 +255,25 @@ void HomePage::searchAlbums(const juce::String& query)
 
 void HomePage::loadAlbumCover(int index)
 {
-    if (index >= albums.size()) return;
-    
-    std::thread([this, index]() {
-        if (!albums[index].coverUrl.isEmpty())
+    if (index >= 0 && index < albums.size())
+    {
+        auto& album = albums[index];
+        if (!album.coverUrl.isEmpty() && !album.coverImage)
         {
-            juce::Thread::sleep(index * 20);
-            
-            auto coverImage = SpotifyService::loadAlbumCover(albums[index].coverUrl);
-            
-            if (coverImage != nullptr)
+            auto coverImage = SpotifyService::loadAlbumCover(album.coverUrl);
+            if (coverImage)
             {
                 auto* comp = this;
-                auto* img = coverImage.release();
-                
-                juce::MessageManager::callAsync([comp, index, img]() {
-                    std::unique_ptr<juce::Image> image(img);
+                juce::MessageManager::callAsync([comp, index, coverImage]() {
                     if (index < comp->albums.size())
                     {
-                        comp->albums[index].coverImage = std::move(image);
-                        comp->albums[index].alpha = 0.0f;
-                        comp->albumContainer->repaint();
+                        comp->albums[index].coverImage = coverImage;
+                        comp->repaint();
                     }
                 });
             }
         }
-    }).detach();
+    }
 }
 
 void HomePage::paintAlbumContainer(juce::Graphics& g)
@@ -342,4 +335,60 @@ void HomePage::scrollAlbums(bool scrollRight)
                                 targetPosition);
     
     albumViewport->setViewPosition(targetPosition, albumViewport->getViewPositionY());
+}
+
+void HomePage::drawAlbumCover(juce::Graphics& g, const SpotifyService::Album& album, int x, int y)
+{
+    if (album.coverImage)
+    {
+        // 이미지 크기 계산
+        const int imageSize = 200;
+        const int margin = 10;
+        
+        // 이미지 그리기
+        g.setOpacity(album.alpha);
+        g.drawImage(*album.coverImage,
+                   x + margin, y + margin,
+                   imageSize - (margin * 2), imageSize - (margin * 2),
+                   0, 0,
+                   album.coverImage->getWidth(),
+                   album.coverImage->getHeight(),
+                   false);
+
+        // 텍스트 영역
+        auto textBounds = juce::Rectangle<int>(x, y + imageSize - 60, imageSize, 50);
+        
+        // 반투명 배경
+        g.setColour(juce::Colours::black.withAlpha(0.7f));
+        g.fillRect(textBounds);
+
+        // 텍스트 그리기
+        g.setColour(juce::Colours::white.withAlpha(album.alpha));
+        g.setFont(MapleTypography::getMontserratMedium(14.0f));
+        g.drawFittedText(album.name,
+                        textBounds.reduced(5, 5),
+                        juce::Justification::centredTop,
+                        2);
+        
+        g.setFont(MapleTypography::getMontserratMedium(12.0f));
+        g.drawFittedText(album.artist,
+                        textBounds.reduced(5, 25),
+                        juce::Justification::centredTop,
+                        1);
+    }
+}
+
+void HomePage::loadAlbumCovers()
+{
+    for (auto& album : albums)
+    {
+        if (!album.coverUrl.isEmpty() && !album.coverImage)
+        {
+            album.coverImage = SpotifyService::loadAlbumCover(album.coverUrl);
+            if (album.coverImage)
+            {
+                repaint();
+            }
+        }
+    }
 }
