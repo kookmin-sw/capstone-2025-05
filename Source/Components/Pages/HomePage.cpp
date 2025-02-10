@@ -2,6 +2,7 @@
 #include "../../UI/Styles/MapleColours.h"
 #include "../../UI/Styles/MapleTypography.h"
 #include "../../Services/SpotifyService.h"
+#include "../../Components/Dialogs/ProjectCreateDialog.h"
 
 HomePage::HomePage()
 {
@@ -57,6 +58,27 @@ HomePage::HomePage()
         newPosition = juce::jmin(newPosition, 
                                albumContainer->getWidth() - albumViewport->getWidth());
         scrollAnimator->startScrolling(newPosition);
+    });
+
+    createProjectBtn->setOnClick([this]() {
+        auto* dialog = new juce::AlertWindow("New Project", 
+                                           "Create a new project",
+                                           juce::AlertWindow::NoIcon);
+        
+        dialog->addTextEditor("projectName", "Untitled Project", "Project Name:");
+        dialog->addComboBox("mode", {"Song Practice", "Scale Practice", "Chromatic Practice"}, "Practice Mode:");
+        
+        dialog->addButton("Create", 1, juce::KeyPress(juce::KeyPress::returnKey));
+        dialog->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
+        
+        dialog->enterModalState(true, juce::ModalCallbackFunction::create(
+            [this](int result) {
+                if (result == 1)  // Create button clicked
+                {
+                    // TODO: Handle project creation
+                    DBG("Project creation confirmed");
+                }
+            }));
     });
 }
 
