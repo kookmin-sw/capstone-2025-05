@@ -25,12 +25,18 @@ SidebarComponent::~SidebarComponent()
 }
 
 void SidebarComponent::createMenuItem(std::vector<MenuItem> &items, const char *iconData, size_t iconSize,
-                                      const juce::String &text, std::function<void()> onClick)
+                                      const juce::String &text, std::function<void()> /*onClick*/)
 {
     MenuItem item;
     item.icon = juce::Drawable::createFromImageData(iconData, iconSize);
     item.text = text;
-    item.onClick = onClick;
+    item.onClick = [this, text]() {
+        // MessageManager를 통해 콜백 실행
+        juce::MessageManager::callAsync([this, text]() {
+            if (onMenuItemClick)
+                onMenuItemClick(text);
+        });
+    };
     items.push_back(std::move(item));
 }
 
@@ -117,7 +123,7 @@ void SidebarComponent::mouseMove(const juce::MouseEvent &event)
 
     // 상단 메뉴 아이템 검사
     auto itemBounds = bounds;
-    for (int i = 0; i < menuItems.size(); ++i)
+    for (int i = 0; i < static_cast<int>(menuItems.size()); ++i)
     {
         if (itemBounds.removeFromTop(itemHeight).contains(event.getPosition()))
         {
@@ -133,7 +139,7 @@ void SidebarComponent::mouseMove(const juce::MouseEvent &event)
 
     // 하단 메뉴 아이템 검사
     itemBounds = bounds.withY(bounds.getHeight() - (bottomMenuItems.size() * (itemHeight + spacing)));
-    for (int i = 0; i < bottomMenuItems.size(); ++i)
+    for (int i = 0; i < static_cast<int>(bottomMenuItems.size()); ++i)
     {
         if (itemBounds.removeFromTop(itemHeight).contains(event.getPosition()))
         {
@@ -167,12 +173,14 @@ void SidebarComponent::mouseExit(const juce::MouseEvent &)
 void SidebarComponent::timerCallback()
 {
     bool needsRepaint = false;
-    const float animationSpeed = 0.2f; // 애니메이션 속도 조절
+    const float animationSpeed = 0.2f;
 
     // 상단 메뉴 아이템 애니메이션
     for (size_t i = 0; i < menuItems.size(); ++i)
     {
-        float targetAlpha = (i == hoveredIndex) ? 1.0f : 0.0f;
+        if (i >= menuItems.size()) continue;  // 안전 검사 추가
+        
+        float targetAlpha = (static_cast<int>(i) == hoveredIndex) ? 1.0f : 0.0f;
         float &currentAlpha = menuItems[i].alpha;
 
         if (currentAlpha != targetAlpha)
@@ -187,7 +195,9 @@ void SidebarComponent::timerCallback()
     // 하단 메뉴 아이템 애니메이션
     for (size_t i = 0; i < bottomMenuItems.size(); ++i)
     {
-        float targetAlpha = (i == hoveredBottomIndex) ? 1.0f : 0.0f;
+        if (i >= bottomMenuItems.size()) continue;  // 안전 검사 추가
+        
+        float targetAlpha = (static_cast<int>(i) == hoveredBottomIndex) ? 1.0f : 0.0f;
         float &currentAlpha = bottomMenuItems[i].alpha;
 
         if (currentAlpha != targetAlpha)
@@ -201,4 +211,53 @@ void SidebarComponent::timerCallback()
 
     if (needsRepaint)
         repaint();
+}
+
+void SidebarComponent::mouseUp(const juce::MouseEvent& event)
+{
+    // 마우스가 컴포넌트 안에 있는지 확인
+    if (!getLocalBounds().contains(event.getPosition()))
+        return;
+
+    auto bounds = getLocalBounds().reduced(10, 20);
+    const int itemHeight = 50;
+    const int spacing = 15;
+
+    // 상단 메뉴 아이템 검사
+    auto itemBounds = bounds;
+    for (size_t i = 0; i < menuItems.size(); ++i)
+    {
+        if (itemBounds.removeFromTop(itemHeight).contains(event.getPosition()))
+        {
+            if (i < menuItems.size() && menuItems[i].onClick)
+            {
+                // MessageManager를 통해 콜백 실행
+                juce::MessageManager::callAsync([this, i]() {
+                    if (i < menuItems.size() && menuItems[i].onClick)
+                        menuItems[i].onClick();
+                });
+            }
+            return;
+        }
+        itemBounds.removeFromTop(spacing);
+    }
+
+    // 하단 메뉴 아이템 검사
+    itemBounds = bounds.withY(bounds.getHeight() - (bottomMenuItems.size() * (itemHeight + spacing)));
+    for (size_t i = 0; i < bottomMenuItems.size(); ++i)
+    {
+        if (itemBounds.removeFromTop(itemHeight).contains(event.getPosition()))
+        {
+            if (i < bottomMenuItems.size() && bottomMenuItems[i].onClick)
+            {
+                // MessageManager를 통해 콜백 실행
+                juce::MessageManager::callAsync([this, i]() {
+                    if (i < bottomMenuItems.size() && bottomMenuItems[i].onClick)
+                        bottomMenuItems[i].onClick();
+                });
+            }
+            return;
+        }
+        itemBounds.removeFromTop(spacing);
+    }
 }

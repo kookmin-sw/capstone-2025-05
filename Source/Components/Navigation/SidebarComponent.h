@@ -15,7 +15,11 @@ public:
     // 마우스 이벤트 처리를 위한 함수들 추가
     void mouseMove(const juce::MouseEvent &event) override;
     void mouseExit(const juce::MouseEvent &event) override;
+    void mouseUp(const juce::MouseEvent &event) override;  // mouseUp 추가
     void timerCallback() override; // Timer 콜백 추가
+
+    // 메뉴 클릭 콜백 함수 타입 정의
+    std::function<void(const juce::String&)> onMenuItemClick;
 
 private:
     struct MenuItem
@@ -35,6 +39,8 @@ private:
 
     int hoveredIndex = -1;
     int hoveredBottomIndex = -1;
+
+    void handleMenuItemClick(const MenuItem& item);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SidebarComponent)
 };

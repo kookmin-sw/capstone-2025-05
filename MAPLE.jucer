@@ -47,9 +47,17 @@
                 file="Source/Components/Navigation/SidebarComponent.h"/>
         </GROUP>
         <GROUP id="Pages" name="Pages">
+          <FILE id="gdorix" name="CoursesPage.cpp" compile="1" resource="0" file="Source/Components/Pages/CoursesPage.cpp"/>
+          <FILE id="LPUaRx" name="CoursesPage.h" compile="0" resource="0" file="Source/Components/Pages/CoursesPage.h"/>
+          <FILE id="Zq3smd" name="ExplorePage.cpp" compile="1" resource="0" file="Source/Components/Pages/ExplorePage.cpp"/>
+          <FILE id="MScfwp" name="ExplorePage.h" compile="0" resource="0" file="Source/Components/Pages/ExplorePage.h"/>
           <FILE id="HomePage" name="HomePage.cpp" compile="1" resource="0" file="Source/Components/Pages/HomePage.cpp"/>
           <FILE id="HomePage" name="HomePage.h" compile="0" resource="0" file="Source/Components/Pages/HomePage.h"/>
+          <FILE id="Rbi9av" name="LibraryPage.cpp" compile="1" resource="0" file="Source/Components/Pages/LibraryPage.cpp"/>
+          <FILE id="mI9GH1" name="LibraryPage.h" compile="0" resource="0" file="Source/Components/Pages/LibraryPage.h"/>
           <FILE id="Page" name="Page.h" compile="0" resource="0" file="Source/Components/Pages/Page.h"/>
+          <FILE id="tePYsf" name="UploadPage.cpp" compile="1" resource="0" file="Source/Components/Pages/UploadPage.cpp"/>
+          <FILE id="HKNhLG" name="UploadPage.h" compile="0" resource="0" file="Source/Components/Pages/UploadPage.h"/>
         </GROUP>
       </GROUP>
       <GROUP id="UI" name="UI">
