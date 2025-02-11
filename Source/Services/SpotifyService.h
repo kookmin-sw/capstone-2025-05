@@ -45,6 +45,31 @@ public:
     static void searchAlbumsAsync(const juce::String& query, 
                                 std::function<void(juce::Array<Album>)> callback);
 
+    // 캐시 관련 함수 추가
+    static void preloadData(std::function<void()> onComplete);
+    static std::shared_ptr<juce::Image> getCachedImage(const juce::String& url);
+    static const juce::Array<Album>& getCachedAlbums() { return cachedAlbums; }
+
+    // 리소스 정리 함수 추가
+    static void cleanup()
+    {
+        // 이미지 캐시 정리
+        // for (auto& pair : imageCache)
+        // {
+        //     pair.second.reset();
+        // }
+        imageCache.clear();
+        
+        // // 앨범 데이터 정리
+        // for (auto& album : cachedAlbums)
+        // {
+        //     album.coverImage.reset();
+        // }
+        // cachedAlbums.clear();
+        
+        isPreloaded = false;
+    }
+
 private:
     // 토큰 관리 - 내부용 동기/비동기 모두 제공
     static juce::String getAccessToken();
@@ -56,4 +81,8 @@ private:
     
     // 내부용 이미지 로딩 함수
     static std::shared_ptr<juce::Image> loadAlbumCoverInternal(const juce::String& url);
+    
+    static std::unordered_map<juce::String, std::shared_ptr<juce::Image>> imageCache;
+    static juce::Array<Album> cachedAlbums;
+    static bool isPreloaded;
 }; 

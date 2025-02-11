@@ -248,17 +248,20 @@ void HomePage::updateFadeAnimation()
 
 void HomePage::searchAlbums(const juce::String& query)
 {
-    DBG("Searching albums for query: " + query);
+    DBG("Loading albums from cache");
     
-    SpotifyService::searchAlbumsAsync(query, [this](juce::Array<SpotifyService::Album> results) {
-        DBG("Found " + juce::String(results.size()) + " albums");
-        
-        albums.clear();
-        albums.reserve(results.size());
-        for (auto& album : results) {
-            albums.push_back(std::move(album));
-        }
-        
+    // 캐시된 앨범 데이터 사용
+    auto& cachedAlbums = SpotifyService::getCachedAlbums();
+    
+    albums.clear();
+    albums.reserve(cachedAlbums.size());
+    for (auto& album : cachedAlbums) {
+        albums.push_back(album);
+    }
+    
+    // viewport가 초기화된 경우에만 크기 업데이트
+    if (albumViewport != nullptr)
+    {
         // 컨테이너 크기 업데이트
         const int albumSize = 200;
         const int spacing = 20;
@@ -266,31 +269,21 @@ void HomePage::searchAlbums(const juce::String& query)
         albumContainer->setBounds(0, 0, totalWidth, albumViewport->getHeight());
         
         albumContainer->repaint();  // 컨테이너 다시 그리기
-        
-        for (int i = 0; i < albums.size(); ++i) {
-            loadAlbumCover(i);
+    }
+    
+    // 이미지는 캐시에서 로드
+    for (int i = 0; i < albums.size(); ++i) {
+        if (auto cachedImage = SpotifyService::getCachedImage(albums[i].coverUrl)) {
+            albums[i].coverImage = cachedImage;
+            albums[i].alpha = 1.0f;  // 이미 로드된 이미지는 바로 표시
         }
-    });
+    }
 }
 
 void HomePage::loadAlbumCover(int index)
 {
-    if (index >= albums.size()) return;
-    
-    if (!albums[index].coverUrl.isEmpty())
-    {
-        juce::Timer::callAfterDelay(index * 20, [this, index]() {
-            SpotifyService::loadAlbumCoverAsync(albums[index].coverUrl, 
-                [this, index](std::shared_ptr<juce::Image> image) {
-                    if (index < albums.size())
-                    {
-                        albums[index].coverImage = image;
-                        albums[index].alpha = 0.0f;
-                        albumContainer->repaint();
-                    }
-                });
-        });
-    }
+    // 캐시된 이미지를 사용하므로 이 함수는 더 이상 필요하지 않음
+    // 필요한 경우 캐시 미스 처리를 여기서 할 수 있음
 }
 
 void HomePage::paintAlbumContainer(juce::Graphics& g)

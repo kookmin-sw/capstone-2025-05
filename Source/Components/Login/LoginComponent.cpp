@@ -1,5 +1,6 @@
 ﻿#include "LoginComponent.h"
 #include "../../Services/AuthService.h"
+#include "../../Services/SpotifyService.h"
 
 LoginComponent::LoginComponent(std::function<void()> loginCallback)
     : onLoginSuccess(std::move(loginCallback))
@@ -222,7 +223,7 @@ void LoginComponent::handleLoginAttempt()
 
     // UI 업데이트는 현재 스레드(메인 스레드)에서 수행
     loginButton->setEnabled(false);
-    loginButton->setButtonText(juce::String::fromUTF8(u8"Logging in..."));
+    loginButton->setButtonText(juce::String::fromUTF8(u8"Loading..."));
 
     // 네트워크 요청과 응답 처리를 별도 스레드에서 수행
     std::thread([this, username, password]()
@@ -230,19 +231,20 @@ void LoginComponent::handleLoginAttempt()
         AuthService::LoginRequest request{ username, password };
         auto response = AuthService::login(request);
 
-        // UI 업데이트는 다시 메인 스레드에서
-        juce::MessageManager::callAsync([this, response]()
-        {
-            if (response.success)
-            {
-                onLoginSuccess();
-            }
-            else
-            {
-                showErrorMessage(response.message);
+        if (!response.success) {
+            juce::MessageManager::callAsync([this, message = response.message]() {
+                showErrorMessage(message);
                 loginButton->setEnabled(true);
                 loginButton->setButtonText(juce::String::fromUTF8(u8"Log in"));
-            }
+            });
+            return;
+        }
+
+        // 데이터 프리로드
+        SpotifyService::preloadData([this]() {
+            juce::MessageManager::callAsync([this]() {
+                if (onLoginSuccess) onLoginSuccess();
+            });
         });
     }).detach();
 }

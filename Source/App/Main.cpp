@@ -3,6 +3,7 @@
 #include "../Utils/Constants.h"
 #include "../Windows/LoginWindow.h"
 #include "../Config/AppConfig.h"
+#include "../Services/SpotifyService.h"
 
 class MapleApplication : public juce::JUCEApplication
 {
@@ -35,6 +36,9 @@ public:
 
     void shutdown() override
     {
+        // 리소스 정리
+        SpotifyService::cleanup();
+        
         // 윈도우 정리
         mainWindow = nullptr;
         loginWindow = nullptr;

@@ -3,6 +3,11 @@
 
 const juce::String SpotifyService::API_BASE_URL = "https://api.spotify.com/v1";
 
+// 정적 멤버 변수 초기화
+std::unordered_map<juce::String, std::shared_ptr<juce::Image>> SpotifyService::imageCache;
+juce::Array<SpotifyService::Album> SpotifyService::cachedAlbums;
+bool SpotifyService::isPreloaded = false;
+
 juce::String SpotifyService::getAccessToken()
 {
     static juce::String cachedToken;
@@ -137,11 +142,82 @@ std::shared_ptr<juce::Image> SpotifyService::loadAlbumCoverInternal(const juce::
     return nullptr;
 }
 
+void SpotifyService::preloadData(std::function<void()> onComplete)
+{
+    if (isPreloaded)
+    {
+        onComplete();
+        return;
+    }
+
+    searchAlbumsAsync("Younha", [onComplete](juce::Array<Album> albums) {
+        cachedAlbums = std::move(albums);
+        
+        // 공유 카운터를 위한 스마트 포인터
+        auto remainingCounter = std::make_shared<int>(cachedAlbums.size());
+        
+        for (auto& album : cachedAlbums)
+        {
+            if (!album.coverUrl.isEmpty())
+            {
+                // 앨범 참조를 복사로 변경
+                auto coverUrl = album.coverUrl;
+                loadAlbumCoverAsync(coverUrl, 
+                    [remainingCounter, onComplete, coverUrl](std::shared_ptr<juce::Image> image) {
+                        if (image)
+                        {
+                            imageCache[coverUrl] = image;
+                            
+                            // 앨범 객체 업데이트는 여기서 하지 않음
+                            // 대신 HomePage에서 getCachedImage를 통해 이미지를 가져오도록 함
+                        }
+                        
+                        (*remainingCounter)--;
+                        if (*remainingCounter == 0)
+                        {
+                            isPreloaded = true;
+                            onComplete();
+                        }
+                    });
+            }
+            else
+            {
+                (*remainingCounter)--;
+            }
+        }
+        
+        // 모든 이미지가 비어있는 경우를 처리
+        if (*remainingCounter == 0)
+        {
+            isPreloaded = true;
+            onComplete();
+        }
+    });
+}
+
+std::shared_ptr<juce::Image> SpotifyService::getCachedImage(const juce::String& url)
+{
+    auto it = imageCache.find(url);
+    return (it != imageCache.end()) ? it->second : nullptr;
+}
+
 void SpotifyService::loadAlbumCoverAsync(const juce::String& url,
                                        std::function<void(std::shared_ptr<juce::Image>)> callback)
 {
+    // 캐시 확인
+    if (auto cachedImage = getCachedImage(url))
+    {
+        callback(cachedImage);
+        return;
+    }
+
+    // 캐시에 없으면 로드
     std::thread([url, callback]() {
         auto image = loadAlbumCoverInternal(url);
+        if (image)
+        {
+            imageCache[url] = image;  // 캐시에 저장
+        }
         juce::MessageManager::callAsync([callback, image]() {
             callback(image);
         });
