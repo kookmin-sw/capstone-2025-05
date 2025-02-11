@@ -227,60 +227,48 @@ void HomePage::updateFadeAnimation()
 void HomePage::searchAlbums(const juce::String& query)
 {
     DBG("Searching albums for query: " + query);
-    std::thread([this, query]() {
-        auto results = SpotifyService::searchAlbums(query);
+    
+    SpotifyService::searchAlbumsAsync(query, [this](juce::Array<SpotifyService::Album> results) {
         DBG("Found " + juce::String(results.size()) + " albums");
         
-        juce::MessageManager::callAsync([this, results = std::move(results)]() {
-            albums.clear();
-            albums.reserve(results.size());
-            for (auto& album : results) {
-                albums.push_back(std::move(album));
-            }
-            
-            // 컨테이너 크기 업데이트
-            const int albumSize = 200;
-            const int spacing = 20;
-            const int totalWidth = (albumSize + spacing) * albums.size();
-            albumContainer->setBounds(0, 0, totalWidth, albumViewport->getHeight());
-            
-            albumContainer->repaint();  // 컨테이너 다시 그리기
-            
-            for (int i = 0; i < albums.size(); ++i) {
-                loadAlbumCover(i);
-            }
-        });
-    }).detach();
+        albums.clear();
+        albums.reserve(results.size());
+        for (auto& album : results) {
+            albums.push_back(std::move(album));
+        }
+        
+        // 컨테이너 크기 업데이트
+        const int albumSize = 200;
+        const int spacing = 20;
+        const int totalWidth = (albumSize + spacing) * albums.size();
+        albumContainer->setBounds(0, 0, totalWidth, albumViewport->getHeight());
+        
+        albumContainer->repaint();  // 컨테이너 다시 그리기
+        
+        for (int i = 0; i < albums.size(); ++i) {
+            loadAlbumCover(i);
+        }
+    });
 }
 
 void HomePage::loadAlbumCover(int index)
 {
     if (index >= albums.size()) return;
     
-    std::thread([this, index]() {
-        if (!albums[index].coverUrl.isEmpty())
-        {
-            juce::Thread::sleep(index * 20);
-            
-            auto coverImage = SpotifyService::loadAlbumCover(albums[index].coverUrl);
-            
-            if (coverImage != nullptr)
-            {
-                auto* comp = this;
-                auto* img = coverImage.release();
-                
-                juce::MessageManager::callAsync([comp, index, img]() {
-                    std::unique_ptr<juce::Image> image(img);
-                    if (index < comp->albums.size())
+    if (!albums[index].coverUrl.isEmpty())
+    {
+        juce::Timer::callAfterDelay(index * 20, [this, index]() {
+            SpotifyService::loadAlbumCoverAsync(albums[index].coverUrl, 
+                [this, index](std::shared_ptr<juce::Image> image) {
+                    if (index < albums.size())
                     {
-                        comp->albums[index].coverImage = std::move(image);
-                        comp->albums[index].alpha = 0.0f;
-                        comp->albumContainer->repaint();
+                        albums[index].coverImage = image;
+                        albums[index].alpha = 0.0f;
+                        albumContainer->repaint();
                     }
                 });
-            }
-        }
-    }).detach();
+        });
+    }
 }
 
 void HomePage::paintAlbumContainer(juce::Graphics& g)
