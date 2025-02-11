@@ -19,7 +19,7 @@ public:
             , name(other.name)
             , artist(other.artist)
             , coverUrl(other.coverUrl)
-            , coverImage(other.coverImage)
+            , coverImage(other.coverImage ? std::make_shared<juce::Image>(*other.coverImage) : nullptr)
             , alpha(other.alpha)
         {}
 
@@ -29,7 +29,7 @@ public:
             name = other.name;
             artist = other.artist;
             coverUrl = other.coverUrl;
-            coverImage = other.coverImage;
+            coverImage = other.coverImage ? std::make_shared<juce::Image>(*other.coverImage) : nullptr;
             alpha = other.alpha;
             return *this;
         }
@@ -37,16 +37,23 @@ public:
         Album() = default;
     };
 
-    static juce::Array<Album> searchAlbums(const juce::String& query);
-    static std::shared_ptr<juce::Image> loadAlbumCover(const juce::String& url);
+    // 이미지 로딩 - 비동기만 제공
+    static void loadAlbumCoverAsync(const juce::String& url,
+                                  std::function<void(std::shared_ptr<juce::Image>)> callback);
+
+    // 앨범 검색 - 비동기만 제공
+    static void searchAlbumsAsync(const juce::String& query, 
+                                std::function<void(juce::Array<Album>)> callback);
 
 private:
+    // 토큰 관리 - 내부용 동기/비동기 모두 제공
     static juce::String getAccessToken();
+    static void getAccessTokenAsync(std::function<void(juce::String)> callback);
+    
     static juce::String getClientId() { return AppConfig::getConfigValue("SPOTIFY_CLIENT_ID", ""); }
     static juce::String getClientSecret() { return AppConfig::getConfigValue("SPOTIFY_CLIENT_SECRET", ""); }
     static const juce::String API_BASE_URL;
     
-    // 이미지 캐시에 추가로 검색 결과 캐시 추가
-    static std::unordered_map<juce::String, std::shared_ptr<juce::Image>> imageCache;
-    static std::unordered_map<juce::String, juce::Array<Album>> searchCache;
+    // 내부용 이미지 로딩 함수
+    static std::shared_ptr<juce::Image> loadAlbumCoverInternal(const juce::String& url);
 }; 
