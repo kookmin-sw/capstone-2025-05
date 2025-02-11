@@ -3,10 +3,6 @@
 
 const juce::String SpotifyService::API_BASE_URL = "https://api.spotify.com/v1";
 
-// 정적 멤버 변수 초기화
-std::unordered_map<juce::String, std::shared_ptr<juce::Image>> SpotifyService::imageCache;
-std::unordered_map<juce::String, juce::Array<SpotifyService::Album>> SpotifyService::searchCache;
-
 juce::String SpotifyService::getAccessToken()
 {
     static juce::String cachedToken;
@@ -106,14 +102,6 @@ void SpotifyService::searchAlbumsAsync(const juce::String& query,
 
 std::shared_ptr<juce::Image> SpotifyService::loadAlbumCoverInternal(const juce::String& url)
 {
-    // 캐시에서 이미지 찾기
-    auto it = imageCache.find(url);
-    if (it != imageCache.end())
-    {
-        DBG("Using cached image for URL: " + url);
-        return it->second;
-    }
-
     DBG("Loading album cover from URL: " + url);
     juce::URL imageUrl(url);
     

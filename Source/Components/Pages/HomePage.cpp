@@ -394,18 +394,3 @@ void HomePage::drawAlbumCover(juce::Graphics& g, const SpotifyService::Album& al
                         1);
     }
 }
-
-void HomePage::loadAlbumCovers()
-{
-    for (auto& album : albums)
-    {
-        if (!album.coverUrl.isEmpty() && !album.coverImage)
-        {
-            album.coverImage = SpotifyService::loadAlbumCover(album.coverUrl);
-            if (album.coverImage)
-            {
-                repaint();
-            }
-        }
-    }
-}

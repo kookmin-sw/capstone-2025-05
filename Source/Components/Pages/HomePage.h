@@ -26,7 +26,6 @@ private:
     void displayAlbums();
 
     void drawAlbumCover(juce::Graphics& g, const SpotifyService::Album& album, int x, int y);
-    void loadAlbumCovers();
 
     class FadeTimer : public juce::Timer
     {
