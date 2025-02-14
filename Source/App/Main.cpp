@@ -19,19 +19,20 @@ public:
 
         juce::Desktop::getInstance().setDefaultLookAndFeel(&lookAndFeel);  // 기본 스타일 설정
         
-        // 로그인 윈도우 생성
-        loginWindow = new LoginWindow(getApplicationName(), 
-            // 로그인 성공 콜백
-            [this]() {
-                createMainWindow();
-            },
-            // 윈도우 닫힘 콜백
-            [this]() {
-                if (mainWindow == nullptr) {
-                    // 메인 윈도우가 없는 상태에서 로그인 창이 닫히면 앱 종료
-                    systemRequestedQuit();
-                }
-            });
+        // // 로그인 윈도우 생성
+        // loginWindow = new LoginWindow(getApplicationName(), 
+        //     // 로그인 성공 콜백
+        //     [this]() {
+        //         createMainWindow();
+        //     },
+        //     // 윈도우 닫힘 콜백
+        //     [this]() {
+        //         if (mainWindow == nullptr) {
+        //             // 메인 윈도우가 없는 상태에서 로그인 창이 닫히면 앱 종료
+        //             systemRequestedQuit();
+        //         }
+        //     });
+        createMainWindow();
     }
 
     void shutdown() override
