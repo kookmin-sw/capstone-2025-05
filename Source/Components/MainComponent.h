@@ -1,13 +1,8 @@
 ﻿#pragma once
 #include <JuceHeader.h>
-#include "Navigation/SidebarComponent.h"
-#include "Layout/HeaderComponent.h"
-#include "Pages/Page.h"
-#include "Pages/HomePage.h"
-#include "Pages/UploadPage.h"
-#include "Pages/LibraryPage.h"
-#include "Pages/CoursesPage.h"
-#include "Pages/ExplorePage.h"
+#include "Layout/MainLayout.h"
+#include "Layout/ProjectLayout.h"
+#include "../Controllers/ApplicationController.h"
 
 class MainComponent : public juce::Component
 {
@@ -15,17 +10,15 @@ public:
     MainComponent();
     ~MainComponent() override;
 
-    void paint(juce::Graphics& g) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
 
-    // 페이지 전환 함수 추가
-    void switchToPage(const juce::String& pageName);
-
 private:
-    HeaderComponent headerComponent;
-    SidebarComponent sidebarComponent;
-    std::unique_ptr<Page> mainPanel;
-    juce::Component footerComponent;
+    std::unique_ptr<ApplicationController> appController;
+    std::unique_ptr<Component> currentLayout;
+    
+    void switchToMainLayout();
+    void switchToProjectLayout();
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

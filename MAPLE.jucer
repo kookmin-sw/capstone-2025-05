@@ -4,6 +4,16 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" maxBinaryFileSize="20971520">
   <MAINGROUP id="YOUR_GROUP_ID" name="MAPLE">
     <GROUP id="Source" name="Source">
+      <GROUP id="{F6852FF3-551A-DF95-E4C6-4F478A6EC1EE}" name="Models">
+        <FILE id="pKy4y4" name="ApplicationState.h" compile="0" resource="0"
+              file="Source/Models/ApplicationState.h"/>
+      </GROUP>
+      <GROUP id="{9E7F62ED-359E-C26E-34FA-AF2346660C50}" name="Controllers">
+        <FILE id="TXh7X0" name="ApplicationController.cpp" compile="1" resource="0"
+              file="Source/Controllers/ApplicationController.cpp"/>
+        <FILE id="CmsZiP" name="ApplicationController.h" compile="0" resource="0"
+              file="Source/Controllers/ApplicationController.h"/>
+      </GROUP>
       <GROUP id="{326A58F9-1980-6C5A-6328-EC56A8A30AB2}" name="Config">
         <FILE id="WI5hD8" name="AppConfig.h" compile="0" resource="0" file="Source/Config/AppConfig.h"/>
         <FILE id="EAEJjw" name="EnvLoader.h" compile="0" resource="0" file="Source/Config/EnvLoader.h"/>
@@ -31,34 +41,17 @@
                 file="Source/Components/Login/LoginComponent.h"/>
         </GROUP>
         <GROUP id="Layout" name="Layout">
-          <FILE id="HeaderComponent" name="HeaderComponent.cpp" compile="1" resource="0"
-                file="Source/Components/Layout/HeaderComponent.cpp"/>
-          <FILE id="HeaderComponent" name="HeaderComponent.h" compile="0" resource="0"
-                file="Source/Components/Layout/HeaderComponent.h"/>
+          <FILE id="KQywrA" name="MainLayout.cpp" compile="1" resource="0" file="Source/Components/Layout/MainLayout.cpp"/>
+          <FILE id="lFFyex" name="MainLayout.h" compile="0" resource="0" file="Source/Components/Layout/MainLayout.h"/>
+          <FILE id="Pj6m6x" name="ProjectLayout.cpp" compile="1" resource="0"
+                file="Source/Components/Layout/ProjectLayout.cpp"/>
+          <FILE id="B13Xie" name="ProjectLayout.h" compile="0" resource="0" file="Source/Components/Layout/ProjectLayout.h"/>
         </GROUP>
         <FILE id="MainComponent" name="MainComponent.cpp" compile="1" resource="0"
               file="Source/Components/MainComponent.cpp"/>
         <FILE id="MainComponent" name="MainComponent.h" compile="0" resource="0"
               file="Source/Components/MainComponent.h"/>
-        <GROUP id="Navigation" name="Navigation">
-          <FILE id="SidebarComponent" name="SidebarComponent.cpp" compile="1"
-                resource="0" file="Source/Components/Navigation/SidebarComponent.cpp"/>
-          <FILE id="SidebarComponent" name="SidebarComponent.h" compile="0" resource="0"
-                file="Source/Components/Navigation/SidebarComponent.h"/>
-        </GROUP>
-        <GROUP id="Pages" name="Pages">
-          <FILE id="gdorix" name="CoursesPage.cpp" compile="1" resource="0" file="Source/Components/Pages/CoursesPage.cpp"/>
-          <FILE id="LPUaRx" name="CoursesPage.h" compile="0" resource="0" file="Source/Components/Pages/CoursesPage.h"/>
-          <FILE id="Zq3smd" name="ExplorePage.cpp" compile="1" resource="0" file="Source/Components/Pages/ExplorePage.cpp"/>
-          <FILE id="MScfwp" name="ExplorePage.h" compile="0" resource="0" file="Source/Components/Pages/ExplorePage.h"/>
-          <FILE id="HomePage" name="HomePage.cpp" compile="1" resource="0" file="Source/Components/Pages/HomePage.cpp"/>
-          <FILE id="HomePage" name="HomePage.h" compile="0" resource="0" file="Source/Components/Pages/HomePage.h"/>
-          <FILE id="Rbi9av" name="LibraryPage.cpp" compile="1" resource="0" file="Source/Components/Pages/LibraryPage.cpp"/>
-          <FILE id="mI9GH1" name="LibraryPage.h" compile="0" resource="0" file="Source/Components/Pages/LibraryPage.h"/>
-          <FILE id="Page" name="Page.h" compile="0" resource="0" file="Source/Components/Pages/Page.h"/>
-          <FILE id="tePYsf" name="UploadPage.cpp" compile="1" resource="0" file="Source/Components/Pages/UploadPage.cpp"/>
-          <FILE id="HKNhLG" name="UploadPage.h" compile="0" resource="0" file="Source/Components/Pages/UploadPage.h"/>
-        </GROUP>
+        <GROUP id="Navigation" name="Navigation"/>
       </GROUP>
       <GROUP id="UI" name="UI">
         <GROUP id="Common" name="Common">
@@ -89,6 +82,9 @@
           <FILE id="MapleTypography" name="MapleTypography.h" compile="0" resource="0"
                 file="Source/UI/Styles/MapleTypography.h"/>
         </GROUP>
+        <FILE id="ED7mt9" name="LeftSidebar.h" compile="0" resource="0" file="Source/UI/LeftSidebar.h"/>
+        <FILE id="cFf5l7" name="MainPanel.h" compile="0" resource="0" file="Source/UI/MainPanel.h"/>
+        <FILE id="kR5HCl" name="RightSidebar.h" compile="0" resource="0" file="Source/UI/RightSidebar.h"/>
       </GROUP>
       <GROUP id="Utils" name="Utils">
         <FILE id="Constants" name="Constants.h" compile="0" resource="0" file="Source/Utils/Constants.h"/>
