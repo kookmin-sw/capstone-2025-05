@@ -43,31 +43,6 @@ void MainComponent::paint(juce::Graphics& g)
     g.fillAll(MapleColours::currentTheme.background);
 }
 
-void MainComponent::resized()
-{
-    const int margin = 10;
-    auto bounds = getLocalBounds().reduced(margin);
-
-    // 헤더 영역 설정 (상단)
-    headerComponent.setBounds(bounds.removeFromTop(Constants::HEADER_HEIGHT));
-    bounds.removeFromTop(margin); // 헤더와 메인 영역 사이 여백
-
-    // 푸터 영역 설정 (하단)
-    auto footerBounds = bounds.removeFromBottom(Constants::FOOTER_HEIGHT);
-    bounds.removeFromBottom(margin); // 메인 영역과 푸터 사이 여백
-    footerComponent.setBounds(footerBounds);
-
-    // 남은 공간을 메인 영역으로 사용
-    auto mainArea = bounds;
-
-    // 사이드바 영역 설정 (좌측)
-    sidebarComponent.setBounds(mainArea.removeFromLeft(Constants::SIDEBAR_WIDTH));
-    mainArea.removeFromLeft(margin); // 사이드바와 메인 패널 사이 여백
-
-    // 메인 패널 영역 설정 (우측)
-    mainPanel->setBounds(mainArea);
-}
-
 void MainComponent::switchToPage(const juce::String& pageName)
 {
     // 새 페이지를 먼저 생성
@@ -117,4 +92,70 @@ void MainComponent::switchToPage(const juce::String& pageName)
             resized();
         }
     });
+}
+
+void MainComponent::setMode(Mode newMode)
+{
+    if (currentMode == newMode)
+        return;
+
+    currentMode = newMode;
+
+    if (currentMode == Mode::Project)
+    {
+        sidebarComponent.setVisible(false);
+        headerComponent.setVisible(false);
+        mainPanel.reset();
+        headerComponent.setProjectMode(true);
+        
+        projectModeComponent = std::make_unique<ProjectModeComponent>();
+        addAndMakeVisible(*projectModeComponent);
+    }
+    else
+    {
+        projectModeComponent.reset();
+        sidebarComponent.setVisible(true);
+        headerComponent.setVisible(true);
+        headerComponent.setProjectMode(false);
+        mainPanel = std::make_unique<HomePage>();
+        addAndMakeVisible(*mainPanel);
+    }
+
+    resized();
+}
+
+void MainComponent::resized()
+{
+    auto bounds = getLocalBounds();
+    headerComponent.setBounds(bounds.removeFromTop(60));
+
+    if (currentMode == Mode::Project)
+    {
+        if (projectModeComponent)
+            projectModeComponent->setBounds(bounds);
+    }
+    else
+    {
+        const int margin = 10;
+        auto bounds = getLocalBounds().reduced(margin);
+
+        // 헤더 영역 설정 (상단)
+        headerComponent.setBounds(bounds.removeFromTop(Constants::HEADER_HEIGHT));
+        bounds.removeFromTop(margin); // 헤더와 메인 영역 사이 여백
+
+        // 푸터 영역 설정 (하단)
+        auto footerBounds = bounds.removeFromBottom(Constants::FOOTER_HEIGHT);
+        bounds.removeFromBottom(margin); // 메인 영역과 푸터 사이 여백
+        footerComponent.setBounds(footerBounds);
+
+        // 남은 공간을 메인 영역으로 사용
+        auto mainArea = bounds;
+
+        // 사이드바 영역 설정 (좌측)
+        sidebarComponent.setBounds(mainArea.removeFromLeft(Constants::SIDEBAR_WIDTH));
+        mainArea.removeFromLeft(margin); // 사이드바와 메인 패널 사이 여백
+
+        // 메인 패널 영역 설정 (우측)
+        mainPanel->setBounds(mainArea);
+    }
 }

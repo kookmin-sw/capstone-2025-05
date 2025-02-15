@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <JuceHeader.h>
 #include "../Styles/MapleColours.h"
+#include "../../Components/MainComponent.h"
 
 class ProjectCreateDialog : public juce::DialogWindow
 {
@@ -20,11 +21,17 @@ public:
         setVisible(false);
     }
 
-    static void show()
+    static void show(MainComponent& mainComponent)
     {
         DialogWindow::LaunchOptions options;
         options.dialogTitle = juce::CharPointer_UTF8(u8"새 프로젝트 만들기");
-        options.content.setOwned(new ProjectCreateComponent());
+        auto* content = new ProjectCreateComponent();
+        
+        content->onModeSelected = [&mainComponent]() {
+            mainComponent.setMode(MainComponent::Mode::Project);
+        };
+        
+        options.content.setOwned(content);
         options.componentToCentreAround = nullptr;
         options.dialogBackgroundColour = MapleColours::currentTheme.panel;
         options.escapeKeyTriggersCloseButton = true;
@@ -32,7 +39,7 @@ public:
         options.resizable = false;
 
         // 다이얼로그 크기 지정
-        options.content->setSize(800, 400);
+        content->setSize(800, 400);
 
         options.launchAsync();
     }
@@ -68,6 +75,8 @@ private:
             g.fillAll(MapleColours::currentTheme.panel);
         }
 
+        std::function<void()> onModeSelected;
+
     private:
         class ProjectCard : public juce::Component
         {
@@ -76,6 +85,14 @@ private:
                 : titleText(title), descriptionText(description)
             {
                 setMouseCursor(juce::MouseCursor::PointingHandCursor);
+            }
+
+            std::function<void()> onClick;
+
+            void mouseUp(const juce::MouseEvent&) override
+            {
+                if (onClick)
+                    onClick();
             }
 
             void paint(juce::Graphics& g) override
@@ -122,6 +139,14 @@ private:
                 juce::CharPointer_UTF8(u8"시작하기"),
                 juce::CharPointer_UTF8(u8"커버하고 싶은 곡을 선택하여 연습을 시작하세요.")
             );
+            
+            readyToPlayCard->onClick = [this]() {
+                if (onModeSelected)
+                    onModeSelected();
+                
+                if (auto* dlg = findParentComponentOfClass<DialogWindow>())
+                    dlg->exitModalState(1);
+            };
 
             practiceScaleCard = std::make_unique<ProjectCard>(
                 juce::CharPointer_UTF8(u8"스케일 연습 모드"),

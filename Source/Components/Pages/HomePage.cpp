@@ -3,6 +3,7 @@
 #include "../../UI/Styles/MapleTypography.h"
 #include "../../Services/SpotifyService.h"
 #include "../../UI/Dialogs/ProjectCreateDialog.h"
+#include "../../Components/MainComponent.h"
 
 HomePage::HomePage()
 {
@@ -61,7 +62,10 @@ HomePage::HomePage()
     });
 
     createProjectBtn->setOnClick([this](){
-        ProjectCreateDialog::show();
+        if (auto* mainComp = findParentComponentOfClass<MainComponent>())
+        {
+            ProjectCreateDialog::show(*mainComp);
+        }
     });
 }
 

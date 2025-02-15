@@ -12,7 +12,14 @@ public:
     void paint(juce::Graphics &g) override;
     void resized() override;
 
+    void setProjectMode(bool isProjectMode)
+    {
+        projectMode = isProjectMode;
+        repaint();
+    }
+
 private:
+    bool projectMode = false;
     // 로고 이미지
     std::unique_ptr<juce::Drawable> logoDrawable;
 
