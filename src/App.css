@@ -2,5 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  background-color: #F0EDE6;
+}
+
 .App {
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  overflow-y: auto;
+  position: relative;
+  word-break: keep-all;
 }
