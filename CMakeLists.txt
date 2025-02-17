@@ -60,7 +60,12 @@ juce_generate_juce_header(MAPLE)
 target_sources(MAPLE
     PRIVATE
         Source/Main.cpp
-        Source/MainComponent.cpp)
+        Source/MainComponent.cpp
+        Source/HeaderComponent.cpp
+        Source/MainActionComponent.cpp
+        Source/ContentPanelComponent.cpp
+        Source/BottomComponent.cpp
+)
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
