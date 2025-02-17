@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"C_Cpp.default.cppStandard": "c++17",
+		"C_Cpp.default.includePath": [
+			"${workspaceFolder}/**",
+			"${workspaceFolder}/JUCE/modules"
+		]
+	}
+}
