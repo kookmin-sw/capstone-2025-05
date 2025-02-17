@@ -1,10 +1,14 @@
 #include "MainActionComponent.h"
+#include "NewProjectDialog.h"
 
 MainActionComponent::MainActionComponent()
 {
     startButton.setButtonText(juce::String::fromUTF8("프로젝트(연주) 시작 +"));
     startButton.setColour(juce::TextButton::buttonColourId, juce::Colours::green);
     addAndMakeVisible(startButton);
+    startButton.onClick = [this]() {
+        NewProjectDialog::show();
+    };
 
     subtitle.setText(juce::String::fromUTF8("새 프로젝트 생성 / 새 연습 세션 시작"), 
                     juce::dontSendNotification);

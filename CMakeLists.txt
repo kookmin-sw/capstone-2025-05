@@ -65,6 +65,7 @@ target_sources(MAPLE
         Source/MainActionComponent.cpp
         Source/ContentPanelComponent.cpp
         Source/BottomComponent.cpp
+        Source/NewProjectDialog.cpp
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
