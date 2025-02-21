@@ -1,10 +1,15 @@
 #include "MainComponent.h"
+#include "HeaderComponent.h"
+#include "MainActionComponent.h"
+#include "ContentPanelComponent.h"
+#include "BottomComponent.h"
+#include "PracticeSongComponent.h"
 
 MainComponent::MainComponent()
 {
     // 컴포넌트들 초기화
     headerComponent = std::make_unique<HeaderComponent>();
-    mainActionComponent = std::make_unique<MainActionComponent>();
+    mainActionComponent = std::make_unique<MainActionComponent>(*this);
     contentPanelComponent = std::make_unique<ContentPanelComponent>();
     bottomComponent = std::make_unique<BottomComponent>();
 
@@ -29,15 +34,45 @@ void MainComponent::resized()
 {
     auto bounds = getLocalBounds();
     
-    // 헤더 영역 (상단 15% 차지)
-    headerComponent->setBounds(bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.15)));
+    if (practiceSongComponent && practiceSongComponent->isVisible())
+    {
+        // 연습 화면이 표시 중일 때
+        practiceSongComponent->setBounds(bounds);
+    }
+    else
+    {
+        // 메인 화면이 표시 중일 때
+        headerComponent->setBounds(bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.15)));
+        mainActionComponent->setBounds(bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.15)));
+        bottomComponent->setBounds(bounds.removeFromBottom(static_cast<int>(bounds.getHeight() * 0.3)));
+        contentPanelComponent->setBounds(bounds);
+    }
+}
+
+void MainComponent::showMainScreen()
+{
+    headerComponent->setVisible(true);
+    mainActionComponent->setVisible(true);
+    contentPanelComponent->setVisible(true);
+    bottomComponent->setVisible(true);
     
-    // 메인 액션 영역 (다음 15% 차지)
-    mainActionComponent->setBounds(bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.15)));
+    if (practiceSongComponent)
+        practiceSongComponent->setVisible(false);
+        
+    resized();
+}
+
+void MainComponent::showPracticeScreen()
+{
+    headerComponent->setVisible(false);
+    mainActionComponent->setVisible(false);
+    contentPanelComponent->setVisible(false);
+    bottomComponent->setVisible(false);
     
-    // 하단 영역 (하단 30% 차지)
-    bottomComponent->setBounds(bounds.removeFromBottom(static_cast<int>(bounds.getHeight() * 0.3)));
-    
-    // 콘텐츠 패널 영역 (나머지 공간)
-    contentPanelComponent->setBounds(bounds);
+    if (!practiceSongComponent)
+        practiceSongComponent = std::make_unique<PracticeSongComponent>();
+        
+    addAndMakeVisible(practiceSongComponent.get());
+    practiceSongComponent->setVisible(true);
+    resized();
 }

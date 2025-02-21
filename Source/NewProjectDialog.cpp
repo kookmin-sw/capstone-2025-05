@@ -1,10 +1,10 @@
 #include "NewProjectDialog.h"
+#include "MainComponent.h"
 
-NewProjectDialog::NewProjectDialog() 
+NewProjectDialog::NewProjectDialog(MainComponent& mainComp)
     : DialogWindow(juce::String::fromUTF8("새 프로젝트 생성"), 
-                  juce::Colours::white, 
-                  true, 
-                  true)
+                  juce::Colours::white, true, true),
+      mainComponent(mainComp)
 {
     setContentOwned(new Content(), true);
     centreWithSize(400, 500);
@@ -49,9 +49,8 @@ NewProjectDialog::Content::Content()
     timeSignatureCombo.addItem("6/8", 3);
     timeSignatureCombo.setSelectedId(1);
     
-    audioInterfaceLabel.setText(juce::String::fromUTF8("오디오 인터페이스"), juce::dontSendNotification);
-    audioInterfaceCombo.addItem("Default", 1);
-    // TODO: 실제 오디오 인터페이스 목록 추가
+    audioInterfaceLabel.setText(juce::String::fromUTF8("음성 입력 장치"), juce::dontSendNotification);
+    refreshAudioDeviceList();  // 오디오 장치 목록 초기화
 
     addAndMakeVisible(advancedSettingsGroup);
     addAndMakeVisible(bpmLabel);
@@ -84,17 +83,16 @@ void NewProjectDialog::Content::buttonClicked(juce::Button* button)
 {
     if (button == &cancelButton || button == &createButton)
     {
-        // 부모 다이얼로그 찾아서 종료
         if (auto* dialog = findParentComponentOfClass<NewProjectDialog>())
         {
             if (button == &createButton)
             {
-                // TODO: 프로젝트 생성 로직 구현
-                DBG("Create project");
+                // 프로젝트 생성 및 화면 전환
+                dialog->mainComponent.showPracticeScreen();
             }
             
             dialog->exitModalState(button == &createButton ? 1 : 0);
-            delete dialog;  // 다이얼로그 삭제
+            delete dialog;
         }
     }
 }
@@ -112,7 +110,7 @@ void NewProjectDialog::Content::resized()
     bounds.removeFromTop(spacing);
 
     // 연습 모드
-    practiceTypeGroup.setBounds(bounds.removeFromTop(120));
+    practiceTypeGroup.setBounds(bounds.removeFromTop(140));
     auto practiceTypeBounds = practiceTypeGroup.getBounds().reduced(10, 25);
     songPracticeButton.setBounds(practiceTypeBounds.removeFromTop(30));
     chromaticPracticeButton.setBounds(practiceTypeBounds.removeFromTop(30));
@@ -150,11 +148,20 @@ void NewProjectDialog::Content::paint(juce::Graphics& g)
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 }
 
-void NewProjectDialog::show()
+void NewProjectDialog::Content::refreshAudioDeviceList()
 {
-    NewProjectDialog* dialog = new NewProjectDialog();
+    audioInterfaceCombo.clear();
+    
+    int itemId = 1;
+    
+    if (audioInterfaceCombo.getNumItems() > 0)
+        audioInterfaceCombo.setSelectedId(1);
+}
+
+void NewProjectDialog::show(MainComponent& mainComp)
+{
+    NewProjectDialog* dialog = new NewProjectDialog(mainComp);
     dialog->enterModalState(true);
-    // 여기서 delete하지 않음 - buttonClicked에서 처리
 }
 
 void NewProjectDialog::closeButtonPressed()

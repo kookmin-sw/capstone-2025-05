@@ -1,4 +1,5 @@
 #include "HeaderComponent.h"
+#include "AudioSettingsDialog.h"
 
 HeaderComponent::HeaderComponent()
 {
@@ -21,6 +22,12 @@ HeaderComponent::HeaderComponent()
     // 우측 버튼들
     profileButton.setButtonText(juce::String::fromUTF8("Profile"));
     settingsButton.setButtonText(juce::String::fromUTF8("⚙Settings"));
+
+    settingsButton.onClick = [this]()
+    {
+        AudioSettingsDialog::show();
+    };
+
     addAndMakeVisible(profileButton);
     addAndMakeVisible(settingsButton);
 }

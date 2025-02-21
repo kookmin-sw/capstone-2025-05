@@ -1,14 +1,16 @@
 #pragma once
 #include <JuceHeader.h>
 
+class MainComponent;
+
 class NewProjectDialog : public juce::DialogWindow
 {
 public:
-    NewProjectDialog();
+    NewProjectDialog(MainComponent& mainComp);
     void closeButtonPressed() override;
 
     class Content : public juce::Component,
-                   public juce::Button::Listener  // 버튼 리스너 추가
+                   public juce::Button::Listener
     {
     public:
         Content();
@@ -41,11 +43,14 @@ public:
         juce::TextButton cancelButton;
         juce::TextButton createButton;
 
+        void refreshAudioDeviceList();  // 오디오 장치 목록 갱신 함수 추가
+
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Content)
     };
 
-    static void show();
+    static void show(MainComponent& mainComp);
 
 private:
+    MainComponent& mainComponent;  // reference 사용
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectDialog)
 }; 

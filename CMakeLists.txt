@@ -31,6 +31,9 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 
 # juce_set_vst2_sdk_path(...)
 
+# ASIO SDK 경로를 external 폴더로 지정
+set(ASIO_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk")
+
 # `juce_add_gui_app` adds an executable target with the name passed as the first argument
 # (GuiAppExample here). This target is a normal CMake target, but has a lot of extra properties set
 # up by default. This function accepts many optional arguments. Check the readme at
@@ -66,6 +69,7 @@ target_sources(MAPLE
         Source/ContentPanelComponent.cpp
         Source/BottomComponent.cpp
         Source/NewProjectDialog.cpp
+        Source/PracticeSongComponent.cpp
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
@@ -81,7 +85,9 @@ target_compile_definitions(MAPLE
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
         JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:MAPLE,JUCE_PRODUCT_NAME>"
-        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:MAPLE,JUCE_VERSION>")
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:MAPLE,JUCE_VERSION>"
+        JUCE_ASIO=1  # ASIO 활성화
+)
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
@@ -102,7 +108,18 @@ target_link_libraries(MAPLE
     PRIVATE
         # GuiAppData            # If we'd created a binary data target, we'd link to it here
         juce::juce_gui_extra
+        juce::juce_audio_devices
+        juce::juce_audio_formats
+        juce::juce_audio_processors
+        juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+# ASIO SDK include 경로 추가
+target_include_directories(MAPLE
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk/common"
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk/host"
+)

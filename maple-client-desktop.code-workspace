@@ -9,6 +9,11 @@
 		"C_Cpp.default.includePath": [
 			"${workspaceFolder}/**",
 			"${workspaceFolder}/JUCE/modules"
-		]
+		],
+		"files.associations": {
+			"memory": "cpp",
+			"*.mm": "cpp",
+			"vector": "cpp"
+		}
 	}
 }
