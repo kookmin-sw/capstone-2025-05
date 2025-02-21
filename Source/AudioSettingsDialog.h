@@ -4,11 +4,11 @@
 class AudioSettingsDialog : public juce::DialogWindow
 {
 public:
-    AudioSettingsDialog()
+    AudioSettingsDialog(juce::AudioDeviceManager& deviceManager)
         : DialogWindow(juce::String::fromUTF8("오디오 설정"),
                       juce::Colours::transparentBlack, true, true)
     {
-        setContentOwned(new Content(), true);
+        setContentOwned(new Content(deviceManager), true);
         centreWithSize(500, 600);
         setResizable(true, false);
     }
@@ -23,19 +23,10 @@ public:
                    public juce::ChangeListener
     {
     public:
-        Content()
+        Content(juce::AudioDeviceManager& deviceManager)
+            : audioDeviceManager(deviceManager)
         {
-            audioDeviceManager.initialiseWithDefaultDevices(2, 2);
-            
-            audioSetupComp.reset(new juce::AudioDeviceSelectorComponent(audioDeviceManager,
-                                                                      0, 256,
-                                                                      0, 256,
-                                                                      true,
-                                                                      true,
-                                                                      true,
-                                                                      false));
-            addAndMakeVisible(audioSetupComp.get());
-
+            // 1. 기본 UI 컴포넌트 초기화
             addAndMakeVisible(diagnosticsBox);
             diagnosticsBox.setMultiLine(true);
             diagnosticsBox.setReturnKeyStartsNewLine(true);
@@ -44,9 +35,21 @@ public:
             diagnosticsBox.setCaretVisible(false);
             diagnosticsBox.setPopupMenuEnabled(true);
 
-            audioDeviceManager.addChangeListener(this);
-            logMessage("Audio device diagnostics:\n");
-            dumpDeviceInfo();
+            // 2. 다이얼로그가 표시된 후 오디오 설정 UI 초기화
+            juce::Timer::callAfterDelay(100, [this]() {
+                audioSetupComp.reset(new juce::AudioDeviceSelectorComponent(audioDeviceManager,
+                                                                          0, 256,
+                                                                          0, 256,
+                                                                          true,
+                                                                          true,
+                                                                          true,
+                                                                          false));
+                addAndMakeVisible(audioSetupComp.get());
+                audioDeviceManager.addChangeListener(this);
+                logMessage("Audio device diagnostics:\n");
+                dumpDeviceInfo();
+                resized();
+            });
         }
 
         ~Content() override
@@ -57,7 +60,10 @@ public:
         void resized() override
         {
             auto r = getLocalBounds().reduced(4);
-            audioSetupComp->setBounds(r.removeFromTop(proportionOfHeight(0.65f)));
+            if (audioSetupComp != nullptr)  // nullptr 체크 추가
+            {
+                audioSetupComp->setBounds(r.removeFromTop(proportionOfHeight(0.65f)));
+            }
             diagnosticsBox.setBounds(r);
         }
 
@@ -67,7 +73,7 @@ public:
         }
 
     private:
-        juce::AudioDeviceManager audioDeviceManager;
+        juce::AudioDeviceManager& audioDeviceManager;
         std::unique_ptr<juce::AudioDeviceSelectorComponent> audioSetupComp;
         juce::TextEditor diagnosticsBox;
 
@@ -115,9 +121,9 @@ public:
         }
     };
 
-    static void show()
+    static void show(juce::AudioDeviceManager& deviceManager)
     {
-        AudioSettingsDialog* dialog = new AudioSettingsDialog();
+        AudioSettingsDialog* dialog = new AudioSettingsDialog(deviceManager);
         dialog->enterModalState(true);
     }
 

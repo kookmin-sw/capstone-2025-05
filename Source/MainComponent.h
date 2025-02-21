@@ -19,6 +19,8 @@ public:
     void showMainScreen();
     void showPracticeScreen();
 
+    juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
+
 private:
     juce::AudioDeviceManager deviceManager;
     std::unique_ptr<HeaderComponent> headerComponent;

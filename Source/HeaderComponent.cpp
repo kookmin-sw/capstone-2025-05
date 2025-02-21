@@ -1,5 +1,6 @@
 #include "HeaderComponent.h"
 #include "AudioSettingsDialog.h"
+#include "MainComponent.h"
 
 HeaderComponent::HeaderComponent()
 {
@@ -25,7 +26,10 @@ HeaderComponent::HeaderComponent()
 
     settingsButton.onClick = [this]()
     {
-        AudioSettingsDialog::show();
+        if (auto* mainComp = findParentComponentOfClass<MainComponent>())
+        {
+            AudioSettingsDialog::show(mainComp->getDeviceManager());
+        }
     };
 
     addAndMakeVisible(profileButton);

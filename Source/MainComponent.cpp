@@ -7,7 +7,10 @@
 
 MainComponent::MainComponent()
 {
-    // 컴포넌트들 초기화
+    // 1. 오디오 시스템 초기화
+    deviceManager.initialiseWithDefaultDevices(2, 2);
+
+    // 2. UI 컴포넌트 초기화
     headerComponent = std::make_unique<HeaderComponent>();
     mainActionComponent = std::make_unique<MainActionComponent>(*this);
     contentPanelComponent = std::make_unique<ContentPanelComponent>();
