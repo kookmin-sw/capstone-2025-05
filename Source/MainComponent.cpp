@@ -15,11 +15,13 @@ MainComponent::MainComponent()
     mainActionComponent = std::make_unique<MainActionComponent>(*this);
     contentPanelComponent = std::make_unique<ContentPanelComponent>();
     bottomComponent = std::make_unique<BottomComponent>();
+    practiceSongComponent = std::make_unique<PracticeSongComponent>();  // 미리 생성
 
     addAndMakeVisible(headerComponent.get());
     addAndMakeVisible(mainActionComponent.get());
     addAndMakeVisible(contentPanelComponent.get());
     addAndMakeVisible(bottomComponent.get());
+    addChildComponent(practiceSongComponent.get());  // 숨겨진 상태로 추가
 
     setSize(1920, 1200);
 }
@@ -72,10 +74,6 @@ void MainComponent::showPracticeScreen()
     contentPanelComponent->setVisible(false);
     bottomComponent->setVisible(false);
     
-    if (!practiceSongComponent)
-        practiceSongComponent = std::make_unique<PracticeSongComponent>();
-        
-    addAndMakeVisible(practiceSongComponent.get());
-    practiceSongComponent->setVisible(true);
+    practiceSongComponent->setVisible(true);  // 이미 생성된 컴포넌트를 표시
     resized();
 }
