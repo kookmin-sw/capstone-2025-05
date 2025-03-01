@@ -1,20 +1,88 @@
 #pragma once
 #include <JuceHeader.h>
 
-class PracticeSongComponent : public juce::AudioAppComponent
+class MainComponent;  // 전방 선언
+
+class PracticeSongComponent : public juce::Component, public juce::AudioIODeviceCallback
 {
 public:
-    PracticeSongComponent();
+    PracticeSongComponent(MainComponent& mainComp);
     ~PracticeSongComponent() override;
 
-    void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
-    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
-    void releaseResources() override;
+    // AudioIODeviceCallback 인터페이스 구현
+    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels,
+                              float* const* outputChannelData, int numOutputChannels, int numSamples,
+                              const juce::AudioIODeviceCallbackContext& context) override;
+    void audioDeviceAboutToStart(juce::AudioIODevice* device) override;
+    void audioDeviceStopped() override;
 
     void paint(juce::Graphics&) override;
     void resized() override;
 
 private:
+    // 레벨 미터 클래스
+    class LevelMeterComponent : public juce::Component, private juce::Timer
+    {
+    public:
+        LevelMeterComponent()
+        {
+            startTimerHz(24); // 초당 24번 업데이트
+        }
+
+        ~LevelMeterComponent() override
+        {
+            stopTimer();
+        }
+
+        void paint(juce::Graphics& g) override
+        {
+            auto bounds = getLocalBounds().toFloat();
+            
+            // 배경
+            g.setColour(juce::Colours::black);
+            g.fillRect(bounds);
+            
+            // 레벨 표시
+            const float levelHeight = bounds.getHeight() * level;
+            juce::Rectangle<float> levelRect(bounds.getX(), bounds.getBottom() - levelHeight, 
+                                           bounds.getWidth(), levelHeight);
+            
+            // 레벨에 따라 색상 변경
+            if (level > 0.8f)
+                g.setColour(juce::Colours::red);
+            else if (level > 0.5f)
+                g.setColour(juce::Colours::orange);
+            else
+                g.setColour(juce::Colours::green);
+                
+            g.fillRect(levelRect);
+            
+            // 눈금 표시
+            g.setColour(juce::Colours::white);
+            for (int i = 1; i < 10; ++i)
+            {
+                float y = bounds.getY() + bounds.getHeight() * i / 10.0f;
+                g.drawLine(bounds.getX(), y, bounds.getRight(), y, 0.5f);
+            }
+        }
+
+        void setLevel(float newLevel)
+        {
+            // 0.0 ~ 1.0 범위로 제한
+            level = juce::jlimit(0.0f, 1.0f, newLevel);
+        }
+
+    private:
+        float level = 0.0f;
+        
+        void timerCallback() override
+        {
+            // 레벨이 서서히 감소하도록 함
+            level = level * 0.9f;
+            repaint();
+        }
+    };
+
     class HeaderPanel : public juce::Component
     {
     public:
@@ -116,7 +184,8 @@ private:
                 playButton.setBounds(buttonArea.removeFromTop(buttonHeight).reduced(5));
                 stopButton.setBounds(buttonArea.removeFromTop(buttonHeight).reduced(5));
                 
-                levelMeter.setBounds(bounds.reduced(5));
+                // 레벨 미터 - 남은 공간의 왼쪽 부분 사용
+                levelMeter.setBounds(bounds.removeFromLeft(30).reduced(5));
             }
             else // 우측 패널
             {
@@ -127,12 +196,14 @@ private:
             }
         }
 
+        LevelMeterComponent& getLevelMeter() { return levelMeter; }
+
     private:
         // 좌측 패널 컴포넌트
         juce::Label volumeLabel;
         juce::Slider volumeSlider;
         juce::TextButton recordButton, playButton, stopButton;
-        juce::Component levelMeter; // TODO: 실제 레벨미터 구현
+        LevelMeterComponent levelMeter; // 레벨 미터 구현
         
         // 우측 패널 컴포넌트
         juce::Label tempoLabel;
@@ -144,6 +215,11 @@ private:
     ControlPanel leftPanel{true}, rightPanel{false};
     juce::Component centralContent;  // TODO: 악보/앨범커버 표시 영역
     juce::Component waveformDisplay;  // TODO: 파형 표시 영역
+    
+    MainComponent& mainComponent;  // MainComponent에 대한 참조
+    
+    // 오디오 레벨 계산을 위한 변수
+    float currentInputLevel = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PracticeSongComponent)
 }; 

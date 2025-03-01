@@ -15,7 +15,7 @@ MainComponent::MainComponent()
     mainActionComponent = std::make_unique<MainActionComponent>(*this);
     contentPanelComponent = std::make_unique<ContentPanelComponent>();
     bottomComponent = std::make_unique<BottomComponent>();
-    practiceSongComponent = std::make_unique<PracticeSongComponent>();  // 미리 생성
+    practiceSongComponent = std::make_unique<PracticeSongComponent>(*this);  // MainComponent 참조 전달
 
     addAndMakeVisible(headerComponent.get());
     addAndMakeVisible(mainActionComponent.get());

@@ -1,8 +1,15 @@
 #include "PracticeSongComponent.h"
+#include "MainComponent.h"
 
-PracticeSongComponent::PracticeSongComponent()
+PracticeSongComponent::PracticeSongComponent(MainComponent& mainComp)
+    : mainComponent(mainComp)
 {
-    setAudioChannels(2, 2);
+    // MainComponent에서 오디오 장치 관리자를 가져와 사용
+    auto& deviceManager = mainComponent.getDeviceManager();
+    
+    // 오디오 장치 관리자에 콜백 등록
+    deviceManager.addAudioCallback(this);
+    
     addAndMakeVisible(headerPanel);
     addAndMakeVisible(leftPanel);
     addAndMakeVisible(rightPanel);
@@ -12,22 +19,59 @@ PracticeSongComponent::PracticeSongComponent()
 
 PracticeSongComponent::~PracticeSongComponent()
 {
-    shutdownAudio();
+    // 오디오 콜백 제거
+    auto& deviceManager = mainComponent.getDeviceManager();
+    deviceManager.removeAudioCallback(this);
 }
 
-void PracticeSongComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
+void PracticeSongComponent::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels,
+                                                 float* const* outputChannelData, int numOutputChannels, int numSamples,
+                                                 const juce::AudioIODeviceCallbackContext& context)
+{
+    // 입력 레벨 계산
+    if (numInputChannels > 0 && inputChannelData != nullptr)
+    {
+        float currentBlockLevel = 0.0f;
+        
+        // 모든 입력 채널의 최대 레벨 계산
+        for (int channel = 0; channel < numInputChannels; ++channel)
+        {
+            if (inputChannelData[channel] != nullptr)
+            {
+                for (int i = 0; i < numSamples; ++i)
+                {
+                    float sample = std::abs(inputChannelData[channel][i]);
+                    currentBlockLevel = juce::jmax(currentBlockLevel, sample);
+                }
+            }
+        }
+        
+        // 현재 레벨 업데이트 (약간의 스무딩 적용)
+        currentInputLevel = juce::jmax(currentInputLevel * 0.7f, currentBlockLevel);
+        
+        // 레벨 미터 업데이트
+        leftPanel.getLevelMeter().setLevel(currentInputLevel);
+    }
+    
+    // 실시간 오디오 처리 (레벨 미터, 녹음 등)
+    // 기본적으로 출력 버퍼를 비웁니다 (무음 출력)
+    for (int channel = 0; channel < numOutputChannels; ++channel)
+    {
+        if (outputChannelData[channel] != nullptr)
+            juce::FloatVectorOperations::clear(outputChannelData[channel], numSamples);
+    }
+}
+
+void PracticeSongComponent::audioDeviceAboutToStart(juce::AudioIODevice* device)
 {
     // 오디오 처리 준비
+    currentInputLevel = 0.0f;
 }
 
-void PracticeSongComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
-{
-    // 실시간 오디오 처리 (레벨 미터, 녹음 등)
-}
-
-void PracticeSongComponent::releaseResources()
+void PracticeSongComponent::audioDeviceStopped()
 {
     // 오디오 리소스 해제
+    currentInputLevel = 0.0f;
 }
 
 void PracticeSongComponent::paint(juce::Graphics& g)
