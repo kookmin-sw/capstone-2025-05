@@ -1,6 +1,5 @@
 import React from 'react';
 import Maple from '../Assets/Images/logo.js';
-import { IoSearchOutline } from 'react-icons/io5';
 import { RiLogoutBoxRLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import SearchBox from '../Components/SearchBox/searchBox.js';
