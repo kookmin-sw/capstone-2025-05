@@ -5,7 +5,7 @@ import { MdCopyright } from 'react-icons/md';
 
 const MapleFooter = ({ github, email }) => {
   return (
-    <div className="flex justify-center items-center py-[15px]">
+    <div className="flex justify-center items-center py-[15px] ">
       <p className="flex">
         <span className="flex">
           <div className="flex items-center font-bold">
