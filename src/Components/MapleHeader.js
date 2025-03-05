@@ -32,25 +32,31 @@ const MapleHeader = () => {
         </form>
         <div className="flex mr-8">
           {isLogin ? (
-            <Button width={'100px'} height={'40px'}>
-              <div
-                className="flex items-center"
+            <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
+              <Button
+                width={'100px'}
+                height={'40px'}
                 onClick={() => setIsLogin(!isLogin)}
               >
-                <span>로그아웃</span>
-                <RiLogoutBoxRLine />
-              </div>
-            </Button>
+                <div className="flex items-center">
+                  <span>로그아웃</span>
+                  <RiLogoutBoxRLine />
+                </div>
+              </Button>
+            </div>
           ) : (
-            <Button width={'100px'} height={'40px'}>
-              <div
-                className="flex items-center"
+            <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
+              <Button
+                width={'100px'}
+                height={'40px'}
                 onClick={() => setIsLogin(!isLogin)}
               >
-                <span>로그인</span>
-                <RiLoginBoxLine />
-              </div>
-            </Button>
+                <div className="flex items-center">
+                  <span>로그인</span>
+                  <RiLoginBoxLine />
+                </div>
+              </Button>
+            </div>
           )}
         </div>
       </div>
