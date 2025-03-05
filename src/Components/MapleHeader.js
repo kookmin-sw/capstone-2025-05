@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Maple from '../Assets/Images/logo.js';
-import { RiLogoutBoxRLine } from 'react-icons/ri';
+import { RiLogoutBoxRLine, RiLoginBoxLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import SearchBox from '../Components/SearchBox/searchBox.js';
+import Button from '../Components/Button/Button.js';
 
 const MapleHeader = () => {
   const menuList = ['분석하기', '초보방', '자유게시판', '마이페이지'];
+  const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
   return (
     <div className="flex w-full items-center justify-between bg-[#FFFFFF]/50">
@@ -29,12 +31,27 @@ const MapleHeader = () => {
           </div>
         </form>
         <div className="flex mr-8">
-          <button className="bg-[#A57865] text-white px-6 py-2 rounded-full hover:brightness-150 duration-[0.5s] ease-in-out ">
-            <div className="flex items-center">
-              <span>로그아웃</span>
-              <RiLogoutBoxRLine />
-            </div>
-          </button>
+          {isLogin ? (
+            <Button width={'100px'} height={'40px'}>
+              <div
+                className="flex items-center"
+                onClick={() => setIsLogin(!isLogin)}
+              >
+                <span>로그아웃</span>
+                <RiLogoutBoxRLine />
+              </div>
+            </Button>
+          ) : (
+            <Button width={'100px'} height={'40px'}>
+              <div
+                className="flex items-center"
+                onClick={() => setIsLogin(!isLogin)}
+              >
+                <span>로그인</span>
+                <RiLoginBoxLine />
+              </div>
+            </Button>
+          )}
         </div>
       </div>
     </div>
