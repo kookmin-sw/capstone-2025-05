@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException
-from routers.register_router import router as auth_router
 from manager.firebase_manager import db
 
 app = FastAPI()
