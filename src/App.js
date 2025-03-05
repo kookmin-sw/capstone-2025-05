@@ -6,7 +6,6 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <MapleHeader />
         <Routes>
           <Route path="/test" element={<TestPage />} />
         </Routes>
