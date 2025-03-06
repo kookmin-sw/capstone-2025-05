@@ -1,9 +1,18 @@
 #pragma once
 #include <JuceHeader.h>
+#include "WaveformGraph.h"
 
 class MainComponent;  // 전방 선언
+class TopBar;
+class CenterPanel;
+class LeftPanel;
+class RightPanel;
+class EffectControls;
+class AudioPlaybackDemo;
 
-class PracticeSongComponent : public juce::Component, public juce::AudioIODeviceCallback
+class PracticeSongComponent : public juce::Component,
+                              public juce::AudioIODeviceCallback,
+                              public juce::AudioSource
 {
 public:
     PracticeSongComponent(MainComponent& mainComp);
@@ -15,6 +24,16 @@ public:
                               const juce::AudioIODeviceCallbackContext& context) override;
     void audioDeviceAboutToStart(juce::AudioIODevice* device) override;
     void audioDeviceStopped() override;
+
+    void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
+    void releaseResources() override;
+
+    // TopBar가 사용할 public 인터페이스
+    void loadAudioFile(const juce::File& file);
+    // WaveformGraph* getWaveformGraph() { return waveformGraph.get(); }
+    juce::AudioTransportSource& getTransport() { return transport; }
+    juce::AudioFormatManager& getFormatManager() { return formatManager; }
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -83,139 +102,21 @@ private:
         }
     };
 
-    class HeaderPanel : public juce::Component
-    {
-    public:
-        HeaderPanel()
-        {
-            projectTitle.setText(juce::String::fromUTF8("프로젝트: 재즈 연습 1"), juce::dontSendNotification);
-            songTitle.setText(juce::String::fromUTF8("곡: Autumn Leaves"), juce::dontSendNotification);
-            projectTitle.setFont(juce::Font(juce::FontOptions(24.0f, juce::Font::bold)));
-            songTitle.setFont(juce::Font(juce::FontOptions(18.0f)));
-            
-            backButton.setButtonText(juce::String::fromUTF8("이전"));
-            menuButton.setButtonText(juce::String::fromUTF8("메뉴"));
-            settingsButton.setButtonText(juce::String::fromUTF8("설정"));
-            
-            addAndMakeVisible(projectTitle);
-            addAndMakeVisible(songTitle);
-            addAndMakeVisible(backButton);
-            addAndMakeVisible(menuButton);
-            addAndMakeVisible(settingsButton);
-        }
+    std::unique_ptr<TopBar> topBar;
+    std::unique_ptr<CenterPanel> centerPanel;
+    std::unique_ptr<LeftPanel> leftPanel;
+    std::unique_ptr<RightPanel> rightPanel;
+    std::unique_ptr<EffectControls> effectControls;
+    // std::unique_ptr<WaveformGraph> waveformGraph;
+    std::unique_ptr<AudioPlaybackDemo> waveformGraph;
 
-        void resized() override
-        {
-            auto bounds = getLocalBounds();
-            const int buttonWidth = 40;
-            
-            // 좌측 버튼들
-            backButton.setBounds(bounds.removeFromLeft(buttonWidth).reduced(5));
-            menuButton.setBounds(bounds.removeFromLeft(buttonWidth).reduced(5));
-            
-            // 우측 버튼
-            settingsButton.setBounds(bounds.removeFromRight(buttonWidth).reduced(5));
-            
-            // 타이틀
-            auto titleArea = bounds.reduced(10, 0);
-            projectTitle.setBounds(titleArea.removeFromTop(30));
-            songTitle.setBounds(titleArea);
-        }
 
-    private:
-        juce::Label projectTitle, songTitle;
-        juce::TextButton backButton, menuButton, settingsButton;
-    };
+    juce::AudioDeviceManager& deviceManager;
+    juce::AudioSourcePlayer audioPlayer;
+    juce::AudioTransportSource transport;
+    juce::AudioFormatManager formatManager;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
 
-    class ControlPanel : public juce::Component
-    {
-    public:
-        ControlPanel(bool isLeft)
-        {
-            if (isLeft)
-            {
-                // 좌측 패널 (오디오 컨트롤)
-                volumeLabel.setText(juce::String::fromUTF8("Volume"), juce::dontSendNotification);
-                volumeSlider.setSliderStyle(juce::Slider::LinearVertical);
-                volumeSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-                
-                recordButton.setButtonText(juce::String::fromUTF8("녹음"));
-                recordButton.setColour(juce::TextButton::buttonColourId, juce::Colours::red);
-                playButton.setButtonText(juce::String::fromUTF8("재생"));
-                stopButton.setButtonText(juce::String::fromUTF8("정지"));
-                
-                addAndMakeVisible(volumeLabel);
-                addAndMakeVisible(volumeSlider);
-                addAndMakeVisible(recordButton);
-                addAndMakeVisible(playButton);
-                addAndMakeVisible(stopButton);
-                addAndMakeVisible(levelMeter);
-            }
-            else
-            {
-                // 우측 패널 (연습 설정)
-                tempoLabel.setText(juce::String::fromUTF8("Tempo"), juce::dontSendNotification);
-                tempoSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-                tempoSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 50, 20);
-                tempoSlider.setRange(40, 240, 1);
-                tempoSlider.setValue(120);
-                
-                metronomeButton.setButtonText(juce::String::fromUTF8("Metronome"));
-                metronomeButton.setToggleState(true, juce::dontSendNotification);
-                
-                addAndMakeVisible(tempoLabel);
-                addAndMakeVisible(tempoSlider);
-                addAndMakeVisible(metronomeButton);
-            }
-        }
-
-        void resized() override
-        {
-            auto bounds = getLocalBounds().reduced(10);
-            
-            if (volumeSlider.isVisible()) // 좌측 패널
-            {
-                volumeLabel.setBounds(bounds.removeFromTop(20));
-                volumeSlider.setBounds(bounds.removeFromLeft(50).withHeight(200));
-                
-                auto buttonArea = bounds.removeFromTop(150);
-                const int buttonHeight = 40;
-                recordButton.setBounds(buttonArea.removeFromTop(buttonHeight).reduced(5));
-                playButton.setBounds(buttonArea.removeFromTop(buttonHeight).reduced(5));
-                stopButton.setBounds(buttonArea.removeFromTop(buttonHeight).reduced(5));
-                
-                // 레벨 미터 - 남은 공간의 왼쪽 부분 사용
-                levelMeter.setBounds(bounds.removeFromLeft(30).reduced(5));
-            }
-            else // 우측 패널
-            {
-                tempoLabel.setBounds(bounds.removeFromTop(20));
-                tempoSlider.setBounds(bounds.removeFromTop(40));
-                bounds.removeFromTop(10);
-                metronomeButton.setBounds(bounds.removeFromTop(30));
-            }
-        }
-
-        LevelMeterComponent& getLevelMeter() { return levelMeter; }
-
-    private:
-        // 좌측 패널 컴포넌트
-        juce::Label volumeLabel;
-        juce::Slider volumeSlider;
-        juce::TextButton recordButton, playButton, stopButton;
-        LevelMeterComponent levelMeter; // 레벨 미터 구현
-        
-        // 우측 패널 컴포넌트
-        juce::Label tempoLabel;
-        juce::Slider tempoSlider;
-        juce::ToggleButton metronomeButton;
-    };
-
-    HeaderPanel headerPanel;
-    ControlPanel leftPanel{true}, rightPanel{false};
-    juce::Component centralContent;  // TODO: 악보/앨범커버 표시 영역
-    juce::Component waveformDisplay;  // TODO: 파형 표시 영역
-    
     MainComponent& mainComponent;  // MainComponent에 대한 참조
     
     // 오디오 레벨 계산을 위한 변수
