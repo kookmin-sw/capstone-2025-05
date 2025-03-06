@@ -1,11 +1,26 @@
 import React from 'react';
 
-export default function Box({ width, height, children, onClick }) {
+export default function Button({
+  width,
+  height,
+  children,
+  backgroundColor = '#A57865',
+  cursor = 'pointer',
+  onClick,
+  disabled = false,
+}) {
   return (
     <div
-      className="bg-[#A57865] text-white rounded-[10px] cursor-pointer flex justify-center items-center"
-      style={{ width, height }}
-      onClick={onClick}
+      className={`text-white rounded-[10px] flex justify-center items-center ${
+        disabled ? 'cursor-not-allowed' : ''
+      }`}
+      style={{
+        width,
+        height,
+        backgroundColor: disabled ? '#AFAFAF' : backgroundColor,
+        cursor: disabled ? 'not-allowed' : cursor,
+      }}
+      onClick={!disabled ? onClick : undefined}
     >
       {children}
     </div>
