@@ -22,21 +22,21 @@ export default function Profile() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen">
       <Header />
       <div className="flex flex-col items-center flex-grow relative">
         <div className="absolute top-[20%]">
           <img src={Logo} alt="logo" className="w-60 h-auto" />
         </div>
 
-        <span className="absolute top-[40%] text-[18px] font-bold">
+        <span className="absolute top-[40%] text-[20px] font-bold">
           설정할 닉네임을 입력해 주세요
         </span>
 
         <div className="absolute top-[52%]">
           <Input
             width="400px"
-            height="40px"
+            height="52px"
             type="text"
             placeholder="닉네임을 입력해 주세요"
             value={nickname}
@@ -44,7 +44,7 @@ export default function Profile() {
           />
         </div>
 
-        <div className="absolute top-[68%] text-center">
+        <div className="absolute top-[76%] text-center">
           <Button
             width="100px"
             height="40px"

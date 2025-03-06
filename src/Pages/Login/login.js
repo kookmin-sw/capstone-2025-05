@@ -9,7 +9,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    navigate('/profile');
+    navigate('/profile'); // 구글 로그인으로 수정하기
   };
 
   return (
@@ -20,21 +20,21 @@ export default function Login() {
           <img src={Logo} alt="logo" className="w-60 h-auto" />
         </div>
 
-        <div className="absolute top-[42%]">
+        <div className="absolute top-[44%]">
           <button
-            className="flex flex-row justify-between items-center w-[360px] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[16px] font-bold bg-[white]"
+            className="flex flex-row justify-between items-center w-[360px] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[20px] font-bold bg-[white]"
             onClick={handleLogin}
           >
             <img src={Google} alt="google logo" />
             구글로 시작하기
-            <div className="w-[22px] h-[100%]"></div>
+            <div className="w-[24px] h-[100%]"></div>
           </button>
         </div>
 
         <div className="absolute top-[60%] w-[800px] border-t-2 border-[#AFAFAF]"></div>
 
         <div className="absolute top-[68%] text-center">
-          <span className="text-[#AFAFAF] text-sm text-[24px]">
+          <span className="text-[#AFAFAF] text-sm text-[20px]">
             이메일 인증을 위해 구글 계정으로만 로그인 가능합니다.
           </span>
         </div>
