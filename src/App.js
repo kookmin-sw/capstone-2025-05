@@ -12,10 +12,6 @@ function App() {
           <Route path="/test" element={<TestPage />} />
           <Route path="/write" element={<WritePage />} />
         </Routes>
-        <MapleFooter
-          github={'kimdg@github.com'}
-          email={'kimdk3556@gmail.com'}
-        />
       </BrowserRouter>
     </div>
   );
