@@ -2,6 +2,7 @@ import React from 'react';
 import fakeData from '../../Data/fake_notice_data.json';
 
 function noticeBoard() {
+  // noticeBoard
   console.log(fakeData);
   return (
     <div className="flex justify-center  h-[540px]">
