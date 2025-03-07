@@ -1,9 +1,7 @@
 import './App.css';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import TestPage from './Pages/TestPage/testPage';
-import WritePage from './Pages/WritePage/writePage';
 import MapleHeader from './Components/MapleHeader';
-import MapleFooter from './Components/MapleFooter';
 
 function App() {
   return (
