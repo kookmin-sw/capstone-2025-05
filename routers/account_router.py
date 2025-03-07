@@ -42,7 +42,7 @@ async def google_auth_callback(code: str):
         id_token = tokens.get("id_token")
 
         if not id_token:
-            raise HTTPException(status_code=400, detail="No id_token found in Google response.")
+            raise HTTPException(status_code=400, detail="구글 응답에서 id_token을 찾을 수 없습니다.")
 
         firebase_response = requests.post(
             f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={os.getenv('API_KEY')}",
@@ -60,14 +60,14 @@ async def google_auth_callback(code: str):
         
         firebase_id_token = firebase_data.get("idToken")
         if not firebase_id_token:
-            raise HTTPException(status_code=400, detail="Failed to obtain Firebase ID token.")
+            raise HTTPException(status_code=400, detail="firebase에서 id_toekn을 가져오는 것에 실패했습니다.")
 
         decoded_token = auth.verify_id_token(firebase_id_token)
         uid = decoded_token["uid"]
         
-        user = auth.get_user(uid)
+        user = auth.get_user(uid) # uid 저장
 
-        return {"message": "Google login successful", "user": user.uid}
+        return {"message": "Google login successful", "user": user.uid} # 나중에 지워도 되는 것
 
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=400, detail=f"Failed to authenticate with Google: {str(e)}")
