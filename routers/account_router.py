@@ -16,8 +16,8 @@ GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 class UserData(BaseModel):
     uid: str
     nickname: str
-    interest_genre: List[int]  # 관심 장르 복수 선택 가능 (0~6)
-    level: int  # 실력 (0~3)
+    interest_genre: List[int]  # 관심 장르 복수 선택 가능 (0~11)
+    level: int  # 실력 (0~4)
 
 @router.get("/google-login")
 async def google_login():
@@ -28,11 +28,10 @@ async def google_login():
         f"redirect_uri={redirect_uri}&" 
         f"scope=openid profile email"
     )
-    return RedirectResponse(url=google_auth_url) # 지우기 X
+    return RedirectResponse(url=google_auth_url)
 
 @router.get("/google-auth-callback")
 async def google_auth_callback(code: str):
-    print(f"Received Google auth code: {code}")
     try:
         response = requests.post(
             GOOGLE_TOKEN_URL,
