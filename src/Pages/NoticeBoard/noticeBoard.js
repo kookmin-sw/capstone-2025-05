@@ -1,11 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import fakeData from '../../Data/fake_notice_data.json';
+import PageButton from '../../Components/PageButton/PageButton';
 
-function noticeBoard() {
-  // noticeBoard
-  console.log(fakeData);
+export default function NoticeBoard() {
+  const contents = 10; //게시판에 표시될 데이터 갯수
+  const pages = 10; //게시팜에 표시될 페이지 갯수
+  const totalPage = Math.ceil(fakeData.length / contents);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [startPage, setStartPage] = useState(1);
+  const [currentData, setCurrentData] = useState(fakeData.slice(0, 10));
+  const [pageNumbers, setPageNumbers] = useState(
+    [...Array(10).keys()].map((i) => i + 1),
+  );
+
+  const calcStartPage = () => {
+    if (currentPage % pages == 0) {
+      setStartPage((Math.floor(currentPage / 10) - 1) * 10 + 1);
+    }
+    setStartPage(Math.floor(currentPage / 10) * 10 + 1);
+  };
+
+  //화면에 보여줄 페이지들을 계산하는 함수
+  const calcPageNumbers = () => {
+    let pageNumbers = []; //페이지들 초기화
+    for (let i = startPage; i < startPage + pages; i++) {
+      pageNumbers.push(i);
+    }
+    setPageNumbers(pageNumbers);
+  };
+
+  const calcCurrentData = () => {
+    const startIndex = (currentPage - 1) * 10;
+    setCurrentData(fakeData.slice(startIndex, startIndex + 10));
+  };
+
+  console.log(currentPage);
+  console.log(currentData);
+  useEffect(() => {
+    calcStartPage();
+    calcPageNumbers();
+    calcCurrentData();
+  }, [currentPage]);
   return (
-    <div className="flex justify-center  h-[540px]">
+    <div className="flex flex-col items-center  h-[540px]">
       <table id="table" className="w-[80%] h-[80%] m-auto">
         <thead>
           <div className="mb-[10%]">
@@ -40,13 +77,27 @@ function noticeBoard() {
           </tr>
         </thead>
         <tbody>
-          {fakeData.map((item, index) => {
-            <th>{item[0].id}</th>;
-          })}
+          {currentData.map((item, index) => (
+            <tr key={item?.id}>
+              <td>{item?.id}</td>
+              <td>{item?.title}</td>
+              <td>{item?.view}</td>
+              <td>{item?.write_time}</td>
+              <td>{item?.writer}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
+      <div id="pagination" className="flex">
+        {pageNumbers.map((page) => (
+          <PageButton
+            content={page}
+            width={'50px'}
+            height={'50px'}
+            onClick={() => setCurrentPage(page)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
-
-export default noticeBoard;
