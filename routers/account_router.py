@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import RedirectResponse
-import os
-import requests
 from firebase_admin import auth, db
 from pydantic import BaseModel
 from typing import List
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import RedirectResponse
+import requests
+import os
 
 router = APIRouter()
 
@@ -18,30 +19,121 @@ class UserData(BaseModel):
     interest_genre: List[int]  # 관심 장르 복수 선택 가능 (0~6)
     level: int  # 실력 (0~3)
 
+@router.get("/google-login")
+async def google_login():
+    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/google-auth-callback') 
+    google_auth_url = (
+        f"{GOOGLE_OAUTH2_URL}?response_type=code&"
+        f"client_id={os.getenv('CLIENT_ID')}&"
+        f"redirect_uri={redirect_uri}&" 
+        f"scope=openid profile email"
+    )
+    return RedirectResponse(url=google_auth_url) # 지우기 X
+
+@router.get("/google-auth-callback")
+async def google_auth_callback(code: str):
+    print(f"Received Google auth code: {code}")
+    try:
+        response = requests.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": os.getenv("CLIENT_ID"),
+                "client_secret": os.getenv("CLIENT_SECRET"),
+                "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/google-auth-callback"),
+                "grant_type": "authorization_code",
+            },
+        )
+
+        tokens = response.json()
+        id_token = tokens.get("id_token")
+
+        if not id_token:
+            print("구글 token 오류")
+            raise HTTPException(status_code=400, detail="구글 응답에서 id_token을 찾을 수 없습니다.")
+
+        firebase_response = requests.post(
+            f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={os.getenv('API_KEY')}",
+            headers={"Content-Type": "application/json"},
+            json={
+                "postBody": f"id_token={id_token}&providerId=google.com",
+                "requestUri": "http://localhost",
+                "returnIdpCredential": True,
+                "returnSecureToken": True,
+            }
+        )
+        
+        firebase_response.raise_for_status()
+        firebase_data = firebase_response.json()
+        
+        firebase_id_token = firebase_data.get("idToken")
+        if not firebase_id_token:
+            print("token 오류")
+            raise HTTPException(status_code=400, detail="firebase에서 id_toekn을 가져오는 것에 실패했습니다.")
+
+        decoded_token = auth.verify_id_token(firebase_id_token)
+        uid = decoded_token["uid"]
+
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=400, detail=f"구글 계정 오류: {str(e)}")
+    except auth.InvalidIdTokenError:
+        raise HTTPException(status_code=400, detail="구글 token 오류")
+
 @router.post("/sign-up")
 async def sign_up(user_data: UserData):
     try:
         try:
             auth.get_user(user_data.uid)
         except auth.UserNotFoundError:
-            raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
             print("등록되지 않은 사용자")
+            raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
 
         user_ref = db.reference(f"/users/{user_data.uid}")
         existing_user = user_ref.get()
 
         if existing_user:
-            print("이미 등록된 사용자입니다.")
+            print("이미 등록된 사용자")
+            raise HTTPException(status_code=400, detail="이미 등록된 사용자입니다.")
 
         user_ref.set({
             "nickname": user_data.nickname,
             "interest_genre": user_data.interest_genre,
             "level": user_data.level
         })
-        print("데이터 저장 성공") # 서버 로그 확인용
+        print("회원가입 완료")
+        return {"message": "회원가입 완료"}
     
     except HTTPException as e:
         raise e
     except Exception as e:
+        print("회원가입 실패")
+        raise HTTPException(status_code=500, detail=f"회원가입 실패: {str(e)}")
+
+@router.put("/edit-user")
+async def edit_user(user_data: UserData):
+    try:
+        try:
+            auth.get_user(user_data.uid)
+        except auth.UserNotFoundError:
+            print("등록되지 않은 사용자")
+            raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
+        
+        user_ref = db.reference(f"/users/{user_data.uid}")
+        existing_user = user_ref.get()
+
+        if not existing_user:
+            print("해당 유저가 존재하지 않음")
+            raise HTTPException(status_code=400, detail="해당 사용자가 존재하지 않습니다.")
+
+        user_ref.update({
+            "nickname": user_data.nickname,
+            "interest_genre": user_data.interest_genre,
+            "level": user_data.level
+        })
+        print("유저 정보 수정 완료")
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print("무슨오류지")
         raise HTTPException(status_code=500, detail=e)
-        print("무슨오류지?")
