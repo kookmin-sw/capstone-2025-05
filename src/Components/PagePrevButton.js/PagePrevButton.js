@@ -1,8 +1,12 @@
 import React from 'react';
 
-function PagePrevButton() {
+function PagePrevButton({ width, height, onClick }) {
   return (
-    <div className="flex items-center justify-center bg-white text-black">
+    <div
+      className="flex items-center justify-center bg-white text-black"
+      style={{ width, height }}
+      onClick={onClick}
+    >
       이전
     </div>
   );

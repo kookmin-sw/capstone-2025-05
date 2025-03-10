@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import fakeData from '../../Data/fake_notice_data.json';
 import PageButton from '../../Components/PageButton/PageButton';
+import PagePrevButton from '../../Components/PagePrevButton.js/PagePrevButton';
+import PageNextButton from '../../Components/PageNextButton/PageNextButton';
 
 export default function NoticeBoard() {
   const contents = 10; //게시판에 표시될 데이터 갯수
@@ -13,6 +15,7 @@ export default function NoticeBoard() {
     [...Array(10).keys()].map((i) => i + 1),
   );
 
+  //화면에 보여줄 페이지들 중 첫번째 페이지를 계산하는 함수
   const calcStartPage = () => {
     if (currentPage % pages == 0) {
       setStartPage((Math.floor(currentPage / 10) - 1) * 10 + 1);
@@ -30,17 +33,16 @@ export default function NoticeBoard() {
   };
 
   const calcCurrentData = () => {
-    const startIndex = (currentPage - 1) * 10;
-    setCurrentData(fakeData.slice(startIndex, startIndex + 10));
+    const startIndex = (currentPage - 1) * contents;
+    setCurrentData(fakeData.slice(startIndex, startIndex + contents));
   };
 
-  console.log(currentPage);
-  console.log(currentData);
   useEffect(() => {
     calcStartPage();
     calcPageNumbers();
     calcCurrentData();
   }, [currentPage]);
+
   return (
     <div className="flex flex-col items-center  h-[540px]">
       <table id="table" className="w-[80%] h-[80%] m-auto">
@@ -78,7 +80,7 @@ export default function NoticeBoard() {
         </thead>
         <tbody>
           {currentData.map((item, index) => (
-            <tr key={item?.id}>
+            <tr key={item?.id} className="border-b-[1px] border-[#A57865]">
               <td>{item?.id}</td>
               <td>{item?.title}</td>
               <td>{item?.view}</td>
@@ -89,6 +91,13 @@ export default function NoticeBoard() {
         </tbody>
       </table>
       <div id="pagination" className="flex">
+        {startPage != 1 && (
+          <PagePrevButton
+            width={'50px'}
+            height={'50px'}
+            onClick={() => setCurrentPage(startPage - 10)}
+          />
+        )}
         {pageNumbers.map((page) => (
           <PageButton
             content={page}
@@ -97,6 +106,11 @@ export default function NoticeBoard() {
             onClick={() => setCurrentPage(page)}
           />
         ))}
+        <PageNextButton
+          width={'50px'}
+          height={'50px'}
+          onClick={() => setCurrentPage(startPage + 10)}
+        />
       </div>
     </div>
   );
