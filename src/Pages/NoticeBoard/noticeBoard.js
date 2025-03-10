@@ -19,8 +19,9 @@ export default function NoticeBoard() {
   const calcStartPage = () => {
     if (currentPage % pages == 0) {
       setStartPage((Math.floor(currentPage / 10) - 1) * 10 + 1);
+    } else {
+      setStartPage(Math.floor(currentPage / 10) * 10 + 1);
     }
-    setStartPage(Math.floor(currentPage / 10) * 10 + 1);
   };
 
   //화면에 보여줄 페이지들을 계산하는 함수
@@ -37,11 +38,15 @@ export default function NoticeBoard() {
     setCurrentData(fakeData.slice(startIndex, startIndex + contents));
   };
 
-  useEffect(() => {
+  const calcPagiNation = () => {
+    calcCurrentData();
     calcStartPage();
     calcPageNumbers();
-    calcCurrentData();
-  }, [currentPage]);
+  };
+
+  useEffect(() => {
+    calcPagiNation();
+  }, [currentPage, startPage]);
 
   return (
     <div className="flex flex-col items-center  h-[540px]">
@@ -104,6 +109,7 @@ export default function NoticeBoard() {
             width={'50px'}
             height={'50px'}
             onClick={() => setCurrentPage(page)}
+            active={page === currentPage ? true : false}
           />
         ))}
         <PageNextButton
