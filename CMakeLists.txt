@@ -9,13 +9,13 @@
 # CMake's behaviour is compatible with the named version. This is a standard CMake command, so more
 # information can be found in the CMake docs.
 
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.15)
 
 # The top-level CMakeLists.txt file for a project must contain a literal, direct call to the
 # `project()` command. `project()` sets up some helpful variables that describe source/binary
 # directories, and the current project version. This is a standard CMake command.
 
-project(MAPLE VERSION 0.0.1)
+project(MapleClientDesktop VERSION 0.1.0)
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
@@ -35,17 +35,23 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 set(ASIO_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk")
 
 # `juce_add_gui_app` adds an executable target with the name passed as the first argument
-# (GuiAppExample here). This target is a normal CMake target, but has a lot of extra properties set
+# (MapleClientDesktop here). This target is a normal CMake target, but has a lot of extra properties set
 # up by default. This function accepts many optional arguments. Check the readme at
 # `docs/CMake API.md` in the JUCE repo for the full list.
 
-juce_add_gui_app(MAPLE
-    # VERSION ...                       # Set this if the app version is different to the project version
-    # ICON_BIG ...                      # ICON_* arguments specify a path to an image file to use as an icon
-    # ICON_SMALL ...
-    # DOCUMENT_EXTENSIONS ...           # Specify file extensions that should be associated with this app
-    # COMPANY_NAME ...                  # Specify the name of the app's author
-    PRODUCT_NAME "MAPLE")     # The name of the final executable, which can differ from the target name
+juce_add_gui_app(MapleClientDesktop
+    # App version info
+    VERSION ${PROJECT_VERSION}
+    COMPANY_NAME "KMU"    
+    COMPANY_WEBSITE "lovelyoverflow.github.io"
+    COMPANY_EMAIL "lovelyoverflow@gmail.com"
+    
+    # Icon files
+    # ICON_BIG "Assets/icon.png"
+    
+    # Bundle identifier for macOS
+    BUNDLE_ID "com.KMU.mapleclientdesktop"
+)
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
@@ -53,29 +59,58 @@ juce_add_gui_app(MAPLE
 # include all your JUCE module headers; if you're happy to include module headers directly, you
 # probably don't need to call this.
 
-juce_generate_juce_header(MAPLE)
+juce_generate_juce_header(MapleClientDesktop)
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
 # first argument, then a visibility parameter for the sources which should normally be PRIVATE.
 # Finally, we supply a list of source files that will be built into the target. This is a standard
 # CMake command.
 
-target_sources(MAPLE
-    PRIVATE
-        Source/Main.cpp
-        Source/MainComponent.cpp
-        Source/HeaderComponent.cpp
-        Source/MainActionComponent.cpp
-        Source/ContentPanelComponent.cpp
-        Source/BottomComponent.cpp
-        Source/NewProjectDialog.cpp
-        Source/PracticeSongComponent.cpp
-        Source/TopBar.cpp
-        Source/CenterPanel.cpp
-        Source/LeftPanel.cpp
-        Source/RightPanel.cpp
-        Source/WaveformGraph.cpp
-        Source/EffectControls.cpp
+# Sources organized by MVC
+target_sources(MapleClientDesktop PRIVATE
+    # Main application files
+    Source/Main.cpp
+    Source/MainComponent.cpp
+    Source/MainComponent.h
+    Source/PracticeSongComponent.cpp
+    Source/PracticeSongComponent.h
+    Source/MainActionComponent.cpp
+    Source/MainActionComponent.h
+    Source/ContentPanelComponent.cpp
+    Source/ContentPanelComponent.h
+    Source/BottomComponent.cpp
+    Source/BottomComponent.h
+    Source/NewProjectDialog.cpp
+    Source/NewProjectDialog.h
+    
+    # Model
+    Source/Model/AudioModel.cpp
+    Source/Model/AudioModel.h
+    # Add other model classes as needed
+    
+    # View
+    Source/View/TopBar.cpp
+    Source/View/TopBar.h
+    Source/View/CenterPanel.cpp
+    Source/View/CenterPanel.h
+    Source/View/LeftPanel.cpp
+    Source/View/LeftPanel.h
+    Source/View/RightPanel.cpp
+    Source/View/RightPanel.h
+    Source/View/EffectControls.cpp
+    Source/View/EffectControls.h
+    Source/View/WaveformGraph.cpp
+    Source/View/WaveformGraph.h
+    Source/View/HeaderComponent.cpp
+    Source/View/HeaderComponent.h
+    # Add other view classes as needed
+    
+    # Controller
+    Source/Controller/AudioController.cpp
+    Source/Controller/AudioController.h
+    Source/Controller/TransportController.cpp
+    Source/Controller/TransportController.h
+    # Add other controller classes as needed
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
@@ -85,47 +120,65 @@ target_sources(MAPLE
 # definitions will be visible both to your code, and also the JUCE module code, so for new
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
-target_compile_definitions(MAPLE
+target_compile_definitions(MapleClientDesktop
     PRIVATE
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
-        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:MAPLE,JUCE_PRODUCT_NAME>"
-        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:MAPLE,JUCE_VERSION>"
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:MapleClientDesktop,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:MapleClientDesktop,JUCE_VERSION>"
         JUCE_ASIO=1  # ASIO 활성화
 )
 
-# If your target needs extra binary assets, you can add them here. The first argument is the name of
-# a new static library target that will include all the binary resources. There is an optional
-# `NAMESPACE` argument that can specify the namespace of the generated binary data class. Finally,
-# the SOURCES argument should be followed by a list of source files that should be built into the
-# static library. These source files can be of any kind (wav data, images, fonts, icons etc.).
-# Conversion to binary-data will happen when your target is built.
+# Set C++ standard
+target_compile_features(MapleClientDesktop PRIVATE cxx_std_17)
 
-# juce_add_binary_data(GuiAppData SOURCES ...)
+# Include JUCE modules
+target_link_libraries(MapleClientDesktop PRIVATE
+    juce::juce_core
+    juce::juce_data_structures
+    juce::juce_events
+    juce::juce_graphics
+    juce::juce_gui_basics
+    juce::juce_gui_extra
+    juce::juce_audio_basics
+    juce::juce_audio_devices
+    juce::juce_audio_formats
+    juce::juce_audio_processors
+    juce::juce_audio_utils
+)
 
-# `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
-# we're linking our executable target to the `juce::juce_gui_extra` module. Inter-module
-# dependencies are resolved automatically, so `juce_core`, `juce_events` and so on will also be
-# linked automatically. If we'd generated a binary data target above, we would need to link to it
-# here too. This is a standard CMake command.
+# Set binary output directories
+set_target_properties(MapleClientDesktop PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
 
-target_link_libraries(MAPLE
-    PRIVATE
-        # GuiAppData            # If we'd created a binary data target, we'd link to it here
-        juce::juce_gui_extra
-        juce::juce_audio_devices
-        juce::juce_audio_formats
-        juce::juce_audio_processors
-        juce::juce_audio_utils
-    PUBLIC
-        juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags)
+# Operating system specific settings
+if(MSVC)
+    target_compile_options(MapleClientDesktop PRIVATE /W4)
+else()
+    target_compile_options(MapleClientDesktop PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Resource files (if needed)
+# juce_add_binary_data(ProjectResources
+#     SOURCES
+#         # Assets/icon.png
+#         # Add other assets here
+# )
+
+# target_link_libraries(MapleClientDesktop PRIVATE ProjectResources)
 
 # ASIO SDK include 경로 추가
-target_include_directories(MAPLE
+target_include_directories(MapleClientDesktop
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk/common"
         "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk/host"
 )
+
+# target_precompile_headers(MapleClientDesktop
+#     PRIVATE
+#         <JuceHeader.h>
+#         <juce_audio_basics/juce_audio_basics.h>
+#         <juce_audio_devices/juce_audio_devices.h>
+# )

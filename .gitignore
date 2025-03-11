@@ -10,5 +10,4 @@ build/
 # env
 .env
 
-# cursor
-.cursor/
+.clangd

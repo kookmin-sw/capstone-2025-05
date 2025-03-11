@@ -1,19 +1,72 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
-		"C_Cpp.default.cppStandard": "c++17",
-		"C_Cpp.default.includePath": [
-			"${workspaceFolder}/**",
-			"${workspaceFolder}/JUCE/modules"
-		],
-		"files.associations": {
-			"memory": "cpp",
-			"*.mm": "cpp",
-			"vector": "cpp"
-		}
-	}
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "C_Cpp.default.cppStandard": "c++17",
+        "C_Cpp.default.includePath": [
+            "${workspaceFolder}/**",
+            "${workspaceFolder}/JUCE/modules",
+            "${workspaceFolder}/external/asio-sdk/common",
+            "${workspaceFolder}/external/asio-sdk/host"
+        ],
+        "files.associations": {
+            // C++ STL headers without extensions
+            "memory": "cpp",
+            "vector": "cpp", 
+            "algorithm": "cpp",
+            "string": "cpp",
+            "utility": "cpp",
+            
+            // Platform-specific files
+            "*.mm": "cpp",       // Objective-C++ files
+            
+            // Audio plugin formats
+            "*.vst3": "binary",
+            "*.component": "binary",
+            "*.au": "binary",
+            
+            // JUCE specific
+            "JuceHeader.h": "cpp"
+        },
+        // Enhanced IntelliSense settings
+        "C_Cpp.intelliSenseEngineFallback": "enabled",
+        "C_Cpp.intelliSenseEngine": "default",
+        "C_Cpp.enhancedColorization": "enabled",
+        "C_Cpp.suggestSnippets": true,
+        "C_Cpp.loggingLevel": "Information",
+        "C_Cpp.default.browse.path": [
+            "${workspaceFolder}/Source",
+            "${workspaceFolder}/Source/Model",
+            "${workspaceFolder}/Source/View",
+            "${workspaceFolder}/Source/Controller"
+        ],
+        // Configure intellisense to better understand your MVC structure
+        "C_Cpp.default.defines": [
+            "JUCE_ASIO=1"
+        ],
+        // File organization
+        "explorer.fileNesting.enabled": true,
+        "explorer.fileNesting.patterns": {
+            "*.h": "${capture}.cpp",
+            "*.hpp": "${capture}.cpp"
+        },
+        "search.exclude": {
+            "**/build": true
+        },
+        // Editor settings for C++ files
+        "editor.semanticHighlighting.enabled": true,
+        "[cpp]": {
+            "editor.defaultFormatter": "ms-vscode.cpptools",
+            // "editor.formatOnSave": true
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode.cpptools",
+            "ms-vscode.cmake-tools"
+        ]
+    }
 }

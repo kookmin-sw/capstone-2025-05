@@ -1,5 +1,5 @@
 #include "MainComponent.h"
-#include "HeaderComponent.h"
+#include "View/HeaderComponent.h"
 #include "MainActionComponent.h"
 #include "ContentPanelComponent.h"
 #include "BottomComponent.h"
