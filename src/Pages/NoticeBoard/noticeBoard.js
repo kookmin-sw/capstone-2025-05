@@ -27,7 +27,7 @@ export default function NoticeBoard() {
   //화면에 보여줄 페이지들을 계산하는 함수
   const calcPageNumbers = () => {
     let pageNumbers = []; //페이지들 초기화
-    for (let i = startPage; i < startPage + pages; i++) {
+    for (let i = startPage; i < Math.min(startPage + pages, totalPage); i++) {
       pageNumbers.push(i);
     }
     setPageNumbers(pageNumbers);
@@ -49,7 +49,7 @@ export default function NoticeBoard() {
   }, [currentPage, startPage]);
 
   return (
-    <div className="flex flex-col items-center  h-[540px]">
+    <div className="flex flex-col items-center  h-[570px]">
       <table id="table" className="w-[80%] h-[80%] m-auto">
         <thead>
           <div className="mb-[10%]">
@@ -86,11 +86,11 @@ export default function NoticeBoard() {
         <tbody>
           {currentData.map((item, index) => (
             <tr key={item?.id} className="border-b-[1px] border-[#A57865]">
-              <td>{item?.id}</td>
-              <td>{item?.title}</td>
-              <td>{item?.view}</td>
-              <td>{item?.write_time}</td>
-              <td>{item?.writer}</td>
+              <td className="text-center">{item?.id}</td>
+              <td className="text-center">{item?.title}</td>
+              <td className="text-center">{item?.writer}</td>
+              <td className="text-center">{item?.write_time}</td>
+              <td className="text-center">{item?.view}</td>
             </tr>
           ))}
         </tbody>
@@ -112,11 +112,13 @@ export default function NoticeBoard() {
             active={page === currentPage ? true : false}
           />
         ))}
-        <PageNextButton
-          width={'50px'}
-          height={'50px'}
-          onClick={() => setCurrentPage(startPage + 10)}
-        />
+        {startPage < totalPage && (
+          <PageNextButton
+            width={'50px'}
+            height={'50px'}
+            onClick={() => setCurrentPage(startPage + 10)}
+          />
+        )}
       </div>
     </div>
   );
