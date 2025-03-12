@@ -102,9 +102,11 @@ export default function NoticeBoard() {
       <div id="searchBar" className="flex justify-between w-[80%]">
         <div></div>
         <SearchBox width={'300px'} height={'40px'} />
-        <Button width={'80px'} height={'40px'}>
-          글쓰기
-        </Button>
+        <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
+          <Button width={'80px'} height={'40px'}>
+            글쓰기
+          </Button>
+        </div>
       </div>
       <div id="pagination" className="flex my-4">
         {startPage != 1 && (
