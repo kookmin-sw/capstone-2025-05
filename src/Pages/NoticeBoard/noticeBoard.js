@@ -3,7 +3,8 @@ import fakeData from '../../Data/fake_notice_data.json';
 import PageButton from '../../Components/PageButton/PageButton';
 import PagePrevButton from '../../Components/PagePrevButton.js/PagePrevButton';
 import PageNextButton from '../../Components/PageNextButton/PageNextButton';
-
+import SearchBox from '../../Components/SearchBox/searchBox';
+import Button from '../../Components/Button/Button';
 export default function NoticeBoard() {
   const contents = 10; //게시판에 표시될 데이터 갯수
   const pages = 10; //게시팜에 표시될 페이지 갯수
@@ -49,11 +50,14 @@ export default function NoticeBoard() {
   }, [currentPage, startPage]);
 
   return (
-    <div className="flex flex-col items-center  h-[570px]">
+    <div className="flex flex-col items-center h-[100svh]">
       <table id="table" className="w-[80%] h-[80%] m-auto">
         <thead>
-          <div className="mb-[10%]">
-            <th scope="col" className="text-2xl font-bold h-[30px] w-[15%]">
+          <div className="mb-[10px]">
+            <th
+              scope="col"
+              className="text-2xl font-bold h-[30px] w-auto whitespace-nowrap"
+            >
               자유 게시판
             </th>
           </div>
@@ -95,7 +99,14 @@ export default function NoticeBoard() {
           ))}
         </tbody>
       </table>
-      <div id="pagination" className="flex">
+      <div id="searchBar" className="flex justify-between w-[80%]">
+        <div></div>
+        <SearchBox width={'300px'} height={'40px'} />
+        <Button width={'80px'} height={'40px'}>
+          글쓰기
+        </Button>
+      </div>
+      <div id="pagination" className="flex my-4">
         {startPage != 1 && (
           <PagePrevButton
             width={'50px'}
