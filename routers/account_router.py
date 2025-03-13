@@ -19,7 +19,7 @@ class UserData(BaseModel):
     interest_genre: List[int]  # 관심 장르 복수 선택 가능 (0~11)
     level: int  # 실력 (0~4)
 
-@router.get("/google-login", tags=["A"])
+@router.get("/google-login", tags=["Sign"])
 async def google_login():
     redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/google-auth-callback') 
     google_auth_url = (
