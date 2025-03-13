@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import RedirectResponse
 from firebase_admin import auth, db
+from firebase_admin import firestore
 from pydantic import BaseModel
 from typing import List
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import RedirectResponse
 import requests
 import os
 
@@ -67,11 +67,22 @@ async def google_auth_callback(code: str):
         
         firebase_id_token = firebase_data.get("idToken")
         if not firebase_id_token:
-            print("token 오류")
-            raise HTTPException(status_code=400, detail="firebase에서 id_toekn을 가져오는 것에 실패했습니다.")
+            print("firebase token 오류")
+            raise HTTPException(status_code=400, detail="firebase에서 id_token을 가져오는 것에 실패했습니다.")
 
         decoded_token = auth.verify_id_token(firebase_id_token)
         uid = decoded_token["uid"]
+
+        firestore_client = firestore.client()
+        user_doc_ref = firestore_client.collection("users").document(uid)
+        user_data = user_doc_ref.get()
+
+        if user_data.exists:
+            user_info = user_data.to_dict()
+            print("기존 사용자 로그인 성공")
+            return { "message": "기존 사용자 로그인 성공!" }
+        else:
+            return { "message": "로그인 성공!" }
 
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=400, detail=f"구글 계정 오류: {str(e)}")
@@ -136,3 +147,32 @@ async def edit_user(user_data: UserData):
     except Exception as e:
         print("무슨오류지")
         raise HTTPException(status_code=500, detail=e)
+    
+@router.delete("/delete-user/{uid}")
+async def delete_user(uid: str):
+    try:
+        try:
+            auth.get_user(uid)
+        except auth.UserNotFoundError:
+            print("등록되지 않은 사용자")
+            raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
+
+        auth.delete_user(uid)
+
+        user_ref = db.reference(f"/users/{uid}")
+        if user_ref.get():
+            user_ref.delete()
+
+        firestore_client = firestore.client()
+        user_doc_ref = firestore_client.collection("users").document(uid)
+        if user_doc_ref.get().exists:
+            user_doc_ref.delete()
+        
+        print("사용자 삭제 완료")
+        return {"message": "사용자 삭제 완료"}
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print("사용자 삭제 실패")
+        raise HTTPException(status_code=500, detail=f"사용자 삭제 실패: {str(e)}")
