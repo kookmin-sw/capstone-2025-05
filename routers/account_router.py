@@ -77,16 +77,16 @@ async def google_auth_callback(code: str):
         user_doc_ref = firestore_client.collection("users").document(uid)
         user_data = user_doc_ref.get()
 
-        if user_data.exists:
-            user_info = user_data.to_dict()
-            print("기존 사용자 로그인 성공")
-            return { "message": "기존 사용자 로그인 성공!" }
-        else:
-            return { "message": "로그인 성공!" }
+        return {
+            "message" : "로그인 성공",
+            "uid" : uid
+        }
 
     except requests.exceptions.RequestException as e:
+        print("구글 계정 오류")
         raise HTTPException(status_code=400, detail=f"구글 계정 오류: {str(e)}")
     except auth.InvalidIdTokenError:
+        print("구글 토큰 오류")
         raise HTTPException(status_code=400, detail="구글 token 오류")
 
 @router.post("/sign-up", tags=["Sign"])
