@@ -78,7 +78,7 @@ async def google_auth_callback(code: str):
         user_data = user_doc_ref.get()
 
         return {
-            "message" : "로그인 성공",
+            "message" : "로그인 성공", # json 형태로 프론트로 전송, todo: 바뀔 수도
             "uid" : uid
         }
 
