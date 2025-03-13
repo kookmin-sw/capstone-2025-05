@@ -19,7 +19,7 @@ class UserData(BaseModel):
     interest_genre: List[int]  # 관심 장르 복수 선택 가능 (0~11)
     level: int  # 실력 (0~4)
 
-@router.get("/google-login")
+@router.get("/google-login", tags=["A"])
 async def google_login():
     redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/google-auth-callback') 
     google_auth_url = (
@@ -30,7 +30,7 @@ async def google_login():
     )
     return RedirectResponse(url=google_auth_url)
 
-@router.get("/google-auth-callback")
+@router.get("/google-auth-callback", tags=["Sign"])
 async def google_auth_callback(code: str):
     try:
         response = requests.post(
@@ -89,7 +89,7 @@ async def google_auth_callback(code: str):
     except auth.InvalidIdTokenError:
         raise HTTPException(status_code=400, detail="구글 token 오류")
 
-@router.post("/sign-up")
+@router.post("/sign-up", tags=["Sign"])
 async def sign_up(user_data: UserData):
     try:
         try:
@@ -119,7 +119,7 @@ async def sign_up(user_data: UserData):
         print("회원가입 실패")
         raise HTTPException(status_code=500, detail=f"회원가입 실패: {str(e)}")
     
-@router.delete("/delete-user/{uid}")
+@router.delete("/delete-user/{uid}", tags=["Sign"])
 async def delete_user(uid: str):
     try:
         try:
