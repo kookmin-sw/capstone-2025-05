@@ -118,35 +118,6 @@ async def sign_up(user_data: UserData):
     except Exception as e:
         print("회원가입 실패")
         raise HTTPException(status_code=500, detail=f"회원가입 실패: {str(e)}")
-
-@router.put("/edit-user")
-async def edit_user(user_data: UserData):
-    try:
-        try:
-            auth.get_user(user_data.uid)
-        except auth.UserNotFoundError:
-            print("등록되지 않은 사용자")
-            raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
-        
-        user_ref = db.reference(f"/users/{user_data.uid}")
-        existing_user = user_ref.get()
-
-        if not existing_user:
-            print("해당 유저가 존재하지 않음")
-            raise HTTPException(status_code=400, detail="해당 사용자가 존재하지 않습니다.")
-
-        user_ref.update({
-            "nickname": user_data.nickname,
-            "interest_genre": user_data.interest_genre,
-            "level": user_data.level
-        })
-        print("유저 정보 수정 완료")
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        print("무슨오류지")
-        raise HTTPException(status_code=500, detail=e)
     
 @router.delete("/delete-user/{uid}")
 async def delete_user(uid: str):
