@@ -1,18 +1,22 @@
 import os
 from dotenv import load_dotenv
 import firebase_admin
-from firebase_admin import credentials, firestore
-import os
+from firebase_admin import credentials, firestore, auth
 
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+# .env 파일 로드
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
 load_dotenv(dotenv_path)
+# Windows와 macOS/Linux에서 모두 호환되도록 절대 경로 변환
+file_path = os.path.abspath(os.getenv("FILE_PATH", "./data/file.txt"))
 
-private_key = os.getenv("PRIVATE_KEY")
+# Firebase 환경 변수 로드
+private_key = os.getenv("PRIVATE_KEY", "").replace('\\n', '\n')
+
 firebase_config = {
     "type": os.getenv("TYPE"),
     "project_id": os.getenv("PROJECT_ID"),
     "private_key_id": os.getenv("PRIVATE_KEY_ID"),
-    "private_key": private_key.replace('\\n', '\n'),
+    "private_key": private_key,
     "client_email": os.getenv("CLIENT_EMAIL"),
     "client_id": os.getenv("CLIENT_ID"),
     "auth_uri": os.getenv("AUTH_URI"),
