@@ -6,6 +6,7 @@ import Profile from './Pages/Login/profile';
 import Main from './Pages/Main/main';
 import WritePage from './Pages/WritePage/writePage';
 import MyPage from './Pages/MyPage/MyPage';
+import PlayedMusic from './Pages/MyPage/PlayedMusic';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/main" element={<Main />} />
           <Route path="/write" element={<WritePage />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/playedmusic" element={<PlayedMusic />} />
         </Routes>
       </BrowserRouter>
     </div>
