@@ -5,16 +5,16 @@ import Header from '../../Components/MapleHeader.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
-import Cover_1 from '../../Assets/MyPage/앨범커버1.svg';
-import Cover_2 from '../../Assets/MyPage/앨범커버2.svg';
-import Cover_3 from '../../Assets/MyPage/앨범커버3.svg';
-import Cover_4 from '../../Assets/MyPage/앨범커버4.svg';
+import Cover_1 from '../../Assets/Main/album/iveCover.svg';
+import Cover_2 from '../../Assets/Main/album/bndCover.svg';
+import Cover_3 from '../../Assets/Main/album/riizeCover.svg';
+import Cover_4 from '../../Assets/Main/album/aespaCover.svg';
 
 const recentSongs = [
   { title: 'REBEL HEART', artist: 'IVE', image: Cover_1 },
   { title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR', image: Cover_2 },
   { title: 'COMBO', artist: 'RIZE', image: Cover_3 },
-  { title: 'HOME SWEET HOME', artist: 'G-DRAGON', image: Cover_4 }
+  { title: 'Whiplesh', artist: 'Aespa', image: Cover_4 }
 ];
 
 const practiceRecords = [
