@@ -13,4 +13,4 @@ async def test():
         })
         return {"message": "Data added successfully", "doc_id": doc_ref.id}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) 
