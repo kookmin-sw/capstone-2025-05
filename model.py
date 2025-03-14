@@ -2,7 +2,7 @@ from pydantic import BaseModel
 import datetime
 
 class Post(BaseModel):
-    uid: int | None = None
+    uid: str
     게시판종류이름: str
     내용: str
     댓글갯수: int = 0
@@ -17,11 +17,11 @@ class Post(BaseModel):
         orm_mode = True  # SQLAlchemy와 호환될 수 있도록 설정 (기본적으로 DB에서 쿼리한 데이터를 Pydantic 모델로 변환)
 
 class Comment(BaseModel):
-    uid: int | None = None
+    uid: str
     postid: int
     내용: str
     비밀번호: str
-    작성일시: datetime.datetime | None = None
+    작성일시: datetime.datetime
     작성자: str
 
     class Config:
