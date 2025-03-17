@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException
+from routers.myPage_router import router as myPage_router
 from manager.firebase_manager import db
 
 app = FastAPI()
+
+app.include_router(myPage_router) 
 
 @app.post("/test")
 async def test():

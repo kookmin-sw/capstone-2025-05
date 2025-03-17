@@ -1,1 +1,97 @@
-# initial settings
+from fastapi import APIRouter, HTTPException
+from firebase_admin import auth, db, storage
+from typing import List
+from fastapi import APIRouter, HTTPException, UploadFile, File
+from manager.firebase_manager import firestore_db, storage_bucket
+import uuid
+
+router = APIRouter()
+
+@router.put("/edit-user/nickname", tags=["My Page"])
+async def edit_nickname(uid: str, nickname: str):
+    try:
+        auth.get_user(uid)
+        user_ref = db.reference(f"/users/{uid}")
+        
+        if not user_ref.get():
+            raise HTTPException(status_code=400, detail="해당 사용자가 존재하지 않습니다.")
+        
+        user_ref.update({"nickname": nickname})
+        print("닉네임 변경 완료")
+        return { "message": "닉네임 변경 완료" }
+
+    except auth.UserNotFoundError:
+        print("등록되지 않은 사용자")
+        raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
+    except Exception as e:
+        print("원인불명 닉네임 변경 실패")
+        raise HTTPException(status_code=500, detail=f"닉네임 변경 실패: {str(e)}")
+
+
+@router.put("/edit-user/interest-genre", tags=["My Page"])
+async def edit_interest_genre(uid: str, interest_genre: List[int]):
+    try:
+        auth.get_user(uid)
+        user_ref = db.reference(f"/users/{uid}")
+        
+        if not user_ref.get():
+            raise HTTPException(status_code=400, detail="해당 사용자가 존재하지 않습니다.")
+        
+        user_ref.update({"interest_genre": interest_genre})
+        print("관심 장르 변경 완료")
+        return { "message": "관심 장르 변경 완료" }
+
+    except auth.UserNotFoundError:
+        print("등록되지 않은 사용자")
+        raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
+    except Exception as e:
+        print("원인불명 관심 장르 변경 실패")
+        raise HTTPException(status_code=500, detail=f"관심 장르 변경 실패: {str(e)}")
+
+
+@router.put("/edit-user/level", tags=["My Page"])
+async def edit_level(uid: str, level: int):
+    try:
+        auth.get_user(uid)
+        user_ref = db.reference(f"/users/{uid}")
+        
+        if not user_ref.get():
+            raise HTTPException(status_code=400, detail="해당 사용자가 존재하지 않습니다.")
+        
+        user_ref.update({"level": level})
+        print("실력 변경 완료")
+        return { "message": "실력 변경 완료" }
+
+    except auth.UserNotFoundError:
+        print("등록되지 않은 사용자")
+        raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
+    except Exception as e:
+        print("원인불명 실력 변경 실패")
+        raise HTTPException(status_code=500, detail=f"실력 변경 실패: {str(e)}")
+
+@router.post("/upload-profile-image", tags=["My Page"])
+async def upload_profile_image(uid: str, file: UploadFile = File(...)):
+    try:
+        user_record = auth.get_user(uid)
+        user_ref = db.reference(f"/users/{uid}")
+
+        file_extension = file.filename.split(".")[-1].lower()
+        if file_extension not in ["jpg", "jpeg", "png"]:
+            print("지원하지 않는 파일 형식 (jpg, jpeg, png만 가능)")
+            raise HTTPException(status_code=400, detail="지원하지 않는 파일 형식입니다. (jpg, jpeg, png만 가능)")
+
+        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+
+        storage_bucket = storage.bucket()
+        blob = storage_bucket.blob(f"user_profile/{uid}/{unique_filename}")
+        blob.upload_from_file(file.file, content_type=file.content_type)
+
+        print("프로필 사진 업로드 완료")
+        return {"message": "프로필 사진 업로드 완료"}
+
+    except auth.UserNotFoundError:
+        print("등록되지 않은 사용자")
+        raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
+    except Exception as e:
+        print(f"원인불명 프로필 사진 업로드 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"프로필 사진 업로드 실패: {str(e)}")
