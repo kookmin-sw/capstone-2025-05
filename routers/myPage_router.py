@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from firebase_admin import auth, db, storage
+from firebase_admin import auth, db, storage, firestore
 from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from manager.firebase_manager import firestore_db, storage_bucket
@@ -111,3 +111,98 @@ async def change_profile_image(uid: str, file: UploadFile = File(...)):
     except Exception as e:
         print(f"원인 불명 프로필 사진 변경 실패: {str(e)}")
         raise HTTPException(status_code=500, detail=f"프로필 사진 변경 실패: {str(e)}")
+
+def get_score_data(uid: str, song_name: str, upload_count: int):
+    try:
+        doc_ref = firestore_db.collection(f"{uid}_score").document(song_name).collection(str(upload_count)).document("score")
+        score_data = doc_ref.get()
+
+        if not score_data.exists:
+            print("연습 기록이 존재하지 않음")
+            return None
+
+        return score_data.to_dict()
+    except Exception as e:
+        print(f"연습 기록 조회 실패: {str(e)}")
+        return None
+
+@router.get("/records/all", tags=["My Page"])
+async def get_all_records(uid: str):
+    try:
+        storage_bucket = storage.bucket()
+        blobs = list(storage_bucket.list_blobs(prefix=f"{uid}/record/"))
+
+        records = {}
+
+        for blob in blobs:
+            path_parts = blob.name.split("/")
+
+            if len(path_parts) < 5 or not blob.name.endswith(('.mp3', '.wav')):
+                continue
+
+            song_name = path_parts[2]
+            upload_count = int(path_parts[3])
+
+            score_data = get_score_data(uid, song_name, upload_count)
+
+            if score_data:
+                if song_name not in records:
+                    records[song_name] = []
+
+                if not any(record["upload_count"] == upload_count and record["audio_url"] == blob.public_url 
+                           for record in records[song_name]):
+                    records[song_name].append({
+                        "upload_count": upload_count,
+                        "tempo": score_data.get("tempo"),
+                        "beat": score_data.get("beat"),
+                        "interval": score_data.get("interval")
+                    })
+
+        return {"records": records}
+
+    except Exception as e:
+        print(f"연습 기록 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="연습 기록 조회에 실패했습니다.")
+
+@router.get("/records/specific", tags=["My Page"])
+async def get_specific_record(uid: str, song_name: str, upload_count: int):
+    try:
+        storage_bucket = storage.bucket()
+
+        if upload_count == 0:  # upload_count가 0일 경우 모든 연습 내역 조회
+            blob_path = f"{uid}/record/{song_name}/"
+            blobs = list(storage_bucket.list_blobs(prefix=blob_path))
+            upload_counts = set(blob.name.split("/")[3] for blob in blobs if blob.name.endswith(('.mp3', '.wav')))
+        else:
+            upload_counts = {str(upload_count)}
+
+        records = []
+
+        for count in upload_counts:
+            blob_path = f"{uid}/record/{song_name}/{count}/"
+            blobs = list(storage_bucket.list_blobs(prefix=blob_path))
+
+            if not blobs:
+                continue
+
+            score_data = get_score_data(uid, song_name, int(count))
+
+            if score_data:
+                audio_files = [blob.public_url for blob in blobs if blob.name.endswith(('.mp3', '.wav'))]
+
+                for audio_url in audio_files:
+                    records.append({
+                        "upload_count": int(count),
+                        "tempo": score_data.get("tempo"),
+                        "beat": score_data.get("beat"),
+                        "interval": score_data.get("interval")
+                    })
+
+        if not records:
+            raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
+
+        return {"records": records}
+
+    except Exception as e:
+        print(f"특정 연습 기록 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="특정 연습 기록 조회에 실패했습니다.")
