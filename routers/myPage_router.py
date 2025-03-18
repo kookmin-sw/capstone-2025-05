@@ -76,7 +76,7 @@ async def change_profile_image(uid: str, file: UploadFile = File(...)):
         user_ref = db.reference(f"/users/{uid}")
 
         storage_bucket = storage.bucket()
-        blobs = storage_bucket.list_blobs(prefix=f"user_profile/{uid}/")
+        blobs = storage_bucket.list_blobs(prefix=f"{uid}/profile/")
 
         deleted_files: List[str] = []
         for blob in blobs:
@@ -94,7 +94,7 @@ async def change_profile_image(uid: str, file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="지원하지 않는 파일 형식입니다. (jpg, jpeg, png만 가능)")
 
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
-        storage_path = f"user_profile/{uid}/{unique_filename}"
+        storage_path = f"{uid}/profile/{unique_filename}"
 
         blob = storage_bucket.blob(storage_path)
         blob.upload_from_file(file.file, content_type=file.content_type)
