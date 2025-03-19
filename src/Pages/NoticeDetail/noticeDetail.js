@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MapleHeader from '../../Components/MapleHeader';
 
 import Button from '../../Components/Button/Button';
@@ -7,7 +7,7 @@ import profile from '../../Assets/Images/google_profile.png';
 import profile2 from '../../Assets/Images/google_profile2.png';
 import heart from '../../Assets/Images/heart.png';
 import flag from '../../Assets/Images/flag.png';
-import { FaAngleDown } from 'react-icons/fa6';
+import { FaAngleDown, FaAngleUp } from 'react-icons/fa6';
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
 export default function NoticeDetail() {
@@ -55,6 +55,19 @@ export default function NoticeDetail() {
       dislikes: 120,
     },
   ];
+
+  const filterComments = () => {
+    setIsShow((prevIsShow) => {
+      const newIsShow = !prevIsShow;
+      setFilteredComments(newIsShow ? comments : comments.slice(0, 3));
+      return newIsShow;
+    });
+  };
+
+  const [isShow, setIsShow] = useState(false);
+  const [filteredComments, setFilteredComments] = useState(
+    comments.slice(0, 3),
+  );
 
   return (
     <div>
@@ -145,12 +158,14 @@ export default function NoticeDetail() {
           </h>
         </div>
         <div id="review-contents" className="mt-4 w-[80%]">
-          {comments.map((item, index) => (
-            <Review comments={item} />
-          ))}
+          {comments.length <= 3 &&
+            comments.map((item, index) => <Review comments={item} />)}
+          {comments.length > 3 &&
+            filteredComments.map((item, index) => <Review comments={item} />)}
         </div>
         <div>
-          <FaAngleDown size={'30px'} />
+          {!isShow && <FaAngleDown size={'30px'} onClick={filterComments} />}
+          {isShow && <FaAngleUp size={'30px'} onClick={filterComments} />}
         </div>
       </section>
     </div>
