@@ -8,6 +8,8 @@ import profile2 from '../../Assets/Images/google_profile2.png';
 import heart from '../../Assets/Images/heart.png';
 import flag from '../../Assets/Images/flag.png';
 import { FaAngleDown, FaAngleUp } from 'react-icons/fa6';
+import ClipLoader from 'react-spinners/ClipLoader';
+
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
 export default function NoticeDetail() {
@@ -57,17 +59,23 @@ export default function NoticeDetail() {
   ];
 
   const filterComments = () => {
-    setIsShow((prevIsShow) => {
-      const newIsShow = !prevIsShow;
-      setFilteredComments(newIsShow ? comments : comments.slice(0, 3));
-      return newIsShow;
-    });
+    setIsLoading(true); // 로딩 시작
+
+    setTimeout(() => {
+      setIsShow((prevIsShow) => {
+        const newIsShow = !prevIsShow;
+        setFilteredComments(newIsShow ? comments : comments.slice(0, 3));
+        setIsLoading(false); // 로딩 완료
+        return newIsShow;
+      });
+    }, 500);
   };
 
   const [isShow, setIsShow] = useState(false);
   const [filteredComments, setFilteredComments] = useState(
     comments.slice(0, 3),
   );
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <div>
@@ -164,8 +172,20 @@ export default function NoticeDetail() {
             filteredComments.map((item, index) => <Review comments={item} />)}
         </div>
         <div>
-          {!isShow && <FaAngleDown size={'30px'} onClick={filterComments} />}
-          {isShow && <FaAngleUp size={'30px'} onClick={filterComments} />}
+          {
+            <ClipLoader
+              color="#0a0a0a"
+              loading={isLoading}
+              size={30}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          }
+          {!isShow ? (
+            <FaAngleDown size={'30px'} onClick={filterComments} />
+          ) : (
+            <FaAngleUp size={'30px'} onClick={filterComments} />
+          )}
         </div>
       </section>
     </div>
