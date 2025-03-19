@@ -7,6 +7,8 @@ import SearchBox from '../../Components/SearchBox/searchBox';
 import Button from '../../Components/Button/Button';
 import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
+import { Link, useNavigate } from 'react-router-dom';
+
 export default function NoticeBoard() {
   const contents = 10; //게시판에 표시될 데이터 갯수
   const pages = 10; //게시팜에 표시될 페이지 갯수
@@ -17,6 +19,7 @@ export default function NoticeBoard() {
   const [pageNumbers, setPageNumbers] = useState(
     [...Array(10).keys()].map((i) => i + 1),
   );
+  const navigate = useNavigate();
 
   //화면에 보여줄 페이지들 중 첫번째 페이지를 계산하는 함수
   const calcStartPage = () => {
@@ -93,9 +96,22 @@ export default function NoticeBoard() {
           </thead>
           <tbody>
             {currentData.map((item, index) => (
-              <tr key={item?.id} className="border-b-[1px] border-[#A57865]">
+              <tr key={item?.id} className="border-b-[1px] border-">
                 <td className="text-center">{item?.id}</td>
-                <td className="text-center">{item?.title}</td>
+                <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
+                  <Link
+                    to={`/noticeDetail/${item?.id}`}
+                    state={{
+                      id: item?.id,
+                      title: item?.title,
+                      writer: item?.writer,
+                      write_time: item?.write_time,
+                      view: item?.view,
+                    }}
+                  >
+                    {item?.title}
+                  </Link>
+                </td>
                 <td className="text-center">{item?.writer}</td>
                 <td className="text-center">{item?.write_time}</td>
                 <td className="text-center">{item?.view}</td>
