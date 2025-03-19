@@ -126,17 +126,13 @@ def get_score_data(uid: str, song_name: str, upload_count: int):
     except Exception as e:
         print(f"연습 기록 조회 실패: {str(e)}")
         return None
-
-def extract_date(timestamp):
-    try:
-        print(f"[DEBUG] 원래 timestamp: {timestamp}")  # 디버깅용 출력
-        if "T" in timestamp:
-            return timestamp.split("T")[0]  # 'T' 기준으로 나눠서 날짜만 반환
-        return timestamp
-    except Exception as e:
-        print(f"[ERROR] 날짜 변환 실패: {e}")
-        return timestamp
-
+    
+def extract_date(date):
+    if hasattr(date, "strftime"):
+        return date.strftime("%Y-%m-%d")
+    elif isinstance(date, str) and 'T' in date:
+        return date.split('T')[0]
+    return date
 
 @router.get("/records/all", tags=["My Page"])
 async def get_all_records(uid: str):
@@ -181,31 +177,6 @@ async def get_all_records(uid: str):
     except Exception as e:
         print(f"연습 기록 조회 실패: {str(e)}")
         raise HTTPException(status_code=500, detail="연습 기록 조회에 실패했습니다.")
-
-from datetime import datetime
-
-def extract_date(date):
-    """
-    날짜에서 Firestore Timestamp 또는 문자열의 날짜 부분만 추출하는 함수
-    """
-    if hasattr(date, "strftime"):  # Firestore Timestamp나 datetime 객체인 경우
-        return date.strftime("%Y-%m-%d")
-    elif isinstance(date, str) and 'T' in date:  # 문자열 형식의 날짜인 경우
-        return date.split('T')[0]
-    return date  # 다른 형식은 그대로 반환
-
-
-from datetime import datetime
-
-def extract_date(date):
-    """
-    날짜에서 Firestore Timestamp 또는 문자열의 날짜 부분만 추출하는 함수
-    """
-    if hasattr(date, "strftime"):  # Firestore Timestamp나 datetime 객체인 경우
-        return date.strftime("%Y-%m-%d")
-    elif isinstance(date, str) and 'T' in date:  # 문자열 형식의 날짜인 경우
-        return date.split('T')[0]
-    return date  # 다른 형식은 그대로 반환
 
 
 @router.get("/records/specific", tags=["My Page"])
