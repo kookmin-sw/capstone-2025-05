@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File
 from manager.firebase_manager import firestore_db, storage_bucket
 from urllib.parse import urlparse
 import uuid
+from dateutil import parser
 
 router = APIRouter()
 
@@ -126,6 +127,17 @@ def get_score_data(uid: str, song_name: str, upload_count: int):
         print(f"연습 기록 조회 실패: {str(e)}")
         return None
 
+def extract_date(timestamp):
+    try:
+        print(f"[DEBUG] 원래 timestamp: {timestamp}")  # 디버깅용 출력
+        if "T" in timestamp:
+            return timestamp.split("T")[0]  # 'T' 기준으로 나눠서 날짜만 반환
+        return timestamp
+    except Exception as e:
+        print(f"[ERROR] 날짜 변환 실패: {e}")
+        return timestamp
+
+
 @router.get("/records/all", tags=["My Page"])
 async def get_all_records(uid: str):
     try:
@@ -151,11 +163,17 @@ async def get_all_records(uid: str):
 
                 if not any(record["upload_count"] == upload_count and record["audio_url"] == blob.public_url 
                            for record in records[song_name]):
+                    date = score_data.get("date")
+
+                    hasattr(date, "strftime")
+                    date = date.strftime("%Y-%m-%d") 
+
                     records[song_name].append({
                         "upload_count": upload_count,
                         "tempo": score_data.get("tempo"),
                         "beat": score_data.get("beat"),
-                        "interval": score_data.get("interval")
+                        "interval": score_data.get("interval"),
+                        "date": date
                     })
 
         return {"records": records}
@@ -164,44 +182,86 @@ async def get_all_records(uid: str):
         print(f"연습 기록 조회 실패: {str(e)}")
         raise HTTPException(status_code=500, detail="연습 기록 조회에 실패했습니다.")
 
+from datetime import datetime
+
+def extract_date(date):
+    """
+    날짜에서 Firestore Timestamp 또는 문자열의 날짜 부분만 추출하는 함수
+    """
+    if hasattr(date, "strftime"):  # Firestore Timestamp나 datetime 객체인 경우
+        return date.strftime("%Y-%m-%d")
+    elif isinstance(date, str) and 'T' in date:  # 문자열 형식의 날짜인 경우
+        return date.split('T')[0]
+    return date  # 다른 형식은 그대로 반환
+
+
+from datetime import datetime
+
+def extract_date(date):
+    """
+    날짜에서 Firestore Timestamp 또는 문자열의 날짜 부분만 추출하는 함수
+    """
+    if hasattr(date, "strftime"):  # Firestore Timestamp나 datetime 객체인 경우
+        return date.strftime("%Y-%m-%d")
+    elif isinstance(date, str) and 'T' in date:  # 문자열 형식의 날짜인 경우
+        return date.split('T')[0]
+    return date  # 다른 형식은 그대로 반환
+
+
 @router.get("/records/specific", tags=["My Page"])
 async def get_specific_record(uid: str, song_name: str, upload_count: int):
     try:
         storage_bucket = storage.bucket()
 
-        if upload_count == 0:  # upload_count가 0일 경우 모든 연습 내역 조회
+        if upload_count == 0:  # 모든 연습 내역 조회
             blob_path = f"{uid}/record/{song_name}/"
             blobs = list(storage_bucket.list_blobs(prefix=blob_path))
             upload_counts = set(blob.name.split("/")[3] for blob in blobs if blob.name.endswith(('.mp3', '.wav')))
-        else:
-            upload_counts = {str(upload_count)}
 
-        records = []
+            records = []
 
-        for count in upload_counts:
-            blob_path = f"{uid}/record/{song_name}/{count}/"
-            blobs = list(storage_bucket.list_blobs(prefix=blob_path))
+            for count in upload_counts:
+                blob_path = f"{uid}/record/{song_name}/{count}/"
+                blobs = list(storage_bucket.list_blobs(prefix=blob_path))
 
-            if not blobs:
-                continue
+                if not blobs:
+                    continue
 
-            score_data = get_score_data(uid, song_name, int(count))
+                score_data = get_score_data(uid, song_name, int(count))
 
-            if score_data:
-                audio_files = [blob.public_url for blob in blobs if blob.name.endswith(('.mp3', '.wav'))]
-
-                for audio_url in audio_files:
+                if score_data:
                     records.append({
                         "upload_count": int(count),
                         "tempo": score_data.get("tempo"),
                         "beat": score_data.get("beat"),
-                        "interval": score_data.get("interval")
+                        "interval": score_data.get("interval"),
+                        "date": extract_date(score_data.get("date"))
                     })
 
-        if not records:
-            raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
+            if not records:
+                raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
 
-        return {"records": records}
+            return {"records": records}
+
+        else:
+            blob_path = f"{uid}/record/{song_name}/{upload_count}/"
+            blobs = list(storage_bucket.list_blobs(prefix=blob_path))
+
+            if not blobs:
+                raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
+
+            score_data = get_score_data(uid, song_name, upload_count)
+
+            if not score_data:
+                raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
+
+            return {
+                "upload_count": upload_count,
+                "tempo": score_data.get("tempo"),
+                "beat": score_data.get("beat"),
+                "interval": score_data.get("interval"),
+                "date": extract_date(score_data.get("date"))
+            }
 
     except Exception as e:
         print(f"특정 연습 기록 조회 실패: {str(e)}")
