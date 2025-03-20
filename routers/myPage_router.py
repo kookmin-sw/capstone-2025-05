@@ -1,11 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from firebase_admin import auth, db, storage, firestore
-from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
+from firebase_admin import auth, db, storage
+from typing import List
+from io import BytesIO
 from manager.firebase_manager import firestore_db, storage_bucket
-from urllib.parse import urlparse
 import uuid
-from dateutil import parser
 
 router = APIRouter()
 
@@ -178,28 +177,18 @@ async def get_all_records(uid: str):
         print(f"연습 기록 조회 실패: {str(e)}")
         raise HTTPException(status_code=500, detail="연습 기록 조회에 실패했습니다.")
 
-
 @router.get("/records/specific", tags=["My Page"])
 async def get_specific_record(uid: str, song_name: str, upload_count: int):
+    """특정 연습 기록 조회"""
     try:
-        storage_bucket = storage.bucket()
-
         if upload_count == 0:  # 모든 연습 내역 조회
             blob_path = f"{uid}/record/{song_name}/"
             blobs = list(storage_bucket.list_blobs(prefix=blob_path))
             upload_counts = set(blob.name.split("/")[3] for blob in blobs if blob.name.endswith(('.mp3', '.wav')))
 
             records = []
-
             for count in upload_counts:
-                blob_path = f"{uid}/record/{song_name}/{count}/"
-                blobs = list(storage_bucket.list_blobs(prefix=blob_path))
-
-                if not blobs:
-                    continue
-
                 score_data = get_score_data(uid, song_name, int(count))
-
                 if score_data:
                     records.append({
                         "upload_count": int(count),
@@ -212,21 +201,14 @@ async def get_specific_record(uid: str, song_name: str, upload_count: int):
             if not records:
                 raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
 
-            return {"records": records}
+            return records
 
         else:
-            blob_path = f"{uid}/record/{song_name}/{upload_count}/"
-            blobs = list(storage_bucket.list_blobs(prefix=blob_path))
-
-            if not blobs:
-                raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
-
             score_data = get_score_data(uid, song_name, upload_count)
-
             if not score_data:
                 raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
 
-            return {
+            record_data = {
                 "upload_count": upload_count,
                 "tempo": score_data.get("tempo"),
                 "beat": score_data.get("beat"),
@@ -234,6 +216,34 @@ async def get_specific_record(uid: str, song_name: str, upload_count: int):
                 "date": extract_date(score_data.get("date"))
             }
 
+            return record_data
+
     except Exception as e:
         print(f"특정 연습 기록 조회 실패: {str(e)}")
         raise HTTPException(status_code=500, detail="특정 연습 기록 조회에 실패했습니다.")
+
+
+@router.get("/records/audio", tags=["My Page"])
+async def get_record_audio(uid: str, song_name: str, upload_count: int):
+    try:
+        blob_path = f"{uid}/record/{song_name}/{upload_count}/"
+        blobs = list(storage_bucket.list_blobs(prefix=blob_path))
+
+        audio_files = [blob for blob in blobs if blob.name.endswith(('.mp3', '.wav'))]
+
+        if not audio_files:
+            raise HTTPException(status_code=404, detail="해당 연습 파일이 없습니다.")
+
+        target_blob = audio_files[0]
+        audio_stream = BytesIO(target_blob.download_as_bytes())
+        audio_filename = target_blob.name.split("/")[-1]
+
+        headers = {
+            "Content-Disposition": f"attachment; filename={audio_filename}"
+        }
+
+        return StreamingResponse(audio_stream, headers=headers, media_type="audio/mpeg")
+
+    except Exception as e:
+        print("숫자 입력 잘못해서 음원 가져오기 실패")
+        raise HTTPException(status_code=500, detail="업로드한 음원 가져오기 실패")
