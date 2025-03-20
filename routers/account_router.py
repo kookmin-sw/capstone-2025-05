@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 from manager.firebase_manager import firestore_db, storage_bucket
 from firebase_admin import auth, db
-from firebase_admin import firestore
 from pydantic import BaseModel, EmailStr
 from typing import List
 import requests
