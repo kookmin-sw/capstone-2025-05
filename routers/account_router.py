@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
+from manager.firebase_manager import firestore_db, storage_bucket
 from firebase_admin import auth, db
 from firebase_admin import firestore
 from pydantic import BaseModel
@@ -134,16 +135,32 @@ async def delete_user(uid: str):
         if user_ref.get():
             user_ref.delete()
 
-        firestore_client = firestore.client()
-        user_doc_ref = firestore_client.collection("users").document(uid)
+        user_doc_ref = firestore_db.collection("users").document(uid)
         if user_doc_ref.get().exists:
             user_doc_ref.delete()
+
+        score_collection_ref = firestore_db.collection(f"{uid}_score")
+        score_docs = score_collection_ref.stream()
+        for doc in score_docs:
+            doc.reference.delete()
+        print(f"Firestore에서 {uid}_score 컬렉션 삭제 완료")
+
+        blobs = storage_bucket.list_blobs(prefix=f"{uid}/")
+        deleted_files = []
+        for blob in blobs:
+            blob.delete()
+            deleted_files.append(blob.name)
         
+        if deleted_files:
+            print(f"Storage에서 {uid} 폴더 삭제 완료 (파일 개수: {len(deleted_files)})")
+        else:
+            print("Storage에서 삭제할 파일이 없습니다.")
+
         print("사용자 삭제 완료")
         return {"message": "사용자 삭제 완료"}
 
     except HTTPException as e:
         raise e
     except Exception as e:
-        print("사용자 삭제 실패")
+        print(f"사용자 삭제 실패: {str(e)}")
         raise HTTPException(status_code=500, detail=f"사용자 삭제 실패: {str(e)}")
