@@ -76,7 +76,6 @@ async def google_auth_callback(code: str):
 
         firestore_client = firestore.client()
         user_doc_ref = firestore_client.collection("users").document(uid)
-        user_data = user_doc_ref.get()
 
         return {
             "message" : "로그인 성공", # json 형태로 프론트로 전송, todo: 바뀔 수도
