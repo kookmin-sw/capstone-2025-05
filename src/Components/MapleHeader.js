@@ -9,6 +9,24 @@ const MapleHeader = () => {
   const menuList = ['분석하기', '초보방', '자유게시판', '마이페이지'];
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
+
+  const goPage = (menu) => {
+    console.log(menu);
+    if (menu === '분석하기') {
+      navigate('/');
+    } else if (menu === '초보방') {
+      navigate('/');
+    } else if (menu === '자유게시판') {
+      navigate('/notice');
+    } else if (menu === '마이페이지') {
+      navigate('/mypage');
+    }
+  };
+
+  const clickLogin = () => {
+    setIsLogin(!isLogin);
+    navigate('/login');
+  };
   return (
     <div className="flex w-full items-center justify-between bg-[#FFFFFF]/50">
       <div className="ml-8" onClick={() => navigate('/')}>
@@ -18,7 +36,7 @@ const MapleHeader = () => {
         {menuList.map((menu) => (
           <li
             className="mx-10 list-none font-bold hover:scale-125 duration-[1s] ease-in-out"
-            onClick={() => navigate(`/${menu}`)}
+            onClick={() => goPage(menu)}
           >
             {menu}
           </li>
@@ -49,7 +67,7 @@ const MapleHeader = () => {
               <Button
                 width={'100px'}
                 height={'40px'}
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => clickLogin()}
               >
                 <div className="flex items-center">
                   <span>로그인</span>
