@@ -8,6 +8,7 @@ import Button from '../../Components/Button/Button';
 import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { Link, useNavigate } from 'react-router-dom';
+import { usePostInfoQuery } from '../../Hooks/usePostInfoQuery';
 
 export default function NoticeBoard() {
   const contents = 10; //게시판에 표시될 데이터 갯수
@@ -49,6 +50,9 @@ export default function NoticeBoard() {
     calcStartPage();
     calcPageNumbers();
   };
+
+  const { data: postInfo } = usePostInfoQuery();
+  console.log(postInfo?.[0]?.작성자);
 
   useEffect(() => {
     calcPagiNation();
