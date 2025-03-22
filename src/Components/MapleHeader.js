@@ -13,9 +13,9 @@ const MapleHeader = () => {
   const goPage = (menu) => {
     console.log(menu);
     if (menu === '분석하기') {
-      navigate('/');
+      navigate('/main');
     } else if (menu === '초보방') {
-      navigate('/');
+      navigate('/main');
     } else if (menu === '자유게시판') {
       navigate('/notice');
     } else if (menu === '마이페이지') {
@@ -29,7 +29,7 @@ const MapleHeader = () => {
   };
   return (
     <div className="flex w-full items-center justify-between bg-[#FFFFFF]/50">
-      <div className="ml-8" onClick={() => navigate('/')}>
+      <div className="ml-8" onClick={() => navigate('/main')}>
         <Maple width="150" height="100" />
       </div>
       <div className="menu-area flex">
