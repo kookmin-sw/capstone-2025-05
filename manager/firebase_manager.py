@@ -30,4 +30,4 @@ if not firebase_admin._apps:
 
 firestore_db = firestore.client() 
 realtime_db = db.reference("/") 
-storage_bucket = storage.bucket()  
+storage_bucket = storage.bucket()
