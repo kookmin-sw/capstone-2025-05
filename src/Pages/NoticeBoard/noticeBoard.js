@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import fakeData from '../../Data/fake_notice_data.json';
 import PageButton from '../../Components/PageButton/PageButton';
 import PagePrevButton from '../../Components/PagePrevButton.js/PagePrevButton';
 import PageNextButton from '../../Components/PageNextButton/PageNextButton';
@@ -11,52 +10,43 @@ import { Link, useNavigate } from 'react-router-dom';
 import { usePostInfoQuery } from '../../Hooks/usePostInfoQuery';
 
 export default function NoticeBoard() {
-  const contents = 10; //게시판에 표시될 데이터 갯수
-  const pages = 10; //게시팜에 표시될 페이지 갯수
-  const totalPage = Math.ceil(fakeData.length / contents);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [startPage, setStartPage] = useState(1);
-  const [currentData, setCurrentData] = useState(fakeData.slice(0, 10));
-  const [pageNumbers, setPageNumbers] = useState(
-    [...Array(10).keys()].map((i) => i + 1),
-  );
-  const navigate = useNavigate();
-
-  //화면에 보여줄 페이지들 중 첫번째 페이지를 계산하는 함수
-  const calcStartPage = () => {
-    if (currentPage % pages == 0) {
-      setStartPage((Math.floor(currentPage / 10) - 1) * 10 + 1);
-    } else {
-      setStartPage(Math.floor(currentPage / 10) * 10 + 1);
-    }
-  };
-
-  //화면에 보여줄 페이지들을 계산하는 함수
-  const calcPageNumbers = () => {
-    let pageNumbers = []; //페이지들 초기화
-    for (let i = startPage; i < Math.min(startPage + pages, totalPage); i++) {
-      pageNumbers.push(i);
-    }
-    setPageNumbers(pageNumbers);
-  };
-
-  const calcCurrentData = () => {
-    const startIndex = (currentPage - 1) * contents;
-    setCurrentData(fakeData.slice(startIndex, startIndex + contents));
-  };
-
-  const calcPagiNation = () => {
-    calcCurrentData();
-    calcStartPage();
-    calcPageNumbers();
-  };
+  const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
+  const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
 
   const { data: postInfo } = usePostInfoQuery();
-  console.log(postInfo?.[0]?.작성자);
+  const totalPage = postInfo ? Math.ceil(postInfo.length / contentsPerPage) : 1;
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [startPage, setStartPage] = useState(1);
+  const [currentData, setCurrentData] = useState([]);
+  const [pageNumbers, setPageNumbers] = useState([]);
+
+  // 현재 페이지 기준으로 시작 페이지 계산
   useEffect(() => {
-    calcPagiNation();
-  }, [currentPage, startPage]);
+    const newStartPage =
+      Math.floor((currentPage - 1) / pagesPerBlock) * pagesPerBlock + 1;
+    setStartPage(newStartPage);
+  }, [currentPage]);
+
+  // 페이지 버튼 리스트 계산
+  useEffect(() => {
+    const endPage = Math.min(startPage + pagesPerBlock - 1, totalPage);
+    setPageNumbers(
+      Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i),
+    );
+  }, [startPage, totalPage]);
+
+  // 현재 페이지에 해당하는 데이터 추출
+  useEffect(() => {
+    if (postInfo && Array.isArray(postInfo)) {
+      const startIndex = (currentPage - 1) * contentsPerPage;
+      setCurrentData(postInfo.slice(startIndex, startIndex + contentsPerPage));
+    } else {
+      setCurrentData([]); // 데이터가 없을 때 빈 배열 유지
+    }
+  }, [currentPage, postInfo]);
+
+  console.log(postInfo?.[0]);
 
   return (
     <>
@@ -99,7 +89,7 @@ export default function NoticeBoard() {
             </tr>
           </thead>
           <tbody>
-            {currentData.map((item, index) => (
+            {currentData?.map((item, index) => (
               <tr key={item?.id} className="border-b-[1px] border-">
                 <td className="text-center">{item?.id}</td>
                 <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
@@ -107,18 +97,18 @@ export default function NoticeBoard() {
                     to={`/noticeDetail/${item?.id}`}
                     state={{
                       id: item?.id,
-                      title: item?.title,
-                      writer: item?.writer,
-                      write_time: item?.write_time,
-                      view: item?.view,
+                      title: item?.제목,
+                      writer: item?.작성자,
+                      write_time: item?.작성일시,
+                      view: item?.조회수,
                     }}
                   >
-                    {item?.title}
+                    {item?.제목}
                   </Link>
                 </td>
-                <td className="text-center">{item?.writer}</td>
-                <td className="text-center">{item?.write_time}</td>
-                <td className="text-center">{item?.view}</td>
+                <td className="text-center">{item?.작성자}</td>
+                <td className="text-center">{item?.작성일시}</td>
+                <td className="text-center">{item?.조회수}</td>
               </tr>
             ))}
           </tbody>

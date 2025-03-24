@@ -1,9 +1,9 @@
 import axios from 'axios';
-
+// 자유게시판 전체 데이터
 const api = axios.create({
-  baseURL: 'https://c4a86d04-6038-4278-8530-5893188f1d63.mock.pstmn.io/',
+  baseURL: 'http://localhost:8001/',
   headers: {
-    Accept: 'application/json',
+    'Content-Type': 'application/json',
   },
 });
 

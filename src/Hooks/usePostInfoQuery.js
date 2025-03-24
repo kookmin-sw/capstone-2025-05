@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../Utils/api';
 
 const fetchPostInfo = () => {
-  return api.get(`/notice`);
+  return api.get(`/noticeBoard`);
 };
 
 export const usePostInfoQuery = () => {
