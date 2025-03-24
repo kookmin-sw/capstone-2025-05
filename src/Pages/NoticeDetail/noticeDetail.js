@@ -11,12 +11,14 @@ import { FaAngleDown, FaAngleUp } from 'react-icons/fa6';
 import ClipLoader from 'react-spinners/ClipLoader';
 import { useComentsQuery } from '../../Hooks/useCommentsQuery';
 import { useLocation } from 'react-router-dom';
+import { useEditPostMutation } from '../../Hooks/useEditPostMutation';
 
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
 export default function NoticeDetail() {
   const location = useLocation();
   const post = location.state;
+  const { mutate } = useEditPostMutation();
 
   const filterComments = () => {
     setIsLoading(true); // 로딩 시작
@@ -37,6 +39,33 @@ export default function NoticeDetail() {
   const [filteredComments, setFilteredComments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { data: commentsInfo } = useComentsQuery(post.id);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(post.title);
+  const [editedContent, setEditedContent] = useState(post.content);
+
+  const toggleEditMode = () => {
+    setIsEditing(!isEditing);
+    setEditedTitle(post.title);
+    setEditedContent(post.content);
+  };
+
+  const handleSave = () => {
+    mutate(
+      { post, editedTitle, editedContent },
+      {
+        onSuccess: () => {
+          post.title = editedTitle;
+          post.content = editedContent;
+          setIsEditing(false);
+          console.log('게시물 수정 완료');
+        },
+        onError: (error) => {
+          console.error('게시물 수정 중 오류 발생:', error);
+          alert('게시물 수정에 실패했습니다.');
+        },
+      },
+    );
+  };
 
   useEffect(() => {
     if (commentsInfo) {
@@ -59,9 +88,18 @@ export default function NoticeDetail() {
               id="title"
               className=" border-b border-[#C4A08E] p-4 min-h-[11vh]"
             >
-              <h1 className="text-2xl font-bold align-middle !important">
-                {post.title}
-              </h1>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  className="border p-2 w-full"
+                />
+              ) : (
+                <h1 className="text-2xl font-bold align-middle">
+                  {post.title}
+                </h1>
+              )}
             </div>
             <table className="w-full  border-collapse min-h-[8vh]">
               <thead className="border-b border-[#C4A08E]">
@@ -87,7 +125,15 @@ export default function NoticeDetail() {
                 </tr>
               </thead>
             </table>
-            <p className="mt-6 ml-2 whitespace-pre-line">{post.content}</p>
+            {isEditing ? (
+              <textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                className="border p-2 w-full h-40"
+              />
+            ) : (
+              <p className="mt-6 ml-2 whitespace-pre-line">{post.content}</p>
+            )}
           </div>
         </div>
 
@@ -108,9 +154,25 @@ export default function NoticeDetail() {
           </div>
           <div className="flex">
             <div className="duration-300 ease-in-out hover:scale-[110%]">
-              <Button width="60px" height="40px">
-                수정
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button width="60px" height="40px" onClick={handleSave}>
+                    저장
+                  </Button>
+                  <Button
+                    width="60px"
+                    height="40px"
+                    onClick={toggleEditMode}
+                    backgroundColor="white"
+                  >
+                    취소
+                  </Button>
+                </>
+              ) : (
+                <Button width="60px" height="40px" onClick={toggleEditMode}>
+                  수정
+                </Button>
+              )}
             </div>
             <div className="duration-300 ease-in-out hover:scale-[110%]">
               <Button width="60px" height="40px" backgroundColor="white">

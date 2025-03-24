@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../Utils/api';
 
 const fetchPostInfo = () => {
-  return api.get(`/noticeBoard`);
+  return api.get(`/posts`);
 };
 
 export const usePostInfoQuery = () => {
   return useQuery({
-    queryKey: ['post-info'],
+    queryKey: ['postNoticeBoard'],
     queryFn: () => fetchPostInfo(),
     select: (result) => result.data,
     staleTime: 300000,
