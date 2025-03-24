@@ -46,8 +46,6 @@ export default function NoticeBoard() {
     }
   }, [currentPage, postInfo]);
 
-  console.log(postInfo?.[0]);
-
   return (
     <>
       <MapleHeader />
@@ -101,6 +99,7 @@ export default function NoticeBoard() {
                       writer: item?.작성자,
                       write_time: item?.작성일시,
                       view: item?.조회수,
+                      content: item?.내용,
                     }}
                   >
                     {item?.제목}
