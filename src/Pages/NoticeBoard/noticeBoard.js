@@ -21,6 +21,8 @@ export default function NoticeBoard() {
   const [currentData, setCurrentData] = useState([]);
   const [pageNumbers, setPageNumbers] = useState([]);
 
+  const navigate = useNavigate();
+
   // 현재 페이지 기준으로 시작 페이지 계산
   useEffect(() => {
     const newStartPage =
@@ -116,7 +118,11 @@ export default function NoticeBoard() {
           <div></div>
           <SearchBox width={'300px'} height={'40px'} />
           <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
-            <Button width={'80px'} height={'40px'}>
+            <Button
+              width={'80px'}
+              height={'40px'}
+              onClick={() => navigate('/write')}
+            >
               글쓰기
             </Button>
           </div>
