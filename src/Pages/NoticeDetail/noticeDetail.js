@@ -10,7 +10,7 @@ import flag from '../../Assets/Images/flag.png';
 import { FaAngleDown, FaAngleUp } from 'react-icons/fa6';
 import ClipLoader from 'react-spinners/ClipLoader';
 import { useComentsQuery } from '../../Hooks/useCommentsQuery';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useEditPostMutation } from '../../Hooks/useEditPostMutation';
 
 // 하트 아이콘 저작권(fariha begum)
@@ -19,6 +19,7 @@ export default function NoticeDetail() {
   const location = useLocation();
   const post = location.state;
   const { mutate } = useEditPostMutation();
+  const navigate = useNavigate();
 
   const filterComments = () => {
     setIsLoading(true); // 로딩 시작
@@ -57,11 +58,11 @@ export default function NoticeDetail() {
           post.title = editedTitle;
           post.content = editedContent;
           setIsEditing(false);
-          console.log('게시물 수정 완료');
+          alert('✅게시물 수정 완료');
         },
         onError: (error) => {
           console.error('게시물 수정 중 오류 발생:', error);
-          alert('게시물 수정에 실패했습니다.');
+          alert('❎게시물 수정에 실패했습니다.');
         },
       },
     );
@@ -153,37 +154,51 @@ export default function NoticeDetail() {
             </div>
           </div>
           <div className="flex">
-            <div className="duration-300 ease-in-out hover:scale-[110%]">
-              {isEditing ? (
-                <>
+            {isEditing ? (
+              <div className="flex">
+                <div className="duration-300 ease-in-out hover:scale-[110%]">
                   <Button width="60px" height="40px" onClick={handleSave}>
                     저장
                   </Button>
+                </div>
+                <div className="duration-300 ease-in-out hover:scale-[110%]">
                   <Button
                     width="60px"
                     height="40px"
                     onClick={toggleEditMode}
                     backgroundColor="white"
                   >
-                    취소
+                    <span className="text-[#A57865] !important">취소</span>
                   </Button>
-                </>
-              ) : (
-                <Button width="60px" height="40px" onClick={toggleEditMode}>
-                  수정
-                </Button>
-              )}
-            </div>
-            <div className="duration-300 ease-in-out hover:scale-[110%]">
-              <Button width="60px" height="40px" backgroundColor="white">
-                <span className="text-[#A57865] !important">목록</span>
-              </Button>
-            </div>
-            <div className="duration-300 ease-in-out hover:scale-[110%]">
-              <Button width="60px" height="40px">
-                글쓰기
-              </Button>
-            </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="duration-300 ease-in-out hover:scale-[110%]">
+                  <Button width="60px" height="40px" onClick={toggleEditMode}>
+                    수정
+                  </Button>
+                </div>
+                <div className="duration-300 ease-in-out hover:scale-[110%]">
+                  <Button
+                    width="60px"
+                    height="40px"
+                    backgroundColor="white"
+                    onClick={() => navigate('/notice')}
+                  >
+                    <span className="text-[#A57865] !important">목록</span>
+                  </Button>
+                </div>
+                <div
+                  className="duration-300 ease-in-out hover:scale-[110%]"
+                  onClick={() => navigate('/write')}
+                >
+                  <Button width="60px" height="40px">
+                    글쓰기
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

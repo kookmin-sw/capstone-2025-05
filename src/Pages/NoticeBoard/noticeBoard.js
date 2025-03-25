@@ -121,6 +121,7 @@ export default function NoticeBoard() {
             </Button>
           </div>
         </div>
+        {/* 페이지 네이션 구현 */}
         <div id="pagination" className="flex my-4">
           {startPage != 1 && (
             <PagePrevButton
