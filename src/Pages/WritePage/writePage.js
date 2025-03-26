@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button from '../../Components/Button/Button';
 import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
-import { usePostWriteMutation } from '../../Hooks/usePostWriteMutation';
+import { usePostWriteMutation } from '../../Hooks/post/usePostWriteMutation';
 
 export default function WritePage() {
   const [title, setTitle] = useState('');

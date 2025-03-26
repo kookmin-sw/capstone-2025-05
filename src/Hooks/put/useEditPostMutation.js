@@ -1,13 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../Utils/api';
+import api from '../../Utils/api';
 
-const updatePost = ({ post, editedTitle, editedContent }) => {
-  return api.put(`/posts/${post.id}`, {
-    id: post.id,
+const updatePost = ({
+  id,
+  editedTitle,
+  writer,
+  write_time,
+  view,
+  editedContent,
+}) => {
+  return api.put(`/posts/${id}`, {
+    id,
     제목: editedTitle,
-    작성자: post.writer,
-    작성일시: post.write_time,
-    조회수: post.view,
+    작성자: writer,
+    작성일시: write_time,
+    조회수: view,
     내용: editedContent,
   });
 };

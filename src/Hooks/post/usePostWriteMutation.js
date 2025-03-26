@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../Utils/api';
+import api from '../../Utils/api';
 
 const postWrite = ({ post }) => {
   return api.post(`/posts`, {
