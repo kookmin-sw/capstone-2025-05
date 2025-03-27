@@ -2,6 +2,7 @@ import './App.css';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import TestPage from './Pages/TestPage/testPage';
 import Login from './Pages/Login/login';
+import Signup from './Pages/Login/signup';
 import Profile from './Pages/Login/profile';
 import Main from './Pages/Main/main';
 import WritePage from './Pages/WritePage/writePage';
@@ -15,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/test" element={<TestPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/main" element={<Main />} />
           <Route path="/write" element={<WritePage />} />
