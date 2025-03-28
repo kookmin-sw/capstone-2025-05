@@ -32,6 +32,6 @@ export default function Input(props) {
       ))}
     </select>
   ) : (
-    <input {...commonProps} type={props.type} />
+    <input {...commonProps} type={props.type} placeholder={props.placeholder} />
   );
 }

@@ -5,9 +5,13 @@ export default function Box({
   height,
   backgroundColor = 'white',
   children,
+  overwrite, //rounded 변경을 위한 오버라이딩
 }) {
   return (
-    <div className="rounded-[10px]" style={{ width, height, backgroundColor }}>
+    <div
+      className={`rounded-[10px] ${overwrite}`}
+      style={{ width, height, backgroundColor }}
+    >
       {children}
     </div>
   );

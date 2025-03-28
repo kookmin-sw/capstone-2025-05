@@ -101,6 +101,7 @@ export default function NoticeBoard() {
                       write_time: item?.작성일시,
                       view: item?.조회수,
                       content: item?.내용,
+                      likes: item?.좋아요수,
                     }}
                   >
                     {item?.제목}
