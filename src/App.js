@@ -9,6 +9,7 @@ import WritePage from './Pages/WritePage/writePage';
 import MyPage from './Pages/MyPage/MyPage';
 import NoticeBoard from './Pages/NoticeBoard/noticeBoard';
 import NoticeDetail from './Pages/NoticeDetail/noticeDetail';
+import Ranking from './Pages/Ranking/ranking';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/notice" element={<NoticeBoard />} />
           <Route path="/noticeDetail/:id" element={<NoticeDetail />} />
+          <Route path="/ranking" element={<Ranking />} />
         </Routes>
       </BrowserRouter>
     </div>
