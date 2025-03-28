@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../Components/MapleHeader';
 import Logo from '../../Assets/logo.svg';
-import Google from '../../Assets/google.svg';
 import Box from '../../Components/Box/Box.js';
 import Input from '../../Components/Input/input.js';
 import Button from '../../Components/Button/Button.js';
@@ -17,16 +16,7 @@ export default function Login() {
   const handlePassword = (e) => setPassword(e.target.value);
 
   const handleLogin = () => {
-    navigate('/main');
-  };
-
-  const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-  const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
-  const SCOPE = process.env.REACT_APP_SCOPE;
-  const googleLink = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
-
-  const handleGoogleLogin = () => {
-    window.location.href = googleLink;
+    navigate('/profile');
   };
 
   return (
@@ -38,9 +28,12 @@ export default function Login() {
         </div>
 
         <div className="absolute top-[18%]">
-          <Box width="400px" height="300px">
+          <Box width="400px" height="432px">
             <div className="flex flex-col items-center justify-center h-full">
-              <div className="flex flex-col items-center gap-y-4">
+              <span className="text-center text-lg font-semibold mb-8">
+                사용할 아이디와 비밀번호를 입력해 주세요
+              </span>
+              <div className="flex flex-col items-center gap-y-6">
                 <Input
                   width="320px"
                   height="52px"
@@ -58,40 +51,16 @@ export default function Login() {
                   onChange={handlePassword}
                 />
               </div>
-              <div className="mt-8">
+              <div className="mt-16">
                 <Button width="320px" height="52px" onClick={handleLogin}>
-                  로그인
+                  회원가입
                 </Button>
               </div>
             </div>
           </Box>
         </div>
-
-        <div className="absolute top-[74%] w-[600px] border-t-2 border-[#AFAFAF]"></div>
-
-        <div className="absolute top-[77%]">
-          <button
-            className="flex flex-row justify-between items-center w-[400px] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[20px] font-bold bg-[white]"
-            onClick={handleGoogleLogin}
-          >
-            <img src={Google} alt="google logo" />
-            구글로 시작하기
-            <div className="w-[24px] h-[100%]"></div>
-          </button>
-        </div>
       </div>
-      <div className="flex flex-col items-center">
-        <div className="absolute top-[85%]">
-          <button
-            className="text-[#AFAFAF] text-sm underline hover:text-gray-500"
-            onClick={() => {
-              navigate('/signup');
-            }}
-          >
-            회원가입
-          </button>
-        </div>
-      </div>
+
       <Footer className="absolute bottom-0 w-full" />
     </div>
   );
