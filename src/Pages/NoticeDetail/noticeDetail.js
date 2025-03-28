@@ -15,7 +15,9 @@ import { useEditPostMutation } from '../../Hooks/put/useEditPostMutation';
 import { FaRegMinusSquare, FaRegPlusSquare } from 'react-icons/fa';
 import Input from '../../Components/Input/input';
 import { usePostCommentsMutation } from '../../Hooks/post/usePostCommentsMutation';
-import { useMutation } from '@tanstack/react-query';
+import Alert from '../../Components/Alert/Alert';
+import fill_heart from '../../Assets/Images/fill_heart.png';
+import fill_flag from '../../Assets/Images/fill_flag.png';
 
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
@@ -41,13 +43,25 @@ export default function NoticeDetail() {
 
   const [isShow, setIsShow] = useState(false);
   const [comments, setComments] = useState();
+  //접기&펼치기에 따라 보여줄 댓글 데이터
   const [filteredComments, setFilteredComments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  //전체 게시물 리뷰 데이터
   const { data: commentsInfo } = useComentsQuery(post.id);
+  //게수물 수정 여부
   const [isEditing, setIsEditing] = useState(false);
+  //게시물 수정 타이틀
   const [editedTitle, setEditedTitle] = useState(post.title);
+  //게시물 수정 내용
   const [editedContent, setEditedContent] = useState(post.content);
   const [isPostComment, setIsPostComment] = useState(false);
+
+  // 댓글 내용
+  const [reviewComment, setReviewComment] = useState('');
+
+  //좋아요,신고하기 버튼 체크 여부
+  const [liked, setLiked] = useState(false);
+  const [reported, setReported] = useState(false);
 
   //수정 모드
   const toggleEditMode = () => {
@@ -82,18 +96,19 @@ export default function NoticeDetail() {
 
   const handlePostComment = () => {
     const commentData = {
-      id: post.id,
+      id: post.id, //나중에 uid로 바꿀것
       uid: '랜덤',
       작성일시: new Date().toISOString(), // 현재 시간
       프로필이미지: 'profile',
       postid: post.id, // 현재 게시글 ID
       작성자: '누굴까', // 작성자 이름
-      // 내용: 여기에는 댓글 작성창에 들어갈 내용 넣어야함, // 입력된 댓글 내용
+      내용: reviewComment,
     };
 
     postCommentMutate(commentData, {
       onSuccess: () => {
         alert('✅ 댓글이 추가되었습니다.');
+        setReviewComment('');
       },
       onError: (error) => {
         console.error('댓글 작성 중 오류 발생:', error);
@@ -105,6 +120,17 @@ export default function NoticeDetail() {
   const handlePlusComment = () => {
     const newIsPostComment = !isPostComment;
     return setIsPostComment(newIsPostComment);
+  };
+
+  //좋아요&신고하기 버튼 클릭 이벤트
+  const handleHeartBttn = () => {
+    setLiked(!liked);
+    //여기에는 좋아요 + 1기능을 하는 mutate를 집어넣어주면 됨
+  };
+
+  const handleFlagBttn = () => {
+    setReported(!reported);
+    //여기에는 신고 하는 mutate를 집어넣어주면 됨
   };
 
   useEffect(() => {
@@ -179,18 +205,19 @@ export default function NoticeDetail() {
 
         <div className="flex w-[80%] justify-between mt-4">
           <div className="flex">
-            <div className="mr-2 w-10">
+            <button className="mr-2 w-10 h-[40px]" onClick={handleHeartBttn}>
               <img
-                src={heart}
+                src={liked ? fill_heart : heart}
                 className="duration-300 ease-in-out hover:scale-[110%]"
               />
-            </div>
-            <div className="w-10">
+              <span>{post.likes}</span>
+            </button>
+            <button className="w-10" onClick={handleFlagBttn}>
               <img
-                src={flag}
+                src={reported ? fill_flag : flag}
                 className="duration-300 ease-in-out hover:scale-[110%]"
               />
-            </div>
+            </button>
           </div>
           <div className="flex">
             {isEditing ? (
@@ -265,7 +292,7 @@ export default function NoticeDetail() {
           )}
         </div>
         {/* 댓글 contents */}
-        <div id="review-contents" className="mt-4 w-[80%]">
+        <div id="review-contents" className="my-4 w-[80%]">
           {comments?.length <= 3 &&
             comments?.map((item, index) => (
               <Review
@@ -281,6 +308,43 @@ export default function NoticeDetail() {
                 fakeImg={item.프로필이미지 == 'profile' ? profile : profile2}
               />
             ))}
+          {comments?.length == 0 && (
+            <Alert
+              width={'full'}
+              height={'8'}
+              overwrite={'rounded-[6px] py-4'}
+              content={'댓글이 없습니다. 댓글을 작성해주세요..!'}
+            />
+          )}
+        </div>
+
+        {/* 댓글 작성 박스 */}
+
+        <div
+          className={`flex w-[85%] fixed bottom-[25px]  transition-opacity ${
+            isPostComment ? 'visible' : 'hidden'
+          } ease-in-out duration-700`}
+        >
+          <div className="flex w-full relative left-[45px] ">
+            <Input
+              className="w-full"
+              height="60px"
+              placeholder="댓글을 작성해주세요..."
+              value={reviewComment}
+              onChange={(e) => {
+                setReviewComment(e.target.value);
+              }}
+            />
+            <div className="flex items-center relative right-[90px]">
+              <Button
+                height={'45px'}
+                width={'80px'}
+                onClick={handlePostComment}
+              >
+                완료
+              </Button>
+            </div>
+          </div>
         </div>
         {/* 댓글 펼치기 & 접기 */}
         {comments?.length > 3 && (
@@ -301,26 +365,6 @@ export default function NoticeDetail() {
             )}
           </div>
         )}
-        {/* 댓글 작성 박스 */}
-
-        <div
-          className={`flex w-[85%] fixed bottom-[10px]  transition-opacity ${
-            isPostComment ? 'visible' : 'hidden'
-          } ease-in-out duration-700`}
-        >
-          <div className="flex w-full relative left-[45px] ">
-            <Input className="w-full" height="60px" />
-            <div className="flex items-center relative right-[90px]">
-              <Button
-                height={'45px'}
-                width={'80px'}
-                onClick={handlePostComment}
-              >
-                완료
-              </Button>
-            </div>
-          </div>
-        </div>
       </section>
     </div>
   );
