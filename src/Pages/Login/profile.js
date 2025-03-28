@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../Components/MapleHeader';
 import Logo from '../../Assets/logo.svg';
 import Input from '../../Components/Input/input.js';
@@ -7,6 +8,7 @@ import Button from '../../Components/Button/Button.js';
 import Footer from '../../Components/MapleFooter';
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [nickname, setNickname] = useState('');
   const [skillLevel, setSkillLevel] = useState('');
   const [genre, setGenre] = useState('');
@@ -29,10 +31,7 @@ export default function Profile() {
 
   const handleComplete = () => {
     if (!invalidNickname && !invalidSkill && !invalidGenre) {
-      console.log(nickname);
-      console.log(skillLevel);
-      console.log(genre);
-      console.log('complete!');
+      navigate('/main');
     }
   };
 
@@ -53,7 +52,7 @@ export default function Profile() {
             width="400px"
             height="52px"
             type="text"
-            placeholder="닉네임을 입력해 주세요"
+            placeholder="닉네임(10글자 이내)을 입력해 주세요"
             value={nickname}
             onChange={handleNickname}
           />

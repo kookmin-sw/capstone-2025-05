@@ -2,8 +2,7 @@ import React from 'react';
 
 export default function Input(props) {
   const commonProps = {
-    className:
-      'border border-[#A57865] cursor-pointer rounded-lg p-2 outline-none appearance-none',
+    className: `border border-[#A57865] cursor-pointer rounded-lg p-2 outline-none appearance-none ${props.className}`,
     style: {
       width: props.width,
       height: props.height,
