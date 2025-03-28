@@ -7,6 +7,7 @@ import Main from './Pages/Main/main';
 import WritePage from './Pages/WritePage/writePage';
 import MyPage from './Pages/MyPage/MyPage';
 import NoticeBoard from './Pages/NoticeBoard/noticeBoard';
+import NoticeDetail from './Pages/NoticeDetail/noticeDetail';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/write" element={<WritePage />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/notice" element={<NoticeBoard />} />
+          <Route path="/noticeDetail/:id" element={<NoticeDetail />} />
         </Routes>
       </BrowserRouter>
     </div>
