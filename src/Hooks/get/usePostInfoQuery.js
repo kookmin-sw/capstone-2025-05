@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../Utils/api';
+import api from '../../Utils/api';
 
 const fetchPostInfo = () => {
   return api.get(`/posts`);

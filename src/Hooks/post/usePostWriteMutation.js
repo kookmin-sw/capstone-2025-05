@@ -1,22 +1,22 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../Utils/api';
+import api from '../../Utils/api';
 
-const updatePost = ({ post, editedTitle, editedContent }) => {
-  return api.put(`/posts/${post.id}`, {
+const postWrite = ({ post }) => {
+  return api.post(`/posts`, {
     id: post.id,
-    제목: editedTitle,
+    제목: post.title,
     작성자: post.writer,
     작성일시: post.write_time,
     조회수: post.view,
-    내용: editedContent,
+    내용: post.content,
   });
 };
 
-export const useEditPostMutation = () => {
+export const usePostWriteMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: updatePost,
+    mutationFn: postWrite,
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries('postNoticeBoard'); // 캐시된 데이터 갱신
     },

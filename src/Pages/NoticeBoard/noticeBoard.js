@@ -7,8 +7,7 @@ import Button from '../../Components/Button/Button';
 import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { Link, useNavigate } from 'react-router-dom';
-import { usePostInfoQuery } from '../../Hooks/usePostInfoQuery';
-
+import { usePostInfoQuery } from '../../Hooks/get/usePostInfoQuery';
 export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
   const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
@@ -20,6 +19,8 @@ export default function NoticeBoard() {
   const [startPage, setStartPage] = useState(1);
   const [currentData, setCurrentData] = useState([]);
   const [pageNumbers, setPageNumbers] = useState([]);
+
+  const navigate = useNavigate();
 
   // 현재 페이지 기준으로 시작 페이지 계산
   useEffect(() => {
@@ -116,7 +117,11 @@ export default function NoticeBoard() {
           <div></div>
           <SearchBox width={'300px'} height={'40px'} />
           <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
-            <Button width={'80px'} height={'40px'}>
+            <Button
+              width={'80px'}
+              height={'40px'}
+              onClick={() => navigate('/write')}
+            >
               글쓰기
             </Button>
           </div>
