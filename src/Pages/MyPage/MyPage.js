@@ -115,7 +115,7 @@ export default function MyPage() {
               </div>
               <div className="flex items-center gap-4">
                   <img src={Profile} alt="프로필" className="w-12 h-12 " />
-                  <Link to="/admin" className="text-black text-[16px] font-semibold hover:underline">길동1234</Link>
+                  <Link to="/setting" className="text-black text-[16px] font-semibold hover:underline">길동1234</Link>
               </div>
              </div>
           </Box>

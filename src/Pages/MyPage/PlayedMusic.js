@@ -63,7 +63,7 @@ export default function PlayedMusic() {
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
-                <Link to="/admin">관리</Link>
+                <Link to="/setting">관리</Link>
               </li>
             </ul>
           </div>

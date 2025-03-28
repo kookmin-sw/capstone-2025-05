@@ -8,6 +8,8 @@ import NoticeBoard from './Pages/NoticeBoard/noticeBoard';
 import WritePage from './Pages/WritePage/writePage';
 import MyPage from './Pages/MyPage/MyPage';
 import PlayedMusic from './Pages/MyPage/PlayedMusic';
+import Feedback from './Pages/MyPage/Feedback';
+import Setting from './Pages/MyPage/Setting';
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
           <Route path="/write" element={<WritePage />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/playedmusic" element={<PlayedMusic />} />
+          <Route path="/feedback" element={<Feedback />} />
+          <Route path="/setting" element={<Setting />} />
         </Routes>
       </BrowserRouter>
     </div>
