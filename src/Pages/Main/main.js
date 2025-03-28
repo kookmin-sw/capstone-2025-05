@@ -12,7 +12,7 @@ import Box from '../../Components/Box/Box';
 import Album1 from '../../Assets/Main/album/iveCover.svg';
 import Album2 from '../../Assets/Main/album/bndCover.svg';
 import Album3 from '../../Assets/Main/album/riizeCover.svg';
-import Album4 from '../../Assets/Main/album/aespaCover.svg';
+import Album4 from '../../Assets/Main/album/gdCover.svg';
 import Footer from '../../Components/MapleFooter';
 import 'swiper/css';
 
@@ -21,14 +21,14 @@ export default function Main() {
   const swiperRef = useRef(null);
 
   const handleMove = () => {
-    navigate('/'); // 마이페이지2와 연동
+    navigate('/'); // 등록된 음원 페이지로 이동
   };
 
   const albums = [
-    { cover: Album1, title: 'Rebel Heart', artist: '아이브' },
-    { cover: Album2, title: '오늘만 I LOVE YOU', artist: '보이넥스트도어' },
-    { cover: Album3, title: 'COMBO', artist: '라이즈' },
-    { cover: Album4, title: 'Whiplash', artist: '에스파' },
+    { cover: Album1, title: 'REBEL HEART', artist: 'IVE (아이브)' },
+    { cover: Album2, title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR' },
+    { cover: Album3, title: 'COMBO', artist: 'RIIZE' },
+    { cover: Album4, title: 'HOME SWEET HOME', artist: 'G-DRAGON' },
   ];
 
   return (
@@ -104,12 +104,16 @@ export default function Main() {
                 />
               </div>
               <div className="flex items-center justify-between px-4 mt-2">
-                <div className="flex flex-col">
-                  <span className="text-lg font-semibold">{album.title}</span>
-                  <span className="text-lg mt-[-4px]">{album.artist}</span>
+                <div className="flex flex-col w-[168px]">
+                  <span className="text-lg font-semibold truncate">
+                    {album.title}
+                  </span>
+                  <span className="text-lg mt-[-4px] truncate">
+                    {album.artist}
+                  </span>
                 </div>
                 <button className="w-10 h-10 rounded-full bg-[#A57865] flex items-center justify-center shadow-none hover:bg-white hover:shadow-xl transition-colors group">
-                  <div className="w-0 h-0 border-l-[8px] border-l-white border-t-[4px] border-b-[4px] border-t-transparent border-b-transparent group-hover:border-l-[#A57865] transition-colors"></div>
+                  <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-b-[8px] border-t-transparent border-b-transparent group-hover:border-l-[#A57865] transition-colors"></div>
                 </button>
               </div>
             </Box>
@@ -117,14 +121,14 @@ export default function Main() {
         </div>
       </div>
 
-      <div className="w-full mt-8 mb-16">
+      <div className="w-full mt-16 mb-16">
         <span className="text-xl font-bold text-[24px] ml-16">
-          최근 연주한 곡
+          최근 등록된 곡
         </span>
         <img
           src={Right}
           alt="arrow"
-          className="absolute left-60 -mt-6 cursor-pointer"
+          className="absolute left-[220px] -mt-[22px] cursor-pointer"
           onClick={handleMove}
         />
         <div className="flex flex-wrap justify-center gap-12 mt-4">
@@ -138,12 +142,16 @@ export default function Main() {
                 />
               </div>
               <div className="flex items-center justify-between px-4 mt-2">
-                <div className="flex flex-col">
-                  <span className="text-lg font-semibold">{album.title}</span>
-                  <span className="text-lg mt-[-4px]">{album.artist}</span>
+                <div className="flex flex-col w-[168px]">
+                  <span className="text-lg font-semibold truncate">
+                    {album.title}
+                  </span>
+                  <span className="text-lg mt-[-4px] truncate">
+                    {album.artist}
+                  </span>
                 </div>
                 <button className="w-10 h-10 rounded-full bg-[#A57865] flex items-center justify-center shadow-none hover:bg-white hover:shadow-xl transition-colors group">
-                  <div className="w-0 h-0 border-l-[8px] border-l-white border-t-[4px] border-b-[4px] border-t-transparent border-b-transparent group-hover:border-l-[#A57865] transition-colors"></div>
+                  <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-b-[8px] border-t-transparent border-b-transparent group-hover:border-l-[#A57865] transition-colors"></div>
                 </button>
               </div>
             </Box>
