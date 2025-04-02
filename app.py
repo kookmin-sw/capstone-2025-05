@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from manager.firebase_manager import firestore_db, storage_bucket
+from routers.ranking_router import router as ranking_router
 
 app = FastAPI()
+
+app.include_router(ranking_router) 
 
 @app.post("/test")
 async def test():
