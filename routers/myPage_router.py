@@ -247,3 +247,38 @@ async def get_record_audio(uid: str, song_name: str, upload_count: int):
     except Exception as e:
         print("숫자 입력 잘못해서 음원 가져오기 실패")
         raise HTTPException(status_code=500, detail="업로드한 음원 가져오기 실패")
+    
+def get_posts_by_activity(uid: str, activity_type: str):
+    try:
+        activity_ref = firestore_db.collection("my_activity").document(uid).collection(activity_type)
+        activity_docs = activity_ref.stream()
+        
+        post_ids = [doc.id for doc in activity_docs]
+        if not post_ids:
+            return []
+        
+        posts = []
+        for post_id in post_ids:
+            post_doc = firestore_db.collection("post").document(post_id).get()
+            if post_doc.exists:
+                posts.append({
+                    "post_id": post_id,
+                    "title": post_doc.to_dict().get("title", "")
+                })
+        return posts
+    
+    except Exception as e:
+        print(f"{activity_type} 데이터 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"{activity_type} 데이터 조회 실패")
+
+@router.get("/my-posts", tags=["My Page"])
+async def get_my_posts(uid: str):
+    return {"my_posts": get_posts_by_activity(uid, "post")}
+
+@router.get("/my-scraps", tags=["My Page"])
+async def get_my_scraps(uid: str):
+    return {"my_scraps": get_posts_by_activity(uid, "scrap")}
+
+@router.get("/my-likes", tags=["My Page"])
+async def get_my_likes(uid: str):
+    return {"my_likes": get_posts_by_activity(uid, "like")}
