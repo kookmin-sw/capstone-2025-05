@@ -1,3 +1,4 @@
+import urllib.parse
 from fastapi import APIRouter, HTTPException
 from firebase_admin import db
 
@@ -6,7 +7,8 @@ router = APIRouter()
 @router.get("/rank", tags=["Rank"])
 async def get_rank(song_name: str):
     try:
-        rank_ref = db.reference(f"/rank/{song_name}")
+        encoded_song_name = urllib.parse.quote(song_name, safe="")
+        rank_ref = db.reference(f"/rank/{encoded_song_name}")
         rank_data = rank_ref.get()
         
         if not rank_data:
