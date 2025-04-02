@@ -14,6 +14,7 @@ import PlayedMusic from './Pages/MyPage/PlayedMusic';
 import Feedback from './Pages/MyPage/Feedback';
 import Setting from './Pages/MyPage/Setting';
 import MyActivity from './Pages/MyPage/MyActivity';
+import SearchPage from './Pages/SearchPage/searchPage.js';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/feedback" element={<Feedback />} />
           <Route path="/setting" element={<Setting />} />
           <Route path="/myactivity" element={<MyActivity />} />
+          <Route path="/searchpage" element={<SearchPage />} />
         </Routes>
       </BrowserRouter>
     </div>
