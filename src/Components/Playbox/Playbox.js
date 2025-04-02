@@ -1,6 +1,7 @@
 import React from 'react';
 import Box from '../Box/Box';
 import { Link } from 'react-router';
+import playButton from '../../Assets/MyPage/play-bttn.svg';
 
 export default function playbox({ img, title, artist, index }) {
   return (
@@ -19,6 +20,12 @@ export default function playbox({ img, title, artist, index }) {
           <span className="text-lg font-semibold truncate">{title}</span>
           <span className="text-lg mt-[-4px] truncate">{artist}</span>
         </div>
+        {/* 플레이 버튼 */}
+        <Link to="/feedback">
+          <div id="play-bttn" className="rounded-full">
+            <img src={playButton} className="overflow-hidden" />
+          </div>
+        </Link>
       </div>
     </Box>
   );
