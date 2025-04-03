@@ -15,6 +15,7 @@ import Feedback from './Pages/MyPage/Feedback';
 import Setting from './Pages/MyPage/Setting';
 import MyActivity from './Pages/MyPage/MyActivity';
 import SearchPage from './Pages/SearchPage/searchPage.js';
+import PrintPage from './Pages/PrintPage/PrintPage';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/setting" element={<Setting />} />
           <Route path="/myactivity" element={<MyActivity />} />
           <Route path="/searchpage" element={<SearchPage />} />
+          <Route path="/print" element={<PrintPage />} />
         </Routes>
       </BrowserRouter>
     </div>

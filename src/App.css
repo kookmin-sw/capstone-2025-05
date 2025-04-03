@@ -1,6 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer utilities {
+  .print-color-adjust {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
 
 body {
   background-color: #f0ede6;
