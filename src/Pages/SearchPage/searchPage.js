@@ -18,7 +18,7 @@ export default function SearchPage() {
           "{searchKeyword}"에 대한 검색결과 입니다.
         </h1>
       </div>
-      <div className="flex flex-wrap justify-center gap-12 ml-4 pb-16">
+      <div className="grid gap-12 lg:grid-cols-4 md:grid-cols-3 sm: grid-cols-2 ml-32 pb-16">
         {playlists &&
           playlists.map((track) => (
             <Playbox
