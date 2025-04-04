@@ -17,7 +17,12 @@ class FirebaseManager:
     def __init__(self):
         if not FirebaseManager._initialized:
             self._load_env_vars()
-            self._initialize_firebase()
+            # 테스트 모드가 아닐 때만 실제 Firebase 초기화
+            if os.environ.get("TESTING") != "1":
+                self._initialize_firebase()
+            else:
+                # 테스트 모드일 때는 Mock 객체만 생성
+                self._initialize_mock_firebase()
             FirebaseManager._initialized = True
     
     def _load_env_vars(self):
@@ -48,6 +53,52 @@ class FirebaseManager:
         self.firestore_db = firestore.client()
         self.realtime_db = db.reference("/")
         self.storage_bucket = storage.bucket()
+        
+    def _initialize_mock_firebase(self):
+        """테스트용 Mock Firebase 초기화"""
+        # 테스트용 Mock 객체 생성
+        class MockDB:
+            def collection(self, *args, **kwargs):
+                return self
+                
+            def document(self, *args, **kwargs):
+                return self
+                
+            def set(self, *args, **kwargs):
+                return None
+                
+            def get(self, *args, **kwargs):
+                class MockSnapshot:
+                    def __init__(self):
+                        self.exists = True
+                return MockSnapshot()
+                
+            def stream(self, *args, **kwargs):
+                return []
+                
+            def child(self, *args, **kwargs):
+                return self
+                
+            def delete(self, *args, **kwargs):
+                return None
+        
+        class MockBucket:
+            def blob(self, *args, **kwargs):
+                return MockBlob()
+                
+            def list_blobs(self, *args, **kwargs):
+                return []
+        
+        class MockBlob:
+            def upload_from_filename(self, *args, **kwargs):
+                return None
+                
+            def delete(self, *args, **kwargs):
+                return None
+        
+        self.firestore_db = MockDB()
+        self.realtime_db = MockDB()
+        self.storage_bucket = MockBucket()
     
     @property
     def firestore(self):

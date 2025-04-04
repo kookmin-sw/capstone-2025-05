@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from manager.test_service import TestService
 from models.response_models import StandardResponse, ErrorResponse
+from routers.account_router import router as account_router
 
 app = FastAPI(
     title="Capstone 2025-05 API",
@@ -15,10 +16,13 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 라우터 등록
+app.include_router(account_router, prefix="/account", tags=["Account"])
 
 @app.get("/")
 async def root():
