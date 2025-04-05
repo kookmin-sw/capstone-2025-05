@@ -7,6 +7,7 @@ from manager.test_service import TestService
 from models.response_models import StandardResponse, ErrorResponse
 from routers.account_router import router as account_router
 from routers.post_router import router as post_router
+from routers.myPage_router import router as mypage_router
 
 app = FastAPI(
     title="Capstone 2025-05 API",
@@ -29,6 +30,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 라우터 등록
 app.include_router(account_router, prefix="/account", tags=["Account"])
 app.include_router(post_router, prefix="/post", tags=["Post"])
+app.include_router(mypage_router, prefix="/mypage", tags=["MyPage"])
 
 @app.get("/")
 async def root():
