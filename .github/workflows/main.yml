@@ -90,11 +90,13 @@ jobs:
         host: ${{ secrets.OCI_HOST }}
         username: ${{ secrets.OCI_USERNAME }}
         key: ${{ secrets.OCI_SSH_KEY }}
+        key_path: ""  # Don't use key_path with key content
+        passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}  # Add passphrase for the protected key
         port: ${{ secrets.OCI_PORT }}
         script: |
           cd /home/${{ secrets.OCI_USERNAME }}/maple-app
           echo "Pulling latest changes from Git repository..."
-          git pull origin main || git pull origin master
+          git pull origin main || git pull origin develop || git pull origin maple-backend/refactor
           
           echo "Creating .env file..."
           cat > .env << EOL
