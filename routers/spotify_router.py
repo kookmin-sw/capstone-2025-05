@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from manager.spotify_service import SpotifyService
 
-router = APIRouter(prefix="/api/spotify", tags=["Spotify"])
+router = APIRouter()
 
 # SpotifyService 클래스의 get_spotify_token 메서드를 직접 참조
 get_spotify_token = SpotifyService.get_spotify_token

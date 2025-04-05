@@ -3,7 +3,7 @@ from typing import List
 
 from manager.mypage_service import MyPageService
 
-router = APIRouter(prefix="/mypage", tags=["My Page"])
+router = APIRouter()
 
 @router.put("/edit-user/nickname")
 async def edit_nickname(uid: str, nickname: str):

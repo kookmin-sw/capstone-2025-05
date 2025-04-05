@@ -8,7 +8,7 @@ from routers.myPage_router import router, MyPageService
 
 # 독립적인 FastAPI 앱 생성하여 테스트
 app = FastAPI()
-app.include_router(router)
+app.include_router(router, prefix="/mypage")  # mypage prefix 추가
 test_client = TestClient(app)
 
 class TestMyPageRouter:

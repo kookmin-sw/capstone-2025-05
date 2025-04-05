@@ -9,10 +9,11 @@ from routers.account_router import router as account_router
 from routers.post_router import router as post_router
 from routers.myPage_router import router as mypage_router
 from routers.spotify_router import router as spotify_router
+from routers.recent_prepare_router import router as recent_prepare_router
 
 app = FastAPI(
-    title="Capstone 2025-05 API",
-    description="캡스톤 프로젝트 API",
+    title="MAPLE API Server",
+    description="Music Analysis & Performance Learning Environment - 음악 분석 및 학습 환경을 위한 API 서버",
     version="1.0.0"
 )
 
@@ -32,7 +33,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(account_router, prefix="/account", tags=["Account"])
 app.include_router(post_router, prefix="/post", tags=["Post"])
 app.include_router(mypage_router, prefix="/mypage", tags=["MyPage"])
-app.include_router(spotify_router)  # Spotify router already has its own prefix
+app.include_router(spotify_router, prefix="/api/spotify", tags=["Spotify"])
+app.include_router(recent_prepare_router, prefix="/api/prepare", tags=["RecentPrepare"])
 
 @app.get("/")
 async def root():
