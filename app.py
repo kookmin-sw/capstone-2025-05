@@ -1,10 +1,12 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from manager.test_service import TestService
 from models.response_models import StandardResponse, ErrorResponse
 from routers.account_router import router as account_router
+from routers.post_router import router as post_router
 
 app = FastAPI(
     title="Capstone 2025-05 API",
@@ -21,8 +23,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 정적 파일 제공
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # 라우터 등록
 app.include_router(account_router, prefix="/account", tags=["Account"])
+app.include_router(post_router, prefix="/post", tags=["Post"])
 
 @app.get("/")
 async def root():

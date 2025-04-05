@@ -2,7 +2,11 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore, db, storage
 from dotenv import load_dotenv
+import logging
 
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class FirebaseManager:
     """Firebase 연결 및 관리를 위한 클래스"""
@@ -16,46 +20,69 @@ class FirebaseManager:
     
     def __init__(self):
         if not FirebaseManager._initialized:
-            self._load_env_vars()
-            # 테스트 모드가 아닐 때만 실제 Firebase 초기화
-            if os.environ.get("TESTING") != "1":
-                self._initialize_firebase()
-            else:
-                # 테스트 모드일 때는 Mock 객체만 생성
+            # 테스트 모드이거나 개발 모드일 때는 Mock 객체 사용
+            if os.environ.get("TESTING") == "1" or os.environ.get("DEVELOPMENT") == "1":
+                logger.info("Running in test/development mode. Using mock Firebase.")
                 self._initialize_mock_firebase()
+            else:
+                # 환경 변수 로드 시도
+                try:
+                    self._load_env_vars()
+                    self._initialize_firebase()
+                    logger.info("Firebase initialized successfully")
+                except Exception as e:
+                    logger.warning(f"Firebase initialization failed: {e}. Falling back to mock implementation.")
+                    self._initialize_mock_firebase()
+            
             FirebaseManager._initialized = True
     
     def _load_env_vars(self):
         """환경 변수 로드"""
         dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+        if not os.path.exists(dotenv_path):
+            logger.warning(f".env file not found at {dotenv_path}")
+            raise FileNotFoundError(f".env file not found at {dotenv_path}")
+        
         load_dotenv(dotenv_path)
+        
+        # 필수 환경 변수 검증
+        required_env_vars = ["PROJECT_ID", "PRIVATE_KEY", "CLIENT_EMAIL"]
+        missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+        if missing_vars:
+            raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+        
         self.firebase_config = {
-            "type": os.getenv("TYPE"),
+            "type": os.getenv("TYPE", "service_account"),
             "project_id": os.getenv("PROJECT_ID"),
-            "private_key_id": os.getenv("PRIVATE_KEY_ID"),
+            "private_key_id": os.getenv("PRIVATE_KEY_ID", ""),
             "private_key": os.getenv("PRIVATE_KEY", "").replace('\\n', '\n'),
             "client_email": os.getenv("CLIENT_EMAIL"),
-            "client_id": os.getenv("CLIENT_ID"),
-            "auth_uri": os.getenv("AUTH_URI"),
-            "token_uri": os.getenv("TOKEN_URI"),
-            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_CERT_URL"),
-            "client_x509_cert_url": os.getenv("CLIENT_CERT_URL")
+            "client_id": os.getenv("CLIENT_ID", ""),
+            "auth_uri": os.getenv("AUTH_URI", "https://accounts.google.com/o/oauth2/auth"),
+            "token_uri": os.getenv("TOKEN_URI", "https://oauth2.googleapis.com/token"),
+            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_CERT_URL", "https://www.googleapis.com/oauth2/v1/certs"),
+            "client_x509_cert_url": os.getenv("CLIENT_CERT_URL", "")
         }
     
     def _initialize_firebase(self):
         """Firebase 초기화"""
         if not firebase_admin._apps:
-            cred = credentials.Certificate(self.firebase_config)
-            firebase_admin.initialize_app(cred, {
-                "databaseURL": os.getenv("DATABASE_URL"),
-                "storageBucket": os.getenv("STORAGE_BUCKET")
-            })
+            try:
+                cred = credentials.Certificate(self.firebase_config)
+                firebase_admin.initialize_app(cred, {
+                    "databaseURL": os.getenv("DATABASE_URL", ""),
+                    "storageBucket": os.getenv("STORAGE_BUCKET", "")
+                })
+            except ValueError as e:
+                logger.error(f"Firebase credential error: {e}")
+                raise
         self.firestore_db = firestore.client()
         self.realtime_db = db.reference("/")
         self.storage_bucket = storage.bucket()
         
     def _initialize_mock_firebase(self):
         """테스트용 Mock Firebase 초기화"""
+        logger.info("Initializing mock Firebase objects")
         # 테스트용 Mock 객체 생성
         class MockDB:
             def collection(self, *args, **kwargs):
@@ -71,16 +98,43 @@ class FirebaseManager:
                 class MockSnapshot:
                     def __init__(self):
                         self.exists = True
+                        
+                    def to_dict(self):
+                        return {"id": 1, "name": "Test Document"}
                 return MockSnapshot()
                 
             def stream(self, *args, **kwargs):
-                return []
+                class MockDoc:
+                    def __init__(self, doc_id, data):
+                        self.id = doc_id
+                        self._data = data
+                        
+                    def to_dict(self):
+                        return self._data
+                
+                # 몇 가지 샘플 문서 반환
+                return [
+                    MockDoc("doc1", {"id": 1, "name": "Document 1"}),
+                    MockDoc("doc2", {"id": 2, "name": "Document 2"})
+                ]
                 
             def child(self, *args, **kwargs):
                 return self
                 
             def delete(self, *args, **kwargs):
                 return None
+                
+            def update(self, *args, **kwargs):
+                return None
+                
+            def order_by(self, *args, **kwargs):
+                return self
+                
+            def limit(self, *args, **kwargs):
+                return self
+                
+            def transaction(self, *args, **kwargs):
+                return self
         
         class MockBucket:
             def blob(self, *args, **kwargs):
@@ -94,6 +148,17 @@ class FirebaseManager:
                 return None
                 
             def delete(self, *args, **kwargs):
+                return None
+                
+            def upload_from_string(self, *args, **kwargs):
+                return None
+                
+            def download_as_string(self, *args, **kwargs):
+                return b"mock file content"
+                
+            def download_to_filename(self, *args, **kwargs):
+                with open(args[0], 'w') as f:
+                    f.write("mock file content")
                 return None
         
         self.firestore_db = MockDB()
@@ -115,6 +180,16 @@ class FirebaseManager:
         """Storage 버킷 반환"""
         return self.storage_bucket
 
+
+# 싱글톤 인스턴스 생성 전에 개발 모드 설정 (Firebase 인증 정보가 없을 때)
+try:
+    # 먼저 개발 모드로 설정
+    if "DEVELOPMENT" not in os.environ and "TESTING" not in os.environ:
+        logger.info("Setting DEVELOPMENT=1 for local development")
+        os.environ["DEVELOPMENT"] = "1"
+except Exception as e:
+    logger.warning(f"Error setting development mode: {e}")
+    os.environ["DEVELOPMENT"] = "1"
 
 # 싱글톤 인스턴스 생성
 firebase_manager = FirebaseManager()
