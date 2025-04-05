@@ -27,7 +27,12 @@ class AccountService:
     @staticmethod
     def get_google_auth_url() -> str:
         """Google OAuth URL을 생성합니다"""
-        redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/account/google-auth-callback')
+        # Use HTTPS for production environments
+        base_url = os.getenv('API_BASE_URL', 'http://localhost:8000')
+        if not base_url.startswith('https://') and not base_url.startswith('http://localhost'):
+            base_url = 'https://' + base_url.lstrip('http://')
+            
+        redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', f"{base_url}/account/google-auth-callback")
         google_auth_url = (
             f"{AccountService.GOOGLE_OAUTH2_URL}?response_type=code&"
             f"client_id={os.getenv('CLIENT_ID')}&"
