@@ -10,6 +10,7 @@ from routers.post_router import router as post_router
 from routers.myPage_router import router as mypage_router
 from routers.spotify_router import router as spotify_router
 from routers.recent_prepare_router import router as recent_prepare_router
+from routers.ranking_router import router as ranking_router
 
 app = FastAPI(
     title="MAPLE API Server",
@@ -35,6 +36,7 @@ app.include_router(post_router, prefix="/post", tags=["Post"])
 app.include_router(mypage_router, prefix="/mypage", tags=["MyPage"])
 app.include_router(spotify_router, prefix="/api/spotify", tags=["Spotify"])
 app.include_router(recent_prepare_router, prefix="/api/prepare", tags=["RecentPrepare"])
+app.include_router(ranking_router, prefix="/ranking", tags=["Ranking"])
 
 @app.get("/")
 async def root():
