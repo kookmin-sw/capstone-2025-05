@@ -1,0 +1,124 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, maple-backend/refactor ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Run tests
+      run: |
+        python -m pytest
+      env:
+        TYPE: ${{ secrets.TYPE }}
+        PROJECT_ID: ${{ secrets.PROJECT_ID }}
+        PRIVATE_KEY_ID: ${{ secrets.PRIVATE_KEY_ID }}
+        PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        CLIENT_EMAIL: ${{ secrets.CLIENT_EMAIL }}
+        CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        AUTH_URI: ${{ secrets.AUTH_URI }}
+        TOKEN_URI: ${{ secrets.TOKEN_URI }}
+        AUTH_PROVIDER_CERT_URL: ${{ secrets.AUTH_PROVIDER_CERT_URL }}
+        CLIENT_CERT_URL: ${{ secrets.CLIENT_CERT_URL }}
+        UNIVERSE_DOMAIN: ${{ secrets.UNIVERSE_DOMAIN }}
+        FILE_PATH: ${{ secrets.FILE_PATH }}
+        CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
+        API_KEY: ${{ secrets.API_KEY }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
+        NEXT_PUBLIC_SPOTIFY_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_SPOTIFY_CLIENT_ID }}
+        NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET: ${{ secrets.NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET }}
+  
+  build-and-push:
+    needs: test
+    if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+        
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/maple-app:latest
+
+  deploy:
+    needs: build-and-push
+    if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to Oracle Cloud via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.OCI_HOST }}
+        username: ${{ secrets.OCI_USERNAME }}
+        key: ${{ secrets.OCI_SSH_KEY }}
+        port: ${{ secrets.OCI_PORT }}
+        script: |
+          cd /home/${{ secrets.OCI_USERNAME }}/maple-app
+          echo "Pulling latest changes from Git repository..."
+          git pull origin main || git pull origin master
+          
+          echo "Creating .env file..."
+          cat > .env << EOL
+          TYPE="${{ secrets.TYPE }}"
+          PROJECT_ID="${{ secrets.PROJECT_ID }}"
+          PRIVATE_KEY_ID="${{ secrets.PRIVATE_KEY_ID }}"
+          PRIVATE_KEY="${{ secrets.PRIVATE_KEY }}"
+          CLIENT_EMAIL="${{ secrets.CLIENT_EMAIL }}"
+          CLIENT_ID="${{ secrets.CLIENT_ID }}"
+          AUTH_URI="${{ secrets.AUTH_URI }}"
+          TOKEN_URI="${{ secrets.TOKEN_URI }}"
+          AUTH_PROVIDER_CERT_URL="${{ secrets.AUTH_PROVIDER_CERT_URL }}"
+          CLIENT_CERT_URL="${{ secrets.CLIENT_CERT_URL }}"
+          UNIVERSE_DOMAIN="${{ secrets.UNIVERSE_DOMAIN }}"
+          FILE_PATH="${{ secrets.FILE_PATH }}"
+          CLIENT_SECRET="${{ secrets.CLIENT_SECRET }}"
+          GOOGLE_REDIRECT_URI="${{ secrets.GOOGLE_REDIRECT_URI }}"
+          API_KEY="${{ secrets.API_KEY }}"
+          DATABASE_URL="${{ secrets.DATABASE_URL }}"
+          STORAGE_BUCKET="${{ secrets.STORAGE_BUCKET }}"
+          NEXT_PUBLIC_SPOTIFY_CLIENT_ID="${{ secrets.NEXT_PUBLIC_SPOTIFY_CLIENT_ID }}"
+          NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET="${{ secrets.NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET }}"
+          EOL
+          
+          echo "Pulling the latest Docker image..."
+          docker pull ${{ secrets.DOCKER_USERNAME }}/maple-app:latest
+          
+          echo "Stopping and removing existing containers..."
+          docker-compose down
+          
+          echo "Starting updated containers..."
+          docker-compose up -d
