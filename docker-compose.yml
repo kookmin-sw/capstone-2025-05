@@ -34,13 +34,15 @@ services:
       - maple-network
 
   nginx:
-    image: nginx:latest
+    image: nginx:stable-alpine
     container_name: maple-nginx
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./static:/usr/share/nginx/html/static
     depends_on:
       - app
