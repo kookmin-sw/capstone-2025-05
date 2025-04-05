@@ -26,6 +26,8 @@ jobs:
         pip install $(grep -v "pytest" requirements.txt | xargs)
         # Install compatible pytest versions with proper quoting
         pip install "pytest>=7.0.0,<8.0.0" "pytest-asyncio==0.23.4"
+        # Install additional dependencies needed for tests
+        pip install email-validator aiofiles
         
     - name: Run tests
       run: |
