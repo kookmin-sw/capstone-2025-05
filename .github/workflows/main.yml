@@ -22,7 +22,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        # Install all requirements except pytest-related packages
+        pip install $(grep -v "pytest" requirements.txt | xargs)
+        # Install compatible pytest versions
+        pip install pytest>=7.0.0,<8.0.0 pytest-asyncio==0.23.4
         
     - name: Run tests
       run: |
