@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, maple-backend/refactor ]
+    branches: [ maple-backend/refactor ]
   pull_request:
-    branches: [ main, develop, maple-backend/refactor ]
+    branches: [ maple-backend/refactor ]
 
 jobs:
   test:
@@ -55,7 +55,7 @@ jobs:
   
   build-and-push:
     needs: test
-    if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/maple-backend/refactor') }}
+    if: ${{ success() && (github.ref == 'refs/heads/maple-backend/refactor') }}
     runs-on: ubuntu-latest
     
     steps:
@@ -80,7 +80,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/maple-backend/refactor') }}
+    if: ${{ success() && (github.ref == 'refs/heads/maple-backend/refactor') }}
     runs-on: ubuntu-latest
     
     steps:
@@ -116,7 +116,7 @@ jobs:
           # Pull the latest changes
           echo "Pulling latest changes from Git repository..."
           git fetch --all
-          git checkout main || git checkout develop || git checkout maple-backend/refactor
+          git checkout maple-backend/refactor
           git pull
           
           # Create the .env file
