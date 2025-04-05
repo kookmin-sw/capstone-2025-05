@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master, maple-backend/refactor ]
+    branches: [ main, develop, maple-backend/refactor ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, develop, maple-backend/refactor ]
 
 jobs:
   test:
@@ -55,7 +55,7 @@ jobs:
   
   build-and-push:
     needs: test
-    if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+    if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/maple-backend/refactor') }}
     runs-on: ubuntu-latest
     
     steps:
@@ -80,7 +80,7 @@ jobs:
 
   deploy:
     needs: build-and-push
-    if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+    if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/maple-backend/refactor') }}
     runs-on: ubuntu-latest
     
     steps:
