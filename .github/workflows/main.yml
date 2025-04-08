@@ -152,7 +152,7 @@ jobs:
           services:
             app:
               image: ${{ secrets.DOCKER_USERNAME }}/maple-app:latest
-              platform: linux/amd64  # Specify platform to avoid architecture issues
+              platform: linux/amd64,linux/arm64  # Specify platform to avoid architecture issues
               ports:
                 - "8000:8000"
               environment:
