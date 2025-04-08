@@ -183,13 +183,15 @@ class FirebaseManager:
 
 # 싱글톤 인스턴스 생성 전에 개발 모드 설정 (Firebase 인증 정보가 없을 때)
 try:
-    # 먼저 개발 모드로 설정
-    if "DEVELOPMENT" not in os.environ and "TESTING" not in os.environ:
-        logger.info("Setting DEVELOPMENT=1 for local development")
-        os.environ["DEVELOPMENT"] = "1"
+    # 개발 모드 강제 설정 코드를 제거하거나 주석 처리
+    # if "DEVELOPMENT" not in os.environ and "TESTING" not in os.environ:
+    #     logger.info("Setting DEVELOPMENT=1 for local development")
+    #     os.environ["DEVELOPMENT"] = "1"
+    pass
 except Exception as e:
     logger.warning(f"Error setting development mode: {e}")
-    os.environ["DEVELOPMENT"] = "1"
+    # 아래 줄도 제거하거나 주석 처리
+    # os.environ["DEVELOPMENT"] = "1"
 
 # 싱글톤 인스턴스 생성
 firebase_manager = FirebaseManager()
