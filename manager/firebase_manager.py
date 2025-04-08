@@ -1,7 +1,6 @@
 import os
 import firebase_admin
 from firebase_admin import credentials, firestore, db, storage
-from dotenv import load_dotenv
 import logging
 
 # 로깅 설정
@@ -20,6 +19,10 @@ class FirebaseManager:
     
     def __init__(self):
         if not FirebaseManager._initialized:
+            # 환경 변수 로그 출력 (디버깅용)
+            logger.info(f"DEVELOPMENT env: {os.environ.get('DEVELOPMENT')}")
+            logger.info(f"TESTING env: {os.environ.get('TESTING')}")
+            
             # 테스트 모드이거나 개발 모드일 때는 Mock 객체 사용
             if os.environ.get("TESTING") == "1" or os.environ.get("DEVELOPMENT") == "1":
                 logger.info("Running in test/development mode. Using mock Firebase.")
@@ -37,31 +40,29 @@ class FirebaseManager:
             FirebaseManager._initialized = True
     
     def _load_env_vars(self):
-        """환경 변수 로드"""
-        dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
-        if not os.path.exists(dotenv_path):
-            logger.warning(f".env file not found at {dotenv_path}")
-            raise FileNotFoundError(f".env file not found at {dotenv_path}")
-        
-        load_dotenv(dotenv_path)
-        
+        """시스템 환경 변수 로드"""
         # 필수 환경 변수 검증
         required_env_vars = ["PROJECT_ID", "PRIVATE_KEY", "CLIENT_EMAIL"]
-        missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+        missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
         if missing_vars:
             raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
         
+        # 환경 변수 로그 출력 (디버깅용)
+        logger.info(f"Found PROJECT_ID: {bool(os.environ.get('PROJECT_ID'))}")
+        logger.info(f"Found CLIENT_EMAIL: {bool(os.environ.get('CLIENT_EMAIL'))}")
+        logger.info(f"Found PRIVATE_KEY: {bool(os.environ.get('PRIVATE_KEY'))}")
+        
         self.firebase_config = {
-            "type": os.getenv("TYPE", "service_account"),
-            "project_id": os.getenv("PROJECT_ID"),
-            "private_key_id": os.getenv("PRIVATE_KEY_ID", ""),
-            "private_key": os.getenv("PRIVATE_KEY", "").replace('\\n', '\n'),
-            "client_email": os.getenv("CLIENT_EMAIL"),
-            "client_id": os.getenv("CLIENT_ID", ""),
-            "auth_uri": os.getenv("AUTH_URI", "https://accounts.google.com/o/oauth2/auth"),
-            "token_uri": os.getenv("TOKEN_URI", "https://oauth2.googleapis.com/token"),
-            "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_CERT_URL", "https://www.googleapis.com/oauth2/v1/certs"),
-            "client_x509_cert_url": os.getenv("CLIENT_CERT_URL", "")
+            "type": os.environ.get("TYPE", "service_account"),
+            "project_id": os.environ.get("PROJECT_ID"),
+            "private_key_id": os.environ.get("PRIVATE_KEY_ID", ""),
+            "private_key": os.environ.get("PRIVATE_KEY", "").replace('\\n', '\n'),
+            "client_email": os.environ.get("CLIENT_EMAIL"),
+            "client_id": os.environ.get("CLIENT_ID", ""),
+            "auth_uri": os.environ.get("AUTH_URI", "https://accounts.google.com/o/oauth2/auth"),
+            "token_uri": os.environ.get("TOKEN_URI", "https://oauth2.googleapis.com/token"),
+            "auth_provider_x509_cert_url": os.environ.get("AUTH_PROVIDER_CERT_URL", "https://www.googleapis.com/oauth2/v1/certs"),
+            "client_x509_cert_url": os.environ.get("CLIENT_CERT_URL", "")
         }
     
     def _initialize_firebase(self):
@@ -70,8 +71,8 @@ class FirebaseManager:
             try:
                 cred = credentials.Certificate(self.firebase_config)
                 firebase_admin.initialize_app(cred, {
-                    "databaseURL": os.getenv("DATABASE_URL", ""),
-                    "storageBucket": os.getenv("STORAGE_BUCKET", "")
+                    "databaseURL": os.environ.get("DATABASE_URL", ""),
+                    "storageBucket": os.environ.get("STORAGE_BUCKET", "")
                 })
             except ValueError as e:
                 logger.error(f"Firebase credential error: {e}")
@@ -181,17 +182,12 @@ class FirebaseManager:
         return self.storage_bucket
 
 
-# 싱글톤 인스턴스 생성 전에 개발 모드 설정 (Firebase 인증 정보가 없을 때)
-try:
-    # 개발 모드 강제 설정 코드를 제거하거나 주석 처리
-    # if "DEVELOPMENT" not in os.environ and "TESTING" not in os.environ:
-    #     logger.info("Setting DEVELOPMENT=1 for local development")
-    #     os.environ["DEVELOPMENT"] = "1"
-    pass
-except Exception as e:
-    logger.warning(f"Error setting development mode: {e}")
-    # 아래 줄도 제거하거나 주석 처리
-    # os.environ["DEVELOPMENT"] = "1"
+# 싱글톤 인스턴스 생성 전에 환경 변수 상태 확인
+logger.info("Initializing Firebase Manager")
+if "DEVELOPMENT" in os.environ:
+    logger.info(f"DEVELOPMENT={os.environ['DEVELOPMENT']} is set")
+if "TESTING" in os.environ:
+    logger.info(f"TESTING={os.environ['TESTING']} is set")
 
 # 싱글톤 인스턴스 생성
 firebase_manager = FirebaseManager()

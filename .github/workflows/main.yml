@@ -94,9 +94,7 @@ jobs:
           TYPE=${{ secrets.TYPE }}
           PROJECT_ID=${{ secrets.PROJECT_ID }}
           PRIVATE_KEY_ID=${{ secrets.PRIVATE_KEY_ID }}
-          PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
-          ${{ secrets.PRIVATE_KEY }}
-          -----END PRIVATE KEY-----"
+          PRIVATE_KEY=${{ secrets.PRIVATE_KEY }}
           CLIENT_EMAIL=${{ secrets.CLIENT_EMAIL }}
           CLIENT_ID=${{ secrets.CLIENT_ID }}
           AUTH_URI=${{ secrets.AUTH_URI }}
