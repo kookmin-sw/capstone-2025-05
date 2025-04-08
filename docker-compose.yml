@@ -2,8 +2,7 @@ version: '3'
 
 services:
   app:
-    build: .
-    image: maple-app
+    image: ${{ secrets.DOCKER_USERNAME }}/maple-app:latest  # CI/CD 이미지 사용
     container_name: maple-api
     restart: always
     ports:
@@ -28,8 +27,7 @@ services:
       - STORAGE_BUCKET=${STORAGE_BUCKET}
       - NEXT_PUBLIC_SPOTIFY_CLIENT_ID=${NEXT_PUBLIC_SPOTIFY_CLIENT_ID}
       - NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET=${NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET}
-    volumes:
-      - ./static:/app/static
+
     networks:
       - maple-network
 
