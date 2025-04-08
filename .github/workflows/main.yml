@@ -9,29 +9,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-      
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install all requirements except pytest-related packages
-        pip install $(grep -v "pytest" requirements.txt | xargs)
-        # Install compatible pytest versions with proper quoting
-        pip install "pytest>=7.0.0,<8.0.0" "pytest-asyncio==0.23.4"
-        # Install additional dependencies needed for tests
-        pip install email-validator aiofiles
-        
+        pip install -r requirements.txt
+        pip install "pytest>=7.0.0,<8.0.0" "pytest-asyncio==0.23.4" email-validator aiofiles
     - name: Run tests
-      run: |
-        python -m pytest
+      run: python -m pytest
       env:
         TYPE: ${{ secrets.TYPE }}
         PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -52,37 +43,37 @@ jobs:
         STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
         NEXT_PUBLIC_SPOTIFY_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_SPOTIFY_CLIENT_ID }}
         NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET: ${{ secrets.NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET }}
-  
+
   build-and-push:
     needs: test
-    if: ${{ success() && (github.ref == 'refs/heads/maple-backend/refactor') }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/maple-backend/refactor' }}
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-      
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-      
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
-        
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
         context: .
+        platforms: linux/arm64  # ARM64 서버에 맞춤
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/maple-app:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=min
+        build-args: |
+          BUILDKIT_INLINE_CACHE=0
 
   deploy:
     needs: build-and-push
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/maple-backend/refactor' }}
     runs-on: ubuntu-latest
-    
     steps:
     - name: Deploy to Oracle Cloud via SSH
       uses: appleboy/ssh-action@master
@@ -98,7 +89,6 @@ jobs:
           mkdir -p ~/maple-app
           cd ~/maple-app
           
-          # .env 파일 생성 (멀티라인 처리)
           echo "Creating .env file..."
           cat > .env << 'EOF'
           TYPE=${{ secrets.TYPE }}
@@ -124,7 +114,6 @@ jobs:
           NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET=${{ secrets.NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET }}
           EOF
           
-          # docker-compose.yml 생성
           if [ ! -f "docker-compose.yml" ]; then
             echo "Creating docker-compose.yml file..."
             cat > docker-compose.yml << EOL
@@ -132,7 +121,6 @@ jobs:
           services:
             app:
               image: ${{ secrets.DOCKER_USERNAME }}/maple-app:latest
-              platform: linux/arm64
               ports:
                 - "8000:8000"
               env_file:
@@ -142,7 +130,7 @@ jobs:
           fi
           
           echo "Pulling the latest Docker image..."
-          docker pull --platform linux/arm64 ${{ secrets.DOCKER_USERNAME }}/maple-app:latest || echo "Failed to pull image!"
+          docker pull ${{ secrets.DOCKER_USERNAME }}/maple-app:latest || echo "Failed to pull image!"
           
           echo "Stopping existing containers..."
           docker-compose down || echo "No containers to stop"
