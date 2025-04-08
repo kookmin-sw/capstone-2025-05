@@ -22,8 +22,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt  # requirements.txt 전체 설치
-        pip install "pytest>=7.0.0,<8.0.0" "pytest-asyncio==0.23.4" email-validator aiofiles
+        # Install all requirements except pytest-related packages
+        pip install $(grep -v "pytest" requirements.txt | xargs)
+        # Install compatible pytest versions with proper quoting
+        pip install "pytest>=7.0.0,<8.0.0" "pytest-asyncio==0.23.4"
+        # Install additional dependencies needed for tests
+        pip install email-validator aiofiles
         
     - name: Run tests
       run: |
@@ -51,7 +55,7 @@ jobs:
   
   build-and-push:
     needs: test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/maple-backend/refactor' }}
+    if: ${{ success() && (github.ref == 'refs/heads/maple-backend/refactor') }}
     runs-on: ubuntu-latest
     
     steps:
@@ -73,14 +77,10 @@ jobs:
         context: .
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/maple-app:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=min
-        build-args: |
-          BUILDKIT_INLINE_CACHE=0  # 캐시 비활성화로 최신 코드 반영 보장
 
   deploy:
     needs: build-and-push
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/maple-backend/refactor' }}
+    if: ${{ success() && (github.ref == 'refs/heads/maple-backend/refactor') }}
     runs-on: ubuntu-latest
     
     steps:
@@ -96,7 +96,28 @@ jobs:
         script: |
           # Create directory if it doesn't exist
           mkdir -p ~/maple-app
+          
+          # Navigate to project directory
           cd ~/maple-app
+          
+          # Check if it's a git repository, if not clone it
+          if [ ! -d .git ]; then
+            echo "Directory is not a git repository. Cloning the repository..."
+            # Move any existing files to a backup directory
+            if [ "$(ls -A)" ]; then
+              mkdir -p ~/maple-app-backup
+              mv * ~/maple-app-backup/ 2>/dev/null || true
+              mv .* ~/maple-app-backup/ 2>/dev/null || true
+            fi
+            # Clone the repository
+            git clone https://github.com/kookmin-sw/capstone-2025-05.git .
+          fi
+          
+          # Pull the latest changes
+          echo "Pulling latest changes from Git repository..."
+          git fetch --all
+          git checkout maple-backend/refactor
+          git pull
           
           # Create the .env file
           echo "Creating .env file..."
@@ -122,27 +143,50 @@ jobs:
           NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET="${{ secrets.NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET }}"
           EOL
           
-          # Create docker-compose.yml if it doesn't exist
+          # Check if docker-compose.yml exists
           if [ ! -f "docker-compose.yml" ]; then
             echo "Creating docker-compose.yml file..."
             cat > docker-compose.yml << EOL
           version: '3'
+          
           services:
             app:
               image: ${{ secrets.DOCKER_USERNAME }}/maple-app:latest
-              platform: linux/amd64
+              platform: linux/amd64  # Specify platform to avoid architecture issues
               ports:
                 - "8000:8000"
-              env_file:
-                - .env
+              environment:
+                - TYPE=\${TYPE}
+                - PROJECT_ID=\${PROJECT_ID}
+                - PRIVATE_KEY_ID=\${PRIVATE_KEY_ID}
+                - PRIVATE_KEY=\${PRIVATE_KEY}
+                - CLIENT_EMAIL=\${CLIENT_EMAIL}
+                - CLIENT_ID=\${CLIENT_ID}
+                - AUTH_URI=\${AUTH_URI}
+                - TOKEN_URI=\${TOKEN_URI}
+                - AUTH_PROVIDER_CERT_URL=\${AUTH_PROVIDER_CERT_URL}
+                - CLIENT_CERT_URL=\${CLIENT_CERT_URL}
+                - UNIVERSE_DOMAIN=\${UNIVERSE_DOMAIN}
+                - FILE_PATH=\${FILE_PATH}
+                - CLIENT_SECRET=\${CLIENT_SECRET}
+                - GOOGLE_REDIRECT_URI=\${GOOGLE_REDIRECT_URI}
+                - API_KEY=\${API_KEY}
+                - DATABASE_URL=\${DATABASE_URL}
+                - STORAGE_BUCKET=\${STORAGE_BUCKET}
+                - NEXT_PUBLIC_SPOTIFY_CLIENT_ID=\${NEXT_PUBLIC_SPOTIFY_CLIENT_ID}
+                - NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET=\${NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET}
               restart: always
           EOL
           fi
           
-          # Pull the latest Docker image and restart
+          # Pull the latest Docker image with platform specification
           echo "Pulling the latest Docker image..."
           docker pull --platform linux/amd64 ${{ secrets.DOCKER_USERNAME }}/maple-app:latest
+          
+          # Stop and remove existing containers
           echo "Stopping and removing existing containers..."
           docker-compose down || echo "No containers to stop"
-          echo "Starting updated containers with forced pull..."
-          docker-compose up -d --pull always
+          
+          # Start updated containers
+          echo "Starting updated containers..."
+          docker-compose up -d
