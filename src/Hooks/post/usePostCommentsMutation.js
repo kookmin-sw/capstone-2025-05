@@ -10,7 +10,7 @@ const postComments = ({
   작성자,
   내용,
 }) => {
-  return api.post(`/comment`, {
+  return api.post(`post/comments/${id}`, {
     id,
     uid,
     작성일시,

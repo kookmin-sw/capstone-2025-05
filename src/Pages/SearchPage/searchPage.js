@@ -9,7 +9,6 @@ export default function SearchPage() {
   const searchKeyword = searchParams.get('keyword') || '검색어 없음';
 
   const { data: playlists } = useSearchPlaylistsQuery(searchKeyword);
-  console.log(playlists);
   return (
     <>
       <MapleHeader />
@@ -26,6 +25,7 @@ export default function SearchPage() {
               img={track.album.images[2].url}
               title={track.name}
               artist={track.artists[0].name}
+              playurl={track.uri}
             />
           ))}
       </div>

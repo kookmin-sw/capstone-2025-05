@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../Utils/api';
 // id는 postId
 const fetchComments = (id) => {
-  return api.get(`/comment/?id=${id}`);
+  return api.get(`post/comments/${id}`);
 };
 
 export const useComentsQuery = (id) => {

@@ -33,7 +33,6 @@ const spotifyApi = axios.create({
 let accessToken = null;
 let tokenExpiresAt = null;
 
-// ✅ 4. 초기 Access Token 설정
 const initializeSpotifyApi = async () => {
   const tokenData = await getSpotifyToken();
   if (tokenData) {
