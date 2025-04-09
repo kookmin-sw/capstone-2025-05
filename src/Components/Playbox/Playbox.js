@@ -4,77 +4,37 @@ import { Link } from 'react-router';
 import { useSpotifyPlayer } from '../../Context/SpotifyContext';
 import PlayButton from '../Button/PlayButton';
 import PauseButton from '../Button/PauseButton';
+import { useSpotifyPlayback } from '../../Hooks/Music/useSpotifyPlayback';
 
 export default function Playbox({ img, title, artist, index, playurl }) {
   const { deviceId, isReady, authUrl } = useSpotifyPlayer();
   const [play, setPlay] = useState(false);
   const token = localStorage.getItem('spotify_access_token');
-  const handlePlay = async () => {
-    setPlay(true);
-    if (!isReady || !deviceId) {
-      alert('🎧 Spotify Player가 아직 준비되지 않았어요!');
-      return;
-    }
+  const { sendPlaybackCommand } = useSpotifyPlayback({
+    token,
+    deviceId,
+    isReady,
+    authUrl,
+    onError: (msg) => alert(msg),
+    onTokenExpired: () => console.log('로그인 필요'),
+  });
 
-    try {
-      const res = await fetch(
-        `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            uris: [playurl],
-          }),
-        },
-      );
-      if (res.status === 401) {
-        console.log('토큰 만료! 다시 로그인');
-        localStorage.removeItem('spotify_access_token');
-        window.location.href = authUrl;
-      } else if (!res.ok) {
-        const err = await res.json();
-        console.log('❌ 다른 오류 발생:', err);
-      }
-    } catch (error) {
-      console.error('💥 fetch 실패:', error);
-    }
+  const handlePlay = () => {
+    setPlay(true);
+    sendPlaybackCommand({
+      action: 'play',
+      body: {
+        uris: [playurl],
+      },
+    });
   };
 
-  const handlePause = async () => {
+  const handlePause = () => {
     setPlay(false);
-    if (!isReady || !deviceId) {
-      alert('🎧 Spotify Player가 아직 준비되지 않았어요!');
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            uris: [playurl],
-          }),
-        },
-      );
-      if (res.status === 401) {
-        console.log('토큰 만료! 다시 로그인');
-        localStorage.removeItem('spotify_access_token');
-        window.location.href = authUrl;
-      } else if (!res.ok) {
-        const err = await res.json();
-        console.log('❌ 다른 오류 발생:', err);
-      }
-    } catch (error) {
-      console.error('💥 fetch 실패:', error);
-    }
+    sendPlaybackCommand({
+      action: 'pause',
+      body: {},
+    });
   };
 
   return (
@@ -93,10 +53,6 @@ export default function Playbox({ img, title, artist, index, playurl }) {
           <span className="text-lg font-semibold truncate">{title}</span>
           <span className="text-lg mt-[-4px] truncate">{artist}</span>
         </div>
-        {/* 플레이 버튼 */}
-        {/* <button id="play-bttn" className="rounded-full" onClick={handlePlay}>
-          <img src={playButton} className="overflow-hidden" />
-        </button> */}
         {!play ? (
           <PlayButton onClick={handlePlay} />
         ) : (

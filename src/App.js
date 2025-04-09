@@ -22,7 +22,7 @@ import { SpotifyPlayerProvider } from './Context/SpotifyContext';
 function App() {
   const [token, setToken] = useState(null);
   const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
-  const redirectUri = 'http://localhost:3000'; // Spotify 앱 등록 시 동일하게 설정
+  const redirectUri = process.env.REACT_APP_SPOTIFY_REDIRECT_URI; // Spotify 앱 등록 시 동일하게 설정
 
   const scopes = [
     'streaming',

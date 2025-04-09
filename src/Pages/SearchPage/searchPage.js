@@ -22,7 +22,7 @@ export default function SearchPage() {
           playlists.map((track) => (
             <Playbox
               index={track.id}
-              img={track.album.images[2].url}
+              img={track.album.images[0].url}
               title={track.name}
               artist={track.artists[0].name}
               playurl={track.uri}
