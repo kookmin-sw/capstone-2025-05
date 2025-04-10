@@ -12,7 +12,7 @@ from firebase_admin import credentials
 from manager.firebase_manager import firestore_db, storage_bucket
 
 
-recent_prepare_router = APIRouter(prefix="/api/prepare", tags=["RecentPrepare"])
+recent_prepare_router = APIRouter(prefix="/api/prepare")
 
 def get_storage_url(file_path : str):
     try:
@@ -21,7 +21,6 @@ def get_storage_url(file_path : str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Firebase Storage URL 생성 실패: {str(e)}")
 
-#최신곡 가져오는 코드
 @recent_prepare_router.get("/recent_music", tags=["Recent Prepare Music"])
 def get_recent_music_from_storage():
     try:
@@ -55,8 +54,6 @@ async def download_music(file_name: str):
             "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_file_name}"
         }
 
-
-        # media_type은 다운로드 형식과 상관없지만, 기본적으로 audio 확장자일 경우 아래처럼
         return StreamingResponse(audio_stream, headers=headers, media_type="application/octet-stream")
 
     except Exception as e:
