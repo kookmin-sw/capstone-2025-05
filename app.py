@@ -20,4 +20,4 @@ async def test():
         print("성공")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) 
