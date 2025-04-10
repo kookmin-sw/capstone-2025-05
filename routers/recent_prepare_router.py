@@ -1,43 +1,63 @@
 from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi.responses import StreamingResponse
 import requests
 import os
 from dotenv import load_dotenv
-
+from io import BytesIO
+import urllib.parse
 import firebase_admin
 from firebase_admin import firestore, storage
 from firebase_admin import credentials
 
-from manager.firebase_manager import db
+from manager.firebase_manager import firestore_db, storage_bucket
 
-load_dotenv()
-music_ref = db.collection("preparemymusic")
+
 recent_prepare_router = APIRouter(prefix="/api/prepare", tags=["RecentPrepare"])
 
 def get_storage_url(file_path : str):
     try:
-        bucket = storage.bucket()
-        blob = bucket.blob(file_path) #file_path에 해당하는 파일 객체(blob을 가져옴)
-        return blob.generate_signed_url(expiration=3600) #1시간 동안 해당 mp3 파일을 다운로드 가능하게 함
+        blob = storage_bucket.blob(file_path)
+        return blob.generate_signed_url(expiration=3600)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Firebase Storage URL 생성 실패: {str(e)}")
 
 #최신곡 가져오는 코드
-@spotify_router.get("/recent_music")
-def get_recent_uploads():
+@recent_prepare_router.get("/recent_music", tags=["Recent Prepare Music"])
+def get_recent_music_from_storage():
     try:
-        docs = music_ref.order_by("upload_time", direction=firestore.Query.DESCENDING).limit(10).stream()
-        music_list = []
-        for doc in docs:
-            data = doc.to_dict()
-            music_list.append({
-                "title": data.get("title", "제목 없음"),
-                "artist": data.get("artist", "알 수 없음"),
-                "album_cover": data.get("album_cover", ""),
-                "file_url" : get_storage_url(data.get("file_path", ""))
-            }) 
-        return {"recent_music": music_list}
-    except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Spotify 신곡 데이터 요청 실패: {str(e)}")
+        blobs = storage_bucket.list_blobs(prefix="recent_prepare_music/")
+        music_files = []
+
+        for blob in blobs:
+            if not blob.name.endswith("/"):
+                file_name = blob.name.split("/")[-1]
+                music_files.append(file_name)
+
+        return music_files
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"음악 리스트 가져오기 실패: {str(e)}")
+
+@recent_prepare_router.get("/download_music/{file_name}", tags=["Recent Prepare Music"])
+async def download_music(file_name: str):
+    try:
+        file_path = f"recent_prepare_music/{file_name}"
+        blob = storage_bucket.blob(file_path)
+
+        if not blob.exists():
+            raise HTTPException(status_code=404, detail="해당 파일이 존재하지 않습니다.")
+
+        file_bytes = blob.download_as_bytes()
+
+        audio_stream = BytesIO(file_bytes)
+        encoded_file_name = urllib.parse.quote(file_name)
+        headers = {
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_file_name}"
+        }
 
 
-#서버 실행 명령어 : uvicorn spotify_manager:app --reload
+        # media_type은 다운로드 형식과 상관없지만, 기본적으로 audio 확장자일 경우 아래처럼
+        return StreamingResponse(audio_stream, headers=headers, media_type="application/octet-stream")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"음악 다운로드 실패: {str(e)}")
