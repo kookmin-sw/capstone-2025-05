@@ -282,3 +282,25 @@ async def get_my_scraps(uid: str):
 @router.get("/my-likes", tags=["My Page"])
 async def get_my_likes(uid: str):
     return {"my_likes": get_posts_by_activity(uid, "like")}
+
+@router.get("/my-specifix-song-rank", tags=["My Page"])
+async def get_my_rank(uid: str, song_name: str):
+    try:
+        doc_ref = firestore_db.collection(f"{uid}_score").document(song_name)
+        doc = doc_ref.get()
+
+        if not doc.exists:
+            print("해당 곡의 랭킹 정보가 없음")
+            raise HTTPException(status_code=404, detail="해당 곡의 랭킹 정보가 없습니다.")
+
+        data = doc.to_dict()
+        rank = data.get("rank")
+
+        if rank is None:
+            print("연습 기록을 안 올려서 랭킹 정보가 없음")
+            raise HTTPException(status_code=404, detail="랭킹 정보가 존재하지 않습니다.")
+
+        return {"rank": rank}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"랭킹 정보 조회 실패: {str(e)}")
