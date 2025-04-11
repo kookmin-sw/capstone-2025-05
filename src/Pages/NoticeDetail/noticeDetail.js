@@ -275,7 +275,7 @@ export default function NoticeDetail() {
           className="flex justify-between border-b-[2px] border-b-black w-[80%]"
         >
           <h className="font-bold text-xl mb-2">
-            <strong>댓글 {comments?.length}개</strong>{' '}
+            <strong>댓글 {comments ? comments?.length : 0}개</strong>{' '}
           </h>
           {!isPostComment ? (
             <FaRegPlusSquare

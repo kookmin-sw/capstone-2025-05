@@ -95,6 +95,7 @@ export default function NoticeBoard() {
                   <Link
                     to={`/noticeDetail/${item?.id}`}
                     state={{
+                      //추후에 백엔드 필드명으로 변경
                       id: item?.id,
                       title: item?.제목,
                       writer: item?.작성자,
