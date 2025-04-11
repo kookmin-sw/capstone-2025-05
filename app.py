@@ -1,5 +1,5 @@
-from fastapi import FastAPI
-from routers.account_router import router as account_router
+from fastapi import FastAPI, HTTPException
+from routers.myPage_router import router as account_router
 # 게시판 import
 # 마이페이지 import
 from routers.spotify_router import router as spotify_router
