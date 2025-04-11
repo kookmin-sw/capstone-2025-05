@@ -6,7 +6,6 @@ load_dotenv()
 
 router = APIRouter()
 
-mainsearch_router = APIRouter(prefix="/api", tags=["MainSearch"])
 music_ref = firestore_db.collection("recent_preparse_music") #최근준비음원 db
 # 🔽 여기에 직접 추가
 def get_storage_url(file_path: str):
@@ -16,7 +15,7 @@ def get_storage_url(file_path: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Firebase Storage URL 생성 실패: {str(e)}")
 
-@mainsearch_router.get("/search", tags=["MainSearch"])
+@router.get("/search", tags=["MainSearch"])
 def search_music(query: str = Query(..., description="검색어 입력")):
     try:
         blobs = storage_bucket.list_blobs(prefix="recent_prepare_music/")
@@ -33,7 +32,7 @@ def search_music(query: str = Query(..., description="검색어 입력")):
         return {"results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"검색 실패: {str(e)}")
-@mainsearch_router.get("/autocomplete", tags=["MainSearch"])
+@router.get("/autocomplete", tags=["MainSearch"])
 def autocomplete(query: str = Query(..., description="자동완성 검색어 입력")):
     try:
         blobs = storage_bucket.list_blobs(prefix="recent_prepare_music/")

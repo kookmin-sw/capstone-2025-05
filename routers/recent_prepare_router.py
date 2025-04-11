@@ -1,14 +1,11 @@
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
-from dotenv import load_dotenv
 from io import BytesIO
 import urllib.parse
 
 from manager.firebase_manager import storage_bucket
 
 router = APIRouter()
-
-recent_prepare_router = APIRouter(prefix="/api/prepare")
 
 def get_storage_url(file_path : str):
     try:
@@ -17,7 +14,7 @@ def get_storage_url(file_path : str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Firebase Storage URL 생성 실패: {str(e)}")
 
-@recent_prepare_router.get("/recent_music", tags=["Recent Prepare Music"])
+@router.get("/recent_music", tags=["Recent Prepare Music"])
 def get_recent_music_from_storage():
     try:
         blobs = storage_bucket.list_blobs(prefix="recent_prepare_music/")
@@ -33,7 +30,7 @@ def get_recent_music_from_storage():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"음악 리스트 가져오기 실패: {str(e)}")
 
-@recent_prepare_router.get("/download_music/{file_name}", tags=["Recent Prepare Music"])
+@router.get("/download_music/{file_name}", tags=["Recent Prepare Music"])
 async def download_music(file_name: str):
     try:
         file_path = f"recent_prepare_music/{file_name}"

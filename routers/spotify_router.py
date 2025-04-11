@@ -1,13 +1,10 @@
-from fastapi import HTTPException, APIRouter
-import requests
-import os
+from fastapi import APIRouter, HTTPException
+import requests, os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-router = APIRouter()
-
-spotify_router = APIRouter(prefix="/api/spotify", tags=["Spotify"])
+router = APIRouter(prefix="/api/spotify", tags=["Spotify"])
 
 def get_spotify_token():
     auth_url = "https://accounts.spotify.com/api/token"
@@ -33,7 +30,7 @@ def get_spotify_token():
         return response.json().get('access_token')
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail="Spotify API 토큰 요청 실패 : {str(e)}")
-@spotify_router.get("/top-tracks")
+@router.get("/top-tracks")
 def get_top_tracks():
     token = get_spotify_token()
     url = "https://api.spotify.com/v1/browse/categories/toplists/playlists"
@@ -47,7 +44,7 @@ def get_top_tracks():
         raise HTTPException(status_code=500, detail=f"Spotify 인기곡 데이터 요청 실패: {str(e)}")
 
 #최신곡 가져오는 코드
-@spotify_router.get("/new-releases")
+@router.get("/new-releases")
 def get_new_releases():
     token = get_spotify_token()
     url = "https://api.spotify.com/v1/browse/new-releases"
