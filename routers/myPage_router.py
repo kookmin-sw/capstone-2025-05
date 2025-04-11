@@ -309,7 +309,7 @@ async def get_my_scraps(uid: str):
 async def get_my_likes(uid: str):
     return {"my_likes": get_posts_by_activity(uid, "like")}
 
-@router.get("/my-specifix-song-rank", tags=["My Page"])
+@router.get("/my-specific-song-rank", tags=["My Page"])
 async def get_my_rank(uid: str, song_name: str):
     try:
         doc_ref = firestore_db.collection(f"{uid}_score").document(song_name)
