@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+router = APIRouter()
+
 spotify_router = APIRouter(prefix="/api/spotify", tags=["Spotify"])
 
 def get_spotify_token():

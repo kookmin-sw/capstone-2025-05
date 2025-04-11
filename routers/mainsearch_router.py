@@ -7,6 +7,8 @@ from io import BytesIO
 import urllib.parse
 load_dotenv()
 
+router = APIRouter()
+
 mainsearch_router = APIRouter(prefix="/api", tags=["MainSearch"])
 music_ref = firestore_db.collection("recent_preparse_music") #최근준비음원 db
 # 🔽 여기에 직접 추가

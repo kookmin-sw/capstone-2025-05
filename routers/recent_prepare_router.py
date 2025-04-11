@@ -11,6 +11,7 @@ from firebase_admin import credentials
 
 from manager.firebase_manager import firestore_db, storage_bucket
 
+router = APIRouter()
 
 recent_prepare_router = APIRouter(prefix="/api/prepare")
 

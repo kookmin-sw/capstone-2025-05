@@ -3,7 +3,7 @@ from routers.account_router import router as account_router
 # 게시판 import
 # 마이페이지 import
 from routers.spotify_router import router as spotify_router
-from routers.recent_prepare_router import rouer as recent_prepared_router
+from routers.recent_prepare_router import router as recent_prepared_router
 from routers.ranking_router import router as ranking_router
 from routers.mainsearch_router import router as mainsearch_router
 
