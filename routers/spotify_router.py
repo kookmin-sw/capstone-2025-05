@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter
 import requests
 import os
 from dotenv import load_dotenv
@@ -61,6 +61,3 @@ def get_new_releases():
         return response.json()
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Spotify 신곡 데이터 요청 실패: {str(e)}")
-
-
-#서버 실행 명령어 : uvicorn spotify_manager:app --reload

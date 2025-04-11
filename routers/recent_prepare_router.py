@@ -1,15 +1,10 @@
-from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
-import requests
-import os
 from dotenv import load_dotenv
 from io import BytesIO
 import urllib.parse
-import firebase_admin
-from firebase_admin import firestore, storage
-from firebase_admin import credentials
 
-from manager.firebase_manager import firestore_db, storage_bucket
+from manager.firebase_manager import storage_bucket
 
 router = APIRouter()
 

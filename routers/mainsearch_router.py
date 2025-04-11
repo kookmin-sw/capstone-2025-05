@@ -1,10 +1,7 @@
-from fastapi import FastAPI, HTTPException, Query, APIRouter
-from firebase_admin import firestore
+from fastapi import HTTPException, Query, APIRouter
 from manager.firebase_manager import firestore_db
 from dotenv import load_dotenv
 from manager.firebase_manager import storage_bucket
-from io import BytesIO
-import urllib.parse
 load_dotenv()
 
 router = APIRouter()
