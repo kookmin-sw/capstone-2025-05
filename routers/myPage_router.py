@@ -13,21 +13,47 @@ async def edit_nickname(uid: str, nickname: str):
     try:
         auth.get_user(uid)
         user_ref = db.reference(f"/users/{uid}")
-        
         if not user_ref.get():
+            print("해당 사용자가 존재하지 않음")
             raise HTTPException(status_code=400, detail="해당 사용자가 존재하지 않습니다.")
-        
         user_ref.update({"nickname": nickname})
+
+        activity_ref = firestore_db.collection("my_activity").document(uid)
+
+        for activity_type in ["post", "comment"]:
+            subcollection = activity_ref.collection(activity_type)
+            docs = subcollection.stream()
+
+            for doc in docs:
+                post_id = doc.id
+                target_collection = firestore_db.collection(activity_type).document(post_id)
+                if target_collection.get().exists:
+                    target_collection.update({"작성자": nickname})
+
+        blobs = list(storage_bucket.list_blobs(prefix=f"{uid}/record/"))
+
+        updated_songs = set()
+        for blob in blobs:
+            parts = blob.name.split("/")
+            if len(parts) >= 3:
+                song_name = parts[2]
+                updated_songs.add(song_name)
+
+        for song_name in updated_songs:
+            rank_ref = db.reference(f"/rank/{song_name}/{uid}")
+            rank_data = rank_ref.get()
+            if rank_data:
+                rank_ref.update({"nickname": nickname})
+
         print("닉네임 변경 완료")
-        return { "message": "닉네임 변경 완료" }
+        return {"message": "닉네임 변경 완료"}
 
     except auth.UserNotFoundError:
         print("등록되지 않은 사용자")
         raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
     except Exception as e:
-        print("원인불명 닉네임 변경 실패")
+        print("닉네임 변경 불확실한 이유로 실패")
         raise HTTPException(status_code=500, detail=f"닉네임 변경 실패: {str(e)}")
-
 
 @router.put("/edit-user/interest-genre", tags=["My Page"])
 async def edit_interest_genre(uid: str, interest_genre: List[int]):
