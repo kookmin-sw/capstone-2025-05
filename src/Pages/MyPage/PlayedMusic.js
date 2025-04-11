@@ -68,9 +68,10 @@ const practiceRecords = [
   { date: '2025-01-24', song: 'Canon Rock', tempo: 85, rhythm: 84, pitch: 83 },
 ];
 
-export default function PlayedMusic() {
+export default function PlayedMusic({ opacity }) {
+  console.log(opacity);
   return (
-    <div className="flex flex-col">
+    <div className={`flex flex-col ${opacity ? 'opacity-25' : null}`}>
       <Header />
       <div className="flex">
         <div className="w-[210px] h-[780px] bg-[#463936] text-white p-4 flex flex-col justify-between">
@@ -99,9 +100,6 @@ export default function PlayedMusic() {
           </div>
           <div>
             <p className="font-semibold">Kildong Hong</p>
-            <button className="mt-2 text-sm text-red-400 hover:underline">
-              탈퇴하기
-            </button>
           </div>
         </div>
 

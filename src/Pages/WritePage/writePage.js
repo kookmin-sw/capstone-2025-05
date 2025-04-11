@@ -18,7 +18,7 @@ export default function WritePage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const post = {
-      id: 10000000000, //중복X,자동 생성 & 증가되도록 변경해야됨
+      uid: 'dogyeong', //중복X,자동 생성 & 증가되도록 변경해야됨
       title,
       author,
       write_time: formatDate(new Date()),
