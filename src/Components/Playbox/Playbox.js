@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Box from '../Box/Box';
 import { Link } from 'react-router';
 import { useSpotifyPlayer } from '../../Context/SpotifyContext';
 import PlayButton from '../Button/PlayButton';
 import PauseButton from '../Button/PauseButton';
 import { useSpotifyPlayback } from '../../Hooks/Music/useSpotifyPlayback';
+import PlayerBar from '../PlayerBar/PlayerBar';
 
-export default function Playbox({ img, title, artist, index, playurl }) {
-  const { deviceId, isReady, authUrl } = useSpotifyPlayer();
+export default function Playbox({
+  img,
+  title,
+  artist,
+  playurl,
+  playerTarget,
+  setPlayerTarget,
+  isSelected,
+}) {
+  const { deviceId, isReady, authUrl, player } = useSpotifyPlayer();
   const [play, setPlay] = useState(false);
   const token = localStorage.getItem('spotify_access_token');
   const { sendPlaybackCommand } = useSpotifyPlayback({
@@ -21,11 +30,16 @@ export default function Playbox({ img, title, artist, index, playurl }) {
 
   const handlePlay = () => {
     setPlay(true);
+    setPlayerTarget({ img, title, artist, playurl });
+    const isSameTrack = playerTarget?.playurl === playurl;
+
     sendPlaybackCommand({
       action: 'play',
-      body: {
-        uris: [playurl],
-      },
+      body: isSameTrack
+        ? {} //같은 트랙이면 이어서 재생
+        : {
+            uris: [playurl], // 새로운 트랙이면 처음부터
+          },
     });
   };
 
@@ -37,8 +51,13 @@ export default function Playbox({ img, title, artist, index, playurl }) {
     });
   };
 
+  useEffect(() => {
+    if (!isSelected) {
+      setPlay(false);
+    }
+  }, [isSelected]);
   return (
-    <Box key={index} width="220px" height="288px">
+    <Box width="220px" height="288px">
       <div className="flex justify-center items-center mt-4">
         <Link to="/feedback">
           <img
@@ -59,6 +78,17 @@ export default function Playbox({ img, title, artist, index, playurl }) {
           <PauseButton onClick={handlePause} />
         )}
       </div>
+      {isSelected && title == playerTarget.title && (
+        <PlayerBar
+          title={playerTarget.title}
+          artist={playerTarget.artist}
+          image={playerTarget.img}
+          isPlay={play}
+          handlePlay={handlePlay}
+          handlePause={handlePause}
+          player={player}
+        />
+      )}
     </Box>
   );
 }

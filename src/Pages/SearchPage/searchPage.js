@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useSearchPlaylistsQuery } from '../../Hooks/get/useSearchPlaylistsQuery';
 import Playbox from '../../Components/Playbox/Playbox';
@@ -9,6 +9,7 @@ export default function SearchPage() {
   const searchKeyword = searchParams.get('keyword') || '검색어 없음';
 
   const { data: playlists } = useSearchPlaylistsQuery(searchKeyword);
+  const [playerTarget, setPlayerTarget] = useState();
   return (
     <>
       <MapleHeader />
@@ -21,11 +22,15 @@ export default function SearchPage() {
         {playlists &&
           playlists.map((track) => (
             <Playbox
-              index={track.id}
               img={track.album.images[0].url}
               title={track.name}
               artist={track.artists[0].name}
               playurl={track.uri}
+              playerTarget={playerTarget}
+              setPlayerTarget={setPlayerTarget}
+              isSelected={
+                playerTarget && track.name == playerTarget.title ? true : false
+              }
             />
           ))}
       </div>
