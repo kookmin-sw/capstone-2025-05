@@ -1,25 +1,18 @@
-from fastapi import FastAPI, HTTPException
-from manager.firebase_manager import firestore_db, storage_bucket, db
-from routers.ranking_router import router as ranking_router
+from fastapi import FastAPI
 from routers.account_router import router as account_router
+# 게시판 import
+# 마이페이지 import
+from routers.spotify_router import router as spotify_router
+from routers.recent_prepare_router import rouer as recent_prepared_router
+from routers.ranking_router import router as ranking_router
+from routers.mainsearch_router import router as mainsearch_router
 
 app = FastAPI()
 
+app.include_router(account_router)
+#app.include_router(post_router)
+#app.include_router(myPage_router)
+app.include_router(spotify_router)
 app.include_router(ranking_router)
-app.include_router(account_router) 
-
-@app.post("/test")
-async def test():
-    try:
-        doc_ref = firestore_db.collection("test").document()
-        doc_ref.set({
-            "이름": "김개똥",
-            "기타 실력": "1"
-        })
-
-        blob = storage_bucket.blob("uploads/sample.txt")
-        blob.upload_from_filename("sample.txt")
-        print("성공")
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+app.include_router(recent_prepared_router)
+app.include_router(mainsearch_router)
