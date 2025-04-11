@@ -99,9 +99,6 @@ export default function PlayedMusic() {
           </div>
           <div>
             <p className="font-semibold">Kildong Hong</p>
-            <button className="mt-2 text-sm text-red-400 hover:underline">
-              탈퇴하기
-            </button>
           </div>
         </div>
 
