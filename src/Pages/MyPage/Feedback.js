@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Box from '../../Components/Box/Box.js';
 import Header from '../../Components/MapleHeader.js';
-import Improvement from '../../Assets/MyPage/실력 향상 그래프.svg';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Album from '../../Assets/Main/album/bndCover.svg';
+import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
 
 export default function Feedback() {
 
@@ -19,6 +19,20 @@ export default function Feedback() {
   const recentSongs = [
     { title: "오늘만 I LOVE YOU", artist: "BOYNEXTDOOR", image: Album },
   ];
+
+  const chartData = Array.from({ length: 901 }, (_, i) => {
+    const second = parseFloat((i * 0.1).toFixed(1));
+    const base = 740 + Math.sin(i / 15) * 25; // original: 자연스러운 곡선
+    const played = base + (Math.random() - 0.5) * 12; // played: ±6 오차
+  
+    return {
+      second,
+      original: Math.round(base),
+      played: Math.round(played),
+    };
+  });
+  
+  
 
   return (
     <div className="flex flex-col">
@@ -44,9 +58,6 @@ export default function Feedback() {
           </div>
           <div>
             <p className="font-semibold">Kildong Hong</p>
-            <button className="mt-2 text-sm text-red-400 hover:underline">
-              탈퇴하기
-            </button>
           </div>
         </div>
 
@@ -77,13 +88,13 @@ export default function Feedback() {
 
             <Box width="750px" height="340px" className="mt-[-10px]">
               <div className="ml-4 mt-5">
-                <span className="font-bold text-[16px] block">실력 향상 그래프</span>
+                <span className="font-bold text-[16px] block">연주 분석 그래프</span>
               </div>
-              <img src={Improvement} alt="실력 향상 그래프" className="mt-6 ml-12 w-[600px]" />
+              <PerformanceChart data={chartData} alt="연주 분석 그래프" className="mt-6 ml-12 w-[600px]" />
             </Box>
           </div>
 
-          {/* 분석 박스 & 피드백 박스 나란히 배치 */}
+  
           <div className="flex flex-row mt-10 gap-10">
             {/* 분석 박스 */}
             <Box width="235px" height="280px">

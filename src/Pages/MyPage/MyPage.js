@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom'; 
 import Box from '../../Components/Box/Box.js';
 import Header from '../../Components/MapleHeader.js';
-import Improvement from '../../Assets/MyPage/실력 향상 그래프.svg';
 import Profile from '../../Assets/MyPage/profile.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
@@ -12,6 +11,7 @@ import Volume from '../../Assets/MyPage/volume.svg';
 import Bookmark from '../../Assets/MyPage/filledBookmark.svg';
 import Heart from '../../Assets/MyPage/filledHeart.svg';
 import Write from '../../Assets/MyPage/wirte.svg';
+import ImprovementChart from '../../Components/Chart/ImprovementChart.js';
 
 export default function MyPage() {
   return (
@@ -38,9 +38,6 @@ export default function MyPage() {
           </div>
           <div>
             <p className="font-semibold">Kildong Hong</p>
-            <button className="mt-2 text-sm text-red-400 hover:underline">
-              탈퇴하기
-            </button>
           </div>
         </div>
 
@@ -50,7 +47,7 @@ export default function MyPage() {
               <div className="ml-4 mt-5">
                 <span className="font-bold text-[16px] block">실력 향상 그래프</span>
               </div>
-              <img src={Improvement} alt="실력 향상 그래프" className="mt-6 ml-12 w-[650px]" />
+              <ImprovementChart alt="실력 향상 그래프" className="mt-6 ml-12 w-[650px]" />
             </Box>
             <Link to="/setting">
             <Box width="250px" height="350px" backgroundColor="#463936">

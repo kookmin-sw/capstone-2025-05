@@ -9,6 +9,7 @@ import NoticeBoard from './Pages/NoticeBoard/noticeBoard';
 import NoticeDetail from './Pages/NoticeDetail/noticeDetail';
 import WritePage from './Pages/WritePage/writePage';
 import Ranking from './Pages/Ranking/ranking';
+import Beginner from './Pages/Beginner/beginner';
 import MyPage from './Pages/MyPage/MyPage';
 import PlayedMusic from './Pages/MyPage/PlayedMusic';
 import Feedback from './Pages/MyPage/Feedback';
