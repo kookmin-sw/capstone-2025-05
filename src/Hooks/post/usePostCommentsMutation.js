@@ -2,24 +2,22 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
 const postComments = ({
-  id,
   uid,
+  postid,
+  내용,
+  비밀번호,
   작성일시,
   프로필이미지,
-  postid,
-  작성자,
-  내용,
+  작성자
 }) => {
-  return api.post(`post/comments/${id}`, {
-    id,
+  return api.post(`post/comments`, {
     uid,
+    postid,
+    내용,
+    비밀번호,
     작성일시,
     프로필이미지,
-    postid,
-    작성자,
-    내용,
-    좋아요수: 0,
-    싫어요수: 0,
+    작성자
   });
 };
 
