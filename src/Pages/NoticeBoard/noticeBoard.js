@@ -8,9 +8,11 @@ import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePostInfoQuery } from '../../Hooks/get/usePostInfoQuery';
+import { useViewMutation } from '../../Hooks/put/useViewMutation';
 export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
   const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
+  const { mutate: increaseView } = useViewMutation();
 
   const { data: postInfo } = usePostInfoQuery();
   const totalPage = postInfo ? Math.ceil(postInfo.length / contentsPerPage) : 1;
@@ -21,6 +23,10 @@ export default function NoticeBoard() {
   const [pageNumbers, setPageNumbers] = useState([]);
 
   const navigate = useNavigate();
+
+  const handleClick = (post_id) => {
+    increaseView({ post_id: post_id });
+  };
 
   // 현재 페이지 기준으로 시작 페이지 계산
   useEffect(() => {
@@ -104,6 +110,7 @@ export default function NoticeBoard() {
                       content: item?.내용,
                       likes: item?.좋아요수,
                     }}
+                    onClick={() => handleClick(item?.id)}
                   >
                     {item?.제목}
                   </Link>
