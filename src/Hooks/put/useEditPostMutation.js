@@ -8,19 +8,14 @@ const updatePost = ({
   write_time,
   view,
   editedContent,
-  commentNum,
 }) => {
-  return api.put(`post/posts/${id}`, {
-    uid: 'userid',
-    게시판종류이름: 'string',
+  return api.put(`/posts/${id}`, {
+    id,
     제목: editedTitle,
     작성자: writer,
     작성일시: write_time,
     조회수: view,
     내용: editedContent,
-    댓글갯수: commentNum,
-    비밀번호: '1234', //추후에 바꿀것
-    좋아요수: 0, //추후에 바꿀것
   });
 };
 

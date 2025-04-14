@@ -7,11 +7,11 @@ const postWrite = ({ post }) => {
     게시판종류이름: 'string',
     내용: post.content,
     댓글갯수: 0,
-    비밀번호: '1234',
+    비밀번호: 'string',
     작성일시: post.write_time,
     작성자: post.author,
     제목: post.title,
-    조회수: post.view,
+    조회수: 0,
     좋아요수: 0,
   });
 };

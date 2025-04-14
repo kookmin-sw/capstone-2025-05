@@ -24,7 +24,7 @@ import fill_flag from '../../Assets/Images/fill_flag.png';
 export default function NoticeDetail() {
   const location = useLocation();
   const post = location.state;
-  const { mutate: editContentMutate } = useEditPostMutation();
+  const { mutate } = useEditPostMutation();
   const { mutate: postCommentMutate } = usePostCommentsMutation();
   const navigate = useNavigate();
   const filterComments = () => {
@@ -76,10 +76,9 @@ export default function NoticeDetail() {
     const writer = post.writer;
     const write_time = post.write_time;
     const view = post.view;
-    const commentNum = comments?.length;
 
-    editContentMutate(
-      { id, editedTitle, writer, write_time, view, editedContent, commentNum },
+    mutate(
+      { id, editedTitle, writer, write_time, view, editedContent },
       {
         onSuccess: () => {
           post.title = editedTitle;
@@ -97,13 +96,13 @@ export default function NoticeDetail() {
 
   const handlePostComment = () => {
     const commentData = {
+      id: post.id, //나중에 uid로 바꿀것
       uid: '랜덤',
-      postid: post.id, // 현재 게시글 ID
-      내용: reviewComment,
-      비밀번호: '1234',
       작성일시: new Date().toISOString(), // 현재 시간
       프로필이미지: 'profile',
+      postid: post.id, // 현재 게시글 ID
       작성자: '누굴까', // 작성자 이름
+      내용: reviewComment,
     };
 
     postCommentMutate(commentData, {
