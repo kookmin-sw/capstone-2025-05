@@ -132,22 +132,60 @@ TabPlayer::TabPlayer()
 
 void TabPlayer::setTabFile(const gp_parser::TabFile& file)
 {
-    tabFile = std::make_unique<gp_parser::TabFile>(file);
-    
-    // 탭 파일이 로드되면 재생 초기화
-    currentTrack = 0;
-    currentMeasure = 0;
-    currentBeat = 0;
-    currentTick = 0;
-    
-    // 템포 계산
-    calculateTickSamples();
-    
-    // 탭 파일 정보 출력
-    DBG("Tab file loaded: " + juce::String(tabFile->title));
-    DBG("Number of tracks: " + juce::String(tabFile->tracks.size()));
-    DBG("Number of measures: " + juce::String(tabFile->measures));
-    DBG("Tempo: " + juce::String(getBPM()) + " BPM");
+    try {
+        tabFile = std::make_unique<gp_parser::TabFile>(file);
+        
+        // 탭 파일이 로드되면 재생 초기화
+        currentTrack = 0;
+        currentMeasure = 0;
+        currentBeat = 0;
+        currentTick = 0;
+        
+        // 템포 계산
+        calculateTickSamples();
+        
+        // 탭 파일 정보 출력
+        DBG("Tab file loaded: " + juce::String(tabFile->title));
+        
+        // 트랙이 비어 있는지 확인
+        if (tabFile->tracks.empty()) {
+            DBG("Warning: No tracks in tab file");
+        } else {
+            DBG("Number of tracks: " + juce::String(tabFile->tracks.size()));
+            
+            // 첫 번째 트랙에 마디가 있는지 확인
+            if (!tabFile->tracks[0].measures.empty()) {
+                DBG("First track has " + juce::String(tabFile->tracks[0].measures.size()) + " measures");
+                
+                // 첫 번째 마디에 비트가 있는지 확인
+                if (!tabFile->tracks[0].measures[0].beats.empty()) {
+                    DBG("First measure has " + juce::String(tabFile->tracks[0].measures[0].beats.size()) + " beats");
+                } else {
+                    DBG("First measure has no beats");
+                }
+            } else {
+                DBG("First track has no measures");
+            }
+        }
+        
+        DBG("Tempo: " + juce::String(getBPM()) + " BPM");
+    }
+    catch (const std::exception& e) {
+        DBG("Exception in setTabFile: " + juce::String(e.what()));
+        // 예외가 발생해도 기본 상태는 유지
+        currentTrack = 0;
+        currentMeasure = 0;
+        currentBeat = 0;
+        currentTick = 0;
+    }
+    catch (...) {
+        DBG("Unknown exception in setTabFile");
+        // 예외가 발생해도 기본 상태는 유지
+        currentTrack = 0;
+        currentMeasure = 0;
+        currentBeat = 0;
+        currentTick = 0;
+    }
 }
 
 void TabPlayer::startPlaying()
@@ -484,10 +522,24 @@ void TabPlayer::stopAllActiveNotes(juce::MidiBuffer& midiMessages)
 
 void TabPlayer::processNextBeat(juce::MidiBuffer& midiMessages, int startSample)
 {
-    if (currentTrack >= static_cast<int>(tabFile->tracks.size()) ||
-        currentMeasure >= static_cast<int>(tabFile->tracks[currentTrack].measures.size()) ||
-        currentBeat >= static_cast<int>(tabFile->tracks[currentTrack].measures[currentMeasure].beats.size()))
+    // 인덱스 범위 유효성 검사 추가
+    if (currentTrack < 0 || currentTrack >= static_cast<int>(tabFile->tracks.size()))
+    {
+        DBG("Invalid track index in processNextBeat: " + juce::String(currentTrack));
         return;
+    }
+    
+    if (currentMeasure < 0 || currentMeasure >= static_cast<int>(tabFile->tracks[currentTrack].measures.size()))
+    {
+        DBG("Invalid measure index in processNextBeat: " + juce::String(currentMeasure));
+        return;
+    }
+    
+    if (currentBeat < 0 || currentBeat >= static_cast<int>(tabFile->tracks[currentTrack].measures[currentMeasure].beats.size()))
+    {
+        DBG("Invalid beat index in processNextBeat: " + juce::String(currentBeat));
+        return;
+    }
     
     const auto& track = tabFile->tracks[currentTrack];
     const auto& measure = track.measures[currentMeasure];
@@ -519,6 +571,13 @@ void TabPlayer::processNextBeat(juce::MidiBuffer& midiMessages, int startSample)
         // 모든 노트 처리
         for (const auto& note : voice.notes)
         {
+            // 노트의 string 값이 유효한지 확인 (1~6 사이)
+            if (note.string < 1 || note.string > 6)
+            {
+                DBG("Invalid string value: " + juce::String(note.string));
+                continue;
+            }
+            
             // MIDI 노트 번호 계산
             int midiNote = stringToMidiNote(note.string, note.value);
             
@@ -636,11 +695,11 @@ void TabPlayer::releaseResources()
         plugin = nullptr;
     }
     
-    #ifdef _WIN32
-    // COM 정리
-    CoUninitialize();
-    DBG("COM uninitialized");
-    #endif
+    // #ifdef _WIN32
+    // // COM 정리
+    // CoUninitialize();
+    // DBG("COM uninitialized");
+    // #endif
 }
 
 int TabPlayer::stringToMidiNote(int string, int fret)
@@ -677,4 +736,82 @@ void TabPlayer::setPlaybackPosition(int track, int measure, int beat)
 
     if (wasPlaying)
         startPlaying();
+}
+
+void TabPlayer::audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
+                                            int numInputChannels,
+                                            float* const* outputChannelData,
+                                            int numOutputChannels,
+                                            int numSamples,
+                                            const juce::AudioIODeviceCallbackContext& context)
+{
+    // 이 함수는 오디오 장치에서 콜백을 받아 처리합니다
+    
+    // MIDI 메시지 처리를 위한 임시 버퍼
+    juce::MidiBuffer midiBuffer;
+    
+    // 오디오 데이터 처리를 위한 임시 버퍼
+    juce::AudioBuffer<float> tempBuffer(numOutputChannels, numSamples);
+    tempBuffer.clear();
+    
+    // TabPlayer의 processBlock 함수를 사용하여 오디오와 MIDI 데이터 생성
+    processBlock(tempBuffer, midiBuffer);
+    
+    // 생성된 오디오 데이터를 출력 버퍼로 복사
+    for (int channel = 0; channel < numOutputChannels; ++channel)
+    {
+        if (channel < tempBuffer.getNumChannels())
+        {
+            // 생성된 오디오 데이터를 출력 버퍼에 복사
+            juce::FloatVectorOperations::copy(
+                outputChannelData[channel],
+                tempBuffer.getReadPointer(channel),
+                numSamples
+            );
+        }
+        else
+        {
+            // 채널이 부족한 경우 첫 번째 채널 데이터를 복사(모노->스테레오 변환)
+            if (tempBuffer.getNumChannels() > 0)
+            {
+                juce::FloatVectorOperations::copy(
+                    outputChannelData[channel],
+                    tempBuffer.getReadPointer(0),
+                    numSamples
+                );
+            }
+            else
+            {
+                // 데이터가 없으면 무음 출력
+                juce::FloatVectorOperations::clear(outputChannelData[channel], numSamples);
+            }
+        }
+    }
+}
+
+void TabPlayer::audioDeviceAboutToStart(juce::AudioIODevice* device)
+{
+    // 오디오 장치가 시작되기 전에 호출됩니다
+    double sampleRate = device->getCurrentSampleRate();
+    int samplesPerBlock = device->getCurrentBufferSizeSamples();
+    
+    // AudioProcessor의 prepareToPlay 메서드 활용
+    prepareToPlay(sampleRate, samplesPerBlock);
+    
+    DBG("TabPlayer::audioDeviceAboutToStart - Sample rate: " + juce::String(sampleRate) + 
+        ", Buffer size: " + juce::String(samplesPerBlock));
+}
+
+void TabPlayer::audioDeviceStopped()
+{
+    // 오디오 장치가 정지될 때 호출됩니다
+    if (playing)
+    {
+        stopPlaying();
+    }
+    
+    // AudioProcessor의 releaseResources 메서드 활용
+    releaseResources();
+    
+    DBG("TabPlayer::audioDeviceStopped");
 }

@@ -16,6 +16,9 @@ public:
     
     void startPlayback();
     void stopPlayback();
+    
+    // 악보 업데이트 메서드 추가
+    void updateScore();
 
 private:
     void timerCallback() override; // 재생 위치 업데이트를 위해 주기적 호출

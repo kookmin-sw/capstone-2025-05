@@ -3,7 +3,7 @@
 #include "gp_parser.h"
 #include <memory>
 
-class TabPlayer : public juce::AudioProcessor
+class TabPlayer : public juce::AudioProcessor, public juce::AudioIODeviceCallback
 {
 public:
     TabPlayer();
@@ -33,6 +33,15 @@ public:
     
     void getStateInformation(juce::MemoryBlock& destData) override {}
     void setStateInformation(const void* data, int sizeInBytes) override {}
+
+    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
+                                         int numInputChannels,
+                                         float* const* outputChannelData,
+                                         int numOutputChannels,
+                                         int numSamples,
+                                         const juce::AudioIODeviceCallbackContext& context) override;
+    void audioDeviceAboutToStart(juce::AudioIODevice* device) override;
+    void audioDeviceStopped() override;
 
     void setPlaybackPosition(int track, int measure, int beat);
     int getCurrentMeasure() const { return currentMeasure; }

@@ -1,11 +1,26 @@
 #pragma once
 #include <JuceHeader.h>
 #include "SpotifyService.h"
+#include "Model/Song.h"
+
+class MainComponent;  // 전방 선언
+
 class ContentPanelComponent : public juce::Component
 {
 public:
-    ContentPanelComponent();
+    ContentPanelComponent(MainComponent& mainComp);
     void resized() override;
+    
+    // 곡 선택 이벤트 리스너 인터페이스
+    class SongSelectedListener
+    {
+    public:
+        virtual ~SongSelectedListener() = default;
+        virtual void songSelected(const juce::String& songId) = 0;
+    };
+    
+    void addSongSelectedListener(SongSelectedListener* listener) { songListeners.add(listener); }
+    void removeSongSelectedListener(SongSelectedListener* listener) { songListeners.remove(listener); }
 
 private:
     class AlbumThumbnailComponent : public juce::Component
@@ -16,6 +31,56 @@ private:
         {
             if (thumbnail.isNull())
                 thumbnail = juce::Image(juce::Image::RGB, 150, 150, true);
+        }
+
+        // 노래 ID 설정 (악보 파일 ID)
+        void setSongId(const juce::String& id) 
+        {
+            songId = id;
+        }
+
+        // 노래 정보 설정
+        void setSongInfo(const Song& song)
+        {
+            try {
+                songId = song.getId();
+                albumTitle = song.getTitle();
+                albumArtist = song.getArtist();
+                
+                // 썸네일 이미지 로드 (예외 처리 추가)
+                juce::File thumbnailFile(song.getThumbnailPath());
+                if (thumbnailFile.existsAsFile())
+                {
+                    try {
+                        thumbnail = juce::ImageFileFormat::loadFrom(thumbnailFile);
+                        repaint();
+                    }
+                    catch (const std::exception& e) {
+                        DBG("Error loading thumbnail image: " + thumbnailFile.getFullPathName() + 
+                            " - " + juce::String(e.what()));
+                        // 기본 썸네일 이미지 사용
+                        thumbnail = juce::Image(juce::Image::RGB, 150, 150, true);
+                        juce::Graphics g(thumbnail);
+                        g.fillAll(juce::Colours::darkgrey);
+                        g.setColour(juce::Colours::white);
+                        g.drawText(song.getTitle(), thumbnail.getBounds().reduced(10), juce::Justification::centred, true);
+                    }
+                }
+                else
+                {
+                    // 파일이 존재하지 않는 경우 기본 썸네일 사용
+                    DBG("Thumbnail file does not exist: " + thumbnailFile.getFullPathName());
+                    thumbnail = juce::Image(juce::Image::RGB, 150, 150, true);
+                    juce::Graphics g(thumbnail);
+                    g.fillAll(juce::Colours::darkgrey);
+                    g.setColour(juce::Colours::white);
+                    g.drawText(song.getTitle(), thumbnail.getBounds().reduced(10), juce::Justification::centred, true);
+                }
+            }
+            catch (const std::exception& e) {
+                DBG("Exception in setSongInfo: " + juce::String(e.what()));
+                // 예외 발생 시 기본 상태 유지
+            }
         }
 
         void setAlbumId(const juce::String& id) 
@@ -68,6 +133,24 @@ private:
             }
         }
 
+        juce::String getSongId() const { return songId; }
+
+        void mouseDown(const juce::MouseEvent& event) override
+        {
+            // 클릭 이벤트 처리
+            selected = true;
+            repaint();
+            
+            if (onClick)
+                onClick();
+        }
+
+        void mouseUp(const juce::MouseEvent& event) override
+        {
+            selected = false;
+            repaint();
+        }
+
         void paint(juce::Graphics& g) override
         {
             // Draw thumbnail
@@ -84,13 +167,17 @@ private:
             g.setColour(juce::Colours::black);
             g.drawText(albumTitle, 0, getHeight() - 30, getWidth(), 30, juce::Justification::centred);
         }
+
+        std::function<void()> onClick;
         
     private:
         juce::String albumTitle;
         juce::String albumArtist;
         juce::String albumId;
+        juce::String songId;  // 노래 ID (악보 파일 ID)
         juce::String albumCoverUrl;
         juce::Image thumbnail;
+        bool selected = false;
     };
     
     class AlbumGridView : public juce::Component
@@ -116,6 +203,24 @@ private:
         {
             auto* newItem = new AlbumThumbnailComponent(album.name);
             newItem->setAlbumInfo(album);
+            addAndMakeVisible(newItem);
+            thumbnails.add(newItem);
+            resized();
+        }
+
+        // Song 데이터로 앨범 썸네일 추가
+        void addSong(const Song& song, std::function<void(const juce::String&)> onSongSelected)
+        {
+            auto* newItem = new AlbumThumbnailComponent(song.getTitle());
+            newItem->setSongInfo(song);
+            
+            // 클릭 이벤트 핸들러 설정
+            newItem->onClick = [this, newItem, onSongSelected]() {
+                juce::String songId = newItem->getSongId();
+                if (!songId.isEmpty() && onSongSelected)
+                    onSongSelected(songId);
+            };
+            
             addAndMakeVisible(newItem);
             thumbnails.add(newItem);
             resized();
@@ -194,4 +299,8 @@ private:
     // Add sample data initialization method
     void initializeSampleData();
     void loadAlbumsFromCache();
+    void notifySongSelected(const juce::String& songId);
+
+    // Array 대신 ListenerList 사용
+    juce::ListenerList<SongSelectedListener> songListeners;
 };
