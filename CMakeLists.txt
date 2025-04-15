@@ -82,6 +82,8 @@ target_sources(MapleClientDesktop PRIVATE
     Source/BottomComponent.h
     Source/NewProjectDialog.cpp
     Source/NewProjectDialog.h
+    Source/SpotifyService.cpp
+    Source/SpotifyService.h
     
     # Model
     Source/Model/AudioModel.cpp
@@ -111,6 +113,14 @@ target_sources(MapleClientDesktop PRIVATE
     Source/Controller/TransportController.cpp
     Source/Controller/TransportController.h
     # Add other controller classes as needed
+
+    Source/gp_parser.cpp
+    Source/gp_parser.h
+
+    Source/AmpliTubeProcessor.cpp
+    Source/AmpliTubeProcessor.h
+
+    # Source/TabData.h
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
@@ -128,6 +138,7 @@ target_compile_definitions(MapleClientDesktop
         JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:MapleClientDesktop,JUCE_PRODUCT_NAME>"
         JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:MapleClientDesktop,JUCE_VERSION>"
         JUCE_ASIO=1  # ASIO 활성화
+        JUCE_PLUGINHOST_VST3=1  # VST3 호스팅 활성화
 )
 
 # Set C++ standard
@@ -182,3 +193,4 @@ target_include_directories(MapleClientDesktop
 #         <juce_audio_basics/juce_audio_basics.h>
 #         <juce_audio_devices/juce_audio_devices.h>
 # )
+add_definitions(-DJUCE_ENABLE_ASSERTIONS=0)

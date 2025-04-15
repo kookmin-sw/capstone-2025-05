@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-
+#include "SpotifyService.h"
 class ContentPanelComponent : public juce::Component
 {
 public:
@@ -12,10 +12,60 @@ private:
     {
     public:
         AlbumThumbnailComponent(const juce::String& title, const juce::Image& thumbnailImage = juce::Image())
-            : albumTitle(title), thumbnail(thumbnailImage)
+            : albumTitle(title), thumbnail(thumbnailImage), albumId("")
         {
             if (thumbnail.isNull())
                 thumbnail = juce::Image(juce::Image::RGB, 150, 150, true);
+        }
+
+        void setAlbumId(const juce::String& id) 
+        {
+            albumId = id;
+            // 앨범 ID가 설정되면 커버 이미지 로드 시도
+            loadCoverImage();
+        }
+
+        void loadCoverImage()
+        {
+            // SpotifyService에서 캐시된 이미지가 있는지 확인
+            if (!albumCoverUrl.isEmpty())
+            {
+                auto cachedImage = SpotifyService::getCachedImage(albumCoverUrl);
+                if (cachedImage != nullptr)
+                {
+                    thumbnail = *cachedImage;
+                    repaint();
+                    return;
+                }
+
+                // 캐시에 없으면 비동기로 로드
+                SpotifyService::loadAlbumCoverAsync(albumCoverUrl, 
+                    [this](std::shared_ptr<juce::Image> image) {
+                        if (image)
+                        {
+                            thumbnail = *image;
+                            repaint();
+                        }
+                    });
+            }
+        }
+
+        void setAlbumInfo(const SpotifyService::Album& album)
+        {
+            albumId = album.id;
+            albumTitle = album.name;
+            albumArtist = album.artist;
+            albumCoverUrl = album.coverUrl;
+            
+            if (album.coverImage)
+            {
+                thumbnail = *album.coverImage;
+                repaint();
+            }
+            else
+            {
+                loadCoverImage();
+            }
         }
 
         void paint(juce::Graphics& g) override
@@ -37,6 +87,9 @@ private:
         
     private:
         juce::String albumTitle;
+        juce::String albumArtist;
+        juce::String albumId;
+        juce::String albumCoverUrl;
         juce::Image thumbnail;
     };
     
@@ -59,6 +112,15 @@ private:
             resized();
         }
         
+        void addAlbumFromSpotify(const SpotifyService::Album& album)
+        {
+            auto* newItem = new AlbumThumbnailComponent(album.name);
+            newItem->setAlbumInfo(album);
+            addAndMakeVisible(newItem);
+            thumbnails.add(newItem);
+            resized();
+        }
+
         void clear()
         {
             thumbnails.clear();
@@ -131,4 +193,5 @@ private:
     
     // Add sample data initialization method
     void initializeSampleData();
+    void loadAlbumsFromCache();
 };
