@@ -120,6 +120,11 @@ target_sources(MapleClientDesktop PRIVATE
     Source/AmpliTubeProcessor.cpp
     Source/AmpliTubeProcessor.h
 
+    Source/TabPlayer.cpp
+    Source/TabPlayer.h
+    Source/ScoreComponent.cpp
+    Source/ScoreComponent.h
+
     # Source/TabData.h
 )
 

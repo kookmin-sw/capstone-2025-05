@@ -1,40 +1,24 @@
+#pragma once
+#include <JuceHeader.h>
+#include "gp_parser.h"
+#include <memory>
+
 class TabPlayer : public juce::AudioProcessor
 {
 public:
-    TabPlayer()
-    {
-        formatManager.addDefaultFormats();
-        OwnedArray<PluginDescription> pluginDescriptions;
-        formatManager.createPluginDescriptionForFile("C:/Program Files/VSTPlugins/AGML2.dll", pluginDescriptions);
-        if (!pluginDescriptions.isEmpty())
-            plugin = formatManager.createPluginInstance(*pluginDescriptions[0], 44100.0, 512, error);
-    }
+    TabPlayer();
+    ~TabPlayer() override {}
 
-    void setTabFile(const gp_parser::TabFile& file) { tabFile = file; }
+    void setTabFile(const gp_parser::TabFile& file);
+    // void loadVSTPlugin(const juce::String& pluginPath);
+    void startPlaying();
+    void stopPlaying();
+    bool isPlaying() const { return playing; }
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock) override
-    {
-        if (plugin) plugin->prepareToPlay(sampleRate, samplesPerBlock);
-    }
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
+    void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void releaseResources() override;
 
-    void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override
-    {
-        midiMessages.clear();
-        if (!tabFile.tracks.empty() && sampleCounter == 0)
-        {
-            auto& beat = tabFile.tracks[0].measures[0].beats[0];
-            for (auto& voice : beat.voices)
-                for (auto& note : voice.notes)
-                {
-                    int midiNote = stringToMidiNote(note.string, note.value);
-                    midiMessages.addEvent(juce::MidiMessage::noteOn(1, midiNote, 0.8f), 0);
-                }
-        }
-        sampleCounter += buffer.getNumSamples();
-        if (plugin) plugin->processBlock(buffer, midiMessages);
-    }
-
-    // 필수 오버라이드 함수들
     const juce::String getName() const override { return "TabPlayer"; }
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
@@ -44,20 +28,62 @@ public:
     void setCurrentProgram(int) override {}
     const juce::String getProgramName(int) override { return "Default"; }
     void changeProgramName(int, const juce::String&) override {}
-    void releaseResources() override { if (plugin) plugin->releaseResources(); }
     bool hasEditor() const override { return true; }
     juce::AudioProcessorEditor* createEditor() override { return plugin ? plugin->createEditor() : nullptr; }
+    
+    void getStateInformation(juce::MemoryBlock& destData) override {}
+    void setStateInformation(const void* data, int sizeInBytes) override {}
+
+    void setPlaybackPosition(int track, int measure, int beat);
+    int getCurrentMeasure() const { return currentMeasure; }
+    int getCurrentTrack() const { return currentTrack; }
+    int getCurrentBeat() const { return currentBeat; }
+    const std::unique_ptr<gp_parser::TabFile>& getTabFile() const { return tabFile; }
 
 private:
+    void useBuiltInSynthesizer(juce::AudioBuffer<float>& buffer);
+    void stopAllActiveNotes(juce::MidiBuffer& midiMessages);
+    
     juce::AudioPluginFormatManager formatManager;
     std::unique_ptr<juce::AudioPluginInstance> plugin;
-    gp_parser::TabFile tabFile;
-    int sampleCounter = 0;
+    std::unique_ptr<gp_parser::TabFile> tabFile;
+    
     juce::String error;
+    bool useVST = false;
+    bool playing = false;
+    double currentSampleRate = 44100.0;
+    int samplesPerBlock = 512;
+    bool trackEndReached = false;
+    int silenceCountdown = 0;
+    int currentTrack = 0;
+    int currentMeasure = 0;
+    int currentBeat = 0;
+    int currentTick = 0;
+    double samplesPerTick = 0.0;
+    double sampleCounter = 0.0;
+    double tickCounter = 0.0;
+    int ticksPerBeat = 960;
+    
+    struct ActiveNote {
+        int midiNote;
+        int channel;
+        int startSample;
+        int duration;
+        bool isPlaying;
+        ActiveNote(int note, int ch, int start, int dur) 
+            : midiNote(note), channel(ch), startSample(start), 
+              duration(dur), isPlaying(true) {}
+    };
+    
+    std::vector<ActiveNote> activeNotes;
+    
+    void processNextBeat(juce::MidiBuffer& midiMessages, int startSample);
+    void updatePlayPosition();
+    double getBPM() const;
+    void calculateTickSamples();
+    void processActiveNotes(juce::MidiBuffer& midiMessages, int numSamples);
+    void applyNoteEffect(const gp_parser::Note& note, juce::MidiBuffer& midiMessages, int startSample, int channel, int noteDuration);
+    int stringToMidiNote(int string, int fret);
 
-    int stringToMidiNote(int string, int fret)
-    {
-        static const int openStrings[] = { 40, 45, 50, 55, 59, 64 }; // E2, A2, D3, G3, B3, E4
-        return openStrings[string - 1] + fret;
-    }
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TabPlayer)
 };

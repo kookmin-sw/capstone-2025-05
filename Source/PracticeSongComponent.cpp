@@ -7,9 +7,31 @@
 #include "View/EffectControls.h"
 
 PracticeSongComponent::PracticeSongComponent(MainComponent &mainComp)
-    : mainComponent(mainComp), deviceManager(mainComp.getDeviceManager())
+    : mainComponent(mainComp), deviceManager(mainComp.getDeviceManager()), parser("D:/audio_dataset/recording/homecoming/homecoming.gp5")
 {
     // Initialize model first
+    try
+    {
+        player.setTabFile(parser.getTabFile());
+        DBG("Tab file set successfully");
+    }
+    catch (const std::exception& e)
+    {
+        DBG("Failed to load tab file: " + juce::String(e.what()));
+        return;
+    }
+
+    auto result = deviceManager.initialiseWithDefaultDevices(0, 2);
+    if (result.isEmpty())
+        DBG("Audio device initialized successfully!");
+    else
+        DBG("Audio device initialization failed: " + result);
+
+    // setAudioChannels(0, 2);
+
+    playButton.setButtonText("Play");
+    playButton.onClick = [this]() { togglePlayback(); };
+    addAndMakeVisible(playButton);
 
     // Create controllers
     audioController = std::make_unique<AudioController>(audioModel, deviceManager);
@@ -20,16 +42,18 @@ PracticeSongComponent::PracticeSongComponent(MainComponent &mainComp)
     centerPanel = std::make_unique<CenterPanel>();
     leftPanel = std::make_unique<LeftPanel>(audioModel); // Pass model to view
     rightPanel = std::make_unique<RightPanel>();
-    effectControls = std::make_unique<EffectControls>();
-    waveformGraph = std::make_unique<AudioPlaybackDemo>();
+    // effectControls = std::make_unique<EffectControls>();
+    // waveformGraph = std::make_unique<AudioPlaybackDemo>();
+    scoreComponent = std::make_unique<ScoreComponent>(player);
 
     // Add components to view
     addAndMakeVisible(topBar.get());
     addAndMakeVisible(centerPanel.get());
     addAndMakeVisible(leftPanel.get());
     addAndMakeVisible(rightPanel.get());
-    addAndMakeVisible(effectControls.get());
-    addAndMakeVisible(waveformGraph.get());
+    // addAndMakeVisible(effectControls.get());
+    // addAndMakeVisible(waveformGraph.get());
+    addAndMakeVisible(scoreComponent.get());
 }
 
 PracticeSongComponent::~PracticeSongComponent()
@@ -61,9 +85,28 @@ void PracticeSongComponent::resized()
 {
     auto bounds = getLocalBounds();
     topBar->setBounds(bounds.removeFromTop(50));
-    waveformGraph->setBounds(bounds.removeFromBottom(300));
-    effectControls->setBounds(bounds.removeFromBottom(100));
+    scoreComponent->setBounds(bounds.removeFromBottom(300));
+    // waveformGraph->setBounds(bounds.removeFromBottom(300));
+    // effectControls->setBounds(bounds.removeFromBottom(100));
     leftPanel->setBounds(bounds.removeFromLeft(300));
     rightPanel->setBounds(bounds.removeFromRight(300));
     centerPanel->setBounds(bounds.reduced(50));
+}
+
+void PracticeSongComponent::togglePlayback()
+{
+    if (!isPlaying)
+    {
+        player.startPlaying();
+        playButton.setButtonText("Stop");
+        isPlaying = true;
+        DBG("Playback started");
+    }
+    else
+    {
+        player.stopPlaying();
+        playButton.setButtonText("Play");
+        isPlaying = false;
+        DBG("Playback stopped");
+    }
 }

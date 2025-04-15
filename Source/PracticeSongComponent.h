@@ -10,6 +10,8 @@
 #include "View/EffectControls.h"
 #include "View/WaveformGraph.h"
 #include "AudioPlaying.h"
+#include "ScoreComponent.h"
+#include "TabPlayer.h"
 
 class MainComponent;  // 전방 선언
 
@@ -31,6 +33,8 @@ public:
     TransportController& getTransportController() { return *transportController; }
     
 private:
+    void togglePlayback();
+
     MainComponent& mainComponent;
     juce::AudioDeviceManager& deviceManager;
     
@@ -45,7 +49,16 @@ private:
     std::unique_ptr<LeftPanel> leftPanel;
     std::unique_ptr<RightPanel> rightPanel;
     std::unique_ptr<EffectControls> effectControls;
-    std::unique_ptr<AudioPlaybackDemo> waveformGraph;
+    // std::unique_ptr<AudioPlaybackDemo> waveformGraph;
+    
+    gp_parser::Parser parser;
+    TabPlayer player;
+    std::unique_ptr<ScoreComponent> scoreComponent;
+
+    juce::TextButton playButton;
+    juce::MidiBuffer midiBuffer;
+    bool isPlaying = false;
+
     
     juce::AudioTransportSource transport;
 };
