@@ -8,6 +8,8 @@ from routers.ranking_router import router as ranking_router
 from routers.mainsearch_router import router as mainsearch_router
 
 app = FastAPI()
+app.include_router(posting_router)
+app.include_router(spotify_router)
 
 app.include_router(account_router)
 #app.include_router(post_router)
