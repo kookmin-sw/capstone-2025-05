@@ -1,11 +1,13 @@
 import os
 import datetime
 from typing import Dict, List, Optional, Any
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException, UploadFile, APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 from firebase_admin import auth, firestore
 from manager.firebase_manager import firestore_db, storage_bucket
 from manager.post_model import Post, Comment
+
+router = APIRouter()
 
 class PostService:
     @staticmethod
