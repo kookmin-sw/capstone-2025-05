@@ -1,15 +1,17 @@
 #pragma once
 #include <JuceHeader.h>
-#include "gp_parser.h"
-#include "ContentPanelComponent.h"
+#include "Model/AudioModel.h"
 
+// 전방 선언
 class HeaderComponent;
 class MainActionComponent;
 class BottomComponent;
 class PracticeSongComponent;
+class ContentPanelComponent;
+class ContentController;
 
-class MainComponent : public juce::Component,
-                      public ContentPanelComponent::SongSelectedListener
+// MainComponent는 View 역할만 담당하도록 수정
+class MainComponent : public juce::Component
 {
 public:
     MainComponent();
@@ -18,26 +20,26 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
 
+    // 화면 전환 메서드 (View 관점에서)
     void showMainScreen();
     void showPracticeScreen();
     
-    // ContentPanelComponent::SongSelectedListener 구현
-    void songSelected(const juce::String& songId) override;
-
+    // 디바이스 매니저 접근자 (나중에 AudioController로 완전히 이동 예정)
     juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
-    
-    // 현재 선택된 곡 ID 반환
-    juce::String getSelectedSongId() const { return selectedSongId; }
 
 private:
+    // 오디오 관련 - 나중에 AudioController로 이동 예정
     juce::AudioDeviceManager deviceManager;
+    
+    // UI 컴포넌트들
     std::unique_ptr<HeaderComponent> headerComponent;
     std::unique_ptr<MainActionComponent> mainActionComponent;
     std::unique_ptr<ContentPanelComponent> contentPanelComponent;
     std::unique_ptr<BottomComponent> bottomComponent;
     std::unique_ptr<PracticeSongComponent> practiceSongComponent;
     
-    juce::String selectedSongId; // 현재 선택된 곡 ID
+    // Controller 참조
+    std::shared_ptr<ContentController> contentController;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

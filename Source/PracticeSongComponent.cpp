@@ -4,7 +4,6 @@
 #include "View/CenterPanel.h"
 #include "View/LeftPanel.h"
 #include "View/RightPanel.h"
-#include "View/EffectControls.h"
 
 // 간소화된 RecordingThumbnail 클래스 구현
 class RecordingThumbnail : public juce::Component,
@@ -220,14 +219,15 @@ PracticeSongComponent::PracticeSongComponent(MainComponent &mainComp)
     // Create controllers
     audioController = std::make_unique<AudioController>(audioModel, deviceManager);
     transportController = std::make_unique<TransportController>(audioModel);
+    
+    // AudioModel에 리스너로 등록
+    audioModel.addListener(this);
 
     // Create view components
     topBar = std::make_unique<TopBar>(*this);
     centerPanel = std::make_unique<CenterPanel>();
     leftPanel = std::make_unique<LeftPanel>(audioModel); // Pass model to view
     rightPanel = std::make_unique<RightPanel>();
-    // effectControls = std::make_unique<EffectControls>();
-    // waveformGraph = std::make_unique<AudioPlaybackDemo>();
     
     try {
         // ScoreComponent는 player가 초기화된 후에 생성
@@ -244,13 +244,14 @@ PracticeSongComponent::PracticeSongComponent(MainComponent &mainComp)
     addAndMakeVisible(centerPanel.get());
     addAndMakeVisible(leftPanel.get());
     addAndMakeVisible(rightPanel.get());
-    // addAndMakeVisible(effectControls.get());
-    // addAndMakeVisible(waveformGraph.get());
     addAndMakeVisible(recordingThumbnail.get());
 }
 
 PracticeSongComponent::~PracticeSongComponent()
 {
+    // AudioModel에서 리스너 제거
+    audioModel.removeListener(this);
+    
     // TabPlayer를 오디오 시스템에서 제거
     deviceManager.removeAudioCallback(&player);
     
@@ -259,21 +260,6 @@ PracticeSongComponent::~PracticeSongComponent()
         deviceManager.removeAudioCallback(audioRecorder.get());
     
     // Controllers will clean up their resources in their destructors
-}
-
-void PracticeSongComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
-{
-    transportController->prepareToPlay(samplesPerBlockExpected, sampleRate);
-}
-
-void PracticeSongComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
-{
-    transportController->getNextAudioBlock(bufferToFill);
-}
-
-void PracticeSongComponent::releaseResources()
-{
-    transportController->releaseResources();
 }
 
 void PracticeSongComponent::paint(juce::Graphics &g)
@@ -319,21 +305,49 @@ void PracticeSongComponent::resized()
     centerPanel->setBounds(bounds.reduced(50));
 }
 
-void PracticeSongComponent::togglePlayback()
+// AudioModel::Listener 메서드 구현
+void PracticeSongComponent::playStateChanged(bool isPlaying)
 {
-    if (!isPlaying)
+    // View 업데이트
+    updatePlaybackState(isPlaying);
+}
+
+void PracticeSongComponent::volumeChanged(float newVolume)
+{
+    // View 업데이트
+    updateVolumeDisplay(newVolume);
+}
+
+// View 업데이트 메서드
+void PracticeSongComponent::updatePlaybackState(bool isNowPlaying)
+{
+    if (isNowPlaying)
     {
-        player.startPlaying();
         playButton.setButtonText("Stop");
-        isPlaying = true;
-        DBG("Playback started");
     }
     else
     {
-        player.stopPlaying();
         playButton.setButtonText("Play");
-        isPlaying = false;
-        DBG("Playback stopped");
+    }
+}
+
+void PracticeSongComponent::updateVolumeDisplay(float volume)
+{
+    // 볼륨 표시 UI 요소가 있을 경우 여기서 업데이트
+}
+
+void PracticeSongComponent::togglePlayback()
+{
+    // Controller를 통해 모델 상태 변경 (MVC 패턴)
+    if (!audioModel.isPlaying())
+    {
+        transportController->startPlayback();
+        player.startPlaying();
+    }
+    else
+    {
+        transportController->stopPlayback();
+        player.stopPlaying();
     }
 }
 
@@ -481,37 +495,19 @@ bool PracticeSongComponent::loadSong(const juce::String& songId)
 void PracticeSongComponent::resetParser()
 {
     // 재생 중이면 중지
-    if (isPlaying) {
+    if (audioModel.isPlaying()) {
+        transportController->stopPlayback();
         player.stopPlaying();
-        playButton.setButtonText("Play");
-        isPlaying = false;
     }
     
     // 재생 버튼 비활성화
     playButton.setEnabled(false);
 }
 
-void PracticeSongComponent::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels,
-                                                           float* const* outputChannelData, int numOutputChannels,
-                                                           int numSamples, const juce::AudioIODeviceCallbackContext& context)
-{
-    // AudioRecorder가 이미 처리하므로 여기서는 추가 작업 필요 없음
-}
-
-void PracticeSongComponent::audioDeviceAboutToStart(juce::AudioIODevice* device)
-{
-    sampleRate = device->getCurrentSampleRate();
-}
-
-void PracticeSongComponent::audioDeviceStopped()
-{
-    sampleRate = 0.0;
-}
-
 void PracticeSongComponent::startRecording()
 {
     // 재생 중이면 중지
-    if (isPlaying)
+    if (audioModel.isPlaying())
         togglePlayback();
     
     // 임시 녹음 파일 경로 설정

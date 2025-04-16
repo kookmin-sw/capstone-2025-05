@@ -4,22 +4,32 @@
 #include "ContentPanelComponent.h"
 #include "BottomComponent.h"
 #include "PracticeSongComponent.h"
+#include "Controller/ContentController.h"
+#include "Model/ContentModel.h"
 
 MainComponent::MainComponent()
 {
-    // 1. 오디오 시스템 초기화
+    // 1. 오디오 시스템 초기화 (이후 AudioController로 이동 예정)
     deviceManager.initialiseWithDefaultDevices(2, 2);
 
-    // 2. UI 컴포넌트 초기화
+    // 2. UI 컴포넌트 초기화 (View)
     headerComponent = std::make_unique<HeaderComponent>();
     mainActionComponent = std::make_unique<MainActionComponent>(*this);
-    contentPanelComponent = std::make_unique<ContentPanelComponent>(*this);  // MainComponent 참조 전달
+    contentPanelComponent = std::make_unique<ContentPanelComponent>();
     bottomComponent = std::make_unique<BottomComponent>();
-    practiceSongComponent = std::make_unique<PracticeSongComponent>(*this);  // MainComponent 참조 전달
+    practiceSongComponent = std::make_unique<PracticeSongComponent>(*this);
 
-    // 곡 선택 이벤트 리스너 등록
-    contentPanelComponent->addSongSelectedListener(this);
+    // 3. Model, Controller 초기화
+    auto contentModel = std::make_shared<ContentModel>();
+    contentController = std::make_shared<ContentController>(*contentModel, *this, *practiceSongComponent);
+    
+    // 곡 선택 이벤트 리스너 등록 (MainComponent가 아닌 ContentController가 리스너로 등록)
+    contentPanelComponent->addSongSelectedListener(contentController.get());
+    
+    // 데이터 초기화
+    contentController->initializeData();
 
+    // 4. UI 컴포넌트 추가
     addAndMakeVisible(headerComponent.get());
     addAndMakeVisible(mainActionComponent.get());
     addAndMakeVisible(contentPanelComponent.get());
@@ -57,6 +67,7 @@ void MainComponent::resized()
     }
 }
 
+// 화면 전환 메서드 (View 관점에서)
 void MainComponent::showMainScreen()
 {
     headerComponent->setVisible(true);
@@ -77,32 +88,6 @@ void MainComponent::showPracticeScreen()
     contentPanelComponent->setVisible(false);
     bottomComponent->setVisible(false);
     
-    practiceSongComponent->setVisible(true);  // 이미 생성된 컴포넌트를 표시
+    practiceSongComponent->setVisible(true);
     resized();
-}
-
-// songSelected 메서드 구현
-void MainComponent::songSelected(const juce::String& songId)
-{
-    DBG("MainComponent: Song selected with ID: " + songId);
-    
-    // 선택된 곡 ID 저장
-    selectedSongId = songId;
-    
-    // 곡 선택 후 연습 화면으로 전환
-    showPracticeScreen();
-    
-    // PracticeSongComponent에 선택된 곡 로드 요청
-    if (practiceSongComponent && practiceSongComponent->isVisible())
-    {
-        // 곡 로드
-        bool loadSuccess = practiceSongComponent->loadSong(songId);
-        
-        if (!loadSuccess)
-        {
-            // 로드 실패 시 메인 화면으로 돌아가기
-            DBG("Failed to load song: " + songId);
-            showMainScreen();
-        }
-    }
 }

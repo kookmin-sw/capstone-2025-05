@@ -1,11 +1,8 @@
 #include "ContentPanelComponent.h"
 #include "MainComponent.h"
 
-ContentPanelComponent::ContentPanelComponent(MainComponent& mainComp)
+ContentPanelComponent::ContentPanelComponent()
 {
-    // MVC 컴포넌트 초기화
-    contentController = std::make_unique<ContentController>(contentModel);
-    
     // UI 컴포넌트 초기화
     addAndMakeVisible(recentTitle);
     recentTitle.setText("Playable Songs", juce::dontSendNotification);
@@ -25,13 +22,13 @@ ContentPanelComponent::ContentPanelComponent(MainComponent& mainComp)
     addAndMakeVisible(viewAllRecommend);
     viewAllRecommend.setButtonText("View All");
     
-    // 컨트롤러를 통해 데이터 초기화
-    contentController->initializeData();
+    // 모델 데이터 초기화
+    contentModel.initializeSampleData();
     
     // 모델 데이터를 뷰에 표시
     try {
         // 연습 가능한 곡 표시
-        for (const auto& song : contentController->getRecentSongs())
+        for (const auto& song : contentModel.getRecentSongs())
         {
             recentGrid.addSong(song, [this](const juce::String& songId) {
                 notifySongSelected(songId);
@@ -39,7 +36,7 @@ ContentPanelComponent::ContentPanelComponent(MainComponent& mainComp)
         }
         
         // 추천 곡 표시
-        for (const auto& song : contentController->getRecommendedSongs())
+        for (const auto& song : contentModel.getRecommendedSongs())
         {
             recommendGrid.addSong(song, [this](const juce::String& songId) {
                 notifySongSelected(songId);

@@ -70,12 +70,8 @@ juce_generate_juce_header(MapleClientDesktop)
 target_sources(MapleClientDesktop PRIVATE
     # Main application files
     Source/Main.cpp
-    Source/MainComponent.cpp
-    Source/MainComponent.h
-    Source/PracticeSongComponent.cpp
-    Source/PracticeSongComponent.h
-    Source/MainActionComponent.cpp
-    Source/MainActionComponent.h
+    Source/AmpliTubeProcessor.cpp
+    Source/AmpliTubeProcessor.h
     Source/ContentPanelComponent.cpp
     Source/ContentPanelComponent.h
     Source/BottomComponent.cpp
@@ -84,11 +80,24 @@ target_sources(MapleClientDesktop PRIVATE
     Source/NewProjectDialog.h
     Source/SpotifyService.cpp
     Source/SpotifyService.h
+    Source/EnvLoader.h
+    Source/MainActionComponent.cpp
+    Source/MainActionComponent.h
+    Source/MainComponent.cpp
+    Source/MainComponent.h
+    Source/ScoreComponent.cpp
+    Source/ScoreComponent.h
+    Source/PracticeSongComponent.cpp
+    Source/PracticeSongComponent.h
+    Source/TabPlayer.cpp
+    Source/TabPlayer.h
     
     # Model
     Source/Model/AudioModel.cpp
     Source/Model/AudioModel.h
-    # Add other model classes as needed
+    Source/Model/ContentModel.cpp
+    Source/Model/ContentModel.h
+    Source/Model/Song.h
     
     # View
     Source/View/TopBar.cpp
@@ -99,45 +108,23 @@ target_sources(MapleClientDesktop PRIVATE
     Source/View/LeftPanel.h
     Source/View/RightPanel.cpp
     Source/View/RightPanel.h
-    Source/View/EffectControls.cpp
-    Source/View/EffectControls.h
-    Source/View/WaveformGraph.cpp
-    Source/View/WaveformGraph.h
     Source/View/HeaderComponent.cpp
     Source/View/HeaderComponent.h
-    # Add other view classes as needed
+    Source/View/AlbumGridView.cpp
+    Source/View/AlbumGridView.h
+    Source/View/AlbumThumbnailComponent.cpp
+    Source/View/AlbumThumbnailComponent.h
     
     # Controller
     Source/Controller/AudioController.cpp
     Source/Controller/AudioController.h
     Source/Controller/TransportController.cpp
     Source/Controller/TransportController.h
-    # Add other controller classes as needed
-
-    Source/gp_parser.cpp
-    Source/gp_parser.h
-
-    Source/AmpliTubeProcessor.cpp
-    Source/AmpliTubeProcessor.h
-
-    Source/TabPlayer.cpp
-    Source/TabPlayer.h
-    Source/ScoreComponent.cpp
-    Source/ScoreComponent.h
-
     Source/Controller/ContentController.cpp
     Source/Controller/ContentController.h
 
-    Source/Model/ContentModel.cpp
-    Source/Model/ContentModel.h
-
-    Source/View/AlbumGridView.cpp
-    Source/View/AlbumGridView.h
-
-    Source/View/AlbumThumbnailComponent.cpp
-    Source/View/AlbumThumbnailComponent.h
-
-    # Source/TabData.h
+    Source/gp_parser.cpp
+    Source/gp_parser.h
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer

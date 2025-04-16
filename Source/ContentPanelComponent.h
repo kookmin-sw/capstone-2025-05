@@ -1,16 +1,16 @@
 #pragma once
 #include <JuceHeader.h>
 #include "View/AlbumGridView.h"
-#include "Controller/ContentController.h"
 #include "Model/ContentModel.h"
 
 class MainComponent;  // 전방 선언
+class ContentController; // 전방 선언
 
 // ContentPanelComponent - MVC 패턴의 View 역할
 class ContentPanelComponent : public juce::Component
 {
 public:
-    ContentPanelComponent(MainComponent& mainComp);
+    ContentPanelComponent();  // 생성자 수정
     void resized() override;
     
     // 곡 선택 이벤트 리스너 인터페이스
@@ -39,7 +39,6 @@ private:
     
     // MVC 컴포넌트
     ContentModel contentModel;
-    std::unique_ptr<ContentController> contentController;
 
     // 리스너 리스트
     juce::ListenerList<SongSelectedListener> songListeners;
