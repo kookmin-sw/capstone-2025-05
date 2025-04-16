@@ -1,40 +1,60 @@
 from fastapi import APIRouter, HTTPException
-from manager.spotify_service import SpotifyService
+import requests, os
+from dotenv import load_dotenv
 
-router = APIRouter()
+load_dotenv()
 
-# SpotifyService 클래스의 get_spotify_token 메서드를 직접 참조
-get_spotify_token = SpotifyService.get_spotify_token
+router = APIRouter(prefix="/api/spotify", tags=["Spotify"])
 
+def get_spotify_token():
+    auth_url = "https://accounts.spotify.com/api/token"
+    client_id = os.getenv("NEXT_PUBLIC_SPOTIFY_CLIENT_ID")
+    client_secret = os.getenv("NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET")
+
+    if not client_id or not client_secret:
+        raise HTTPException(status_code=500, detail="Spotify API 인증 정보가 누락되었습니다.")
+
+    try:
+        response = requests.post(
+        auth_url,
+        headers = {"Content-Type" : "application/x-www-form-urlencoded"},
+        data = {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret" : client_secret,
+        },
+        timeout = 10
+        )
+        response.raise_for_status()
+        print("Spotify Token Response:", response.json())
+        return response.json().get('access_token')
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail="Spotify API 토큰 요청 실패 : {str(e)}")
 @router.get("/top-tracks")
-async def get_top_tracks():
-    """인기 트랙 가져오기"""
-    return SpotifyService.get_top_tracks()
+def get_top_tracks():
+    token = get_spotify_token()
+    url = "https://api.spotify.com/v1/browse/categories/toplists/playlists"
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        print(f"Spotify API Response: {response.status_code}, {response.text}")
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Spotify 인기곡 데이터 요청 실패: {str(e)}")
 
+#최신곡 가져오는 코드
 @router.get("/new-releases")
-async def get_new_releases():
-    """신규 발매곡 가져오기"""
-    return SpotifyService.get_new_releases()
+def get_new_releases():
+    token = get_spotify_token()
+    url = "https://api.spotify.com/v1/browse/new-releases"
 
-@router.get("/search")
-async def search_tracks(query: str):
-    """트랙 검색"""
-    return SpotifyService.search_tracks(query)
-
-@router.get("/recommendations")
-async def get_recommendations(
-    seed_tracks: str = None,
-    seed_artists: str = None, 
-    seed_genres: str = None,
-    limit: int = 10
-):
-    """
-    트랙, 아티스트 또는 장르를 기반으로 추천 트랙을 가져옵니다.
-    최소한 하나의 seed 파라미터가 필요합니다.
-    """
-    return SpotifyService.get_recommendations(
-        seed_tracks=seed_tracks,
-        seed_artists=seed_artists,
-        seed_genres=seed_genres,
-        limit=limit
-    )
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    try:
+        response = requests.get(url, headers=headers, timeout = 10)
+        print(f"Spotify API Response: {response.status_code}, {response.text}")
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Spotify 신곡 데이터 요청 실패: {str(e)}")

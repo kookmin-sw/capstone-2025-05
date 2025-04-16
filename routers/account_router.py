@@ -1,92 +1,187 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
-from manager.account_service import AccountService, UserData, UserEmailSignUp
-from models.response_models import StandardResponse
+from manager.firebase_manager import firestore_db, storage_bucket
+from firebase_admin import auth, db
+from pydantic import BaseModel, EmailStr
+from typing import List
+import requests
+import os
 
 router = APIRouter()
 
+GOOGLE_OAUTH2_URL = "https://accounts.google.com/o/oauth2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+class UserData(BaseModel):
+    uid: str
+    nickname: str
+    interest_genre: List[int]  # 관심 장르 복수 선택 가능 (0~11)
+    level: int  # 실력 (0~4)
+
+class UserEmailSignUp(BaseModel):
+    email: EmailStr
+    password: str
+
 @router.get("/google-login", tags=["Account"])
 async def google_login():
-    """구글 OAuth 로그인을 시작합니다"""
-    google_auth_url = AccountService.get_google_auth_url()
+    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/google-auth-callback') 
+    google_auth_url = (
+        f"{GOOGLE_OAUTH2_URL}?response_type=code&"
+        f"client_id={os.getenv('CLIENT_ID')}&"
+        f"redirect_uri={redirect_uri}&" 
+        f"scope=openid profile email"
+    )
     return RedirectResponse(url=google_auth_url)
 
-@router.get("/google-auth-callback", tags=["Account"], response_model=StandardResponse)
+@router.get("/google-auth-callback", tags=["Account"])
 async def google_auth_callback(code: str):
-    """구글 OAuth 콜백을 처리합니다"""
     try:
-        result = await AccountService.process_google_auth(code)
-        return StandardResponse(
-            success=True,
-            message="로그인 성공",
-            data=result
-        )
-    except HTTPException as e:
-        # 이미 HTTPException으로 처리된 예외는 그대로 전달
-        raise e
-    except Exception as e:
-        # 예상치 못한 예외 처리
-        raise HTTPException(
-            status_code=500, 
-            detail=f"서버 오류: {str(e)}"
+        response = requests.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": os.getenv("CLIENT_ID"),
+                "client_secret": os.getenv("CLIENT_SECRET"),
+                "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/google-auth-callback"),
+                "grant_type": "authorization_code",
+            },
         )
 
-@router.post("/email-sign-up", tags=["Account"], response_model=StandardResponse)
+        tokens = response.json()
+        id_token = tokens.get("id_token")
+
+        if not id_token:
+            print("구글 token 오류")
+            raise HTTPException(status_code=400, detail="구글 응답에서 id_token을 찾을 수 없습니다.")
+
+        firebase_response = requests.post(
+            f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={os.getenv('API_KEY')}",
+            headers={"Content-Type": "application/json"},
+            json={
+                "postBody": f"id_token={id_token}&providerId=google.com",
+                "requestUri": "http://localhost",
+                "returnIdpCredential": True,
+                "returnSecureToken": True,
+            }
+        )
+        
+        firebase_response.raise_for_status()
+        firebase_data = firebase_response.json()
+        
+        firebase_id_token = firebase_data.get("idToken")
+        if not firebase_id_token:
+            print("firebase token 오류")
+            raise HTTPException(status_code=400, detail="firebase에서 id_token을 가져오는 것에 실패했습니다.")
+
+        decoded_token = auth.verify_id_token(firebase_id_token)
+        uid = decoded_token["uid"]
+
+        return {
+            "message": "로그인 성공",
+            "uid": uid
+        }
+
+    except requests.exceptions.RequestException as e:
+        print("구글 계정 오류")
+        raise HTTPException(status_code=400, detail=f"구글 계정 오류: {str(e)}")
+    except auth.InvalidIdTokenError:
+        print("구글 토큰 오류")
+        raise HTTPException(status_code=400, detail="구글 token 오류")
+
+@router.post("/email-sign-up", tags=["Account"])
 async def email_sign_up(sign_up_data: UserEmailSignUp):
-    """이메일로 회원가입합니다"""
     try:
-        result = await AccountService.create_email_user(sign_up_data)
-        return StandardResponse(
-            success=True,
-            message="회원가입 성공",
-            data=result
+        user = auth.create_user(
+            email=sign_up_data.email,
+            password=sign_up_data.password
         )
-    except HTTPException as e:
-        raise e
+        return {"message": "회원가입 성공", "uid": user.uid}
+    except auth.EmailAlreadyExistsError:
+        print("이미 등록된 이메일")
+        raise HTTPException(status_code=400, detail="이미 등록된 이메일입니다.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
+        print("원인불명 회원가입 실패")
+        raise HTTPException(status_code=500, detail=f"회원가입 실패: {str(e)}")
 
-@router.post("/set-user-info", tags=["Account"], response_model=StandardResponse)
+@router.post("/set-user-info", tags=["Account"])
 async def set_user_info(user_info: UserData):
-    """사용자 정보를 설정합니다"""
     try:
-        result = await AccountService.set_user_information(user_info)
-        return StandardResponse(
-            success=True,
-            message="유저 정보 입력 완료",
-            data=result
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
+        auth.get_user(user_info.uid)
+    except auth.UserNotFoundError:
+        print("등록되지 않은 사용자")
+        raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
 
-@router.post("/email-login", tags=["Account"], response_model=StandardResponse)
+    user_ref = db.reference(f"/users/{user_info.uid}")
+    user_ref.set({
+        "nickname": user_info.nickname,
+        "interest_genre": user_info.interest_genre,
+        "level": user_info.level
+    })
+
+    return {"message": "유저 정보 입력 완료"}
+
+@router.post("/email-login", tags=["Account"])
 async def email_login(user_data: UserEmailSignUp):
-    """이메일로 로그인합니다"""
     try:
-        result = await AccountService.login_with_email(user_data)
-        return StandardResponse(
-            success=True,
-            message="로그인 성공",
-            data=result
+        response = requests.post(
+            f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={os.getenv('API_KEY')}",
+            headers={"Content-Type": "application/json"},
+            json={
+                "email": user_data.email,
+                "password": user_data.password,
+                "returnSecureToken": True
+            }
         )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
 
-@router.delete("/delete-user/{uid}", tags=["Account"], response_model=StandardResponse)
+        response.raise_for_status()
+        firebase_data = response.json()
+        uid = firebase_data.get("localId")
+
+        if not uid:
+            raise HTTPException(status_code=400, detail="로그인 실패: UID를 가져올 수 없습니다.")
+
+        return {"message": "로그인 성공", "uid": uid}
+
+    except requests.exceptions.RequestException as e:
+        print("비밀번호 틀렸을 가능성 높음")
+        raise HTTPException(status_code=400, detail=f"로그인 실패: {str(e)}")
+
+@router.delete("/delete-user/{uid}", tags=["Account"])
 async def delete_user(uid: str):
-    """사용자 계정을 삭제합니다"""
     try:
-        result = await AccountService.delete_user_account(uid)
-        return StandardResponse(
-            success=True,
-            message="사용자 삭제 완료",
-            data=result
-        )
+        try:
+            auth.get_user(uid)
+        except auth.UserNotFoundError:
+            print("등록되지 않은 사용자")
+            raise HTTPException(status_code=400, detail="등록되지 않은 사용자입니다.")
+
+        auth.delete_user(uid)
+
+        user_ref = db.reference(f"/users/{uid}")
+        if user_ref.get():
+            user_ref.delete()
+
+        user_doc_ref = firestore_db.collection("users").document(uid)
+        if user_doc_ref.get().exists:
+            user_doc_ref.delete()
+
+        score_collection_ref = firestore_db.collection(f"{uid}_score")
+        score_docs = score_collection_ref.stream()
+        for doc in score_docs:
+            doc.reference.delete()
+        print(f"Firestore에서 {uid}_score 컬렉션 삭제 완료")
+
+        blobs = storage_bucket.list_blobs(prefix=f"{uid}/")
+        for blob in blobs:
+            blob.delete()
+        print(f"Storage에서 {uid} 폴더 삭제 완료")
+
+        print("사용자 삭제 완료")
+        return {"message": "사용자 삭제 완료"}
+
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
+        print(f"사용자 삭제 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"사용자 삭제 실패: {str(e)}")
