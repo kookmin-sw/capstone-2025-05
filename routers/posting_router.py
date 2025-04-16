@@ -8,7 +8,7 @@ from templates import templates
 from typing import List
 from starlette.middleware.cors import CORSMiddleware
 import datetime
-from model import Post, Comment
+from manager.post_model import Post, Comment
 from fastapi.responses import JSONResponse
 import socket
 import time
@@ -40,7 +40,7 @@ scrap_ref = firestore_db.collection("scrap")
 users_ref = firestore_db.collection("users")
 load_dotenv()
 
-posting_router = APIRouter()
+router = APIRouter()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_DIR = os.path.join(BASE_DIR,'static/')
@@ -57,7 +57,7 @@ def get_user_profile_image(uid: str) -> str:
     if user_doc.exists:
         return user_doc.to_dict().get("profile_image", "")
     return ""
-@posting_router.get("/", response_class=JSONResponse, tags=["Post"])
+@router.get("/", response_class=JSONResponse, tags=["Post"])
 async def root(request: Request, limit: int = Query(10, description="가져올 게시글 수")):
     try:
         postsdictlist = []
@@ -78,7 +78,7 @@ async def root(request: Request, limit: int = Query(10, description="가져올 �
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"목록 가져오기 실패: {str(e)}")
 
-@posting_router.put("/posts/{post_id}/views", response_class=JSONResponse, tags=["Post"])
+@router.put("/posts/{post_id}/views", response_class=JSONResponse, tags=["Post"])
 async def increase_views(post_id: int):
     string_number = str(post_id).zfill(8)
     post_ref = posts_ref.document(string_number)
@@ -94,7 +94,7 @@ async def increase_views(post_id: int):
     post_data["조회수"] = new_views
     return post_data
 
-@posting_router.get("/posts/top-viewed", response_class=JSONResponse, tags=["Post"])
+@router.get("/posts/top-viewed", response_class=JSONResponse, tags=["Post"])
 async def get_top_viewed_post():
     postsdictlist = []
     alldocs = posts_ref.stream()
@@ -114,7 +114,7 @@ async def get_top_viewed_post():
 
     return JSONResponse(content=top_post)
 
-@posting_router.get("/posts/{post_id}", response_class=JSONResponse, tags=["Post"])
+@router.get("/posts/{post_id}", response_class=JSONResponse, tags=["Post"])
 async def read_post(request: Request, post_id: int):
     
     context = {'post_id': post_id}
@@ -164,7 +164,7 @@ async def upload_file_to_firebase(file:UploadFile, path: str) -> Optional[str]:
         print(f"[Firebase Storage Upload Error] {e}")
         return None
 
-@posting_router.post("/posts", tags=["Post"])
+@router.post("/posts", tags=["Post"])
 async def create_post(
     uid : str = Form(),
     content : str= Form(),
@@ -213,7 +213,7 @@ async def create_post(
 
     return {"result_msg": "게시글이 성공적으로 등록되었습니다.", "post_id": string_number}
 
-@posting_router.put("/posts/{post_id}", tags=["Post"])
+@router.put("/posts/{post_id}", tags=["Post"])
 async def modify_post(
     post_id: int,
     uid: str = Form(),
@@ -252,7 +252,7 @@ async def modify_post(
 
     return {'result_msg': f"{postid} updated..."}
 
-@posting_router.delete("/posts/{post_id}", tags=["Post"])
+@router.delete("/posts/{post_id}", tags=["Post"])
 async def delete_post(post_id: int):
     global posts_ref, comments_ref
     print("delete_post >>>")
@@ -271,7 +271,7 @@ async def delete_post(post_id: int):
     db.collection("my_activity").document(uid).collection("post").document(string_number).delete()
     return {'result_msg' : f"Post {post_id} and its comments deleted."}
 
-@posting_router.post("/comment", tags=["Comment"])
+@router.post("/comment", tags=["Comment"])
 async def create_comment(comment: Comment):
     global posts_ref, comments_ref
     
@@ -310,7 +310,7 @@ async def create_comment(comment: Comment):
 
     return { 'result_msg': f'{"put"} Registered...' }
 
-@posting_router.put("/comment/{comment_id}", tags=["Comment"])
+@router.put("/comment/{comment_id}", tags=["Comment"])
 async def modify_post(comment: Comment, comment_id : int):
 
     print("modify_post >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
@@ -338,7 +338,7 @@ async def modify_post(comment: Comment, comment_id : int):
 
     return {'result_msg': f"{commentid} updated..."}
 
-@posting_router.delete("/comment/{comment_id}", tags=["Comment"])
+@router.delete("/comment/{comment_id}", tags=["Comment"])
 async def delete_comment(comment_id: int):
     global posts_ref, comments_ref
     print("delete_post >>>")
@@ -381,7 +381,7 @@ async def delete_comment(comment_id: int):
         
     return {'result_msg' : f"댓글 {comment_id} 삭제 성공"}
 
-@posting_router.post("/posts/{post_id}/like", tags=["Post"])
+@router.post("/posts/{post_id}/like", tags=["Post"])
 async def like_post(post_id: int, uid: str, request: Request):
     db = firestore.client()
     user = request.headers.get("uid")
@@ -412,7 +412,7 @@ async def like_post(post_id: int, uid: str, request: Request):
 
     return {"result_msg": "좋아요가 추가되었습니다.", "post_id": post_id}
 
-@posting_router.delete("/posts/{post_id}/like", tags=["Post"])
+@router.delete("/posts/{post_id}/like", tags=["Post"])
 async def unlike_post(post_id: int, request: Request):
     user = request.headers.get("uid")
     if not user:
@@ -433,7 +433,7 @@ async def unlike_post(post_id: int, request: Request):
     like_doc_ref.delete()
     return {"result_msg": "좋아요가 취소되었습니다.", "post_id": post_id}
 
-@posting_router.post("/posts/{post_id}/scrap", tags=["Post"])
+@router.post("/posts/{post_id}/scrap", tags=["Post"])
 async def scrap_post(post_id: str, request: Request):
     user = request.headers.get("uid")
     if not user:
@@ -456,7 +456,7 @@ async def scrap_post(post_id: str, request: Request):
 
     return {"message": "스크랩이 추가되었습니다.", "post_id": post_id}
 
-@posting_router.delete("/posts/{post_id}/scrap", tags=["Post"])
+@router.delete("/posts/{post_id}/scrap", tags=["Post"])
 async def remove_scrap(post_id: str, request: Request):
     user = request.headers.get("uid")
     if not user:
@@ -469,7 +469,7 @@ async def remove_scrap(post_id: str, request: Request):
     scrap_doc.delete()
     return {"message": "스크랩이 취소되었습니다.", "post_id": post_id}
 
-@posting_router.post("/report/post/{post_id}", tags=["Post"])
+@router.post("/report/post/{post_id}", tags=["Post"])
 async def report_post(post_id : int, reason: str):
     global reports_ref
     print("report_post >>")
@@ -484,7 +484,7 @@ async def report_post(post_id : int, reason: str):
     reports_ref.add(report_data)
     return {"result_msg": f"Post {post_id} reported for reason: {reason}"}
 
-@posting_router.post("/report/comment/{comment_id}", tags=["Comment"])
+@router.post("/report/comment/{comment_id}", tags=["Comment"])
 async def report_comment(comment_id: int, reason: str):
     global reports_ref
     print("report_comment >>>")
@@ -497,7 +497,7 @@ async def report_comment(comment_id: int, reason: str):
     reports_ref.add(report_data)
     return {"result_msg": f"Comment {comment_id} reported for reason: {reason}"}
 
-@posting_router.get("/search", tags=["Post"])
+@router.get("/search", tags=["Post"])
 def search_post(
     query: str = Query(..., description="검색어 입력")
 ):
@@ -528,7 +528,7 @@ def search_post(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"검색 실패: {str(e)}")
-@posting_router.get("/autocomplete", tags=["Post"])
+@router.get("/autocomplete", tags=["Post"])
 def autocomplete(query: str = Query(..., description="자동완성 검색어 입력")):
     try:
         query_lower = query.lower()
@@ -545,7 +545,7 @@ def autocomplete(query: str = Query(..., description="자동완성 검색어 입
         return {"suggestions": suggestions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"자동완성 실패: {str(e)}")
-@posting_router.get("/comment/{post_id}", response_class=JSONResponse, tags=["Comment"])
+@router.get("/comment/{post_id}", response_class=JSONResponse, tags=["Comment"])
 async def read_comment(request: Request, post_id: int):
     context = {'post_id': post_id}
     comments_keyvaluelists=[]
