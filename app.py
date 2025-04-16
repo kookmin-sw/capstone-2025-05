@@ -6,6 +6,7 @@ from routers.spotify_router import router as spotify_router
 from routers.recent_prepare_router import router as recent_prepared_router
 from routers.ranking_router import router as ranking_router
 from routers.mainsearch_router import router as mainsearch_router
+from routers.soundSourceAnalysis_router import router as soundSourceAnalysis_router
 
 app = FastAPI()
 app.include_router(posting_router)
@@ -18,3 +19,4 @@ app.include_router(spotify_router)
 app.include_router(ranking_router)
 app.include_router(recent_prepared_router)
 app.include_router(mainsearch_router)
+app.include_router(soundSourceAnalysis_router)
