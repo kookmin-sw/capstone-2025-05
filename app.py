@@ -11,7 +11,6 @@ from routers.soundSourceAnalysis_router import router as soundSourceAnalysis_rou
 app = FastAPI()
 app.include_router(posting_router)
 app.include_router(spotify_router)
-
 app.include_router(account_router)
 app.include_router(posting_router)
 app.include_router(myPage_router)
