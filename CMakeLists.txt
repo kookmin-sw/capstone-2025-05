@@ -125,6 +125,18 @@ target_sources(MapleClientDesktop PRIVATE
     Source/ScoreComponent.cpp
     Source/ScoreComponent.h
 
+    Source/Controller/ContentController.cpp
+    Source/Controller/ContentController.h
+
+    Source/Model/ContentModel.cpp
+    Source/Model/ContentModel.h
+
+    Source/View/AlbumGridView.cpp
+    Source/View/AlbumGridView.h
+
+    Source/View/AlbumThumbnailComponent.cpp
+    Source/View/AlbumThumbnailComponent.h
+
     # Source/TabData.h
 )
 

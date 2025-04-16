@@ -3,6 +3,10 @@
 
 ContentPanelComponent::ContentPanelComponent(MainComponent& mainComp)
 {
+    // MVC 컴포넌트 초기화
+    contentController = std::make_unique<ContentController>(contentModel);
+    
+    // UI 컴포넌트 초기화
     addAndMakeVisible(recentTitle);
     recentTitle.setText("Playable Songs", juce::dontSendNotification);
     recentTitle.setFont(juce::Font(18.0f, juce::Font::bold));
@@ -21,78 +25,29 @@ ContentPanelComponent::ContentPanelComponent(MainComponent& mainComp)
     addAndMakeVisible(viewAllRecommend);
     viewAllRecommend.setButtonText("View All");
     
-    // 샘플 악보 데이터 초기화
-    initializeSampleData();
-}
-
-void ContentPanelComponent::initializeSampleData()
-{
+    // 컨트롤러를 통해 데이터 초기화
+    contentController->initializeData();
+    
+    // 모델 데이터를 뷰에 표시
     try {
-        // 연습 가능한 곡 섹션
-        recentGrid.clear();
-        recommendGrid.clear();
-        
-        // 샘플 악보 데이터 추가 (로컬 파일 경로에 의존하지 않도록 수정)
-        // 썸네일 파일이 없을 경우를 대비하여 기본 이미지 사용
-        juce::File thumbnailDir("D:/audio_dataset/thumbnails");
-        if (!thumbnailDir.exists()) {
-            DBG("Thumbnail directory does not exist: " + thumbnailDir.getFullPathName());
-            // 실제 파일 없이도 thumbnailPath는 유지 (나중에 사용할 수 있음)
-        }
-        
-        // 샘플 악보 데이터 추가
-        Song song1("song1", "Homecoming", "Green Day", "D:/audio_dataset/thumbnails/song1.jpg");
-        Song song2("song2", "Sweet Child O' Mine", "Guns N' Roses", "D:/audio_dataset/thumbnails/song2.jpg");
-        Song song3("song3", "Wonderwall", "Oasis", "D:/audio_dataset/thumbnails/song3.jpg");
-        
-        // 연습 가능한 곡 썸네일 추가 (에러 처리 추가)
-        try {
-            recentGrid.addSong(song1, [this](const juce::String& songId) {
+        // 연습 가능한 곡 표시
+        for (const auto& song : contentController->getRecentSongs())
+        {
+            recentGrid.addSong(song, [this](const juce::String& songId) {
                 notifySongSelected(songId);
             });
-        } catch (const std::exception& e) {
-            DBG("Error adding song1: " + juce::String(e.what()));
         }
         
-        try {
-            recentGrid.addSong(song2, [this](const juce::String& songId) {
+        // 추천 곡 표시
+        for (const auto& song : contentController->getRecommendedSongs())
+        {
+            recommendGrid.addSong(song, [this](const juce::String& songId) {
                 notifySongSelected(songId);
             });
-        } catch (const std::exception& e) {
-            DBG("Error adding song2: " + juce::String(e.what()));
         }
-        
-        try {
-            recentGrid.addSong(song3, [this](const juce::String& songId) {
-                notifySongSelected(songId);
-            });
-        } catch (const std::exception& e) {
-            DBG("Error adding song3: " + juce::String(e.what()));
-        }
-        
-        // 추천 곡 섹션
-        Song song4("song4", "Nothing Else Matters", "Metallica", "D:/audio_dataset/thumbnails/song4.jpg");
-        Song song5("song5", "Hotel California", "Eagles", "D:/audio_dataset/thumbnails/song5.jpg");
-        
-        try {
-            recommendGrid.addSong(song4, [this](const juce::String& songId) {
-                notifySongSelected(songId);
-            });
-        } catch (const std::exception& e) {
-            DBG("Error adding song4: " + juce::String(e.what()));
-        }
-        
-        try {
-            recommendGrid.addSong(song5, [this](const juce::String& songId) {
-                notifySongSelected(songId);
-            });
-        } catch (const std::exception& e) {
-            DBG("Error adding song5: " + juce::String(e.what()));
-        }
-    } catch (const std::exception& e) {
-        DBG("Exception in initializeSampleData: " + juce::String(e.what()));
-    } catch (...) {
-        DBG("Unknown exception in initializeSampleData");
+    }
+    catch (const std::exception& e) {
+        DBG("Exception in ContentPanelComponent: " + juce::String(e.what()));
     }
 }
 
@@ -102,12 +57,6 @@ void ContentPanelComponent::notifySongSelected(const juce::String& songId)
     DBG("Song selected: " + songId);
     // ListenerList를 사용하여 이벤트 통지
     songListeners.call(&SongSelectedListener::songSelected, songId);
-}
-
-void ContentPanelComponent::loadAlbumsFromCache()
-{
-    // 이 함수는 더 이상 사용되지 않으므로 비워두거나 제거 가능
-    DBG("loadAlbumsFromCache is not used in this implementation");
 }
 
 void ContentPanelComponent::resized()

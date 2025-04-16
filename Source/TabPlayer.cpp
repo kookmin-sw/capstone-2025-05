@@ -454,9 +454,9 @@ void TabPlayer::useBuiltInSynthesizer(juce::AudioBuffer<float>& buffer)
                     
                     // 기타 음색을 위한 고조파 추가 (더 자연스러운 소리)
                     float harmonics = 0.0f;
-                    harmonics += 0.5f * std::sin(2.0f * 2.0f * juce::float_Pi * frequency * time); // 2차 고조파
-                    harmonics += 0.3f * std::sin(3.0f * 2.0f * juce::float_Pi * frequency * time); // 3차 고조파
-                    harmonics += 0.15f * std::sin(4.0f * 2.0f * juce::float_Pi * frequency * time); // 4차 고조파
+                    // harmonics += 0.5f * std::sin(2.0f * 2.0f * juce::float_Pi * frequency * time); // 2차 고조파
+                    // harmonics += 0.3f * std::sin(3.0f * 2.0f * juce::float_Pi * frequency * time); // 3차 고조파
+                    // harmonics += 0.15f * std::sin(4.0f * 2.0f * juce::float_Pi * frequency * time); // 4차 고조파
                     
                     // 기본음과 고조파 믹스
                     float finalSound = (0.7f * sinValue + 0.3f * harmonics) * envelope;
