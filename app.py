@@ -9,6 +9,8 @@ from routers.mainsearch_router import router as mainsearch_router
 from routers.soundSourceAnalysis_router import router as soundSourceAnalysis_router
 
 app = FastAPI()
+app.include_router(posting_router)
+app.include_router(spotify_router)
 
 app.include_router(account_router)
 #app.include_router(post_router)
