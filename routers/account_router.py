@@ -13,6 +13,16 @@ GOOGLE_OAUTH2_URL = "https://accounts.google.com/o/oauth2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
+class UserData(BaseModel):
+    uid: str
+    nickname: str
+    interest_genre: List[int]  # 관심 장르 복수 선택 가능 (0~11)
+    level: int  # 실력 (0~4)
+
+class UserEmailSignUp(BaseModel):
+    email: EmailStr
+    password: str
+
 # 테스트용 서비스 클래스 추가
 class AccountService:
     @staticmethod
