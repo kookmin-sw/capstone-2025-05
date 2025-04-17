@@ -7,7 +7,7 @@ from manager.test_service import TestService
 from models.response_models import StandardResponse, ErrorResponse
 from routers.account_router import router as account_router
 from routers.post_router import router as post_router
-from routers.mypage_router import router as mypage_router
+from routers.myPage_router import router as mypage_router
 from routers.spotify_router import router as spotify_router
 from routers.recent_prepare_router import router as recent_prepare_router
 from routers.ranking_router import router as ranking_router
