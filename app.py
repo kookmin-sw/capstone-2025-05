@@ -19,7 +19,8 @@ app = FastAPI(
     root_path="/api/v1",  # FastAPI가 /api/v1/ 아래에서 제공됨을 알려줌
     docs_url="/docs",     # /api/v1/docs로 접근 가능하도록 명시적 설정
     redoc_url="/redoc",   # /api/v1/redoc으로 접근 가능하도록 명시적 설정
-    openapi_url="/openapi.json"  # /api/v1/openapi.json으로 접근 가능하도록 명시적 설정
+    openapi_url="/openapi.json",  # /api/v1/openapi.json으로 접근 가능하도록 명시적 설정
+    root_path_in_servers=False    # 서버 URL에 root_path를 포함하지 않도록 설정
 )
 
 origins = [
