@@ -16,11 +16,8 @@ services:
   client:
     image: pjh0431/maple-client:latest
     container_name: maple-client
-    environment:
-      - REACT_APP_API_URL=https://maple.ne.kr/api
-      - REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}
-      - REACT_APP_SPOTIFY_REDIRECT_URI=${{ secrets.REACT_APP_SPOTIFY_REDIRECT_URI }}
-      - PUBLIC_URL=/
+    env_file:
+      - .env
     networks:
       - maple-network
   app:
