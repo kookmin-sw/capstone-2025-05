@@ -2,7 +2,7 @@ name: Test and Push FastAPI Image
 on:
   push:
     branches:
-      - main
+      - maple-backend/refactor
 jobs:
   test-and-push:
     runs-on: ubuntu-latest
