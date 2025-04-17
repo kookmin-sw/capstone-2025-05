@@ -435,3 +435,23 @@ class PostService:
             return context
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"댓글 조회 실패: {str(e)}")
+
+    @staticmethod
+    async def get_all_posts(limit: int = 10) -> Dict[str, Any]:
+        """get_posts의 별칭 (테스트 호환성)"""
+        return await PostService.get_posts(limit)
+    
+    @staticmethod
+    async def get_post_by_id(post_id: int) -> Dict[str, Any]:
+        """read_post의 별칭 (테스트 호환성)"""
+        return await PostService.read_post(post_id)
+    
+    @staticmethod
+    async def update_post(post_id: int, uid: str, title: str, content: str, author: str, image: Optional[UploadFile] = None, audio: Optional[UploadFile] = None) -> Dict[str, str]:
+        """modify_post의 별칭 (테스트 호환성)"""
+        return await PostService.modify_post(post_id, uid, title, content, author, image, audio)
+    
+    @staticmethod
+    async def increase_view_count(post_id: int) -> Dict[str, Any]:
+        """increase_views의 별칭 (테스트 호환성)"""
+        return await PostService.increase_views(post_id)
