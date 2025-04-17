@@ -14,6 +14,7 @@ jobs:
           host: ${{ secrets.OCI_HOST }}
           username: ${{ secrets.OCI_USERNAME }}
           key: ${{ secrets.OCI_SSH_KEY }}
+          passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
           source: "docker-compose.yml,nginx/"
           target: "/home/${{ secrets.OCI_USERNAME }}/deployment"
       - name: Deploy with Docker Compose
