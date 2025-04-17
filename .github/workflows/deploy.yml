@@ -49,5 +49,6 @@ jobs:
             echo "REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}" >> .env
             echo "REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main" >> .env
             echo "PUBLIC_URL=/" >> .env
+            docker-compose down
             docker-compose pull
             docker-compose up -d --build
