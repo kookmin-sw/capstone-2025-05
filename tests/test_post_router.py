@@ -3,69 +3,13 @@ import datetime
 from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI, Form
-from routers.post_router import router as post_router, PostService
-from manager.post_model import Post, Comment
+from routers.post_router import router as post_router
+from model import Post, Comment
 from models.response_models import StandardResponse
-
-# 모의 PostService.create_post 메서드 생성
-async def mock_create_post(*args, **kwargs):
-    return {
-        "id": 10,
-        "message": "게시글이 성공적으로 생성되었습니다."
-    }
-
-# 모의 PostService.delete_post 메서드 생성
-async def mock_delete_post(*args, **kwargs):
-    return {
-        "id": 1,
-        "deleted_comments": 2,
-        "message": "게시글과 관련 댓글 2개가 삭제되었습니다."
-    }
-
-# 모의 PostService.create_comment 메서드 생성
-async def mock_create_comment(*args, **kwargs):
-    return {
-        "id": 5,
-        "postid": 1,
-        "message": "댓글이 성공적으로 등록되었습니다."
-    }
-
-# 모의 PostService.like_post 메서드 생성
-async def mock_like_post(*args, **kwargs):
-    return {
-        "id": 1,
-        "likes": 6,
-        "message": "게시글에 좋아요가 추가되었습니다."
-    }
-
-# 모의 PostService.report_post 메서드 생성
-async def mock_report_post(*args, **kwargs):
-    return {
-        "id": "report_id_123",
-        "post_id": 1,
-        "message": "게시글이 신고되었습니다."
-    }
-
-# 모의 PostService.report_comment 메서드 생성
-async def mock_report_comment(*args, **kwargs):
-    return {
-        "id": "report_id_456",
-        "comment_id": 101,
-        "message": "댓글이 신고되었습니다."
-    }
 
 # 테스트용 FastAPI 앱 생성
 app = FastAPI()
 app.include_router(post_router, prefix="/post")
-
-# 모의 메서드를 서비스에 패치
-PostService.create_post = mock_create_post
-PostService.delete_post = mock_delete_post
-PostService.create_comment = mock_create_comment
-PostService.like_post = mock_like_post
-PostService.report_post = mock_report_post
-PostService.report_comment = mock_report_comment
-
 client = TestClient(app)
 
 # 테스트 데이터 정의

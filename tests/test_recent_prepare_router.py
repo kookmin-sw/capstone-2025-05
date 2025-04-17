@@ -1,15 +1,12 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from fastapi import HTTPException, FastAPI
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-# 전체 app 대신 직접 라우터만 임포트
+from app import app
 from routers.recent_prepare_router import router
 
-# 독립적인 FastAPI 앱 생성
-test_app = FastAPI()
-test_app.include_router(router, prefix="/api/prepare")
-client = TestClient(test_app)
+client = TestClient(app)
 
 class TestRecentPrepareRouter:
     """최근 업로드 준비된 음악 라우터 테스트"""

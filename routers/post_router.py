@@ -1,12 +1,11 @@
 import os
 import datetime
 from typing import Dict, List, Optional, Any
-from fastapi import HTTPException, UploadFile, APIRouter, Form, File, Depends
+from fastapi import HTTPException, UploadFile, APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 from firebase_admin import auth, firestore
 from manager.firebase_manager import firestore_db, storage_bucket
 from manager.post_model import Post, Comment
-from models.response_models import StandardResponse
 
 router = APIRouter()
 
@@ -436,140 +435,3 @@ class PostService:
             return context
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"댓글 조회 실패: {str(e)}")
-
-    @staticmethod
-    async def get_all_posts(limit: int = 10) -> Dict[str, Any]:
-        """get_posts의 별칭 (테스트 호환성)"""
-        return await PostService.get_posts(limit)
-    
-    @staticmethod
-    async def get_post_by_id(post_id: int) -> Dict[str, Any]:
-        """read_post의 별칭 (테스트 호환성)"""
-        return await PostService.read_post(post_id)
-    
-    @staticmethod
-    async def update_post(post_id: int, uid: str, title: str, content: str, author: str, image: Optional[UploadFile] = None, audio: Optional[UploadFile] = None) -> Dict[str, str]:
-        """modify_post의 별칭 (테스트 호환성)"""
-        return await PostService.modify_post(post_id, uid, title, content, author, image, audio)
-    
-    @staticmethod
-    async def increase_view_count(post_id: int) -> Dict[str, Any]:
-        """increase_views의 별칭 (테스트 호환성)"""
-        return await PostService.increase_views(post_id)
-
-# 게시글 관련 엔드포인트
-@router.get("/posts", tags=["Posts"])
-async def get_posts(limit: int = 10):
-    posts = await PostService.get_all_posts(limit)
-    return StandardResponse(
-        success=True,
-        message="게시글 목록 조회 성공",
-        data=posts
-    )
-
-@router.get("/posts/{post_id}", tags=["Posts"])
-async def get_post(post_id: int):
-    post = await PostService.get_post_by_id(post_id)
-    return StandardResponse(
-        success=True,
-        message="게시글 조회 성공",
-        data=post
-    )
-
-@router.post("/posts", tags=["Posts"])
-async def create_post(post: Post):
-    result = await PostService.create_post(
-        uid=post.uid,
-        content=post.내용,
-        author=post.작성자,
-        title=post.제목,
-        image=None,
-        audio=None
-    )
-    return StandardResponse(
-        success=True,
-        message="게시글이 성공적으로 생성되었습니다.",
-        data={"id": result.get("post_id", 0), "message": result.get("result_msg")}
-    )
-
-@router.put("/posts/{post_id}", tags=["Posts"])
-async def update_post(post_id: int, post: Post):
-    result = await PostService.update_post(
-        post_id=post_id,
-        uid=post.uid,
-        title=post.제목,
-        content=post.내용,
-        author=post.작성자
-    )
-    return StandardResponse(
-        success=True,
-        message="게시글이 성공적으로 수정되었습니다.",
-        data={"id": post_id, "message": result.get("result_msg")}
-    )
-
-@router.delete("/posts/{post_id}", tags=["Posts"])
-async def delete_post(post_id: int):
-    result = await PostService.delete_post(post_id)
-    deleted_comments = 0  # 실제로는 삭제된 댓글 수를 계산해야 함
-    return StandardResponse(
-        success=True,
-        message="게시글이 성공적으로 삭제되었습니다.",
-        data={"id": post_id, "deleted_comments": deleted_comments, "message": result.get("result_msg")}
-    )
-
-@router.put("/posts/{post_id}/views", tags=["Posts"])
-async def increase_views(post_id: int):
-    result = await PostService.increase_view_count(post_id)
-    return StandardResponse(
-        success=True,
-        message="조회수가 증가했습니다.",
-        data={"id": post_id, "조회수": result.get("조회수", 0)}
-    )
-
-@router.get("/posts/top-viewed", tags=["Posts"])
-async def get_top_viewed_post():
-    result = await PostService.get_top_viewed_post()
-    return StandardResponse(
-        success=True,
-        message="인기 게시글 조회 성공",
-        data=[result]
-    )
-
-@router.put("/posts/{post_id}/like", tags=["Posts"])
-async def like_post(post_id: int):
-    # 실제 구현에서는 uid를 받아야 함
-    uid = "test_user_uid"  # 테스트를 위한 임의 값
-    result = await PostService.like_post(post_id, uid)
-    return StandardResponse(
-        success=True,
-        message="좋아요가 추가되었습니다.",
-        data={"id": post_id, "likes": 6, "message": result.get("result_msg")}
-    )
-
-@router.post("/posts/{post_id}/report", tags=["Posts"])
-async def report_post(post_id: int, reason: str = Form(...)):
-    result = await PostService.report_post(post_id, reason)
-    return StandardResponse(
-        success=True,
-        message="게시글이 신고되었습니다.",
-        data={"id": "report_id_123", "post_id": post_id, "message": result.get("result_msg")}
-    )
-
-# 댓글 관련 엔드포인트
-@router.post("/comments", tags=["Comments"])
-async def create_comment(comment: Comment):
-    result = await PostService.create_comment(comment)
-    return StandardResponse(
-        success=True,
-        message="댓글이 성공적으로 등록되었습니다.",
-        data={"id": 5, "postid": comment.postid, "message": result.get("result_msg")}
-    )
-
-@router.post("/comments/{comment_id}/report", tags=["Comments"])
-async def report_comment(comment_id: int, reason: str = Form(...)):
-    result = await PostService.report_comment(comment_id, reason)
-    return StandardResponse(
-        success=True,
-        message="댓글이 신고되었습니다.",
-        data={"id": "report_id_456", "comment_id": comment_id, "message": result.get("result_msg")}
-    )

@@ -6,13 +6,10 @@ import json
 import os
 
 from routers.spotify_router import router, get_spotify_token
+from app import app
 from manager.spotify_service import SpotifyService
 
-# 독립적인 FastAPI 앱 생성
-test_app = FastAPI()
-# 라우터에 이미 /api/spotify 접두사가 있으므로 여기서는 접두사 없이 추가
-test_app.include_router(router)
-client = TestClient(test_app)
+client = TestClient(app)
 
 class TestSpotifyRouter:
     """Spotify API 라우터 테스트"""
