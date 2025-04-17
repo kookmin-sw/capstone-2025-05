@@ -1,52 +1,18 @@
-version: '3'
-
 services:
   app:
-    image: ${{ secrets.DOCKER_USERNAME }}/maple-app:latest  # CI/CD 이미지 사용
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/maple-api:latest
     container_name: maple-api
-    restart: always
     ports:
       - "8000:8000"
-    environment:
-      - TYPE=${TYPE}
-      - PROJECT_ID=${PROJECT_ID}
-      - PRIVATE_KEY_ID=${PRIVATE_KEY_ID}
-      - PRIVATE_KEY=${PRIVATE_KEY}
-      - CLIENT_EMAIL=${CLIENT_EMAIL}
-      - CLIENT_ID=${CLIENT_ID}
-      - AUTH_URI=${AUTH_URI}
-      - TOKEN_URI=${TOKEN_URI}
-      - AUTH_PROVIDER_CERT_URL=${AUTH_PROVIDER_CERT_URL}
-      - CLIENT_CERT_URL=${CLIENT_CERT_URL}
-      - UNIVERSE_DOMAIN=${UNIVERSE_DOMAIN}
-      - FILE_PATH=${FILE_PATH}
-      - CLIENT_SECRET=${CLIENT_SECRET}
-      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
-      - API_KEY=${API_KEY}
-      - DATABASE_URL=${DATABASE_URL}
-      - STORAGE_BUCKET=${STORAGE_BUCKET}
-      - NEXT_PUBLIC_SPOTIFY_CLIENT_ID=${NEXT_PUBLIC_SPOTIFY_CLIENT_ID}
-      - NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET=${NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET}
-
-    networks:
-      - maple-network
-
-  nginx:
-    image: nginx:stable-alpine
-    container_name: maple-nginx
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
+    env_file:
+      - .env
     volumes:
-      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - ./static:/usr/share/nginx/html/static
-    depends_on:
-      - app
+      - .:/app
     networks:
       - maple-network
-
 networks:
   maple-network:
     driver: bridge
