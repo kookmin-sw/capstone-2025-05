@@ -18,8 +18,8 @@ services:
     container_name: maple-client
     environment:
       - REACT_APP_API_URL=https://maple.ne.kr/api
-      - REACT_APP_SPOTIFY_CLIENT_ID=b863751844374f50969f0d4ded472666
-      - REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main
+      - REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}
+      - REACT_APP_SPOTIFY_REDIRECT_URI=${{ secrets.REACT_APP_SPOTIFY_REDIRECT_URI }}
       - PUBLIC_URL=/
     networks:
       - maple-network
