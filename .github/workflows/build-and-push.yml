@@ -46,5 +46,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          platforms: linux/arm64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/maple-api:latest
