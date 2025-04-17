@@ -8,11 +8,11 @@ import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePostInfoQuery } from '../../Hooks/get/usePostInfoQuery';
-import { useViewMutation } from '../../Hooks/put/useViewMutation';
+import { useViewPutMutation } from '../../Hooks/put/viewPutMutation';
 export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
   const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
-  const { mutate: increaseView } = useViewMutation();
+  const { mutate: increaseView } = useViewPutMutation();
 
   const { data: postInfo } = usePostInfoQuery();
   const totalPage = postInfo ? Math.ceil(postInfo.length / contentsPerPage) : 1;

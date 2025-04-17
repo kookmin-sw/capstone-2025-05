@@ -11,21 +11,32 @@ import { FaAngleDown, FaAngleUp } from 'react-icons/fa6';
 import ClipLoader from 'react-spinners/ClipLoader';
 import { useComentsQuery } from '../../Hooks/get/useCommentsQuery';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEditPostMutation } from '../../Hooks/put/useEditPostMutation';
+import { useEditPutMutation } from '../../Hooks/put/editPutMutation';
+import { useLikePutMutation } from '../../Hooks/put/likePutMutation';
+import { useUnlikePutMutation } from '../../Hooks/put/unlikePutMutation';
+import { useReportPostMutation } from '../../Hooks/post/reportPostMutation';
 import { FaRegMinusSquare, FaRegPlusSquare } from 'react-icons/fa';
 import Input from '../../Components/Input/input';
 import { usePostCommentsMutation } from '../../Hooks/post/usePostCommentsMutation';
 import Alert from '../../Components/Alert/Alert';
 import fill_heart from '../../Assets/Images/fill_heart.png';
-import fill_flag from '../../Assets/Images/fill_flag.png';
+import fill_bookmark from '../../Assets/MyPage/filledBookmark.svg';
+import bookmark from '../../Assets/bookmark.svg';
 
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
 export default function NoticeDetail() {
   const location = useLocation();
   const post = location.state;
-  const { mutate } = useEditPostMutation();
-  const { mutate: postCommentMutate } = usePostCommentsMutation();
+
+  /*Mutation 영역*/
+  const { mutate } = useEditPutMutation(); //게시글 수정하기
+  const { mutate: postCommentMutate } = usePostCommentsMutation(); //댓글 추가하기
+  const { mutate: putLikeMutate } = useLikePutMutation(); //게시글 좋아요
+  const { mutate: postReportMutate } = useReportPostMutation();
+  const { mutate: putUnlikeMutate } = useUnlikePutMutation(); //게시글 좋아요 취소
+  /***************/
+
   const navigate = useNavigate();
   const filterComments = () => {
     setIsLoading(true); // 로딩 시작
@@ -61,6 +72,8 @@ export default function NoticeDetail() {
 
   //좋아요,신고하기 버튼 체크 여부
   const [liked, setLiked] = useState(false);
+  const [clickLiked, setClickLiked] = useState(false);
+  const [likeNum, setLikeNum] = useState(post.likes);
   const [reported, setReported] = useState(false);
 
   //수정 모드
@@ -96,13 +109,12 @@ export default function NoticeDetail() {
 
   const handlePostComment = () => {
     const commentData = {
-      id: post.id, //나중에 uid로 바꿀것
       uid: '랜덤',
       작성일시: new Date().toISOString(), // 현재 시간
-      프로필이미지: 'profile',
       postid: post.id, // 현재 게시글 ID
       작성자: '누굴까', // 작성자 이름
       내용: reviewComment,
+      비밀번호: '1234',
     };
 
     postCommentMutate(commentData, {
@@ -125,12 +137,50 @@ export default function NoticeDetail() {
   //좋아요&신고하기 버튼 클릭 이벤트
   const handleHeartBttn = () => {
     setLiked(!liked);
+    const postid = post.id;
     //여기에는 좋아요 + 1기능을 하는 mutate를 집어넣어주면 됨
+    if (!liked) {
+      //하트를 새로 누른경우
+      putLikeMutate(
+        { postid },
+        {
+          onSuccess: () => {
+            console.log('좋아요 성공');
+          },
+          onError: (error) => console.log('좋아요 실패ㅠㅠ', error),
+        },
+      );
+      localStorage.setItem('heart', postid);
+      setClickLiked(true);
+    } else {
+      putUnlikeMutate(
+        { postid },
+        {
+          onSuccess: () => {
+            console.log('좋아요 취소 성공');
+          },
+          onError: (error) => console.log('좋아요 취소 실패ㅠㅠ', error),
+        },
+      );
+      localStorage.removeItem('heart', postid);
+      setClickLiked(false);
+    }
   };
 
   const handleFlagBttn = () => {
     setReported(!reported);
     //여기에는 신고 하는 mutate를 집어넣어주면 됨
+    const postid = post.id;
+    const reason = '신고 '; //입력받는 형태로 바꿔야됨
+    postReportMutate(
+      { postid, reason },
+      {
+        onSuccess: () => {
+          console.log('신고하기 성공');
+        },
+        onError: (error) => console.log('신고하기 실패ㅠㅠ', error),
+      },
+    );
   };
 
   useEffect(() => {
@@ -140,6 +190,15 @@ export default function NoticeDetail() {
         setFilteredComments(commentsInfo.slice(0, 3));
     }
   }, [commentsInfo]);
+
+  useEffect(() => {
+    if (localStorage.getItem('heart', post.id)) {
+      setLiked(true);
+    } else {
+      setLiked(false);
+    }
+  }, [liked]);
+  console.log(commentsInfo);
 
   return (
     <div>
@@ -202,7 +261,7 @@ export default function NoticeDetail() {
             )}
           </div>
         </div>
-
+        {/*heart버튼과 신고하기 버튼 */}
         <div className="flex w-[80%] justify-between mt-4">
           <div className="flex">
             <button className="mr-2 w-10 h-[40px]" onClick={handleHeartBttn}>
@@ -210,11 +269,11 @@ export default function NoticeDetail() {
                 src={liked ? fill_heart : heart}
                 className="duration-300 ease-in-out hover:scale-[110%]"
               />
-              <span>{post.likes}</span>
+              <span>{clickLiked ? likeNum + 1 : likeNum}</span>
             </button>
             <button className="w-10" onClick={handleFlagBttn}>
               <img
-                src={reported ? fill_flag : flag}
+                src={reported ? fill_bookmark : bookmark}
                 className="duration-300 ease-in-out hover:scale-[110%]"
               />
             </button>

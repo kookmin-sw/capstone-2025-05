@@ -5,7 +5,7 @@ const updateViews = ({ post_id }) => {
   return api.put(`/post/posts/${post_id}/views`);
 };
 
-export const useViewMutation = () => {
+export const useViewPutMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
