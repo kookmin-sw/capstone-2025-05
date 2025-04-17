@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr
 from typing import List
 import requests
 import os
+from models.response_models import StandardResponse
 
 router = APIRouter()
 
@@ -184,7 +185,12 @@ async def google_login():
 @router.get("/google-auth-callback", tags=["Account"])
 async def google_auth_callback(code: str):
     try:
-        return await AccountService.process_google_auth(code)
+        result = await AccountService.process_google_auth(code)
+        return StandardResponse(
+            success=True,
+            message="로그인 성공",
+            data={"uid": result["uid"]}
+        )
     except HTTPException as e:
         print("구글 계정 오류" if e.status_code == 400 else "구글 토큰 오류")
         raise e
@@ -192,7 +198,12 @@ async def google_auth_callback(code: str):
 @router.post("/email-sign-up", tags=["Account"])
 async def email_sign_up(sign_up_data: UserEmailSignUp):
     try:
-        return await AccountService.create_email_user(sign_up_data.email, sign_up_data.password)
+        result = await AccountService.create_email_user(sign_up_data.email, sign_up_data.password)
+        return StandardResponse(
+            success=True,
+            message="회원가입 성공",
+            data={"uid": result["uid"]}
+        )
     except HTTPException as e:
         if e.status_code == 400:
             print("이미 등록된 이메일")
@@ -203,11 +214,16 @@ async def email_sign_up(sign_up_data: UserEmailSignUp):
 @router.post("/set-user-info", tags=["Account"])
 async def set_user_info(user_info: UserData):
     try:
-        return await AccountService.set_user_information(
+        result = await AccountService.set_user_information(
             user_info.uid, 
             user_info.nickname, 
             user_info.interest_genre, 
             user_info.level
+        )
+        return StandardResponse(
+            success=True,
+            message="유저 정보 입력 완료",
+            data={"uid": result["uid"]}
         )
     except HTTPException as e:
         print("등록되지 않은 사용자" if e.status_code == 400 else "유저 정보 입력 실패")
@@ -216,7 +232,12 @@ async def set_user_info(user_info: UserData):
 @router.post("/email-login", tags=["Account"])
 async def email_login(user_data: UserEmailSignUp):
     try:
-        return await AccountService.login_with_email(user_data.email, user_data.password)
+        result = await AccountService.login_with_email(user_data.email, user_data.password)
+        return StandardResponse(
+            success=True,
+            message="로그인 성공",
+            data={"uid": result["uid"]}
+        )
     except HTTPException as e:
         print("비밀번호 틀렸을 가능성 높음" if e.status_code == 400 else "로그인 실패")
         raise e
@@ -224,7 +245,12 @@ async def email_login(user_data: UserEmailSignUp):
 @router.delete("/delete-user/{uid}", tags=["Account"])
 async def delete_user(uid: str):
     try:
-        return await AccountService.delete_user_account(uid)
+        result = await AccountService.delete_user_account(uid)
+        return StandardResponse(
+            success=True,
+            message="사용자 삭제 완료",
+            data={"uid": result["uid"]}
+        )
     except HTTPException as e:
         if e.status_code == 400:
             print("등록되지 않은 사용자")
