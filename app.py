@@ -15,7 +15,8 @@ from routers.ranking_router import router as ranking_router
 app = FastAPI(
     title="MAPLE API Server",
     description="Music Analysis & Performance Learning Environment - 음악 분석 및 학습 환경을 위한 API 서버",
-    version="1.0.0"
+    version="1.0.0",
+    root_path="/api/v1"  # Add this line to tell FastAPI it's being served under /api/v1/
 )
 
 origins = [
