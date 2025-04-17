@@ -16,7 +16,10 @@ app = FastAPI(
     title="MAPLE API Server",
     description="Music Analysis & Performance Learning Environment - 음악 분석 및 학습 환경을 위한 API 서버",
     version="1.0.0",
-    root_path="/api/v1"  # Add this line to tell FastAPI it's being served under /api/v1/
+    root_path="/api/v1",  # FastAPI가 /api/v1/ 아래에서 제공됨을 알려줌
+    docs_url="/docs",     # /api/v1/docs로 접근 가능하도록 명시적 설정
+    redoc_url="/redoc",   # /api/v1/redoc으로 접근 가능하도록 명시적 설정
+    openapi_url="/openapi.json"  # /api/v1/openapi.json으로 접근 가능하도록 명시적 설정
 )
 
 origins = [
