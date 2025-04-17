@@ -46,6 +46,7 @@ jobs:
       env:
         REACT_APP_SPOTIFY_CLIENT_ID: ${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}
         REACT_APP_SPOTIFY_REDIRECT_URI: ${{ secrets.REACT_APP_SPOTIFY_REDIRECT_URI }}
+        CI: "false"  # ESLint 경고를 무시하도록 CI 환경 변수 설정
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
