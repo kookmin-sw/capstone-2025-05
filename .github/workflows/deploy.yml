@@ -12,6 +12,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.OCI_HOST }}
+          port: ${{ secrets.OCI_PORT }}
           username: ${{ secrets.OCI_USERNAME }}
           key: ${{ secrets.OCI_SSH_KEY }}
           passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
