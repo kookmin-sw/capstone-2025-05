@@ -1,0 +1,35 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - client
+      - app
+    networks:
+      - maple-network
+  client:
+    image: pjh0431/maple-client:latest
+    container_name: maple-client
+    environment:
+      - REACT_APP_API_URL=https://maple.ne.kr/api
+      - REACT_APP_SPOTIFY_CLIENT_ID=b863751844374f50969f0d4ded472666
+      - REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main
+      - PUBLIC_URL=/
+    networks:
+      - maple-network
+  app:
+    image: pjh0431/maple-api:latest
+    container_name: maple-api
+    env_file:
+      - .env
+    networks:
+      - maple-network
+networks:
+  maple-network:
+    driver: bridge

@@ -1,0 +1,49 @@
+name: Deploy to OCI Server
+on:
+  push:
+    branches:
+      - maple-deployment
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Copy files to OCI server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USERNAME }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          source: "docker-compose.yml,nginx/"
+          target: "/home/${{ secrets.OCI_USERNAME }}/deployment"
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USERNAME }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.OCI_USERNAME }}/deployment
+            echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
+            echo "TYPE=${{ secrets.TYPE }}" >> .env
+            echo "PROJECT_ID=${{ secrets.PROJECT_ID }}" >> .env
+            echo "PRIVATE_KEY_ID=${{ secrets.PRIVATE_KEY_ID }}" >> .env
+            echo "PRIVATE_KEY=${{ secrets.PRIVATE_KEY }}" >> .env
+            echo "CLIENT_EMAIL=${{ secrets.CLIENT_EMAIL }}" >> .env
+            echo "AUTH_URI=${{ secrets.AUTH_URI }}" >> .env
+            echo "TOKEN_URI=${{ secrets.TOKEN_URI }}" >> .env
+            echo "AUTH_PROVIDER_CERT_URL=${{ secrets.AUTH_PROVIDER_CERT_URL }}" >> .env
+            echo "CLIENT_CERT_URL=${{ secrets.CLIENT_CERT_URL }}" >> .env
+            echo "UNIVERSE_DOMAIN=${{ secrets.UNIVERSE_DOMAIN }}" >> .env
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            echo "GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}" >> .env
+            echo "API_KEY=${{ secrets.API_KEY }}" >> .env
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+            echo "STORAGE_BUCKET=${{ secrets.STORAGE_BUCKET }}" >> .env
+            echo "REACT_APP_API_URL=https://maple.ne.kr/api" >> .env
+            echo "REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}" >> .env
+            echo "REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main" >> .env
+            echo "PUBLIC_URL=/" >> .env
+            docker-compose pull
+            docker-compose up -d --build
