@@ -16,14 +16,12 @@ services:
       - maple-network
   client:
     image: ${DOCKER_USERNAME}/maple-client:latest
-    container_name: maple-client
     env_file:
       - .env
     networks:
       - maple-network
   api:
     image: ${DOCKER_USERNAME}/maple-api:latest
-    container_name: maple-api
     env_file:
       - .env
     networks:
@@ -32,7 +30,8 @@ services:
   # Analysis server components
   analysis_api:
     image: ${DOCKER_USERNAME}/maple-analysis-service:latest
-    container_name: analysis_api
+    env_file:
+      - analysis.env
     networks:
       - maple-network
     depends_on:
@@ -40,8 +39,9 @@ services:
   
   analysis_worker:
     image: ${DOCKER_USERNAME}/maple-analysis-service:latest
-    container_name: analysis_worker
     command: celery -A workers.tasks worker -l info
+    env_file:
+      - analysis.env
     networks:
       - maple-network
     depends_on:
@@ -49,7 +49,6 @@ services:
   
   redis:
     image: redis:7-alpine
-    container_name: maple-redis
     networks:
       - maple-network
 

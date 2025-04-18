@@ -28,6 +28,8 @@ jobs:
           passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
           script: |
             cd /home/${{ secrets.OCI_USERNAME }}/deployment
+            
+            # .env 파일 생성
             echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
             echo "TYPE=${{ secrets.TYPE }}" >> .env
             echo "PROJECT_ID=${{ secrets.PROJECT_ID }}" >> .env
@@ -49,6 +51,29 @@ jobs:
             echo "REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}" >> .env
             echo "REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main" >> .env
             echo "PUBLIC_URL=/" >> .env
-            docker-compose down
-            docker-compose pull
-            docker-compose up -d --build
+            
+            # analysis.env 파일 생성
+            echo "# Analysis Service Environment Variables" > analysis.env
+            echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> analysis.env
+            echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> analysis.env
+            echo "CELERY_BROKER_URL=${{ secrets.CELERY_BROKER_URL }}" >> analysis.env
+            echo "CELERY_RESULT_BACKEND=${{ secrets.CELERY_RESULT_BACKEND }}" >> analysis.env
+            echo "API_HOST=0.0.0.0" >> analysis.env
+            echo "API_PORT=8000" >> analysis.env
+            echo "LOG_LEVEL=info" >> analysis.env
+            echo "MODEL_DIR"="${{ secrets.MODEL_DIR }}" >> analysis.env
+            
+            # 기존 컨테이너 명시적으로 정리 (충돌 방지)
+            docker rm -f maple-client maple-api maple-redis analysis_api analysis_worker 2>/dev/null || true
+            
+            # 사용되지 않는 이미지, 볼륨, 네트워크 정리
+            docker system prune -f
+            
+            # 컨테이너 중지 및 제거
+            docker-compose down --remove-orphans
+            
+            # 최신 이미지 강제 pull (캐시 무시)
+            docker-compose pull --no-cache
+            
+            # 새 컨테이너 시작 (--force-recreate로 항상 새 컨테이너 생성)
+            docker-compose up -d --build --force-recreate
