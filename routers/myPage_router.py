@@ -391,3 +391,48 @@ async def get_recent_album_covers(uid: str):
     except Exception as e:
         print("앨범 커버 조회 실패")
         raise HTTPException(status_code=500, detail=f"앨범 커버 조회 실패: {str(e)}")
+    
+@router.post("/update_highest_score", tags=["My Page"])
+async def update_highest_score(uid: str, song_name: str):
+    try:
+        song_doc_ref = firestore_db.collection(f"{uid}_score").document(song_name)
+        collections_ref = song_doc_ref.collections()
+        highest = None
+
+        for collection in collections_ref:
+            docs = list(collection.stream())
+
+            if not docs:
+                continue
+
+            for doc in docs:
+                doc_data = doc.to_dict()
+
+                if not all(k in doc_data for k in ("tempo", "beat", "interval", "date")):
+                    continue
+
+                total = doc_data["tempo"] + doc_data["beat"] + doc_data["interval"]
+                entry = {
+                    "tempo": doc_data["tempo"],
+                    "beat": doc_data["beat"],
+                    "interval": doc_data["interval"],
+                    "date": doc_data["date"],
+                    "sum": total,
+                    "count": collection.id,
+                }
+
+                if (
+                    highest is None or
+                    entry["sum"] > highest["sum"] or
+                    (entry["sum"] == highest["sum"] and entry["date"] < highest["date"])
+                ):
+                    highest = entry
+
+        if not highest:
+            raise HTTPException(status_code=404, detail="높은 점수 없음")
+
+        song_doc_ref.update({"highest_score": highest})
+        return { "message": "최고 점수 업로드 완료" }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"최고 점수 업로드 실패: {str(e)}")
