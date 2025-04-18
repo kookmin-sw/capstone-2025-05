@@ -2,7 +2,7 @@ version: "3.9"
 services:
   api:
     build: .
-    env_file: .env
+    env_file: analysis.env
     ports: ["8000:8000"]
     volumes:
       - ./models:/srv/models
@@ -10,7 +10,7 @@ services:
   
   worker:
     build: .
-    env_file: .env
+    env_file: analysis.env
     command: celery -A workers.tasks worker -l info
     volumes:
       - ./models:/srv/models

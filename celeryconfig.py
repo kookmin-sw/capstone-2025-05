@@ -1,7 +1,9 @@
+import os
 from kombu import Exchange, Queue
 
-broker_url = "redis://redis:6379/0"
-result_backend = "redis://redis:6379/1"
+# 환경변수에서 Celery 설정 가져오기
+broker_url = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
 
 task_queues = (
     Queue('default', Exchange('default'), routing_key='default'),

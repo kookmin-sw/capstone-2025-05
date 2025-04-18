@@ -228,7 +228,7 @@ def analyze_simple(audio_bytes):
         segments.append(y[start:])
     
     # Use model for technique prediction if available
-    model_path = os.path.join(os.environ.get('MODEL_DIR', 'srv/models'), 'guitar_technique_classifier.keras')
+    model_path = os.path.join(os.environ.get('MODEL_DIR', 'models'), 'guitar_technique_classifier.keras')
     techniques = []
     
     if os.path.exists(model_path):
@@ -295,7 +295,7 @@ def compare_audio_with_reference(user_audio_bytes, reference_audio_bytes, midi_b
     ref_pitches = extract_pitch_with_crepe(ref_segments, sr)
     
     # Use model for technique prediction if available
-    model_path = os.path.join(os.environ.get('MODEL_DIR', 'srv/models'), 'guitar_technique_classifier.keras')
+    model_path = os.path.join(os.environ.get('MODEL_DIR', 'models'), 'guitar_technique_classifier.keras')
     user_techniques = []
     ref_techniques = []
     
