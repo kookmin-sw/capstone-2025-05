@@ -39,7 +39,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      # buildx 인스턴스를 생성하는 대신 기본 설정으로 진행
+      # Docker 데몬 소켓에 대한 권한 확인
+      - name: Check Docker permissions
+        run: |
+          sudo chmod 666 /var/run/docker.sock || true
+          ls -la /var/run/docker.sock
+      
+      # buildx 설정
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
