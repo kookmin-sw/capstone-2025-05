@@ -33,8 +33,6 @@ services:
   analysis_api:
     image: ${DOCKER_USERNAME}/analysis-service:latest
     container_name: analysis_api
-    env_file:
-      - analysis.env
     networks:
       - maple-network
     depends_on:
