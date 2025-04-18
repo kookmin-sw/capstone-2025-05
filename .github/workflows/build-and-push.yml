@@ -46,7 +46,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ github.token }}
       
       - name: Build and push
@@ -55,6 +55,6 @@ jobs:
           context: .
           push: true
           platforms: linux/arm64
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: ghcr.io/org/analysis-service:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
