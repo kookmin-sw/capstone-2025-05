@@ -5,6 +5,10 @@ from typing import List
 from io import BytesIO
 from manager.firebase_manager import firestore_db, storage_bucket
 import uuid
+import datetime
+from datetime import timedelta
+
+
 
 router = APIRouter()
 
@@ -330,3 +334,41 @@ async def get_my_rank(uid: str, song_name: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"랭킹 정보 조회 실패: {str(e)}")
+    
+@router.get("/recent-4-record", tags=["My Page"])
+async def get_recent_album_covers(uid: str):
+    try:
+        user_collection = firestore_db.collection(f"{uid}_score")
+        all_docs = user_collection.stream()
+
+        uploads = []
+        for doc in all_docs:
+            song_name = doc.id
+            count_subcol = user_collection.document(song_name).collections()
+            for subcol in count_subcol:
+                for doc2 in subcol.stream():
+                    if doc2.id == "score":
+                        data = doc2.to_dict()
+                        date = extract_date(data.get("date"))
+                        uploads.append({
+                            "song_name": song_name,
+                            "date": date
+                        })
+
+        sorted_uploads = sorted(uploads, key=lambda x: x["date"], reverse=True)[:4]
+
+        album_covers = []
+        for upload in sorted_uploads:
+            song_name = upload["song_name"]
+            blob = storage.bucket().blob(f"album_covers/{song_name}.jpg")
+            url = blob.generate_signed_url(datetime.timedelta(minutes=60)) if blob.exists() else None
+            album_covers.append({
+                "song_name": song_name,
+                "cover_url": url
+            })
+
+        return {"recent_uploads": album_covers}
+
+    except Exception as e:
+        print("앨범 커버 조회 실패")
+        raise HTTPException(status_code=500, detail=f"앨범 커버 조회 실패: {str(e)}")
