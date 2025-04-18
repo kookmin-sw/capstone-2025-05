@@ -10,23 +10,53 @@ services:
       - ./certs:/etc/nginx/certs
     depends_on:
       - client
-      - app
+      - api
+      - analysis_api
     networks:
       - maple-network
   client:
-    image: pjh0431/maple-client:latest
+    image: ${DOCKER_USERNAME}/maple-client:latest
     container_name: maple-client
     env_file:
       - .env
     networks:
       - maple-network
-  app:
-    image: pjh0431/maple-api:latest
+  api:
+    image: ${DOCKER_USERNAME}/maple-api:latest
     container_name: maple-api
     env_file:
       - .env
     networks:
       - maple-network
+  
+  # Analysis server components
+  analysis_api:
+    image: ${DOCKER_USERNAME}/analysis-service:latest
+    container_name: analysis_api
+    env_file:
+      - analysis.env
+    networks:
+      - maple-network
+    depends_on:
+      - redis
+  
+  analysis_worker:
+    image: ${DOCKER_USERNAME}/analysis-service:latest
+    container_name: analysis_worker
+    command: celery -A workers.tasks worker -l info
+    env_file:
+      - analysis.env
+    networks:
+      - maple-network
+    depends_on:
+      - redis
+  
+  redis:
+    image: redis:7-alpine
+    container_name: maple-redis
+    networks:
+      - maple-network
+
 networks:
   maple-network:
     driver: bridge
