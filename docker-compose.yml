@@ -5,7 +5,7 @@ services:
     env_file: .env
     ports: ["8000:8000"]
     volumes:
-      - ./models:/models
+      - ./models:/srv/models
     depends_on: [redis]
   
   worker:
@@ -13,7 +13,7 @@ services:
     env_file: .env
     command: celery -A workers.tasks worker -l info
     volumes:
-      - ./models:/models
+      - ./models:/srv/models
     depends_on: [redis]
 
   redis:

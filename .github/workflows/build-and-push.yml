@@ -10,7 +10,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,12 +31,17 @@ jobs:
   docker:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       packages: write
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # ARM 아키텍처 지원을 위한 QEMU 설정 추가
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -51,6 +57,8 @@ jobs:
         with:
           context: .
           push: true
+          # ARM 아키텍처 지원 추가
+          platforms: linux/arm64
           tags: ${{ secrets.DOCKER_USERNAME }}/anaysis-service:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
