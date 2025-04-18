@@ -31,17 +31,21 @@ services:
   
   # Analysis server components
   analysis_api:
-    image: ${DOCKER_USERNAME}/analysis-service:latest
+    image: ${DOCKER_USERNAME}/maple-analysis-service:latest
     container_name: analysis_api
+    env_file:
+      - analysis.env
     networks:
       - maple-network
     depends_on:
       - redis
   
   analysis_worker:
-    image: ${DOCKER_USERNAME}/analysis-service:latest
+    image: ${DOCKER_USERNAME}/maple-analysis-service:latest
     container_name: analysis_worker
     command: celery -A workers.tasks worker -l info
+    env_file:
+      - analysis.env
     networks:
       - maple-network
     depends_on:
