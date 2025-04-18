@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Button from '../../Components/Button/Button';
 import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { usePostWriteMutation } from '../../Hooks/post/usePostWriteMutation';
@@ -8,7 +7,7 @@ export default function WritePage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [author, setAuthor] = useState('');
-  const { mutate } = usePostWriteMutation();
+  const { mutate: writePost } = usePostWriteMutation();
 
   // 오늘 날짜 format
   const formatDate = (date) => {
@@ -25,7 +24,24 @@ export default function WritePage() {
       view: 0,
       content,
     };
-    mutate(
+    if (!title) {
+      alert('제목을 입력해주세요');
+      return;
+    }
+    if (!content) {
+      alert('내용을 입력해주세요');
+      return;
+    }
+    if (!author) {
+      alert('작성자를 입력해주세요');
+      return;
+    }
+    if (content.length < 10) {
+      alert('내용을 10자 이상 입력해주세요');
+      return;
+    }
+
+    writePost(
       { post },
       {
         onSuccess: () => {
@@ -41,7 +57,7 @@ export default function WritePage() {
   return (
     <>
       <MapleHeader />
-      <form
+      {/* <form
         className=" flex flex-col items-center h-[80%] w-full"
         onSubmit={handleSubmit}
       >
@@ -53,6 +69,7 @@ export default function WritePage() {
           <input
             className="w-[55svw] h-[5svh] rounded-[10px] border-[2px] border-[#A57865]"
             value={title}
+            placeholder=" 제목을 입력해주세요"
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
@@ -61,6 +78,7 @@ export default function WritePage() {
           <textarea
             className="w-[55svw] h-[50svh]  rounded-[10px] border-[2px] border-[#A57865]"
             value={content}
+            placeholder=" 10자 이상 입력해주세요"
             onChange={(e) => setContent(e.target.value)}
           ></textarea>
         </div>
@@ -69,6 +87,7 @@ export default function WritePage() {
           <input
             className="w-[55svw] h-[5svh] rounded-[10px] border-[2px] border-[#A57865]"
             value={author}
+            placeholder=" 작성자를 입력해주세요"
             onChange={(e) => setAuthor(e.target.value)}
           />
         </div>
@@ -82,7 +101,65 @@ export default function WritePage() {
             </Button>
           </button>
         </div>
-      </form>
+      </form> */}
+      <div className="min-h-screen bg-[F0EFE6] flex justify-center items-center px-4 py-12">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white w-full max-w-2xl rounded-2xl shadow-lg p-10 space-y-6 transition-all duration-300"
+        >
+          <h1 className="text-3xl font-bold text-center text-[#5f4532] tracking-wide">
+            게시판 글쓰기
+          </h1>
+
+          {/* 제목 */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-[#5f4532]">
+              제목
+            </label>
+            <input
+              className="w-full px-4 py-3 border border-[#A57865] rounded-xl shadow-sm focus:ring-2 focus:ring-[#a57865] focus:outline-none bg-[#fdfaf6] placeholder:text-[#b28c74]"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="제목을 입력해주세요"
+            />
+          </div>
+
+          {/* 내용 */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-[#5f4532]">
+              내용
+            </label>
+            <textarea
+              className="w-full h-48 px-4 py-3 border border-[#A57865] rounded-xl shadow-sm resize-none focus:ring-2 focus:ring-[#a57865] focus:outline-none bg-[#fdfaf6] placeholder:text-[#b28c74]"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="10자 이상 입력해주세요"
+            />
+          </div>
+
+          {/* 작성자 */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-[#5f4532]">
+              작성자
+            </label>
+            <input
+              className="w-full px-4 py-3 border border-[#A57865] rounded-xl shadow-sm focus:ring-2 focus:ring-[#a57865] focus:outline-none bg-[#fdfaf6] placeholder:text-[#b28c74]"
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              placeholder="작성자를 입력해주세요"
+            />
+          </div>
+
+          {/* 버튼 */}
+          <button
+            type="submit"
+            className="w-full py-3 bg-gradient-to-r from-[#A57865] to-[#d5b6a2] text-white font-semibold rounded-full shadow-md hover:scale-105 transition-transform duration-300"
+          >
+            등록하기
+          </button>
+        </form>
+      </div>
+
       <MapleFooter />
     </>
   );

@@ -131,6 +131,7 @@ export default function NoticeDetail() {
   };
 
   const handlePostComment = () => {
+    setIsPostComment(false);
     const commentData = {
       uid: '랜덤',
       작성일시: new Date().toISOString(), // 현재 시간
