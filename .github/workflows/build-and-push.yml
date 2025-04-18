@@ -39,11 +39,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      # Docker 데몬 소켓에 대한 권한 확인
-      - name: Check Docker permissions
+      # Docker 소켓 권한 변경 (루트 권한 필요)
+      - name: Fix Docker socket permissions
         run: |
-          sudo chmod 666 /var/run/docker.sock || true
-          ls -la /var/run/docker.sock
+          if [ -S /var/run/docker.sock ]; then
+            sudo chown $(id -u):$(id -g) /var/run/docker.sock
+            ls -la /var/run/docker.sock
+          else
+            echo "Docker socket not found at /var/run/docker.sock"
+            exit 1
+          fi
       
       # buildx 설정
       - name: Set up Docker Buildx
