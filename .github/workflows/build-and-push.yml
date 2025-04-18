@@ -38,14 +38,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          buildkitd-flags: --allow-insecure-entitlement network.host
-          endpoint: safe-builder
-          driver: docker-container
-          install: true
+
+      - name: Use pre-created builder
+        run: docker buildx use safe-builder
       
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
