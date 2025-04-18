@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+.env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Audio files (only ignore large datasets, keep test files)
+*.wav
+*.mp3
+*.ogg
+*.flac
+# Keep test audio files
+!test/**/*.wav
+!test/**/*.mp3
+!test/**/*.ogg
+!test/**/*.flac
+
+# Model files (can be large)
+models/*.h5
+models/*.pb
+# Keep example models for basic testing
+!models/guitar_technique_classifier.keras
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Logging
+logs/
+*.log
+
+# Redis
+dump.rdb
+
+# Testing
+.coverage
+coverage.xml
+htmlcov/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Docker
+.dockerignore
+
+# MIDI files (keep test files)
+*.mid
+*.midi
+!test/**/*.mid
+!test/**/*.midi
