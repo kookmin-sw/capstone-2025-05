@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Body
 from fastapi.responses import StreamingResponse
 from firebase_admin import auth, db, storage
 from typing import List
@@ -8,9 +8,28 @@ import uuid
 import datetime
 from datetime import timedelta
 
-
-
 router = APIRouter()
+
+@router.get("/get-user-info", tags=["My Page"])
+async def get_user_info(uid: str):
+    try:
+        auth.get_user(uid)
+
+        user_ref = db.reference(f"/users/{uid}")
+        user_data = user_ref.get()
+
+        if not user_data:
+            print("사용자 정보 존재 X")
+            raise HTTPException(status_code=404, detail="해당 사용자 정보가 존재하지 않습니다.")
+
+        return {"user information": user_data}
+
+    except auth.UserNotFoundError:
+        print("등록되지 않은 사용자")
+        raise HTTPException(status_code=404, detail="등록되지 않은 사용자입니다.")
+    except Exception as e:
+        print("사용자 정보 조회 실패")
+        raise HTTPException(status_code=500, detail=f"사용자 정보 조회 실패: {str(e)}")
 
 @router.put("/edit-user/nickname", tags=["My Page"])
 async def edit_nickname(uid: str, nickname: str):
