@@ -42,8 +42,6 @@ services:
     image: ${DOCKER_USERNAME}/analysis-service:latest
     container_name: analysis_worker
     command: celery -A workers.tasks worker -l info
-    env_file:
-      - analysis.env
     networks:
       - maple-network
     depends_on:
