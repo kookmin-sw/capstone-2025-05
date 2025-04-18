@@ -32,20 +32,19 @@ jobs:
     needs: test
     runs-on: self-hosted
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    permissions:
-      packages: write
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      # sudo 권한 없이 간단히 Docker 명령으로 직접 빌드하는 방식으로 변경
-      - name: Login to GitHub Container Registry
+      # 직접 docker 명령을 사용하여 이미지 생성 및 푸시
+      - name: Build and push image
         run: |
-          echo ${{ github.token }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-      
-      # Docker 직접 빌드 및 푸시
-      - name: Build and push Docker image
-        run: |
+          # GitHub Container Registry에 로그인
+          echo ${{ github.token }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # 이미지 빌드
           docker build -t ghcr.io/org/analysis-service:latest .
+          
+          # 이미지 푸시
           docker push ghcr.io/org/analysis-service:latest
