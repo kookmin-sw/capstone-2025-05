@@ -40,6 +40,7 @@ class AnalysisRequest(BaseModel):
     song_id: Optional[str] = None
     reference_file_id: Optional[str] = None
     midi_file_id: Optional[str] = None
+    generate_feedback: bool = False  # GROK 피드백 생성 옵션 추가
 
 
 class AudioFeatures(BaseModel):

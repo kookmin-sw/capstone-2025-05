@@ -7,12 +7,16 @@ from datetime import datetime
 API_URL = "https://analysis.maple.ne.kr"
 
 # 1. 분석 API 요청
-def test_analyze():
+def test_analyze(generate_feedback=True):
     print("오디오 분석 테스트 시작...")
     
     with open("/home/lovel/develop/maple-audio-analyzer/test/ref/homecoming.wav", "rb") as f:
         files = {"file": f}
-        params = {"user_id": "test-user", "song_id": "test-song"}
+        params = {
+            "user_id": "test-user", 
+            "song_id": "test-song",
+            "generate_feedback": str(generate_feedback).lower()  # GROK 피드백 생성 옵션 추가
+        }
         
         response = requests.post(f"{API_URL}/api/v1/analyze", files=files, params=params)
         print(f"응답 상태 코드: {response.status_code}")
@@ -20,13 +24,14 @@ def test_analyze():
         if response.status_code == 200:
             result = response.json()
             print(f"작업 ID: {result.get('task_id')}")
+            print(f"GROK 피드백 생성 옵션: {'활성화' if generate_feedback else '비활성화'}")
             return result.get('task_id')
         else:
             print(f"오류: {response.text}")
             return None
 
 # 2. 비교 API 요청
-def test_compare():
+def test_compare(generate_feedback=True):
     print("\n오디오 비교 테스트 시작...")
     
     with open("/home/lovel/develop/maple-audio-analyzer/test/error/homecoming-error-1.wav", "rb") as user_file, \
@@ -38,7 +43,11 @@ def test_compare():
             "reference_file": ref_file,
             "midi_file": midi_file
         }
-        params = {"user_id": "test-user", "song_id": "test-song"}
+        params = {
+            "user_id": "test-user", 
+            "song_id": "test-song",
+            "generate_feedback": str(generate_feedback).lower()  # GROK 피드백 생성 옵션 추가
+        }
         
         response = requests.post(f"{API_URL}/api/v1/compare", files=files, params=params)
         print(f"응답 상태 코드: {response.status_code}")
@@ -46,6 +55,7 @@ def test_compare():
         if response.status_code == 200:
             result = response.json()
             print(f"작업 ID: {result.get('task_id')}")
+            print(f"GROK 피드백 생성 옵션: {'활성화' if generate_feedback else '비활성화'}")
             return result.get('task_id')
         else:
             print(f"오류: {response.text}")
@@ -113,12 +123,29 @@ def check_task_status(task_id, max_attempts=30, wait_time=3):
                             summary = {k: v for k, v in status.get('result', {}).items() 
                                       if k in ['tempo', 'number_of_notes', 'duration']}
                             print(json.dumps(summary, indent=2))
+                        
+                        # GROK 피드백 확인 (추가된 부분)
+                        if 'feedback' in status.get('result', {}):
+                            print("\n----- GROK 피드백 -----")
+                            print(status['result']['feedback'])
+                            print("-----------------------")
+                        elif 'feedback_error' in status.get('result', {}):
+                            print("\n----- GROK 피드백 오류 -----")
+                            print(status['result']['feedback_error'])
+                            print("---------------------------")
                             
                         # 전체 결과를 파일로 저장
                         filename = f"result_{task_id[:8]}.json"
                         with open(filename, 'w') as f:
                             json.dump(status.get('result'), f, indent=2)
                         print(f"\n전체 결과가 {filename}에 저장되었습니다.")
+                        
+                        # 피드백만 따로 텍스트 파일로 저장 (추가된 부분)
+                        if 'feedback' in status.get('result', {}):
+                            feedback_filename = f"feedback_{task_id[:8]}.txt"
+                            with open(feedback_filename, 'w') as f:
+                                f.write(status['result']['feedback'])
+                            print(f"GROK 피드백이 {feedback_filename}에 저장되었습니다.")
                         
                     elif status.get('error'):
                         print(f"\n오류: {status.get('error')}")
@@ -138,9 +165,12 @@ def check_task_status(task_id, max_attempts=30, wait_time=3):
     return None
 
 # 메인 테스트 실행
-def run_tests():
+def run_tests(generate_feedback=True):
+    # 실행 옵션 출력
+    print(f"테스트 실행 - GROK 피드백 생성: {'활성화' if generate_feedback else '비활성화'}")
+    
     # 분석 테스트
-    task_id = test_analyze()
+    task_id = test_analyze(generate_feedback)
     if task_id:
         analysis_result = check_task_status(task_id)
         
@@ -159,7 +189,7 @@ def run_tests():
     time.sleep(2)
     
     # 비교 테스트
-    task_id = test_compare()
+    task_id = test_compare(generate_feedback)
     if task_id:
         compare_result = check_task_status(task_id)
         
@@ -175,4 +205,5 @@ def run_tests():
             print("compare.json 파일이 생성되었습니다.")
 
 if __name__ == "__main__":
-    run_tests()
+    # GROK 피드백 생성 옵션을 True로 설정하여 테스트 실행
+    run_tests(generate_feedback=True)

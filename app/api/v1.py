@@ -17,11 +17,19 @@ async def analyze(
     file: UploadFile = File(...),
     analysis_type: AnalysisType = AnalysisType.SIMPLE,
     user_id: Optional[str] = None,
-    song_id: Optional[str] = None
+    song_id: Optional[str] = None,
+    generate_feedback: bool = False
 ):
     """
     Submit an audio file for analysis.
     Returns a task ID that can be used to track progress and retrieve results.
+    
+    Parameters:
+    - file: Audio file to analyze (WAV or MP3)
+    - analysis_type: Type of analysis to perform
+    - user_id: Optional user identifier
+    - song_id: Optional song identifier
+    - generate_feedback: Whether to generate textual feedback using GROK API
     """
     if not file.filename.lower().endswith(('.wav', '.mp3')):
         raise HTTPException(
@@ -35,7 +43,8 @@ async def analyze(
     request = AnalysisRequest(
         analysis_type=analysis_type,
         user_id=user_id,
-        song_id=song_id
+        song_id=song_id,
+        generate_feedback=generate_feedback  # 피드백 생성 옵션 추가
     )
     
     # Submit to Celery task queue
@@ -51,11 +60,20 @@ async def compare(
     reference_file: Optional[UploadFile] = File(None),
     midi_file: Optional[UploadFile] = File(None),
     user_id: Optional[str] = None,
-    song_id: Optional[str] = None
+    song_id: Optional[str] = None,
+    generate_feedback: bool = False
 ):
     """
     Compare a user's performance with a reference audio file and/or a MIDI file.
     Returns a task ID that can be used to track progress and retrieve results.
+    
+    Parameters:
+    - user_file: User's audio file to analyze (WAV or MP3)
+    - reference_file: Reference audio file for comparison (WAV or MP3)
+    - midi_file: MIDI file for score reference
+    - user_id: Optional user identifier
+    - song_id: Optional song identifier
+    - generate_feedback: Whether to generate textual feedback using GROK API
     """
     if not user_file.filename.lower().endswith(('.wav', '.mp3')):
         raise HTTPException(
@@ -89,7 +107,8 @@ async def compare(
         reference_contents, 
         midi_contents,
         user_id,
-        song_id
+        song_id,
+        generate_feedback  # 피드백 생성 옵션 추가
     )
     
     return {"task_id": task.id}
