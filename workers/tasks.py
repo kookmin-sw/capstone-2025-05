@@ -1,8 +1,15 @@
 import os
 import tempfile
+import scipy.signal  # SciPy 패치를 위해 추가
 from celery import Celery
 from celery.utils.log import get_task_logger
 import json
+
+# SciPy 호환성 패치 적용
+# 최신 버전의 SciPy에서는 scipy.signal.hann이 scipy.signal.windows.hann으로 이동했습니다
+if not hasattr(scipy.signal, 'hann') and hasattr(scipy.signal, 'windows') and hasattr(scipy.signal.windows, 'hann'):
+    print("패치 적용 (tasks): scipy.signal.hann -> scipy.signal.windows.hann")
+    scipy.signal.hann = scipy.signal.windows.hann
 
 from workers.dsp import analyze_simple, compare_audio_with_reference
 

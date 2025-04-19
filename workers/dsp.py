@@ -9,6 +9,11 @@ from keras.models import load_model  # 독립 Keras 패키지 사용
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 import crepe
+import scipy.signal
+
+# SciPy 호환성 패치: 최신 버전에서는 scipy.signal.hann이 windows 모듈로 이동함
+if not hasattr(scipy.signal, 'hann') and hasattr(scipy.signal, 'windows') and hasattr(scipy.signal.windows, 'hann'):
+    scipy.signal.hann = scipy.signal.windows.hann
 
 
 def load_audio_from_bytes(audio_bytes):

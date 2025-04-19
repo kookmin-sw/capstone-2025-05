@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class TaskStatus(str, Enum):
     PENDING = "PENDING"
     STARTED = "STARTED"
+    PROCESSING = "PROCESSING"  # 추가된 상태
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
     REVOKED = "REVOKED"
