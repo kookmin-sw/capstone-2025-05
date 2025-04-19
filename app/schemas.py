@@ -8,6 +8,7 @@ class TaskStatus(str, Enum):
     PENDING = "PENDING"
     STARTED = "STARTED"
     PROCESSING = "PROCESSING"  # 추가된 상태
+    FINALIZING = "FINALIZING"  # 새로 추가된 상태 (결과 마무리 단계)
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
     REVOKED = "REVOKED"

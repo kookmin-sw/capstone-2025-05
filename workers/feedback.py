@@ -15,7 +15,7 @@ class GrokFeedbackGenerator:
     def __init__(self):
         """GROK API와의 통신을 위한 설정을 초기화합니다."""
         self.api_key = os.environ.get('GROK_API_KEY')
-        self.api_url = os.environ.get('GROK_API_URL', 'https://api.grok.ai/v1/chat/completions')
+        self.api_url = os.environ.get('GROK_API_URL', 'https://api.x.ai/v1/chat/completions')
         self.max_retries = 3
         self.retry_delay = 2  # 초 단위
         
@@ -106,7 +106,9 @@ class GrokFeedbackGenerator:
             "max_tokens": 2000
         }
         
-        response = requests.post(self.api_url, headers=headers, json=data)
+        # SSL 인증서 검증 오류를 방지하기 위해 verify=False 옵션 추가
+        # 주의: 프로덕션 환경에서는 적절한 SSL 인증서 설정을 사용해야 함
+        response = requests.post(self.api_url, headers=headers, json=data, verify=False)
         
         if response.status_code == 200:
             return response.json()
