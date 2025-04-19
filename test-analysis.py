@@ -1,6 +1,7 @@
 import requests
 import time
 import json
+from datetime import datetime
 
 # 서버 URL
 API_URL = "https://analysis.maple.ne.kr"
@@ -50,14 +51,14 @@ def test_compare():
             print(f"오류: {response.text}")
             return None
 
-# 3. 작업 상태 확인
+# 3. 작업 상태 확인 (개선된 버전)
 def check_task_status(task_id, max_attempts=30, wait_time=3):
     """
     작업 상태를 확인하고 결과를 기다립니다.
     
     Args:
         task_id: 확인할 작업 ID
-        max_attempts: 최대 시도 횟수 (기본값: 30회 - 최대 2분 30초)
+        max_attempts: 최대 시도 횟수 (기본값: 30회 - 최대 90초)
         wait_time: 각 시도 사이의 대기 시간(초) (기본값: 3초)
     """
     print(f"\n작업 상태 확인 중... (ID: {task_id})")
@@ -65,21 +66,38 @@ def check_task_status(task_id, max_attempts=30, wait_time=3):
     
     last_status = None
     last_progress = None
+    idle_count = 0  # 상태 변경이 없는 시도 횟수를 추적
+    last_update_time = time.time()
     
     for i in range(max_attempts):
         try:
             response = requests.get(f"{API_URL}/api/v1/tasks/{task_id}")
+            current_time = time.time()
+            time_diff = current_time - last_update_time
             
             if response.status_code == 200:
                 status = response.json()
                 current_status = status.get('status')
                 current_progress = status.get('progress', 0)
                 
-                # 상태나 진행률이 변경된 경우에만 출력
+                # 항상 현재 시도 횟수 출력
+                print(f"시도 {i+1}/{max_attempts} - 상태: {current_status}, 진행률: {current_progress}%", end="")
+                
+                # 상태나 진행률이 변경된 경우
                 if current_status != last_status or current_progress != last_progress:
-                    print(f"시도 {i+1}/{max_attempts} - 상태: {current_status}, 진행률: {current_progress}%")
+                    print(f" - 업데이트됨", flush=True)
                     last_status = current_status
                     last_progress = current_progress
+                    idle_count = 0  # 변경이 감지되었으므로 idle_count 초기화
+                    last_update_time = current_time
+                else:
+                    idle_count += 1
+                    # 일정 시간(15초) 이상 변화가 없으면 작업이 계속 진행 중임을 표시
+                    if time_diff > 15:
+                        print(f" - 작업 진행 중 ({time_diff:.1f}초 동안 상태 변화 없음)", flush=True)
+                        last_update_time = current_time
+                    else:
+                        print("", flush=True)  # 줄바꿈만 처리
                 
                 if current_status in ['SUCCESS', 'FAILURE']:
                     if status.get('result'):

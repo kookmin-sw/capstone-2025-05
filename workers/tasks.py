@@ -19,6 +19,8 @@ from workers.dsp import (
     extract_tempo, extract_onsets, extract_pitch_with_crepe,
     predict_techniques, align_audio_with_dtw, segment_audio_with_midi_notes
 )
+# 피드백 생성기 추가
+from workers.feedback import GrokFeedbackGenerator
 
 # Initialize Celery app
 celery_app = Celery('maple_audio_analyzer')
@@ -49,6 +51,7 @@ def analyze_audio(self, audio_bytes, request_dict=None):
         analysis_type = request_dict.get('analysis_type', 'simple')
         user_id = request_dict.get('user_id')
         song_id = request_dict.get('song_id')
+        generate_feedback = request_dict.get('generate_feedback', False)
         
         # 오디오 로드 (10%)
         self.update_state(state='PROCESSING', meta={'progress': 10})
@@ -99,6 +102,27 @@ def analyze_audio(self, audio_bytes, request_dict=None):
             'analysis_type': analysis_type,
             'task_id': self.request.id
         }
+
+        # 피드백 생성 옵션이 활성화된 경우
+        if generate_feedback:
+            self.update_state(state='FINALIZING', meta={'progress': 95})
+            logger.info(f"Generating feedback for analysis task {self.request.id}")
+            
+            try:
+                # GROK API를 사용하여 피드백 생성
+                feedback_generator = GrokFeedbackGenerator()
+                feedback_result = feedback_generator.generate_feedback(result, is_comparison=False)
+                
+                # 피드백이 성공적으로 생성된 경우 결과에 추가
+                if 'feedback' in feedback_result:
+                    result['feedback'] = feedback_result['feedback']
+                    result['feedback_metadata'] = feedback_result.get('metadata', {})
+                # 오류가 발생한 경우 오류 메시지 추가
+                elif 'error' in feedback_result:
+                    result['feedback_error'] = feedback_result['error']
+            except Exception as e:
+                logger.exception(f"Error generating feedback: {str(e)}")
+                result['feedback_error'] = f"피드백 생성 중 오류 발생: {str(e)}"
         
         logger.info(f"Audio analysis task {self.request.id} completed successfully")
         return result
@@ -109,7 +133,7 @@ def analyze_audio(self, audio_bytes, request_dict=None):
 
 
 @celery_app.task(bind=True, name='workers.tasks.compare_audio')
-def compare_audio(self, user_audio_bytes, reference_audio_bytes=None, midi_bytes=None, user_id=None, song_id=None):
+def compare_audio(self, user_audio_bytes, reference_audio_bytes=None, midi_bytes=None, user_id=None, song_id=None, generate_feedback=False):
     """
     Celery task to compare user audio with reference audio and/or MIDI.
     
@@ -119,6 +143,7 @@ def compare_audio(self, user_audio_bytes, reference_audio_bytes=None, midi_bytes
     - midi_bytes: Binary content of the MIDI file (optional)
     - user_id: ID of the user who uploaded the audio (optional)
     - song_id: ID of the song being analyzed (optional)
+    - generate_feedback: Whether to generate textual feedback using GROK API
     
     Returns:
     - Dictionary with comparison results
@@ -347,6 +372,30 @@ def compare_audio(self, user_audio_bytes, reference_audio_bytes=None, midi_bytes
             'has_reference': reference_audio_bytes is not None,
             'has_midi': midi_bytes is not None
         }
+        
+        # 피드백 생성 옵션이 활성화된 경우
+        if generate_feedback:
+            self.update_state(state='FINALIZING', meta={'progress': 97})
+            logger.info(f"Generating feedback for comparison task {self.request.id}")
+            
+            try:
+                # GROK API를 사용하여 피드백 생성
+                feedback_generator = GrokFeedbackGenerator()
+                feedback_result = feedback_generator.generate_feedback(
+                    result, 
+                    is_comparison=(reference_audio_bytes is not None)
+                )
+                
+                # 피드백이 성공적으로 생성된 경우 결과에 추가
+                if 'feedback' in feedback_result:
+                    result['feedback'] = feedback_result['feedback']
+                    result['feedback_metadata'] = feedback_result.get('metadata', {})
+                # 오류가 발생한 경우 오류 메시지 추가
+                elif 'error' in feedback_result:
+                    result['feedback_error'] = feedback_result['error']
+            except Exception as e:
+                logger.exception(f"Error generating feedback: {str(e)}")
+                result['feedback_error'] = f"피드백 생성 중 오류 발생: {str(e)}"
         
         # 100% 진행
         self.update_state(state='FINALIZING', meta={'progress': 99})
