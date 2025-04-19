@@ -1,5 +1,6 @@
 import os
 import tempfile
+import numpy as np
 import scipy.signal  # SciPy 패치를 위해 추가
 from celery import Celery
 from celery.utils.log import get_task_logger

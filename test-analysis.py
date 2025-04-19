@@ -51,14 +51,14 @@ def test_compare():
             return None
 
 # 3. 작업 상태 확인
-def check_task_status(task_id, max_attempts=30, wait_time=5):
+def check_task_status(task_id, max_attempts=30, wait_time=3):
     """
     작업 상태를 확인하고 결과를 기다립니다.
     
     Args:
         task_id: 확인할 작업 ID
         max_attempts: 최대 시도 횟수 (기본값: 30회 - 최대 2분 30초)
-        wait_time: 각 시도 사이의 대기 시간(초) (기본값: 5초)
+        wait_time: 각 시도 사이의 대기 시간(초) (기본값: 3초)
     """
     print(f"\n작업 상태 확인 중... (ID: {task_id})")
     print(f"최대 {max_attempts}회 시도, 각 시도 사이 {wait_time}초 대기 (최대 {max_attempts * wait_time}초)")
