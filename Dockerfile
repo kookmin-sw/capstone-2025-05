@@ -32,5 +32,5 @@ COPY . .
 RUN mkdir -p /srv/models
 RUN if [ -f "guitar_technique_classifier.keras" ]; then cp guitar_technique_classifier.keras /srv/models/; fi
 
-# FastAPI 실행
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# FastAPI 실행 - 파일 크기 제한 증가 (100MB로 설정)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--limit-concurrency", "100", "--limit-request-line", "0", "--limit-request-field-size", "0", "--no-server-header"]
