@@ -62,6 +62,8 @@ jobs:
             echo "API_PORT=8000" >> analysis.env
             echo "LOG_LEVEL=info" >> analysis.env
             echo "MODEL_DIR"="${{ secrets.MODEL_DIR }}" >> analysis.env
+            echo "GROK_API_KEY=${{ secrets.GROK_API_KEY }}" >> analysis.env
+            echo "GROK_API_URL=${{ secrets.GROK_API_URL }}" >> analysis.env
             
             # 기존 컨테이너 명시적으로 정리 (충돌 방지)
             docker rm -f maple-client maple-api maple-redis analysis_api analysis_worker 2>/dev/null || true
