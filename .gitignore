@@ -81,3 +81,13 @@ celerybeat.pid
 *.midi
 !test/**/*.mid
 !test/**/*.midi
+
+# JSON files
+*.json
+# Keep test JSON files
+!test/**/*.json
+
+# Text files
+*.txt
+# Keep test text files
+!test/**/*.txt

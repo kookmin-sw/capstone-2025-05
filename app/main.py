@@ -18,6 +18,9 @@ app = FastAPI(
     title="MAPLE Audio Analysis API",
     description="API for analyzing and comparing audio performances",
     version="0.1.0",
+    docs_url="/api/v1/docs", 
+    redoc_url="/api/v1/redoc",
+    openapi_url="/api/v1/openapi.json"
 )
 
 # Add CORS middleware
@@ -40,7 +43,7 @@ async def root():
         "name": "MAPLE Audio Analysis API",
         "version": "0.1.0",
         "status": "online",
-        "docs_url": "/docs",
+        "docs_url": "/api/v1/docs",  # Updated to match the correct docs URL
     }
 
 

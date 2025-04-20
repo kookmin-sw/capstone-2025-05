@@ -96,22 +96,49 @@ class GrokFeedbackGenerator:
             "Authorization": f"Bearer {self.api_key}"
         }
         
+        # 프롬프트를 다시 구성하여 서론 생략을 더 강력하게 요청
+        # 이전 지시사항을 제거하고 직접적인 지시로 대체
+        base_prompt = """
+**주의: 아래 분석 결과를 바탕으로 바로 피드백을 작성하되, 다음 규칙을 반드시 준수하세요**
+1. 인사말, 소개, 자기소개와 같은 서론은 절대 포함하지 마세요.
+2. "학생님의 기타 연주 분석..." 같은 도입부 문장도 사용하지 마세요.
+3. 첫 문장은 바로 연주의 강점부터 시작하세요.
+4. 섹션 표시(###)는 사용하지 마세요.
+
+아래 분석 데이터를 바탕으로 피드백 작성:
+"""
+        
+        # 기존 프롬프트에서 지시사항 부분 제거하고 새 형식으로 교체
+        if "===중요 지시사항===" in prompt:
+            prompt = prompt.split("===중요 지시사항===")[0]
+        
+        # 최종 프롬프트 구성
+        final_prompt = base_prompt + prompt
+        
         data = {
-            "model": "grok-3-mini-fast",
+            "model": "grok-3",
             "messages": [
-                {"role": "system", "content": "당신은 전문적인 음악 교육자입니다. 학생들에게 친절하고 유용한 음악 연주 피드백을 제공합니다."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": "당신은 전문적인 음악 교육자입니다. 학생들에게 간결하고 핵심적인 음악 연주 피드백을 제공합니다. 절대로 소개나 서론을 포함하지 마세요. 바로 핵심 피드백부터 시작하세요."},
+                {"role": "user", "content": final_prompt}
             ],
-            "temperature": 0.7,
+            "temperature": 0.5,  # 0~1 사이 값: 낮을수록 일관된 응답, 높을수록 다양하고 창의적인 응답 생성
             "max_tokens": 2000
         }
+        
+        # 디버깅을 위한 로그 추가
+        logger.info(f"Sending request to GROK API with system message: {data['messages'][0]['content']}")
+        logger.info(f"Request includes max_tokens: {data['max_tokens']}")
         
         # SSL 인증서 검증 오류를 방지하기 위해 verify=False 옵션 추가
         # 주의: 프로덕션 환경에서는 적절한 SSL 인증서 설정을 사용해야 함
         response = requests.post(self.api_url, headers=headers, json=data, verify=False)
         
         if response.status_code == 200:
-            return response.json()
+            response_data = response.json()
+            
+            # 디버깅을 위한 로그 추가
+            logger.info(f"Received response with token count: {response_data.get('usage', {}).get('total_tokens', 0)}")            
+            return response_data
         else:
             logger.error(f"API 오류: {response.status_code} - {response.text}")
             raise Exception(f"API 호출 실패: {response.status_code} - {response.text}")
@@ -162,8 +189,6 @@ class GrokFeedbackGenerator:
 3. 사용된 기법에 대한 평가와 조언
 4. 향후 연습을 위한 제안
 5. 격려와 긍정적인 피드백
-
-한국어로 친절하고 교육적인 톤으로 작성해주세요. 부정적인 피드백보다는 건설적인 조언에 중점을 두세요.
 """
         
         return prompt
@@ -281,8 +306,6 @@ class GrokFeedbackGenerator:
 3. 기법 사용에 대한 조언
 4. 개선이 필요한 부분과 연습 방법 제안
 5. 격려와 긍정적인 마무리
-
-한국어로 친절하고 교육적인 톤으로 작성해주세요. 부정적인 피드백보다는 건설적인 조언에 중점을 두세요.
 """
         
         return prompt

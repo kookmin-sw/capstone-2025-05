@@ -8,7 +8,7 @@ from tempfile import NamedTemporaryFile
 from app.schemas import AnalysisRequest, AnalysisType, TaskResponse, ProgressResponse
 from workers.tasks import analyze_audio, compare_audio
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter(prefix="/v1")
 
 
 @router.post("/analyze", response_model=TaskResponse)

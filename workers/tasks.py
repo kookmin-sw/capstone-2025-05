@@ -41,10 +41,11 @@ def analyze_audio(self, audio_bytes, request_dict=None):
     - Dictionary with analysis results
     """
     logger.info(f"Starting audio analysis task {self.request.id}")
-    self.update_state(state='STARTED', meta={'progress': 5})
+    self.update_state(state='STARTED', meta={'progress': 0})
     
     try:
-        # Process the request dictionary if provided
+        # Process the request dictionary if provided (5%)
+        self.update_state(state='PROCESSING', meta={'progress': 5})
         if request_dict is None:
             request_dict = {}
         
@@ -57,13 +58,25 @@ def analyze_audio(self, audio_bytes, request_dict=None):
         self.update_state(state='PROCESSING', meta={'progress': 10})
         y, sr = load_audio_from_bytes(audio_bytes)
         
+        # 오디오 초기 처리 (15%)
+        self.update_state(state='PROCESSING', meta={'progress': 15})
+        
         # 템포 추출 (20%)
         self.update_state(state='PROCESSING', meta={'progress': 20})
         tempo = extract_tempo(y, sr)
         
+        # 템포 분석 후처리 (25%)
+        self.update_state(state='PROCESSING', meta={'progress': 25})
+        
+        # 노트 시작점 전처리 (30%)
+        self.update_state(state='PROCESSING', meta={'progress': 30})
+        
         # 노트 시작점 추출 (40%)
         self.update_state(state='PROCESSING', meta={'progress': 40})
         onsets = extract_onsets(y, sr)
+        
+        # 노트 시작점 후처리 (45%)
+        self.update_state(state='PROCESSING', meta={'progress': 45})
         
         # 세그먼트 생성 (50%)
         self.update_state(state='PROCESSING', meta={'progress': 50})
@@ -77,13 +90,30 @@ def analyze_audio(self, audio_bytes, request_dict=None):
             start = int(onsets[-1] * sr)
             segments.append(y[start:])
         
-        # 기법 예측 (70%)
-        self.update_state(state='PROCESSING', meta={'progress': 70})
+        # 세그먼트 후처리 (55%)
+        self.update_state(state='PROCESSING', meta={'progress': 55})
+        
+        # 기법 예측 준비 (60%)
+        self.update_state(state='PROCESSING', meta={'progress': 60})
         model_path = os.path.join(os.environ.get('MODEL_DIR', 'models'), 'guitar_technique_classifier.keras')
         techniques = []
         
+        # 기법 예측 진행 (65%)
+        self.update_state(state='PROCESSING', meta={'progress': 65})
+        
+        # 기법 예측 (70%)
+        self.update_state(state='PROCESSING', meta={'progress': 70})
         if os.path.exists(model_path):
             techniques = predict_techniques(segments, model_path, sr)
+        
+        # 기법 예측 후처리 (75%)
+        self.update_state(state='PROCESSING', meta={'progress': 75})
+        
+        # 결과 준비 (80%)
+        self.update_state(state='PROCESSING', meta={'progress': 80})
+        
+        # 결과 생성 (85%)
+        self.update_state(state='PROCESSING', meta={'progress': 85})
         
         # 결과 생성 및 마무리 (90%)
         self.update_state(state='FINALIZING', meta={'progress': 90})
@@ -95,7 +125,8 @@ def analyze_audio(self, audio_bytes, request_dict=None):
             "techniques": techniques
         }
         
-        # 메타데이터 추가
+        # 메타데이터 추가 (92%)
+        self.update_state(state='FINALIZING', meta={'progress': 92})
         result['metadata'] = {
             'user_id': user_id,
             'song_id': song_id,
@@ -124,7 +155,10 @@ def analyze_audio(self, audio_bytes, request_dict=None):
                 logger.exception(f"Error generating feedback: {str(e)}")
                 result['feedback_error'] = f"피드백 생성 중 오류 발생: {str(e)}"
         
+        # 완료 (99%)
+        self.update_state(state='FINALIZING', meta={'progress': 99})
         logger.info(f"Audio analysis task {self.request.id} completed successfully")
+        # 100% 완료는 Celery에서 자동으로 처리됩니다
         return result
         
     except Exception as e:
