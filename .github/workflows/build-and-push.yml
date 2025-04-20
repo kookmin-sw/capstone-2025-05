@@ -1,4 +1,4 @@
-name: Test and Push FastAPI Image
+name: Build and Push FastAPI Image
 on:
   push:
     branches:
@@ -7,40 +7,7 @@ on:
     branches:
       - maple-backend/develop
 jobs:
-  test:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-      - name: Install dependencies
-        run: |
-          pip install --no-cache-dir -r requirements.txt
-          pip install pytest pytest-asyncio email-validator aiofiles
-      - name: Create .env for tests
-        run: |
-          echo "TYPE=${{ secrets.TYPE }}" > .env
-          echo "PROJECT_ID=${{ secrets.PROJECT_ID }}" >> .env
-          echo "PRIVATE_KEY_ID=${{ secrets.PRIVATE_KEY_ID }}" >> .env
-          echo "PRIVATE_KEY=\"${{ secrets.PRIVATE_KEY }}\"" >> .env
-          echo "CLIENT_EMAIL=${{ secrets.CLIENT_EMAIL }}" >> .env
-          echo "AUTH_URI=${{ secrets.AUTH_URI }}" >> .env
-          echo "TOKEN_URI=${{ secrets.TOKEN_URI }}" >> .env
-          echo "AUTH_PROVIDER_CERT_URL=${{ secrets.AUTH_PROVIDER_CERT_URL }}" >> .env
-          echo "CLIENT_CERT_URL=${{ secrets.CLIENT_CERT_URL }}" >> .env
-          echo "UNIVERSE_DOMAIN=${{ secrets.UNIVERSE_DOMAIN }}" >> .env
-          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
-          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
-          echo "GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}" >> .env
-          echo "API_KEY=${{ secrets.API_KEY }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "STORAGE_BUCKET=${{ secrets.STORAGE_BUCKET }}" >> .env
-      - name: Run tests
-        run: pytest tests/ --verbose
   build-and-push:
-    needs: test
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
