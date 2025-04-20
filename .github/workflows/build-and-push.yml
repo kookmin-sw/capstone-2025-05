@@ -53,8 +53,8 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/maple-client:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/maple-api:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/maple-api:buildcache,mode=max
           build-args: |
             REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}
             REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main
