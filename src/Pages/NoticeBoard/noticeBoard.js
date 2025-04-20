@@ -12,6 +12,9 @@ import { useViewPutMutation } from '../../Hooks/put/viewPutMutation';
 import { useTopViewedPostsQuery } from '../../Hooks/get/useTopViewedPosts';
 import { FaFilter } from 'react-icons/fa6';
 import guitaricon from '../../Assets/electric-guitar.svg';
+import fake_notice_data from '../../Data/fake_notice_data.json';
+import musicIcon from '../../../src/Assets/music-note.svg';
+
 export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
   const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
@@ -58,7 +61,7 @@ export default function NoticeBoard() {
       const startIndex = (currentPage - 1) * contentsPerPage;
       setCurrentData(postInfo.slice(startIndex, startIndex + contentsPerPage));
     } else {
-      setCurrentData([]); // 데이터가 없을 때 빈 배열 유지
+      setCurrentData(fake_notice_data.posts.slice(0, 10)); // 데이터가 없을 때 fakeData넣어줌
     }
   }, [currentPage, postInfo]);
 
@@ -66,17 +69,25 @@ export default function NoticeBoard() {
     <>
       <MapleHeader />
       <div className="flex flex-col items-center h-[100svh]">
-        {/* <table id="table" className="w-[80%] h-[80%] m-auto">
-          <thead>
-            <div className="mb-[10px]">
+        <table id="table" className="w-[80%] h-[80%] m-auto">
+          <thead className="text-xs text-black uppercase border-b border-[#d4c2b5]">
+            <div className="my-6">
               <th
                 scope="col"
                 className="text-2xl font-bold h-[30px] w-auto whitespace-nowrap"
               >
-                자유 게시판
+                <div className="flex items-center">
+                  <img
+                    src={musicIcon}
+                    alt="음악아이콘"
+                    width={30}
+                    className="mr-4"
+                  />
+                  자유 게시판
+                </div>
               </th>
             </div>
-            <tr id="header" className="border-y-[2px] border-[#A57865] h-[10%]">
+            <tr id="header" className="border-y-[2px] border-[#A57865] h-[6%]">
               <th
                 scope="col"
                 id="number"
@@ -103,68 +114,13 @@ export default function NoticeBoard() {
             </tr>
           </thead>
           <tbody>
-            {currentData?.map((item, index) => (
-              <tr key={item?.id} className="border-b-[1px] border-">
-                <td className="text-center">{item?.id}</td>
-                <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
-                  <Link
-                    to={`/noticeDetail/${item?.id}`}
-                    state={{
-                      //추후에 백엔드 필드명으로 변경
-                      id: item?.id,
-                      title: item?.제목,
-                      writer: item?.작성자,
-                      write_time: item?.작성일시,
-                      view: item?.조회수,
-                      content: item?.내용,
-                      likes: item?.좋아요수,
-                    }}
-                    onClick={() => handleClick(item?.id)}
-                  >
-                    {item?.제목}
-                  </Link>
-                </td>
-                <td className="text-center">{item?.작성자}</td>
-                <td className="text-center">{item?.작성일시}</td>
-                <td className="text-center">{item?.조회수}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table> */}
-        <table className="w-full text-sm text-left text-black">
-          <thead className="text-xs text-black uppercase border-b border-[#d4c2b5]">
-            <tr className="border-y-[2px] border-[#A57865] h-[6%]">
-              <th
-                scope="col"
-                className="px-6 py-4  text-xl text-center w-[10%]"
-              >
-                No.
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-4 text-center text-xl font-bold w-[50%] text-center"
-              >
-                제목
-              </th>
-              <th scope="col" className="px-6 py-4 text-center w-[10%]">
-                글쓴이
-              </th>
-              <th scope="col" className="px-6 py-4 text-center w-[10%]">
-                작성일
-              </th>
-              <th scope="col" className="px-6 py-4 text-center w-[10%]">
-                조회수
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentData.map((post, idx) => (
+            {currentData.map((post, index) => (
               <tr
-                key={post.id}
+                key={post.index}
                 className="border-b border-[#e1d4c7] hover:bg-[#fdfaf6] transition duration-200 text-center"
               >
-                <td className="px-6 py-4 font-medium text-center">{post.id}</td>
-                <td className="px-6 py-4 text-[#5f4532] hover:underline cursor-pointer text-center">
+                <td className="text-center">{post.id}</td>
+                <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
                   <Link
                     to={`/noticeDetail/${post.id}`}
                     state={{
@@ -182,11 +138,9 @@ export default function NoticeBoard() {
                     {post.제목}
                   </Link>
                 </td>
-                <td className="px-6 py-4 text-center">{post.작성자}</td>
-                <td className="px-6 py-4 text-center">
-                  {formatDate(post.작성일시)}
-                </td>
-                <td className="px-6 py-4 text-center">{post.조회수}</td>
+                <td className="text-center">{post.작성자}</td>
+                <td className="text-center">{formatDate(post.작성일시)}</td>
+                <td className="text-center">{post.조회수}</td>
               </tr>
             ))}
           </tbody>
