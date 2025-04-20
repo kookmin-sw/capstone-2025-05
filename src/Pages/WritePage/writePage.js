@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { usePostWriteMutation } from '../../Hooks/post/usePostWriteMutation';
+import musicIcon from '../../../src/Assets/music-note.svg';
 
 export default function WritePage() {
   const [title, setTitle] = useState('');
@@ -108,6 +109,7 @@ export default function WritePage() {
           className="bg-white w-full max-w-2xl rounded-2xl shadow-lg p-10 space-y-6 transition-all duration-300"
         >
           <h1 className="text-3xl font-bold text-center text-[#5f4532] tracking-wide">
+            <img src={musicIcon} alt="음악" className="w-8 h-8" />
             게시판 글쓰기
           </h1>
 
