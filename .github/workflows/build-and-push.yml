@@ -24,7 +24,8 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/maple-api:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
+          # 새로운 캐시 시스템 사용
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/maple-api:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/maple-api:buildcache,mode=max
           build-args: |
-            BUILDKIT_INLINE_CACHE=0
+            BUILDKIT_INLINE_CACHE=1
