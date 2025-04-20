@@ -25,18 +25,6 @@ export default function WritePage() {
       view: 0,
       content,
     };
-    if (!title) {
-      alert('제목을 입력해주세요');
-      return;
-    }
-    if (!content) {
-      alert('내용을 입력해주세요');
-      return;
-    }
-    if (!author) {
-      alert('작성자를 입력해주세요');
-      return;
-    }
     if (content.length < 10) {
       alert('내용을 10자 이상 입력해주세요');
       return;
@@ -58,51 +46,6 @@ export default function WritePage() {
   return (
     <>
       <MapleHeader />
-      {/* <form
-        className=" flex flex-col items-center h-[80%] w-full"
-        onSubmit={handleSubmit}
-      >
-        <div className="flex">
-          <h1 className="text-center text-xl font-bold py-6">게시판 글쓰기</h1>
-        </div>
-        <div className="flex flex-col mb-4">
-          <h3 className="text-left font-bold mb-2 pl-2">제목</h3>
-          <input
-            className="w-[55svw] h-[5svh] rounded-[10px] border-[2px] border-[#A57865]"
-            value={title}
-            placeholder=" 제목을 입력해주세요"
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col mb-4">
-          <h3 className="text-left font-bold mb-2 pl-2">내용</h3>
-          <textarea
-            className="w-[55svw] h-[50svh]  rounded-[10px] border-[2px] border-[#A57865]"
-            value={content}
-            placeholder=" 10자 이상 입력해주세요"
-            onChange={(e) => setContent(e.target.value)}
-          ></textarea>
-        </div>
-        <div className="flex flex-col mb-4">
-          <h3 className="text-left font-bold mb-2 pl-2">작성자</h3>
-          <input
-            className="w-[55svw] h-[5svh] rounded-[10px] border-[2px] border-[#A57865]"
-            value={author}
-            placeholder=" 작성자를 입력해주세요"
-            onChange={(e) => setAuthor(e.target.value)}
-          />
-        </div>
-        <div className="flex justify-start w-[55svw]">
-          <button
-            type="submit"
-            className="hover:brightness-150 duration-[0.5s] ease-in-out"
-          >
-            <Button width="90px" height="40px">
-              등록하기
-            </Button>
-          </button>
-        </div>
-      </form> */}
       <div className="min-h-screen bg-[F0EFE6] flex justify-center items-center px-4 py-12">
         <form
           onSubmit={handleSubmit}
@@ -123,6 +66,7 @@ export default function WritePage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="제목을 입력해주세요"
+              required="true"
             />
           </div>
 
@@ -136,6 +80,7 @@ export default function WritePage() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="10자 이상 입력해주세요"
+              required="true"
             />
           </div>
 
@@ -149,6 +94,7 @@ export default function WritePage() {
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
               placeholder="작성자를 입력해주세요"
+              required="true"
             />
           </div>
 

@@ -1,6 +1,12 @@
 import React from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
 
 const data = [
@@ -14,9 +20,11 @@ const data = [
 
 export default function ImprovementChart() {
   return (
-    <ResponsiveContainer width={700} height={300}>
-      <LineChart data={data} margin={{ top: 40, right: 30, left: 0, bottom: 5 }}>
-
+    <ResponsiveContainer width={'90%'} height={300}>
+      <LineChart
+        data={data}
+        margin={{ top: 40, right: 30, left: 0, bottom: 5 }}
+      >
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e2e2" />
 
         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -32,9 +40,9 @@ export default function ImprovementChart() {
         </defs>
 
         <Line
-          type="monotone" 
+          type="monotone"
           dataKey="score"
-          stroke= "#a57865"
+          stroke="#a57865"
           strokeWidth={3}
           dot={{ r: 4 }}
           activeDot={{ r: 6 }}

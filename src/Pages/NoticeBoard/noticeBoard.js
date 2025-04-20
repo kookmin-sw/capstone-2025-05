@@ -131,15 +131,18 @@ export default function NoticeBoard() {
             ))}
           </tbody>
         </table> */}
-        <table className="w-full text-sm text-left text-gray-600">
-          <thead className="text-xs text-[#5f4532] uppercase bg-[#f4ece2] border-b border-[#d4c2b5]">
-            <tr>
-              <th scope="col" className="px-6 py-4 text-center w-[10%]">
+        <table className="w-full text-sm text-left text-black">
+          <thead className="text-xs text-black uppercase border-b border-[#d4c2b5]">
+            <tr className="border-y-[2px] border-[#A57865] h-[6%]">
+              <th
+                scope="col"
+                className="px-6 py-4  text-xl text-center w-[10%]"
+              >
                 No.
               </th>
               <th
                 scope="col"
-                className="px-6 py-4 text-center font-bold w-[50%] text-center"
+                className="px-6 py-4 text-center text-xl font-bold w-[50%] text-center"
               >
                 제목
               </th>
