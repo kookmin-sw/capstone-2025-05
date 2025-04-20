@@ -1,10 +1,10 @@
-name: Test and Push React Image
+name: Build and Push React Image
 on:
   push:
     branches:
       - maple-frontend/develop
 jobs:
-  test-and-push:
+  build-and-push:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
