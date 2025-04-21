@@ -1,13 +1,13 @@
 #include "GuitarPracticeComponent.h"
-#include "MainComponent.h"
-#include "Controller/GuitarPracticeController.h"
+#include "../MainComponent.h"
+#include "../Controller/GuitarPracticeController.h"
 
-#include "View/TopBar.h"
-#include "View/CenterPanel.h"
-#include "View/LeftPanel.h"
-#include "View/RightPanel.h"
+#include "../View/TopBar.h"
+#include "../View/CenterPanel.h"
+#include "../View/LeftPanel.h"
+#include "../View/RightPanel.h"
 
-#include "EnvLoader.h"
+#include "../EnvLoader.h"
 
 class RecordingThumbnail : public juce::Component,
                           private juce::ChangeListener

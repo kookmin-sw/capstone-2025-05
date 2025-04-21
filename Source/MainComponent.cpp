@@ -3,7 +3,7 @@
 #include "MainActionComponent.h"
 #include "ContentPanelComponent.h"
 #include "BottomComponent.h"
-#include "GuitarPracticeComponent.h"
+#include "View/GuitarPracticeComponent.h"
 #include "Controller/ContentController.h"
 #include "Model/ContentModel.h"
 

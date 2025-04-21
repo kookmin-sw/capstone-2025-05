@@ -87,8 +87,6 @@ target_sources(MapleClientDesktop PRIVATE
     Source/MainComponent.h
     Source/ScoreComponent.cpp
     Source/ScoreComponent.h
-    Source/GuitarPracticeComponent.cpp
-    Source/GuitarPracticeComponent.h
     Source/TabPlayer.cpp
     Source/TabPlayer.h
     
@@ -114,6 +112,8 @@ target_sources(MapleClientDesktop PRIVATE
     Source/View/AlbumGridView.h
     Source/View/AlbumThumbnailComponent.cpp
     Source/View/AlbumThumbnailComponent.h
+    Source/View/GuitarPracticeComponent.cpp
+    Source/View/GuitarPracticeComponent.h
     
     # Controller
     Source/Controller/AudioController.cpp

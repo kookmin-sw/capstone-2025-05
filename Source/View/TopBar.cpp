@@ -1,5 +1,5 @@
 #include "TopBar.h"
-#include "../GuitarPracticeComponent.h" // Now include the full header here
+#include "GuitarPracticeComponent.h" // Now include the full header here
 
 TopBar::TopBar(GuitarPracticeComponent &parent)
     : parentComponent(parent)

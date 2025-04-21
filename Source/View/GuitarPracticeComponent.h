@@ -1,12 +1,12 @@
 #pragma once
 #include <JuceHeader.h>
-#include "Model/AudioModel.h"
-#include "Controller/GuitarPracticeController.h"
-#include "View/TopBar.h"
-#include "View/CenterPanel.h"
-#include "View/LeftPanel.h"
-#include "View/RightPanel.h"
-#include "ScoreComponent.h"
+#include "../Model/AudioModel.h"
+#include "../Controller/GuitarPracticeController.h"
+#include "../View/TopBar.h"
+#include "../View/CenterPanel.h"
+#include "../View/LeftPanel.h"
+#include "../View/RightPanel.h"
+#include "../ScoreComponent.h"
 
 // 녹음 기능을 위한 전방 선언
 class AudioRecorder;
