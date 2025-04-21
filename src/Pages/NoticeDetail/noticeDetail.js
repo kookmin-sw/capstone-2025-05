@@ -6,7 +6,6 @@ import Review from '../../Components/Review/Review';
 import profile from '../../Assets/Images/google_profile.png';
 import profile2 from '../../Assets/Images/google_profile2.png';
 import heart from '../../Assets/Images/heart.png';
-import flag from '../../Assets/Images/flag.png';
 import { FaAngleDown, FaAngleUp } from 'react-icons/fa6';
 import ClipLoader from 'react-spinners/ClipLoader';
 import { useComentsQuery } from '../../Hooks/get/useCommentsQuery';
@@ -22,12 +21,17 @@ import Alert from '../../Components/Alert/Alert';
 import fill_heart from '../../Assets/Images/fill_heart.png';
 import fill_bookmark from '../../Assets/MyPage/filledBookmark.svg';
 import bookmark from '../../Assets/bookmark.svg';
+import { FaTrashAlt } from 'react-icons/fa';
+import { useDeletePostMutation } from '../../Hooks/delete/deletePostMutation';
+import Modal from '../../Components/Modal/Modal';
 
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
 export default function NoticeDetail() {
   const location = useLocation();
   const post = location.state;
+  const isAdmin = true; //로그인 계정이 관리자 계정일경우
+  const isLoginUser = true; //uid와 작성자 uid가 같을경우
 
   /*Mutation 영역*/
   const { mutate } = useEditPutMutation(); //게시글 수정하기
@@ -35,6 +39,7 @@ export default function NoticeDetail() {
   const { mutate: putLikeMutate } = useLikePutMutation(); //게시글 좋아요
   const { mutate: postReportMutate } = useReportPostMutation();
   const { mutate: putUnlikeMutate } = useUnlikePutMutation(); //게시글 좋아요 취소
+  const { mutate: deletePostMutate } = useDeletePostMutation(); //게시물 삭제하기
   /***************/
 
   const navigate = useNavigate();
@@ -75,6 +80,7 @@ export default function NoticeDetail() {
   const [clickLiked, setClickLiked] = useState(false);
   const [likeNum, setLikeNum] = useState(post.likes);
   const [reported, setReported] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   //수정 모드
   const toggleEditMode = () => {
@@ -107,7 +113,25 @@ export default function NoticeDetail() {
     );
   };
 
+  const deletePost = () => {
+    const postid = post.id;
+    deletePostMutate(
+      { postid },
+      {
+        onSuccess: () => {
+          alert('게시물을 삭제하였습니다');
+        },
+        onError: (error) => {
+          console.error('게시물 삭제 중 오류 발생:', error);
+          alert('게시물 삭제에 실패했습니다.');
+        },
+      },
+    );
+    setIsModalOpen(false);
+  };
+
   const handlePostComment = () => {
+    setIsPostComment(false);
     const commentData = {
       uid: '랜덤',
       작성일시: new Date().toISOString(), // 현재 시간
@@ -221,9 +245,50 @@ export default function NoticeDetail() {
                   className="border p-2 w-full"
                 />
               ) : (
-                <h1 className="text-2xl font-bold align-middle">
-                  {post.title}
-                </h1>
+                <div className="flex justify-between items-center">
+                  <h1 className="text-2xl font-bold align-middle">
+                    {post.title}
+                  </h1>
+                  <div className="duration-300 ease-in-out hover:scale-[110%]">
+                    <FaTrashAlt
+                      size={20}
+                      onClick={() => setIsModalOpen(true)}
+                    />
+                  </div>
+                  <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                  >
+                    <h2 className="text-xl font-bold mb-4">게시물 삭제</h2>
+                    <p>게시물을 정말 삭제하시겠습니까?</p>
+                    <div className="flex justify-between">
+                      <div></div>
+                      <div id="button-box" className="flex">
+                        <div className="rounded-[10px] border border-[#A57865] mr-[2px]">
+                          <Button
+                            width={'40px'}
+                            height={'30px'}
+                            backgroundColor="white"
+                            onClick={deletePost}
+                          >
+                            <span className="text-[#A57865] !important">
+                              확인
+                            </span>
+                          </Button>
+                        </div>
+                        <div>
+                          <Button
+                            width={'40px'}
+                            height={'30px'}
+                            onClick={() => setIsModalOpen(false)}
+                          >
+                            취소
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Modal>
+                </div>
               )}
             </div>
             <table className="w-full  border-collapse min-h-[8vh]">
