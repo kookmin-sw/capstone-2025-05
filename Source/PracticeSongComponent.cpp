@@ -660,7 +660,7 @@ public:
             
             // 작업 상태 폴링
             int attempts = 0;
-            const int maxAttempts = 30; // 최대 30번 시도 (30초)
+            const int maxAttempts = 120; // 최대 120번 시도 (120초)
             
             setProgress(0.8);
             setStatusMessage("Waiting for analysis results...");
@@ -674,7 +674,10 @@ public:
                 juce::URL statusUrl(serverUrl.upToLastOccurrenceOf("/analyze", false, false) + 
                                   "/tasks/" + taskId);
                 
-                std::unique_ptr<juce::InputStream> statusInput = statusUrl.createInputStream(false);
+                // 이전 코드 createInputStream(false) 대신 InputStreamOptions 사용
+                auto statusOptions = juce::URL::InputStreamOptions(juce::URL::ParameterHandling::inAddress)
+                                    .withConnectionTimeoutMs(5000);
+                std::unique_ptr<juce::InputStream> statusInput = statusUrl.createInputStream(statusOptions);
                 
                 if (statusInput != nullptr)
                 {
@@ -693,13 +696,13 @@ public:
                             setStatusMessage("Analyzing: " + juce::String(static_cast<int>(progress * 100)) + "%");
                         }
                         
-                        if (status == "COMPLETED")
+                        if (status == "SUCCESS")
                         {
                             // 분석 완료
                             analysisCompleted = true;
                             return;
                         }
-                        else if (status == "FAILED")
+                        else if (status == "FAILURE")
                         {
                             // 분석 실패
                             errorMessage = "Analysis failed.";
@@ -735,66 +738,6 @@ public:
     juce::String errorMessage;
 };
 
-// AnalysisThreadListener 클래스 구현 (이미 헤더에 선언되어 있음)
-PracticeSongComponent::AnalysisThreadListener::AnalysisThreadListener(PracticeSongComponent& owner, PracticeSongComponent::AnalysisThread* thread)
-    : component(owner), analysisThread(thread)
-{
-}
-
-void PracticeSongComponent::AnalysisThreadListener::exitSignalSent()
-{
-    // 메인 UI 스레드에서 결과를 표시하도록 변경
-    if (analysisThread->analysisCompleted)
-    {
-        DBG("[ANALYSIS] Thread completed, results ready to display");
-        
-        if (analysisThread->statusJson.isVoid())
-        {
-            DBG("[ANALYSIS] ERROR: statusJson is void!");
-            
-            // UI 스레드에서 오류 메시지 표시
-            juce::MessageManager::callAsync([this]() {
-                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
-                                                      "Analysis Failed",
-                                                      "The analysis completed but no data was returned.",
-                                                      "OK");
-                delete this;
-            });
-            return;
-        }
-        
-        DBG("[ANALYSIS] Successful analysis detected");
-        
-        juce::MessageManager::callAsync([this]() {
-            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-                                                 "Analysis Complete",
-                                                 "The analysis has been completed successfully.",
-                                                 "OK");
-            delete this;
-        });
-    }
-    else if (analysisThread->errorMessage.isNotEmpty())
-    {
-        DBG("[ANALYSIS] Thread failed: " + analysisThread->errorMessage);
-        
-        juce::String errorMsg = analysisThread->errorMessage;
-        
-        juce::MessageManager::callAsync([this, errorMsg]() {
-            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
-                                                 "Analysis Failed",
-                                                 errorMsg,
-                                                 "OK");
-            delete this;
-        });
-    }
-    else 
-    {
-        // 예상치 못한 상황에서도 리스너는 정리
-        DBG("[ANALYSIS] Thread finished but no result or error message set");
-        delete this;
-    }
-}
-
 void PracticeSongComponent::analyzeRecording()
 {
     if (!lastRecording.existsAsFile())
@@ -815,10 +758,98 @@ void PracticeSongComponent::analyzeRecording()
     serverUrl = "http://localhost:8000/api/v1/analyze";
     #endif
     
-    auto analysisThread = new AnalysisThread(this, serverUrl, lastRecording);
+    // 기존 스레드 및 리스너 정리
+    currentAnalysisThread = nullptr;
     
-    analysisThread->setStatusMessage("Preparing analysis...");
-    analysisThread->launchThread();
+    // 새 분석 스레드 생성
+    currentAnalysisThread = std::make_unique<AnalysisThread>(this, serverUrl, lastRecording);
+    
+    // 프로그레스 창 메시지 설정
+    currentAnalysisThread->setStatusMessage("Preparing analysis...");
+    
+    // 스레드 시작 (비동기식)
+    currentAnalysisThread->launchThread();
+    
+    // 디버깅 정보
+    DBG("[ANALYSIS] Thread launched and listener registered");
+    
+    // 타이머 시작
+    startTimer(500);
+}
 
-    analysisThread->addListener(new AnalysisThreadListener(*this, analysisThread));
+// 타이머 콜백 구현
+void PracticeSongComponent::timerCallback()
+{
+    // 분석 스레드가 없으면 타이머 중지
+    if (!currentAnalysisThread)
+    {
+        stopTimer();
+        return;
+    }
+    
+    // 스레드가 실행 중이 아니면 (완료되었거나 취소됨)
+    if (!currentAnalysisThread->isThreadRunning())
+    {
+        DBG("[ANALYSIS] Thread is no longer running - checking results");
+        handleAnalysisThreadComplete();
+        stopTimer();
+    }
+}
+
+// 분석 스레드 결과 처리 메서드
+void PracticeSongComponent::handleAnalysisThreadComplete()
+{
+    if (!currentAnalysisThread)
+        return;
+        
+    DBG("[ANALYSIS] Processing thread completion");
+    
+    if (currentAnalysisThread->threadShouldExit())
+    {
+        DBG("[ANALYSIS] Thread was cancelled");
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
+                                             "Analysis Cancelled",
+                                             "The analysis was cancelled.",
+                                             "OK");
+    }
+    else if (currentAnalysisThread->analysisCompleted)
+    {
+        DBG("[ANALYSIS] Thread completed successfully");
+        
+        if (currentAnalysisThread->statusJson.isVoid())
+        {
+            DBG("[ANALYSIS] ERROR: statusJson is void!");
+            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                                 "Analysis Failed",
+                                                 "The analysis completed but no data was returned.",
+                                                 "OK");
+        }
+        else
+        {
+            DBG("[ANALYSIS] Successful analysis detected");
+            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
+                                                "Analysis Complete",
+                                                "The analysis has been completed successfully.",
+                                                "OK");
+        }
+    }
+    else if (currentAnalysisThread->errorMessage.isNotEmpty())
+    {
+        DBG("[ANALYSIS] Thread failed: " + currentAnalysisThread->errorMessage);
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                             "Analysis Failed",
+                                             currentAnalysisThread->errorMessage,
+                                             "OK");
+    }
+    else
+    {
+        DBG("[ANALYSIS] Thread finished with unknown status");
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                             "Analysis Status",
+                                             "The analysis process completed, but the result is unknown.",
+                                             "OK");
+    }
+    
+    // 스레드 객체 정리
+    currentAnalysisThread = nullptr;
 }

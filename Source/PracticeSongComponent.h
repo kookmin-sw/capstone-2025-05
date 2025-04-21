@@ -18,22 +18,12 @@ class MainComponent;  // 전방 선언
 
 // PracticeSongComponent는 View 역할만 담당하도록 수정
 class PracticeSongComponent : public juce::Component,
-                              public AudioModel::Listener  // 모델 변경 감지를 위한 리스너 추가
+                              public AudioModel::Listener,  // 모델 변경 감지를 위한 리스너 추가
+                              public juce::Timer  // 타이머 추가
 {
 public:
     // 분석 스레드 클래스에 대한 전방 선언
     class AnalysisThread;
-    // Thread::Listener를 상속받는 클래스 선언 (세미콜론 제거)
-    class AnalysisThreadListener : public juce::Thread::Listener
-    {
-    public:
-        AnalysisThreadListener(PracticeSongComponent& owner, AnalysisThread* thread);
-        void exitSignalSent() override;
-    
-    private:
-        PracticeSongComponent& component;
-        AnalysisThread* analysisThread;
-    };
     
     PracticeSongComponent(MainComponent& mainComponent);
     ~PracticeSongComponent() override;
@@ -44,6 +34,9 @@ public:
     // AudioModel::Listener 구현 (모델 변경 감지)
     void playStateChanged(bool isPlaying) override;
     void volumeChanged(float newVolume) override;
+    
+    // Timer 콜백 (스레드 상태 확인용)
+    void timerCallback() override;
     
     // Access to model and controllers
     AudioModel& getAudioModel() { return audioModel; }
@@ -62,6 +55,9 @@ public:
     void analyzeRecording();
     
 private:
+    // 분석 스레드 결과 처리 메서드
+    void handleAnalysisThreadComplete();
+    
     // View에서는 UI 관련 작업만 처리
     void updatePlaybackState(bool isNowPlaying);
     void updateVolumeDisplay(float volume);
@@ -95,6 +91,9 @@ private:
     juce::TextButton recordButton;
     juce::TextButton analyzeButton;
     juce::File lastRecording;
+    
+    // 분석 스레드를 저장할 멤버 변수 추가
+    std::unique_ptr<AnalysisThread> currentAnalysisThread;
     
     juce::TextButton playButton;
     juce::MidiBuffer midiBuffer;
