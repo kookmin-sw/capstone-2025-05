@@ -25,8 +25,14 @@ export default function MyPage() {
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
-                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
-                <Link to="/mypage" className="text-white">내 정보</Link>
+                <img
+                  src={Information}
+                  alt="내 정보 아이콘"
+                  className="w-4 h-4"
+                />
+                <Link to="/mypage" className="text-white">
+                  내 정보
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
@@ -49,8 +55,11 @@ export default function MyPage() {
           <div className="flex gap-16 h-[50vh] ">
             <Box width="70%" height="100%">
               <div className="ml-4 mt-5">
-                <span className="font-bold text-[16px] block">실력 향상 그래프</span>
+                <span className="font-bold text-[16px] block">
+                  실력 향상 그래프
+                </span>
               </div>
+
               <div className="flex justify-center h-[85%]">
                 <ImprovementChart alt="실력 향상 그래프" />
               </div>
@@ -76,6 +85,7 @@ export default function MyPage() {
             </div>
           </div>
 
+
           {/* Played Music + My Activity */}
           <div className="flex gap-16 h-[50vh] mt-16">
             <Box width="70%" height="100%">
@@ -85,22 +95,32 @@ export default function MyPage() {
               </div>
               <ul className="mt-8 space-y-5 ml-4">
                 {[
-                  { title: "Sweet Home Alabama", artist: "Lynyrd Skynyrd" },
-                  { title: "Zombie", artist: "The Cranberries" },
-                  { title: "Esperanza", artist: "Listening to Young Hug" },
-                  { title: "Creep", artist: "Radiohead" },
+                  { title: 'Sweet Home Alabama', artist: 'Lynyrd Skynyrd' },
+                  { title: 'Zombie', artist: 'The Cranberries' },
+                  { title: 'Esperanza', artist: 'Listening to Young Hug' },
+                  { title: 'Creep', artist: 'Radiohead' },
                 ].map((song, index) => (
+
                   <li key={index} className={"flex items-center justify-between pb-2 mb-2 ${index === 3 ? '' : 'border-b border-gray-300'"}>
                     <img src={Album} alt="Album" className="w-6 h-6 mr-2" />
                     <div className="flex flex-col justify-center flex-grow">
-                      <p className="font-semibold text-[10px] mt-2 truncate">{song.title}</p>
-                      <p className="text-[9px] text-gray-600 mt-0">{song.artist}</p>
+                      <p className="font-semibold text-[10px] mt-2 truncate">
+                        {song.title}
+                      </p>
+                      <p className="text-[9px] text-gray-600 mt-0">
+                        {song.artist}
+                      </p>
                     </div>
-                    <img src={Volume} alt="Volume" className="w-5 h-5 mr-4 object-contain" />
+                    <img
+                      src={Volume}
+                      alt="Volume"
+                      className="w-5 h-5 mr-4 object-contain"
+                    />
                   </li>
                 ))}
               </ul>
             </Box>
+
 
             <Box width="25%" height="100%">
               <div className="ml-4 mt-5">
@@ -110,6 +130,7 @@ export default function MyPage() {
               <div className="ml-5 mt-8 space-y-4 flex-grow">
                 <div className="rounded-lg p-3 flex items-center gap-3">
                   <img src={Bookmark} alt="북마크" className="w-6 h-6" />
+
                   <Link to="/my-scraps" className="text-black text-[16px] font-semibold hover:underline">북마크</Link>
                 </div>
                 <div className="rounded-lg p-3 flex items-center gap-3">

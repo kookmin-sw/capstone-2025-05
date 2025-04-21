@@ -8,6 +8,7 @@ import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Album from '../../Assets/Main/album/bndCover.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
+
 import graphData from '../../Data/maplegraph.json';
 
 
@@ -19,6 +20,18 @@ export default function Feedback() {
 
   const songName = "오늘만 I LOVE YOU";
   const uploadCount = 1;
+  
+  const formatChartData = (noteData) => {
+    return noteData.map((note) => ({
+      second: parseFloat(note.note_start.toFixed(2)), // X축
+      original: Math.round(note.original_pitch),
+      played: Math.round(note.user_pitch),
+      pitch_difference: note.pitch_difference,
+      technique_match: note.technique_match,
+    }));
+  };
+
+  const chartData = formatChartData(graphData.note_by_note);
 
   useEffect(() => {
     const fetchSpecificRecord = async () => {
@@ -44,24 +57,9 @@ export default function Feedback() {
       setLoading(false);
     }
   }, [uid, songName, uploadCount]);
-  const formatChartData = (noteData) => {
-    return noteData.map((note) => ({
-      second: parseFloat(note.note_start.toFixed(2)), // X축
-      original: Math.round(note.original_pitch),
-      played: Math.round(note.user_pitch),
-      pitch_difference: note.pitch_difference,
-      technique_match: note.technique_match,
-    }));
-  };
 
-  const chartData = formatChartData(graphData.note_by_note);
-   
+  
 
-  const recentSong = {
-    title: "오늘만 I LOVE YOU",
-    artist: "BOYNEXTDOOR",
-    image: Album,
-  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -73,12 +71,18 @@ export default function Feedback() {
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
-                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
-                <Link to="/mypage" className="text-white">내 정보</Link>
+                <img
+                  src={Information}
+                  alt="내 정보 아이콘"
+                  className="w-4 h-4"
+                />
+                <Link to="/mypage" className="text-white">
+                  내 정보
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
-                <Link to="/playedmusic">연주한 곡</Link>
+                <Link to="/playedmusic">연주한 곡</Link>~
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
@@ -92,6 +96,7 @@ export default function Feedback() {
         </div>
 
         {/* 메인 컨텐츠 */}
+
         <div className="w-full pr-6">
           <div className="flex flex-row mt-1 ml-24 gap-6 items-start">
             <div className="flex-1 mt-28 max-w-[260px]">
