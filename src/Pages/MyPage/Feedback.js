@@ -8,7 +8,6 @@ import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Album from '../../Assets/Main/album/bndCover.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
-
 import graphData from '../../Data/maplegraph.json';
 
 
@@ -20,6 +19,10 @@ export default function Feedback() {
 
   const songName = "오늘만 I LOVE YOU";
   const uploadCount = 1;
+
+  const recentSong = [
+    { title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR', image: Album },
+  ];
   
   const formatChartData = (noteData) => {
     return noteData.map((note) => ({
@@ -82,7 +85,7 @@ export default function Feedback() {
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
-                <Link to="/playedmusic">연주한 곡</Link>~
+                <Link to="/playedmusic">연주한 곡</Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
@@ -98,9 +101,9 @@ export default function Feedback() {
         {/* 메인 컨텐츠 */}
 
         <div className="w-full pr-6">
-          <div className="flex flex-row mt-1 ml-24 gap-6 items-start">
+          <div className="flex flex-row mt-5 ml-24 gap-6 items-start">
             <div className="flex-1 mt-28 max-w-[260px]">
-              <Box width="96.5%" height="400px" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto">
+              <Box width="96.5%" height="100%" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto h-full">
                 <div className="flex justify-center items-center mt-3">
                   <img src={recentSong.image} alt="Album Cover" className="w-[200px] h-[200px] mt-4 object-cover" />
                 </div>
@@ -113,8 +116,8 @@ export default function Feedback() {
               </Box>
             </div>
 
-            <div className="flex-[2] ml-16 mt-12">
-              <Box width="99%" height="100%" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto">
+            <div className="flex-[2] ml-16 mt-12 h-full">
+              <Box width="99%" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto height-[400px]">
                 <div className="ml-4 mt-5">
                   <span className="font-bold text-[16px] block">연주 분석 그래프</span>
                 </div>

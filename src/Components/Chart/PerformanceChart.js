@@ -58,7 +58,7 @@ export default function PerformanceChart({ data, measureTimes = [], largeDiffSec
 
   return (
     <div className="overflow-x-auto h-full">
-      <div className="mt-5 min-w-[100%] h-[100%]">
+      <div className="mt-12 min-w-[1200px] h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
