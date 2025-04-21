@@ -122,6 +122,8 @@ target_sources(MapleClientDesktop PRIVATE
     Source/Controller/TransportController.h
     Source/Controller/ContentController.cpp
     Source/Controller/ContentController.h
+    Source/Controller/GuitarPracticeController.cpp
+    Source/Controller/GuitarPracticeController.h
 
     Source/gp_parser.cpp
     Source/gp_parser.h
