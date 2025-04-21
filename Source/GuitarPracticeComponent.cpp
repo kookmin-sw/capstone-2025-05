@@ -1,4 +1,4 @@
-#include "PracticeSongComponent.h"
+#include "GuitarPracticeComponent.h"
 #include "MainComponent.h"
 
 #include "View/TopBar.h"
@@ -155,7 +155,7 @@ private:
     std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter { nullptr };
 };
 
-PracticeSongComponent::PracticeSongComponent(MainComponent &mainComp)
+GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     : mainComponent(mainComp), deviceManager(mainComp.getDeviceManager())
 {
     // parser는 여기서 초기화하지 않고, loadSong 메서드에서 필요할 때 생성
@@ -249,7 +249,7 @@ PracticeSongComponent::PracticeSongComponent(MainComponent &mainComp)
     addAndMakeVisible(recordingThumbnail.get());
 }
 
-PracticeSongComponent::~PracticeSongComponent()
+GuitarPracticeComponent::~GuitarPracticeComponent()
 {
     // AudioModel에서 리스너 제거
     audioModel.removeListener(this);
@@ -264,12 +264,12 @@ PracticeSongComponent::~PracticeSongComponent()
     // Controllers will clean up their resources in their destructors
 }
 
-void PracticeSongComponent::paint(juce::Graphics &g)
+void GuitarPracticeComponent::paint(juce::Graphics &g)
 {
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 }
 
-void PracticeSongComponent::resized()
+void GuitarPracticeComponent::resized()
 {
     auto bounds = getLocalBounds();
     auto topBarHeight = 50;
@@ -308,20 +308,20 @@ void PracticeSongComponent::resized()
 }
 
 // AudioModel::Listener 메서드 구현
-void PracticeSongComponent::playStateChanged(bool isPlaying)
+void GuitarPracticeComponent::playStateChanged(bool isPlaying)
 {
     // View 업데이트
     updatePlaybackState(isPlaying);
 }
 
-void PracticeSongComponent::volumeChanged(float newVolume)
+void GuitarPracticeComponent::volumeChanged(float newVolume)
 {
     // View 업데이트
     updateVolumeDisplay(newVolume);
 }
 
 // View 업데이트 메서드
-void PracticeSongComponent::updatePlaybackState(bool isNowPlaying)
+void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
 {
     if (isNowPlaying)
     {
@@ -333,12 +333,12 @@ void PracticeSongComponent::updatePlaybackState(bool isNowPlaying)
     }
 }
 
-void PracticeSongComponent::updateVolumeDisplay(float volume)
+void GuitarPracticeComponent::updateVolumeDisplay(float volume)
 {
     // 볼륨 표시 UI 요소가 있을 경우 여기서 업데이트
 }
 
-void PracticeSongComponent::togglePlayback()
+void GuitarPracticeComponent::togglePlayback()
 {
     // Controller를 통해 모델 상태 변경 (MVC 패턴)
     if (!audioModel.isPlaying())
@@ -353,7 +353,7 @@ void PracticeSongComponent::togglePlayback()
     }
 }
 
-bool PracticeSongComponent::loadSong(const juce::String& songId)
+bool GuitarPracticeComponent::loadSong(const juce::String& songId)
 {
     // 서버가 준비되지 않았으므로 로컬 파일 경로를 사용하여 테스트
     juce::String filePath;
@@ -494,7 +494,7 @@ bool PracticeSongComponent::loadSong(const juce::String& songId)
     }
 }
 
-void PracticeSongComponent::resetParser()
+void GuitarPracticeComponent::resetParser()
 {
     // 재생 중이면 중지
     if (audioModel.isPlaying()) {
@@ -506,7 +506,7 @@ void PracticeSongComponent::resetParser()
     playButton.setEnabled(false);
 }
 
-void PracticeSongComponent::startRecording()
+void GuitarPracticeComponent::startRecording()
 {
     // 재생 중이면 중지
     if (audioModel.isPlaying())
@@ -526,7 +526,7 @@ void PracticeSongComponent::startRecording()
     DBG("Recording started: " + lastRecording.getFullPathName());
 }
 
-void PracticeSongComponent::stopRecording()
+void GuitarPracticeComponent::stopRecording()
 {
     // 녹음 중지
     audioRecorder->stop();
@@ -538,16 +538,16 @@ void PracticeSongComponent::stopRecording()
     DBG("Recording finished: " + lastRecording.getFullPathName());
 }
 
-bool PracticeSongComponent::isRecording() const
+bool GuitarPracticeComponent::isRecording() const
 {
     return audioRecorder && audioRecorder->isRecording();
 }
 
 // 분석 스레드 클래스 선언
-class PracticeSongComponent::AnalysisThread : public juce::ThreadWithProgressWindow
+class GuitarPracticeComponent::AnalysisThread : public juce::ThreadWithProgressWindow
 {
 public:
-    AnalysisThread(PracticeSongComponent* owner, juce::String url, juce::File recording)
+    AnalysisThread(GuitarPracticeComponent* owner, juce::String url, juce::File recording)
         : juce::ThreadWithProgressWindow("Analyzing Recording...", true, true),
           component(owner), 
           serverUrl(url),
@@ -730,7 +730,7 @@ public:
         }
     }
     
-    PracticeSongComponent* component;
+    GuitarPracticeComponent* component;
     juce::String serverUrl;
     juce::File audioFile;
     juce::var statusJson;
@@ -738,7 +738,7 @@ public:
     juce::String errorMessage;
 };
 
-void PracticeSongComponent::analyzeRecording()
+void GuitarPracticeComponent::analyzeRecording()
 {
     if (!lastRecording.existsAsFile())
     {
@@ -778,7 +778,7 @@ void PracticeSongComponent::analyzeRecording()
 }
 
 // 타이머 콜백 구현
-void PracticeSongComponent::timerCallback()
+void GuitarPracticeComponent::timerCallback()
 {
     // 분석 스레드가 없으면 타이머 중지
     if (!currentAnalysisThread)
@@ -797,7 +797,7 @@ void PracticeSongComponent::timerCallback()
 }
 
 // 분석 스레드 결과 처리 메서드
-void PracticeSongComponent::handleAnalysisThreadComplete()
+void GuitarPracticeComponent::handleAnalysisThreadComplete()
 {
     if (!currentAnalysisThread)
         return;

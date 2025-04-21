@@ -16,17 +16,17 @@ class RecordingThumbnail;
 
 class MainComponent;  // 전방 선언
 
-// PracticeSongComponent는 View 역할만 담당하도록 수정
-class PracticeSongComponent : public juce::Component,
-                              public AudioModel::Listener,  // 모델 변경 감지를 위한 리스너 추가
-                              public juce::Timer  // 타이머 추가
+// GuitarPracticeComponent는 View 역할만 담당하도록 수정
+class GuitarPracticeComponent : public juce::Component,
+                               public AudioModel::Listener,  // 모델 변경 감지를 위한 리스너 추가
+                               public juce::Timer  // 타이머 추가
 {
 public:
     // 분석 스레드 클래스에 대한 전방 선언
     class AnalysisThread;
     
-    PracticeSongComponent(MainComponent& mainComponent);
-    ~PracticeSongComponent() override;
+    GuitarPracticeComponent(MainComponent& mainComponent);
+    ~GuitarPracticeComponent() override;
     
     void paint(juce::Graphics& g) override;
     void resized() override;

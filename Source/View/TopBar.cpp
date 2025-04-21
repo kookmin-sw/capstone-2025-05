@@ -1,7 +1,7 @@
 #include "TopBar.h"
-#include "../PracticeSongComponent.h" // Now include the full header here
+#include "../GuitarPracticeComponent.h" // Now include the full header here
 
-TopBar::TopBar(PracticeSongComponent &parent)
+TopBar::TopBar(GuitarPracticeComponent &parent)
     : parentComponent(parent)
 {
     addAndMakeVisible(recordButton);

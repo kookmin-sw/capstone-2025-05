@@ -6,7 +6,7 @@
 class HeaderComponent;
 class MainActionComponent;
 class BottomComponent;
-class PracticeSongComponent;
+class GuitarPracticeComponent;
 class ContentPanelComponent;
 class ContentController;
 
@@ -39,7 +39,7 @@ private:
     std::unique_ptr<MainActionComponent> mainActionComponent;
     std::unique_ptr<ContentPanelComponent> contentPanelComponent;
     std::unique_ptr<BottomComponent> bottomComponent;
-    std::unique_ptr<PracticeSongComponent> practiceSongComponent;
+    std::unique_ptr<GuitarPracticeComponent> guitarPracticeComponent;
     
     // Controller 참조
     std::shared_ptr<ContentController> contentController;

@@ -2,12 +2,12 @@
 #include <JuceHeader.h>
 
 // Forward declaration instead of including the header
-class PracticeSongComponent;
+class GuitarPracticeComponent;
 
 class TopBar : public juce::Component
 {
 public:
-    TopBar(PracticeSongComponent &parent);
+    TopBar(GuitarPracticeComponent &parent);
     ~TopBar() override;
 
     void paint(juce::Graphics &g) override;
@@ -18,7 +18,7 @@ private:
     juce::TextButton loadButton{"Load Original"};
 
     std::unique_ptr<juce::FileChooser> fileChooser;
-    PracticeSongComponent &parentComponent;
+    GuitarPracticeComponent &parentComponent;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TopBar)
 };

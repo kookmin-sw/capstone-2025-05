@@ -1,14 +1,14 @@
 #include "ContentController.h"
 #include "../MainComponent.h"
-#include "../PracticeSongComponent.h"
+#include "../GuitarPracticeComponent.h"
 #include "../ContentPanelComponent.h"
 
 // Controller가 Model 객체 참조를 가져오도록 수정
 ContentController::ContentController(ContentModel& model, MainComponent& mainComp, 
-                                    PracticeSongComponent& practiceSongComp)
+                                    GuitarPracticeComponent& practiceSongComp)
     : contentModel(model), 
       mainComponent(mainComp),
-      practiceSongComponent(practiceSongComp)
+      guitarPracticeComponent(practiceSongComp)
 {
 }
 
@@ -39,7 +39,7 @@ void ContentController::songSelected(const juce::String& songId)
     mainComponent.showPracticeScreen();
     
     // PracticeSongComponent에 선택된 곡 로드 요청
-    bool loadSuccess = practiceSongComponent.loadSong(songId);
+    bool loadSuccess = guitarPracticeComponent.loadSong(songId);
     
     if (!loadSuccess)
     {

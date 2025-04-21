@@ -4,14 +4,14 @@
 #include "../ContentPanelComponent.h"  // ContentPanelComponent::SongSelectedListener 정의가 포함된 헤더 추가
 
 class MainComponent;
-class PracticeSongComponent;
+class GuitarPracticeComponent;
 
 // ContentController 클래스 - 컨텐츠 관련 비즈니스 로직을 처리합니다
 class ContentController : public ContentPanelComponent::SongSelectedListener
 {
 public:
     ContentController(ContentModel& model, MainComponent& mainComponent, 
-                      PracticeSongComponent& practiceSongComponent);
+                      GuitarPracticeComponent& guitarPracticeComponent);
     ~ContentController() = default;
     
     // 곡 데이터 초기화
@@ -32,6 +32,6 @@ public:
 private:
     ContentModel& contentModel;
     MainComponent& mainComponent;
-    PracticeSongComponent& practiceSongComponent;
+    GuitarPracticeComponent& guitarPracticeComponent;
     juce::String selectedSongId; // 현재 선택된 곡 ID
 };

@@ -87,8 +87,8 @@ target_sources(MapleClientDesktop PRIVATE
     Source/MainComponent.h
     Source/ScoreComponent.cpp
     Source/ScoreComponent.h
-    Source/PracticeSongComponent.cpp
-    Source/PracticeSongComponent.h
+    Source/GuitarPracticeComponent.cpp
+    Source/GuitarPracticeComponent.h
     Source/TabPlayer.cpp
     Source/TabPlayer.h
     

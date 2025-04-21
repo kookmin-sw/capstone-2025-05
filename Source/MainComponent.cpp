@@ -3,7 +3,7 @@
 #include "MainActionComponent.h"
 #include "ContentPanelComponent.h"
 #include "BottomComponent.h"
-#include "PracticeSongComponent.h"
+#include "GuitarPracticeComponent.h"
 #include "Controller/ContentController.h"
 #include "Model/ContentModel.h"
 
@@ -17,11 +17,11 @@ MainComponent::MainComponent()
     mainActionComponent = std::make_unique<MainActionComponent>(*this);
     contentPanelComponent = std::make_unique<ContentPanelComponent>();
     bottomComponent = std::make_unique<BottomComponent>();
-    practiceSongComponent = std::make_unique<PracticeSongComponent>(*this);
+    guitarPracticeComponent = std::make_unique<GuitarPracticeComponent>(*this);
 
     // 3. Model, Controller 초기화
     auto contentModel = std::make_shared<ContentModel>();
-    contentController = std::make_shared<ContentController>(*contentModel, *this, *practiceSongComponent);
+    contentController = std::make_shared<ContentController>(*contentModel, *this, *guitarPracticeComponent);
     
     // 곡 선택 이벤트 리스너 등록 (MainComponent가 아닌 ContentController가 리스너로 등록)
     contentPanelComponent->addSongSelectedListener(contentController.get());
@@ -34,7 +34,7 @@ MainComponent::MainComponent()
     addAndMakeVisible(mainActionComponent.get());
     addAndMakeVisible(contentPanelComponent.get());
     addAndMakeVisible(bottomComponent.get());
-    addChildComponent(practiceSongComponent.get());  // 숨겨진 상태로 추가
+    addChildComponent(guitarPracticeComponent.get());  // 숨겨진 상태로 추가
 
     setSize(1920, 1200);
 }
@@ -52,10 +52,10 @@ void MainComponent::resized()
 {
     auto bounds = getLocalBounds();
     
-    if (practiceSongComponent && practiceSongComponent->isVisible())
+    if (guitarPracticeComponent && guitarPracticeComponent->isVisible())
     {
         // 연습 화면이 표시 중일 때
-        practiceSongComponent->setBounds(bounds);
+        guitarPracticeComponent->setBounds(bounds);
     }
     else
     {
@@ -75,8 +75,8 @@ void MainComponent::showMainScreen()
     contentPanelComponent->setVisible(true);
     bottomComponent->setVisible(true);
     
-    if (practiceSongComponent)
-        practiceSongComponent->setVisible(false);
+    if (guitarPracticeComponent)
+    guitarPracticeComponent->setVisible(false);
         
     resized();
 }
@@ -88,7 +88,7 @@ void MainComponent::showPracticeScreen()
     contentPanelComponent->setVisible(false);
     bottomComponent->setVisible(false);
     
-    practiceSongComponent->setVisible(true);
+    guitarPracticeComponent->setVisible(true);
     resized();
 }
 
@@ -98,11 +98,11 @@ void MainComponent::prepareToClose()
     deviceManager.closeAudioDevice();
     
     // Clean up PracticeSongComponent if it exists
-    if (practiceSongComponent)
+    if (guitarPracticeComponent)
     {
         // Remove from parent before deletion
-        removeChildComponent(practiceSongComponent.get());
-        practiceSongComponent = nullptr;
+        removeChildComponent(guitarPracticeComponent.get());
+        guitarPracticeComponent = nullptr;
     }
     
     // Clean up other components
