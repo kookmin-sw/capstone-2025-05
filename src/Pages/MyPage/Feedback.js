@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import Box from '../../Components/Box/Box.js';
 import Header from '../../Components/MapleHeader.js';
 import Music from '../../Assets/MyPage/Vector.svg';
@@ -7,32 +8,19 @@ import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Album from '../../Assets/Main/album/bndCover.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
-import graphData from '../../Data/maplegraph.json'; // AI에서 넘어오는 연주 데이터 나중에 바꿔주며됨
+
+import graphData from '../../Data/maplegraph.json';
+
 
 export default function Feedback() {
-  const record = {
-    tempo: 92,
-    rhythm: 89,
-    pitch: 85,
-  };
+  const uid = localStorage.getItem("uid");
 
-  const recentSongs = [
-    { title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR', image: Album },
-  ];
+  const [record, setRecord] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // const chartData = Array.from({ length: 901 }, (_, i) => {
-  //   const second = parseFloat((i * 0.1).toFixed(1));
-  //   const base = 740 + Math.sin(i / 15) * 25; // original: 자연스러운 곡선
-  //   const played = base + (Math.random() - 0.5) * 12; // played: ±6 오차
-
-  //   return {
-  //     second,
-  //     original: Math.round(base),
-  //     played: Math.round(played),
-  //   };
-  // });
-
-  //데이터 포멧 변환(noteData: ai에서 분석하여 넘어오는 json 데이터)
+  const songName = "오늘만 I LOVE YOU";
+  const uploadCount = 1;
+  
   const formatChartData = (noteData) => {
     return noteData.map((note) => ({
       second: parseFloat(note.note_start.toFixed(2)), // X축
@@ -45,11 +33,40 @@ export default function Feedback() {
 
   const chartData = formatChartData(graphData.note_by_note);
 
+  useEffect(() => {
+    const fetchSpecificRecord = async () => {
+      try {
+        const response = await axios.get("/mypage/records/specific", {
+          params: {
+            uid,
+            song_name: songName,
+            upload_count: uploadCount,
+          },
+        });
+        setRecord(response.data);
+      } catch (error) {
+        console.error("특정 연습 기록 조회 실패:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (uid) fetchSpecificRecord();
+    else {
+      console.warn("uid가 없습니다.");
+      setLoading(false);
+    }
+  }, [uid, songName, uploadCount]);
+
+  
+
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="flex">
-        <div className="w-[210px] h-[770px] bg-[#463936] text-white p-4 flex flex-col justify-between">
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
@@ -79,83 +96,68 @@ export default function Feedback() {
         </div>
 
         {/* 메인 컨텐츠 */}
-        <div className="w-full mt-12 ml-[50px]">
-          {/* 곡 박스 & 실력 향상 그래프 박스 나란히 배치 */}
-          <div className="flex flex-row mt-2 ml-2 gap-12 items-start">
-            <div className="mt-3">
-              {recentSongs.map((song, index) => (
-                <Box key={index} width="220px" height="288px">
-                  <div className="flex justify-center items-center mt-3">
-                    <img
-                      src={song.image}
-                      alt="Album Cover"
-                      className="w-[200px] h-[200px] mt-4 object-cover"
-                    />
+
+        <div className="w-full pr-6">
+          <div className="flex flex-row mt-1 ml-24 gap-6 items-start">
+            <div className="flex-1 mt-28 max-w-[260px]">
+              <Box width="96.5%" height="400px" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto">
+                <div className="flex justify-center items-center mt-3">
+                  <img src={recentSong.image} alt="Album Cover" className="w-[200px] h-[200px] mt-4 object-cover" />
+                </div>
+                <div className="flex items-center justify-between px-4 mt-2">
+                  <div className="flex flex-col w-full">
+                    <span className="text-lg font-semibold truncate">{recentSong.title}</span>
+                    <span className="text-lg mt-[-4px] truncate">{recentSong.artist}</span>
                   </div>
-                  <div className="flex items-center justify-between px-4 mt-2">
-                    <div className="flex flex-col w-[140px]">
-                      <span className="text-lg font-semibold truncate">
-                        {song.title}
-                      </span>
-                      <span className="text-lg mt-[-4px] truncate">
-                        {song.artist}
-                      </span>
-                    </div>
-                  </div>
-                </Box>
-              ))}
+                </div>
+              </Box>
             </div>
 
-            <Box width="750px" height="340px" className="mt-[-10px]">
-              <div className="ml-4 mt-5">
-                <span className="font-bold text-[16px] block">
-                  연주 분석 그래프
-                </span>
-              </div>
-              <PerformanceChart
-                data={chartData}
-                alt="연주 분석 그래프"
-                className="mt-6 ml-12 w-[600px]"
-              />
-            </Box>
+            <div className="flex-[2] ml-16 mt-12">
+              <Box width="99%" height="100%" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto">
+                <div className="ml-4 mt-5">
+                  <span className="font-bold text-[16px] block">연주 분석 그래프</span>
+                </div>
+                <PerformanceChart data={chartData} className="w-full h-full" />
+              </Box>
+            </div>
           </div>
 
-          <div className="flex flex-row mt-10 gap-10">
-            {/* 분석 박스 */}
-            <Box width="235px" height="280px">
-              <div className="ml-4 mt-7">
-                <p className="text-lg font-semibold">{recentSongs[0].title}</p>
-                <p className="text-sm text-gray-500">{recentSongs[0].artist}</p>
-                <div className="ml-0 mt-5">
-                  <p className="text-blue-500">템포: {record.tempo}%</p>
-                  <div
-                    className="bg-blue-500 h-3 rounded-full"
-                    style={{ width: `${record.tempo}%` }}
-                  ></div>
-                  <p className="text-green-500 mt-5">박자: {record.rhythm}%</p>
-                  <div
-                    className="bg-green-500 h-3 rounded-full"
-                    style={{ width: `${record.rhythm}%` }}
-                  ></div>
-                  <p className="text-red-500 mt-5">음정: {record.pitch}%</p>
-                  <div
-                    className="bg-red-500 h-3 rounded-full"
-                    style={{ width: `${record.pitch}%` }}
-                  ></div>
+          <div className="flex flex-row ml-20 mt-20 gap-6">
+            <div className="flex-1 max-w-[260px]">
+              <Box width="110%" height="295%" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto">
+                <div className="ml-4 mt-7">
+                  <p className="text-lg font-semibold">{recentSong.title}</p>
+                  <p className="text-sm text-gray-500">{recentSong.artist}</p>
+                  {loading ? (
+                    <p className="mt-6 text-blue-300">로딩 중...</p>
+                  ) : record ? (
+                    <div className="ml-0 mt-5">
+                      <p className="text-blue-500">템포: {record.tempo}%</p>
+                      <div className="bg-blue-500 h-3 rounded-full" style={{ width: `${record.tempo}%` }}></div>
+                      <p className="text-green-500 mt-5">박자: {record.rhythm}%</p>
+                      <div className="bg-green-500 h-3 rounded-full" style={{ width: `${record.rhythm}%` }}></div>
+                      <p className="text-red-500 mt-5">음정: {record.pitch}%</p>
+                      <div className="bg-red-500 h-3 rounded-full" style={{ width: `${record.pitch}%` }}></div>
+                    </div>
+                  ) : (
+                    <p className="mt-6 text-red-500">기록을 찾을 수 없습니다.</p>
+                  )}
                 </div>
-              </div>
-            </Box>
+              </Box>
+            </div>
 
-            {/* 피드백 박스 */}
-            <Box width="750px" height="280px">
-              <div className="ml-4 mt-5">
-                <span className="font-bold text-[16px] block">Feedback</span>
-                <ul className="list-disc pl-5 mt-5">
-                  <li>박자가 빨라요</li>
-                  <li>음정이 맞지 않아요 - 튜닝이 필요해요!</li>
-                </ul>
-              </div>
-            </Box>
+            <div className="flex-[2 ml-20">
+              <Box width="480%" height="295%" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto">
+                <div className="ml-4 mt-5">
+                  <span className="font-bold text-[16px] block">Feedback</span>
+                  <ul className="list-disc pl-5 mt-5">
+                    <li>박자가 빨라요</li>
+                    <li>음정이 맞지 않아요 - 튜닝이 필요해요!</li>
+                  </ul>
+                </div>
+              </Box>
+            </div>
           </div>
         </div>
       </div>
