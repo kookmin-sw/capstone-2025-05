@@ -1,0 +1,250 @@
+{
+    "note_by_note": [
+        {
+            "note_start": 0.0,
+            "user_pitch": 694.848493,
+            "original_pitch": 714.567546,
+            "pitch_difference": 19.719053,
+            "technique_match": true,
+            "user_techniques": ["bend"],
+            "original_techniques": ["bend"]
+        },
+        {
+            "note_start": 0.320913,
+            "user_pitch": 660.711192,
+            "original_pitch": 680.056143,
+            "pitch_difference": 19.344951,
+            "technique_match": true,
+            "user_techniques": ["bend"],
+            "original_techniques": ["bend"]
+        },
+        {
+            "note_start": 0.827586,
+            "user_pitch": 741.758373,
+            "original_pitch": 750.408198,
+            "pitch_difference": 8.649825,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 1.034482,
+            "user_pitch": 882.12518,
+            "original_pitch": 876.947803,
+            "pitch_difference": 5.177377,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 1.241379,
+            "user_pitch": 629.831102,
+            "original_pitch": 598.63864,
+            "pitch_difference": 31.192462,
+            "technique_match": false,
+            "user_techniques": ["normal"],
+            "original_techniques": ["vibrato"]
+        },
+        {
+            "note_start": 1.655172,
+            "user_pitch": 693.864284,
+            "original_pitch": 712.93415,
+            "pitch_difference": 19.069867,
+            "technique_match": true,
+            "user_techniques": ["bend"],
+            "original_techniques": ["bend"]
+        },
+        {
+            "note_start": 1.976085,
+            "user_pitch": 666.452455,
+            "original_pitch": 676.547147,
+            "pitch_difference": 10.094692,
+            "technique_match": false,
+            "user_techniques": ["normal"],
+            "original_techniques": ["bend"]
+        },
+        {
+            "note_start": 2.482758,
+            "user_pitch": 742.761037,
+            "original_pitch": 757.344561,
+            "pitch_difference": 14.583523,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 2.689655,
+            "user_pitch": 882.337165,
+            "original_pitch": 884.158212,
+            "pitch_difference": 1.821046,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 2.896551,
+            "user_pitch": 585.022668,
+            "original_pitch": 599.647341,
+            "pitch_difference": 14.624673,
+            "technique_match": false,
+            "user_techniques": ["normal"],
+            "original_techniques": ["vibrato"]
+        },
+        {
+            "note_start": 3.343673,
+            "user_pitch": 978.223235,
+            "original_pitch": 985.143363,
+            "pitch_difference": 6.920128,
+            "technique_match": true,
+            "user_techniques": ["hammer"],
+            "original_techniques": ["hammer"]
+        },
+        {
+            "note_start": 3.517241,
+            "user_pitch": 883.38654,
+            "original_pitch": 881.464939,
+            "pitch_difference": 1.921602,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 3.724137,
+            "user_pitch": 778.856419,
+            "original_pitch": 783.60783,
+            "pitch_difference": 4.751412,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 3.931034,
+            "user_pitch": 738.563034,
+            "original_pitch": 734.376097,
+            "pitch_difference": 4.186937,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 4.13793,
+            "user_pitch": 671.413147,
+            "original_pitch": 664.810653,
+            "pitch_difference": 6.602494,
+            "technique_match": true,
+            "user_techniques": ["hammer"],
+            "original_techniques": ["hammer"]
+        },
+        {
+            "note_start": 4.344826,
+            "user_pitch": 738.652795,
+            "original_pitch": 740.105165,
+            "pitch_difference": 1.45237,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 4.551723,
+            "user_pitch": 779.569334,
+            "original_pitch": 777.969728,
+            "pitch_difference": 1.599605,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 4.75862,
+            "user_pitch": 657.649001,
+            "original_pitch": 660.782765,
+            "pitch_difference": 3.133765,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 4.965516,
+            "user_pitch": 737.996684,
+            "original_pitch": 737.781853,
+            "pitch_difference": 0.214831,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 5.172413,
+            "user_pitch": 669.958719,
+            "original_pitch": 657.711732,
+            "pitch_difference": 12.246986,
+            "technique_match": false,
+            "user_techniques": ["hammer"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 5.379309,
+            "user_pitch": 738.003614,
+            "original_pitch": 738.231111,
+            "pitch_difference": 0.227498,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 5.586206,
+            "user_pitch": 883.254965,
+            "original_pitch": 859.723978,
+            "pitch_difference": 23.530987,
+            "technique_match": true,
+            "user_techniques": ["normal"],
+            "original_techniques": ["normal"]
+        },
+        {
+            "note_start": 5.700222,
+            "user_pitch": 1081.295531,
+            "original_pitch": 1129.444746,
+            "pitch_difference": 48.149216,
+            "technique_match": false,
+            "user_techniques": ["normal"],
+            "original_techniques": ["hammer", "vibrato"]
+        }
+    ],
+    "tempo_comparison": {
+        "user_tempo": 143.55,
+        "original_tempo": 136.0,
+        "midi_tempo": 145.0,
+        "user_tempo_difference": 1.45,
+        "original_tempo_difference": 9.0
+    },
+    "onset_differences": {
+        "user_vs_midi": [
+            0.09, 0.09, 0.30, 0.01, 0.10, 0.24, 0.13, 0.24, 0.31, 0.38,
+            0.53, 0.35, 0.44, 0.45, 0.34, 0.25, 0.34, 0.25, 0.34, 0.25,
+            0.39, 0.26, 0.32, 0.23, 0.40, 0.25, 0.40, 0.23, 0.33, 0.24,
+            0.31, 0.40
+        ],
+        "original_vs_midi": [
+            0.11, 0.01, 0.01, 0.20, 0.04, 0.03, 0.08, 0.06, 0.08, 0.08,
+            0.15, 0.09, 0.02, 0.01, 0.03, 0.03, 0.04, 0.07, 0.01, 0.10,
+            0.04, 0.08, 0.04, 0.02, 0.05, 0.07, 0.05, 0.07, 0.05, 0.06,
+            0.05, 0.02
+        ]
+    },
+    "summary": {
+        "note_by_note": {
+            "average_pitch_difference": 11.439614260869565,
+            "technique_match_rate": 0.782608695652174
+        },
+        "onset_differences": {
+            "user_vs_midi": {
+                "average": 0.2875,
+                "max": 0.53,
+                "min": 0.01
+            },
+            "original_vs_midi": {
+                "average": 0.05625,
+                "max": 0.20,
+                "min": 0.01
+            }
+        }
+    }
+}
