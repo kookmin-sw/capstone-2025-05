@@ -21,6 +21,20 @@ class PracticeSongComponent : public juce::Component,
                               public AudioModel::Listener  // 모델 변경 감지를 위한 리스너 추가
 {
 public:
+    // 분석 스레드 클래스에 대한 전방 선언
+    class AnalysisThread;
+    // Thread::Listener를 상속받는 클래스 선언 (세미콜론 제거)
+    class AnalysisThreadListener : public juce::Thread::Listener
+    {
+    public:
+        AnalysisThreadListener(PracticeSongComponent& owner, AnalysisThread* thread);
+        void exitSignalSent() override;
+    
+    private:
+        PracticeSongComponent& component;
+        AnalysisThread* analysisThread;
+    };
+    
     PracticeSongComponent(MainComponent& mainComponent);
     ~PracticeSongComponent() override;
     

@@ -1,11 +1,13 @@
 #include "PracticeSongComponent.h"
 #include "MainComponent.h"
+
 #include "View/TopBar.h"
 #include "View/CenterPanel.h"
 #include "View/LeftPanel.h"
 #include "View/RightPanel.h"
 
-// 간소화된 RecordingThumbnail 클래스 구현
+#include "EnvLoader.h"
+
 class RecordingThumbnail : public juce::Component,
                           private juce::ChangeListener
 {
@@ -541,27 +543,282 @@ bool PracticeSongComponent::isRecording() const
     return audioRecorder && audioRecorder->isRecording();
 }
 
+// 분석 스레드 클래스 선언
+class PracticeSongComponent::AnalysisThread : public juce::ThreadWithProgressWindow
+{
+public:
+    AnalysisThread(PracticeSongComponent* owner, juce::String url, juce::File recording)
+        : juce::ThreadWithProgressWindow("Analyzing Recording...", true, true),
+          component(owner), 
+          serverUrl(url),
+          audioFile(recording)
+    {
+    }
+    
+    void run() override
+    {
+        // 프로그레스 바 업데이트
+        setProgress(0.1);
+        setStatusMessage("Reading audio file...");
+        
+        // 오디오 파일 존재 확인
+        if (!audioFile.existsAsFile())
+        {
+            setStatusMessage("Error: Audio file not found!");
+            juce::Thread::sleep(1500);
+            return;
+        }
+        
+        // 파일 데이터를 메모리 블록으로 읽기
+        juce::MemoryBlock fileData;
+        if (!audioFile.loadFileAsData(fileData))
+        {
+            setStatusMessage("Error: Could not read audio file!");
+            juce::Thread::sleep(1500);
+            return;
+        }
+        
+        setProgress(0.3);
+        setStatusMessage("Sending data to analysis server...");
+        
+        // 통신 상태 디버깅을 위한 로그 추가
+        DBG("Connecting to server: " + serverUrl);
+        
+        try {
+            // 파이썬 코드처럼 URL Parameters 사용 방식으로 변경
+            juce::URL url(serverUrl);
+            
+            // URL 쿼리 파라미터로 설정 (파이썬의 params 처럼)
+            url = url.withParameter("user_id", "desktop_user");
+            url = url.withParameter("song_id", "current_song");
+            url = url.withParameter("generate_feedback", "true");
+            
+            DBG("Full URL with parameters: " + url.toString(true));
+            
+            // 멀티파트 폼 데이터 구성을 간소화
+            juce::StringPairArray responseHeaders;
+            int statusCode = 0;
+            
+            // POST 요청 생성 (파일 첨부)
+            url = url.withFileToUpload("file", audioFile, "audio/wav");
+            
+            setProgress(0.5);
+            setStatusMessage("Sending audio to server...");
+            
+            // 요청 전송 - InputStreamOptions를 사용하고 필요한 옵션 설정
+            auto options = juce::URL::InputStreamOptions(juce::URL::ParameterHandling::inAddress)
+                                .withResponseHeaders(&responseHeaders)
+                                .withStatusCode(&statusCode)
+                                .withConnectionTimeoutMs(30000);  // 30초 타임아웃
+            
+            std::unique_ptr<juce::InputStream> input = url.createInputStream(options);
+            
+            // 응답 처리
+            if (input == nullptr)
+            {
+                DBG("Connection failed. Status code: " + juce::String(statusCode));
+                DBG("Response headers: " + responseHeaders.getDescription());
+                
+                setStatusMessage("Error: Failed to connect to the server! Code: " + juce::String(statusCode));
+                juce::Thread::sleep(1500);
+                return;
+            }
+            
+            DBG("Connection successful. Status code: " + juce::String(statusCode));
+            
+            // 응답 헤더 디버깅
+            DBG("Response headers:");
+            for (auto& key : responseHeaders.getAllKeys())
+            {
+                DBG("  " + key + ": " + responseHeaders[key]);
+            }
+            
+            setProgress(0.7);
+            setStatusMessage("Processing response...");
+            
+            // 응답 읽기
+            juce::String response = input->readEntireStreamAsString();
+            DBG("Response content (first 200 chars): " + response.substring(0, 200));
+            
+            // JSON 응답 파싱
+            juce::var jsonResponse = juce::JSON::parse(response);
+            
+            // 작업 ID 추출
+            juce::String taskId;
+            if (jsonResponse.hasProperty("task_id"))
+            {
+                taskId = jsonResponse["task_id"].toString();
+                DBG("Task ID received: " + taskId);
+            }
+            else
+            {
+                DBG("Invalid response: no task_id found. Response: " + response);
+                setStatusMessage("Error: Invalid response from server!");
+                juce::Thread::sleep(1500);
+                return;
+            }
+            
+            // 작업 상태 폴링
+            int attempts = 0;
+            const int maxAttempts = 30; // 최대 30번 시도 (30초)
+            
+            setProgress(0.8);
+            setStatusMessage("Waiting for analysis results...");
+            
+            while (attempts < maxAttempts)
+            {
+                if (threadShouldExit())
+                    return;
+                    
+                // 작업 상태 확인 요청
+                juce::URL statusUrl(serverUrl.upToLastOccurrenceOf("/analyze", false, false) + 
+                                  "/tasks/" + taskId);
+                
+                std::unique_ptr<juce::InputStream> statusInput = statusUrl.createInputStream(false);
+                
+                if (statusInput != nullptr)
+                {
+                    juce::String statusResponse = statusInput->readEntireStreamAsString();
+                    statusJson = juce::JSON::parse(statusResponse);
+                    
+                    if (statusJson.hasProperty("status"))
+                    {
+                        juce::String status = statusJson["status"].toString();
+                        
+                        // 진행률 업데이트
+                        if (statusJson.hasProperty("progress"))
+                        {
+                            float progress = static_cast<float>(static_cast<int>(statusJson["progress"])) / 100.0f;
+                            setProgress(0.8f + (progress * 0.2f));
+                            setStatusMessage("Analyzing: " + juce::String(static_cast<int>(progress * 100)) + "%");
+                        }
+                        
+                        if (status == "COMPLETED")
+                        {
+                            // 분석 완료
+                            analysisCompleted = true;
+                            return;
+                        }
+                        else if (status == "FAILED")
+                        {
+                            // 분석 실패
+                            errorMessage = "Analysis failed.";
+                            if (statusJson.hasProperty("error"))
+                            {
+                                errorMessage = statusJson["error"].toString();
+                            }
+                            return;
+                        }
+                    }
+                }
+                
+                attempts++;
+                wait(1000); // 1초 대기
+            }
+            
+            // 타임아웃
+            errorMessage = "The analysis is taking longer than expected. Please check the results later.";
+        }
+        catch (const std::exception& e)
+        {
+            DBG("Exception during server communication: " + juce::String(e.what()));
+            setStatusMessage("Error: Exception occurred during server communication!");
+            juce::Thread::sleep(1500);
+        }
+    }
+    
+    PracticeSongComponent* component;
+    juce::String serverUrl;
+    juce::File audioFile;
+    juce::var statusJson;
+    bool analysisCompleted = false;
+    juce::String errorMessage;
+};
+
+// AnalysisThreadListener 클래스 구현 (이미 헤더에 선언되어 있음)
+PracticeSongComponent::AnalysisThreadListener::AnalysisThreadListener(PracticeSongComponent& owner, PracticeSongComponent::AnalysisThread* thread)
+    : component(owner), analysisThread(thread)
+{
+}
+
+void PracticeSongComponent::AnalysisThreadListener::exitSignalSent()
+{
+    // 메인 UI 스레드에서 결과를 표시하도록 변경
+    if (analysisThread->analysisCompleted)
+    {
+        DBG("[ANALYSIS] Thread completed, results ready to display");
+        
+        if (analysisThread->statusJson.isVoid())
+        {
+            DBG("[ANALYSIS] ERROR: statusJson is void!");
+            
+            // UI 스레드에서 오류 메시지 표시
+            juce::MessageManager::callAsync([this]() {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                                      "Analysis Failed",
+                                                      "The analysis completed but no data was returned.",
+                                                      "OK");
+                delete this;
+            });
+            return;
+        }
+        
+        DBG("[ANALYSIS] Successful analysis detected");
+        
+        juce::MessageManager::callAsync([this]() {
+            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
+                                                 "Analysis Complete",
+                                                 "The analysis has been completed successfully.",
+                                                 "OK");
+            delete this;
+        });
+    }
+    else if (analysisThread->errorMessage.isNotEmpty())
+    {
+        DBG("[ANALYSIS] Thread failed: " + analysisThread->errorMessage);
+        
+        juce::String errorMsg = analysisThread->errorMessage;
+        
+        juce::MessageManager::callAsync([this, errorMsg]() {
+            juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                                 "Analysis Failed",
+                                                 errorMsg,
+                                                 "OK");
+            delete this;
+        });
+    }
+    else 
+    {
+        // 예상치 못한 상황에서도 리스너는 정리
+        DBG("[ANALYSIS] Thread finished but no result or error message set");
+        delete this;
+    }
+}
+
 void PracticeSongComponent::analyzeRecording()
 {
     if (!lastRecording.existsAsFile())
     {
         DBG("No recorded file to analyze.");
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                              "Analysis Error",
+                                              "No recording file found. Please record audio first.",
+                                              "OK");
         return;
     }
     
-    // 서버에 분석 요청할 URL
-    juce::String serverUrl = "http://localhost:8000/analyze";
+    DBG("[ANALYSIS] Starting analysis with file: " + lastRecording.getFullPathName());
     
-    // The server is not ready yet, so just print a message for now
-    DBG("Audio analysis request: " + lastRecording.getFullPathName());
-    DBG("Server URL: " + serverUrl);
-    DBG("Actual analysis request will be implemented when the server is ready.");
+    juce::String serverUrl = EnvLoader::get("MAPLE_ANALYSIS_API_URL") + "analyze";
+    
+    #ifdef JUCE_DEBUG
+    serverUrl = "http://localhost:8000/api/v1/analyze";
+    #endif
+    
+    auto analysisThread = new AnalysisThread(this, serverUrl, lastRecording);
+    
+    analysisThread->setStatusMessage("Preparing analysis...");
+    analysisThread->launchThread();
 
-    // You can add UI elements to display the analysis result.
-    // For now, just show a simple message box
-    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon,
-                                         "Audio Analysis",
-                                         "The recorded audio file will be sent to the server for analysis.\n"
-                                         "This feature will be enabled when the server is ready.",
-                                         "OK");
+    analysisThread->addListener(new AnalysisThreadListener(*this, analysisThread));
 }

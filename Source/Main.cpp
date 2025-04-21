@@ -1,5 +1,6 @@
 #include <JuceHeader.h>
 #include "MainComponent.h"
+#include "EnvLoader.h"
 
 // 윈도우(창) 클래스
 class MainWindow : public juce::DocumentWindow
@@ -18,6 +19,15 @@ public:
 
     void closeButtonPressed() override
     {
+        // Make sure to close all components before quitting
+        setVisible(false);
+        
+        // Call the prepareToClose method on MainComponent
+        if (auto* mainComp = dynamic_cast<MainComponent*>(getContentComponent()))
+            mainComp->prepareToClose();
+            
+        clearContentComponent();
+        
         // 창 닫으면 애플리케이션 종료
         juce::JUCEApplicationBase::quit();
     }
@@ -35,11 +45,20 @@ public:
 
     void initialise (const juce::String&) override
     {
+        EnvLoader::load();
         mainWindow.reset (new MainWindow());
     }
 
     void shutdown() override
     {
+        // Ensure all components are released before destroying the main window
+        if (mainWindow != nullptr)
+        {
+            mainWindow->setVisible(false);
+            mainWindow->clearContentComponent();
+        }
+        
+        // Now safely release the main window
         mainWindow = nullptr;
     }
 

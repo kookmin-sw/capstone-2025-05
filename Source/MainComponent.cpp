@@ -91,3 +91,31 @@ void MainComponent::showPracticeScreen()
     practiceSongComponent->setVisible(true);
     resized();
 }
+
+void MainComponent::prepareToClose()
+{
+    // Stop any ongoing audio processes
+    deviceManager.closeAudioDevice();
+    
+    // Clean up PracticeSongComponent if it exists
+    if (practiceSongComponent)
+    {
+        // Remove from parent before deletion
+        removeChildComponent(practiceSongComponent.get());
+        practiceSongComponent = nullptr;
+    }
+    
+    // Clean up other components
+    removeChildComponent(headerComponent.get());
+    removeChildComponent(mainActionComponent.get());
+    removeChildComponent(contentPanelComponent.get());
+    removeChildComponent(bottomComponent.get());
+    
+    headerComponent = nullptr;
+    mainActionComponent = nullptr;
+    contentPanelComponent = nullptr;
+    bottomComponent = nullptr;
+    
+    // Clean up controllers
+    contentController = nullptr;
+}

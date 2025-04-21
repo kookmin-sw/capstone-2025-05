@@ -26,6 +26,9 @@ public:
     
     // 디바이스 매니저 접근자 (나중에 AudioController로 완전히 이동 예정)
     juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
+    
+    // 앱 종료 전 정리 메서드 추가
+    void prepareToClose();
 
 private:
     // 오디오 관련 - 나중에 AudioController로 이동 예정
