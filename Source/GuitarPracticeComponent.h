@@ -3,6 +3,7 @@
 #include "Model/AudioModel.h"
 #include "Model/IAudioModelListener.h"
 #include "Controller/GuitarPracticeController.h"
+#include "Event/IEventListener.h"
 #include "View/TopBar.h"
 #include "View/CenterPanel.h"
 #include "View/LeftPanel.h"
@@ -18,7 +19,8 @@ class MainComponent;  // 전방 선언
 // GuitarPracticeComponent - 기타 연습 기능의 View 역할
 // MVC 패턴 중 View 역할만 담당하며, 비즈니스 로직은 Controller에 위임
 class GuitarPracticeComponent : public juce::Component,
-                               public IAudioModelListener  // 새로운 인터페이스 구현
+                               public IAudioModelListener,  // 오디오 모델 리스너
+                               public IEventListener       // 이벤트 시스템 리스너
 {
 public:
     GuitarPracticeComponent(MainComponent& mainComponent);
@@ -31,6 +33,9 @@ public:
     void onPlayStateChanged(bool isPlaying) override;
     void onVolumeChanged(float newVolume) override;
     void onPositionChanged(double positionInSeconds) override;
+    
+    // IEventListener 인터페이스 구현
+    bool onEvent(const Event& event) override;
     
     // 곡 선택 관련 메서드 (UI에서 호출됨)
     void loadSong(const juce::String& songId);
@@ -47,6 +52,12 @@ public:
     void updateUI();
     
 private:
+    // 이벤트 핸들러 메서드
+    void handleAnalysisCompleteEvent(const AnalysisCompleteEvent& event);
+    void handleAnalysisFailedEvent(const AnalysisFailedEvent& event);
+    void handleSongLoadedEvent(const SongLoadedEvent& event);
+    void handleSongLoadFailedEvent(const SongLoadFailedEvent& event);
+    
     // View에서는 UI 관련 작업만 처리
     void updatePlaybackState(bool isNowPlaying);
     void updateVolumeDisplay(float volume);

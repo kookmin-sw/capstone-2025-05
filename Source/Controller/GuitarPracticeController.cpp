@@ -81,8 +81,11 @@ bool GuitarPracticeController::loadSong(const juce::String& songId)
         filePath = "D:/audio_dataset/recording/song4/song4.gp5";
     else if (songId == "song5")
         filePath = "D:/audio_dataset/recording/song5/song5.gp5";
-    else
-        return false; // 지원하지 않는 곡 ID
+    else {
+        // 지원하지 않는 곡 ID - 이벤트 발행
+        publishSongLoadFailedEvent(songId, "Unsupported song ID");
+        return false;
+    }
     
     // 파일 존재 여부 확인
     juce::File gpFile(filePath);
@@ -95,6 +98,8 @@ bool GuitarPracticeController::loadSong(const juce::String& songId)
                                            comments, lyric, tempoValue, globalKeySignature, channels,
                                            measures, trackCount, measureHeaders, tracks));
         
+        // 이벤트 발행 - 파일은 없지만 빈 탭 생성 완료
+        publishSongLoadedEvent(songId);
         return true;
     }
     
@@ -141,18 +146,22 @@ bool GuitarPracticeController::loadSong(const juce::String& songId)
         }
         catch (const std::exception& e) {
             DBG("Error in parser.getTabFile() or player.setTabFile(): " + juce::String(e.what()));
+            publishSongLoadFailedEvent(songId, "Error parsing file: " + juce::String(e.what()));
             return false;
         }
         
         DBG("Song loaded successfully: " + songId);
+        publishSongLoadedEvent(songId);
         return true;
     }
     catch (const std::exception& e) {
         DBG("Error loading song: " + juce::String(e.what()));
+        publishSongLoadFailedEvent(songId, "Error loading file: " + juce::String(e.what()));
         return false;
     }
     catch (...) {
         DBG("Unknown error loading song");
+        publishSongLoadFailedEvent(songId, "Unknown error loading file");
         return false;
     }
 }
@@ -437,18 +446,7 @@ void GuitarPracticeController::handleAnalysisThreadComplete()
     if (currentAnalysisThread->threadShouldExit())
     {
         DBG("[ANALYSIS] Thread was cancelled");
-        
-        if (view)
-        {
-            juce::MessageManager::callAsync([this]() {
-                juce::AlertWindow::showMessageBoxAsync(
-                    juce::AlertWindow::InfoIcon,
-                    "Analysis Cancelled",
-                    "The analysis was cancelled.",
-                    "OK"
-                );
-            });
-        }
+        publishAnalysisFailedEvent("Analysis was cancelled by the user");
     }
     else if (currentAnalysisThread->analysisCompleted)
     {
@@ -457,23 +455,16 @@ void GuitarPracticeController::handleAnalysisThreadComplete()
         if (currentAnalysisThread->statusJson.isVoid())
         {
             DBG("[ANALYSIS] ERROR: statusJson is void!");
-            
-            if (view)
-            {
-                juce::MessageManager::callAsync([this]() {
-                    juce::AlertWindow::showMessageBoxAsync(
-                        juce::AlertWindow::WarningIcon,
-                        "Analysis Failed",
-                        "The analysis completed but no data was returned.",
-                        "OK"
-                    );
-                });
-            }
+            publishAnalysisFailedEvent("The analysis completed but no data was returned");
         }
         else
         {
             DBG("[ANALYSIS] Successful analysis detected");
             
+            // 이벤트 발행: 분석 결과를 EventBus를 통해 전송
+            publishAnalysisCompleteEvent(currentAnalysisThread->statusJson);
+            
+            // 기존 방식 - UI 직접 업데이트 (이벤트 기반 방식 적용 중에 중복으로 일단 유지)
             if (view)
             {
                 juce::MessageManager::callAsync([this]() {
@@ -491,6 +482,10 @@ void GuitarPracticeController::handleAnalysisThreadComplete()
     {
         DBG("[ANALYSIS] Thread failed: " + currentAnalysisThread->errorMessage);
         
+        // 이벤트 발행: 분석 실패를 EventBus를 통해 전송
+        publishAnalysisFailedEvent(currentAnalysisThread->errorMessage);
+        
+        // 기존 방식 - UI 직접 업데이트 (이벤트 기반 방식 적용 중에 중복으로 일단 유지)
         if (view)
         {
             juce::String errorMsg = currentAnalysisThread->errorMessage;
@@ -508,7 +503,9 @@ void GuitarPracticeController::handleAnalysisThreadComplete()
     else
     {
         DBG("[ANALYSIS] Thread finished with unknown status");
+        publishAnalysisFailedEvent("The analysis process completed, but the result is unknown");
         
+        // 기존 방식 - UI 직접 업데이트 (이벤트 기반 방식 적용 중에 중복으로 일단 유지)
         if (view)
         {
             juce::MessageManager::callAsync([this]() {
@@ -543,4 +540,40 @@ void GuitarPracticeController::AnalysisTimer::timerCallback()
         controller.handleAnalysisThreadComplete();
         stopTimer();
     }
+}
+
+void GuitarPracticeController::publishAnalysisCompleteEvent(const juce::var& result)
+{
+    // 분석 완료 이벤트 생성 및 발행
+    auto event = std::make_shared<AnalysisCompleteEvent>(result);
+    EventBus::getInstance().publishOnMainThread(event);
+    
+    DBG("GuitarPracticeController: Published AnalysisCompleteEvent");
+}
+
+void GuitarPracticeController::publishAnalysisFailedEvent(const juce::String& errorMessage)
+{
+    // 분석 실패 이벤트 생성 및 발행
+    auto event = std::make_shared<AnalysisFailedEvent>(errorMessage);
+    EventBus::getInstance().publishOnMainThread(event);
+    
+    DBG("GuitarPracticeController: Published AnalysisFailedEvent: " + errorMessage);
+}
+
+void GuitarPracticeController::publishSongLoadedEvent(const juce::String& songId)
+{
+    // 곡 로드 완료 이벤트 생성 및 발행
+    auto event = std::make_shared<SongLoadedEvent>(songId);
+    EventBus::getInstance().publishOnMainThread(event);
+    
+    DBG("GuitarPracticeController: Published SongLoadedEvent for song: " + songId);
+}
+
+void GuitarPracticeController::publishSongLoadFailedEvent(const juce::String& songId, const juce::String& errorMessage)
+{
+    // 곡 로드 실패 이벤트 생성 및 발행
+    auto event = std::make_shared<SongLoadFailedEvent>(songId, errorMessage);
+    EventBus::getInstance().publishOnMainThread(event);
+    
+    DBG("GuitarPracticeController: Published SongLoadFailedEvent for song: " + songId + ", error: " + errorMessage);
 }

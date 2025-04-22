@@ -3,6 +3,7 @@
 #include "../Model/AudioModel.h"
 #include "../TabPlayer.h"
 #include "../gp_parser.h"
+#include "../Event/EventBus.h"
 
 // 전방 선언
 class GuitarPracticeComponent;
@@ -48,6 +49,12 @@ public:
 private:
     // 분석 스레드 결과 처리 메서드
     void handleAnalysisThreadComplete();
+    
+    // 이벤트 발행 헬퍼 메서드
+    void publishAnalysisCompleteEvent(const juce::var& result);
+    void publishAnalysisFailedEvent(const juce::String& errorMessage);
+    void publishSongLoadedEvent(const juce::String& songId);
+    void publishSongLoadFailedEvent(const juce::String& songId, const juce::String& errorMessage);
     
     // 모델 및 뷰 참조
     AudioModel& audioModel;

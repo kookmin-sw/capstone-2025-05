@@ -27,8 +27,16 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     // 새 인터페이스를 사용하여 모델에 등록
     audioModel.addListener(this);
     
+    // 컨트롤러 초기화 
     controller = std::make_unique<GuitarPracticeController>(audioModel, deviceManager);
     controller->setView(this);
+    
+    // 이벤트 버스에 구독 등록
+    // 특정 이벤트 타입에만 관심이 있는 경우
+    EventBus::getInstance().subscribe(Event::Type::AnalysisComplete, this);
+    EventBus::getInstance().subscribe(Event::Type::AnalysisFailed, this);
+    EventBus::getInstance().subscribe(Event::Type::SongLoaded, this);
+    EventBus::getInstance().subscribe(Event::Type::SongLoadFailed, this);
     
     // 재생 버튼 초기화
     playButton.setButtonText("Play");
@@ -73,7 +81,7 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     // View 컴포넌트 초기화
     topBar = std::make_unique<TopBar>(*this);
     centerPanel = std::make_unique<CenterPanel>();
-    leftPanel = std::make_unique<LeftPanel>(audioModel); // Model 전달 (추후 인터페이스로 변경 예정)
+    leftPanel = std::make_unique<LeftPanel>(audioModel); 
     rightPanel = std::make_unique<RightPanel>();
     
     try {
@@ -98,6 +106,9 @@ GuitarPracticeComponent::~GuitarPracticeComponent()
 {
     // 모델에서 리스너 제거 (새 인터페이스 사용)
     audioModel.removeListener(this);
+    
+    // 이벤트 버스에서 구독 해제
+    EventBus::getInstance().unsubscribeFromAll(this);
     
     // 녹음기 제거
     if (audioRecorder)
@@ -274,4 +285,160 @@ void GuitarPracticeComponent::analyzeRecording()
                                               "No recording file found. Please record audio first.",
                                               "OK");
     }
+}
+
+// IEventListener 인터페이스 구현
+bool GuitarPracticeComponent::onEvent(const Event& event)
+{
+    // 이벤트 타입에 따라 적절한 핸들러 호출
+    switch (event.getType())
+    {
+        case Event::Type::AnalysisComplete:
+            handleAnalysisCompleteEvent(static_cast<const AnalysisCompleteEvent&>(event));
+            return true;
+            
+        case Event::Type::AnalysisFailed:
+            handleAnalysisFailedEvent(static_cast<const AnalysisFailedEvent&>(event));
+            return true;
+            
+        case Event::Type::SongLoaded:
+            handleSongLoadedEvent(static_cast<const SongLoadedEvent&>(event));
+            return true;
+            
+        case Event::Type::SongLoadFailed:
+            handleSongLoadFailedEvent(static_cast<const SongLoadFailedEvent&>(event));
+            return true;
+            
+        default:
+            // 다른 이벤트 타입은 무시
+            return false;
+    }
+}
+
+// 이벤트 핸들러 메서드들
+void GuitarPracticeComponent::handleAnalysisCompleteEvent(const AnalysisCompleteEvent& event)
+{
+    DBG("GuitarPracticeComponent: Handling AnalysisCompleteEvent");
+    
+    const juce::var& result = event.getResult();
+    
+    // 분석 결과를 UI에 표시
+    if (result.hasProperty("feedback") && result["feedback"].hasProperty("messages"))
+    {
+        juce::String feedbackText;
+        const auto& messages = result["feedback"]["messages"];
+        
+        if (auto* array = messages.getArray())
+        {
+            // 배열에서 메시지 추출
+            for (const auto& msg : *array)
+            {
+                if (msg.hasProperty("text"))
+                    feedbackText += "• " + msg["text"].toString() + "\n";
+            }
+        }
+        
+        // 메시지가 있으면 다이얼로그로 표시
+        if (feedbackText.isNotEmpty())
+        {
+            juce::MessageManager::callAsync([this, text = feedbackText]() {
+                auto* dialog = new juce::DialogWindow("Analysis Feedback", 
+                                                     juce::Colours::lightgrey,
+                                                     true, true);
+                                                     
+                auto* textEditor = new juce::TextEditor();
+                textEditor->setMultiLine(true);
+                textEditor->setReadOnly(true);
+                textEditor->setText(text);
+                textEditor->setSize(400, 300);
+                
+                dialog->setContentOwned(textEditor, true);
+                dialog->centreWithSize(450, 350);
+                dialog->setVisible(true);
+            });
+        }
+        else
+        {
+            // 피드백이 없는 경우 간단한 알림만 표시
+            juce::MessageManager::callAsync([this]() {
+                juce::AlertWindow::showMessageBoxAsync(
+                    juce::AlertWindow::InfoIcon,
+                    "Analysis Complete",
+                    "The analysis has been completed. No specific feedback available.",
+                    "OK"
+                );
+            });
+        }
+    }
+    else
+    {
+        // 피드백 구조가 없는 경우 간단한 알림만 표시
+        juce::MessageManager::callAsync([this]() {
+            juce::AlertWindow::showMessageBoxAsync(
+                juce::AlertWindow::InfoIcon,
+                "Analysis Complete",
+                "The analysis has been completed successfully.",
+                "OK"
+            );
+        });
+    }
+    
+    // 결과를 자세히 로깅 (디버깅용)
+    DBG("Analysis result JSON: " + juce::JSON::toString(result));
+}
+
+void GuitarPracticeComponent::handleAnalysisFailedEvent(const AnalysisFailedEvent& event)
+{
+    DBG("GuitarPracticeComponent: Handling AnalysisFailedEvent");
+    
+    // 실패 메시지를 UI에 표시
+    juce::String errorMessage = event.getErrorMessage();
+    
+    juce::MessageManager::callAsync([this, error = errorMessage]() {
+        juce::AlertWindow::showMessageBoxAsync(
+            juce::AlertWindow::WarningIcon,
+            "Analysis Failed",
+            error,
+            "OK"
+        );
+    });
+}
+
+void GuitarPracticeComponent::handleSongLoadedEvent(const SongLoadedEvent& event)
+{
+    DBG("GuitarPracticeComponent: Handling SongLoadedEvent for song: " + event.getSongId());
+    
+    // UI 업데이트
+    juce::MessageManager::callAsync([this]() {
+        playButton.setEnabled(true);
+        recordButton.setEnabled(true);
+        
+        // ScoreComponent 업데이트
+        if (scoreComponent != nullptr) {
+            try {
+                scoreComponent->updateScore();
+            }
+            catch (const std::exception& e) {
+                DBG("Error updating score component: " + juce::String(e.what()));
+            }
+        }
+    });
+}
+
+void GuitarPracticeComponent::handleSongLoadFailedEvent(const SongLoadFailedEvent& event)
+{
+    DBG("GuitarPracticeComponent: Handling SongLoadFailedEvent");
+    
+    // 실패 메시지를 UI에 표시
+    juce::String songId = event.getSongId();
+    juce::String errorMessage = event.getErrorMessage();
+    
+    juce::MessageManager::callAsync([this, song = songId, error = errorMessage]() {
+        juce::AlertWindow::showMessageBoxAsync(
+            juce::AlertWindow::WarningIcon,
+            "Failed to Load Song",
+            "Could not load song ID: " + song + "\nError: " + error,
+            "OK"
+        );
+    });
 }
