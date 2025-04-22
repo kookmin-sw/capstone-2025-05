@@ -1,7 +1,7 @@
 #include "ContentController.h"
-#include "../MainComponent.h"
-#include "../View/GuitarPracticeComponent.h"
-#include "../ContentPanelComponent.h"
+#include "MainComponent.h"
+#include "View/GuitarPracticeComponent.h"
+#include "View/ContentPanelComponent.h"
 
 // Controller가 Model 객체 참조를 가져오도록 수정
 ContentController::ContentController(ContentModel& model, MainComponent& mainComp, 

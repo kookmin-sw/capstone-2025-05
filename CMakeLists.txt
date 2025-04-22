@@ -85,6 +85,10 @@ target_sources(MapleClientDesktop PRIVATE
     Source/Model/gp_parser.h
     Source/Model/SpotifyService.cpp
     Source/Model/SpotifyService.h
+    Source/Model/RecordingThumbnail.cpp
+    Source/Model/RecordingThumbnail.h
+    Source/Model/AudioRecorder.cpp
+    Source/Model/AudioRecorder.h
     
     # View
     Source/View/MainComponent.cpp

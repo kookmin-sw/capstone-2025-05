@@ -1,9 +1,9 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../Model/AudioModel.h"
-#include "../Model/IAudioModelListener.h"
-#include "../Controller/GuitarPracticeController.h"
-#include "../Event/IEventListener.h"
+#include "Model/AudioModel.h"
+#include "Model/IAudioModelListener.h"
+#include "Controller/GuitarPracticeController.h"
+#include "Event/IEventListener.h"
 #include "TopBar.h"
 #include "CenterPanel.h"
 #include "LeftPanel.h"

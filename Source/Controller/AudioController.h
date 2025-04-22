@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../Model/AudioModel.h"
+#include "Model/AudioModel.h"
 
 class AudioController : public juce::AudioIODeviceCallback {
 public:

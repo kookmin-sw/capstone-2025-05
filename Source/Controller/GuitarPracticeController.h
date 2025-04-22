@@ -1,9 +1,9 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../Model/AudioModel.h"
-#include "../Model/TabPlayer.h"
-#include "../Model/gp_parser.h"
-#include "../Event/EventBus.h"
+#include "Model/AudioModel.h"
+#include "Model/TabPlayer.h"
+#include "Model/gp_parser.h"
+#include "Event/EventBus.h"
 
 // 전방 선언
 class GuitarPracticeComponent;

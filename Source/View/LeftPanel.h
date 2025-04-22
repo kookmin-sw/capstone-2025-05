@@ -1,7 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../Model/AudioModel.h"
-#include "../Model/IAudioModelListener.h"
+#include "Model/AudioModel.h"
+#include "Model/IAudioModelListener.h"
 
 class LeftPanel : public juce::Component, public IAudioModelListener {
 public:

@@ -1,6 +1,6 @@
 #include "GuitarPracticeComponent.h"
 #include "MainComponent.h"
-#include "../Controller/GuitarPracticeController.h"
+#include "Controller/GuitarPracticeController.h"
 
 #include "TopBar.h"
 #include "CenterPanel.h"
@@ -8,171 +8,11 @@
 #include "RightPanel.h"
 #include "ScoreComponent.h"
 
-#include "../Util/EnvLoader.h"
-#include "../Event/Event.h"
-#include "../Event/EventBus.h"
-
-// 녹음 관련 클래스들은 그대로 유지 (리팩토링 2단계에서 별도 파일로 이동 예정)
-class RecordingThumbnail : public juce::Component,
-                          private juce::ChangeListener
-{
-public:
-    RecordingThumbnail()
-    {
-        formatManager.registerBasicFormats();
-        thumbnailCache = std::make_unique<juce::AudioThumbnailCache>(10);
-        thumbnail = std::make_unique<juce::AudioThumbnail>(512, formatManager, *thumbnailCache);
-        thumbnail->addChangeListener(this);
-    }
-    
-    ~RecordingThumbnail() override
-    {
-        thumbnail->removeChangeListener(this);
-    }
-    
-    // 오디오 파일 설정
-    void setSource(const juce::File& audioFile)
-    {
-        thumbnail->setSource(new juce::FileInputSource(audioFile));
-    }
-    
-    // 오디오 썸네일 반환
-    juce::AudioThumbnail& getAudioThumbnail() 
-    { 
-        return *thumbnail; 
-    }
-    
-    void paint(juce::Graphics& g) override
-    {
-        g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-        g.setColour(juce::Colours::lightblue);
-        
-        if (thumbnail->getTotalLength() > 0.0)
-        {
-            auto bounds = getLocalBounds();
-            auto thumbArea = bounds.reduced(2);
-            thumbnail->drawChannels(g, thumbArea, 0.0, thumbnail->getTotalLength(), 1.0f);
-        }
-        else
-        {
-            g.setFont(14.0f);
-            g.drawFittedText("No recording loaded", getLocalBounds(), juce::Justification::centred, 2);
-        }
-    }
-    
-    void changeListenerCallback(juce::ChangeBroadcaster*) override
-    {
-        // 썸네일이 변경되면 리페인트
-        repaint();
-    }
-    
-private:
-    juce::AudioFormatManager formatManager;
-    std::unique_ptr<juce::AudioThumbnailCache> thumbnailCache;
-    std::unique_ptr<juce::AudioThumbnail> thumbnail;
-};
-
-class AudioRecorder : public juce::AudioIODeviceCallback
-{
-public:
-    AudioRecorder(juce::AudioThumbnail& thumbnailToUse)
-        : thumbnail(thumbnailToUse), backgroundThread("Audio Recorder Thread")
-    {
-        backgroundThread.startThread();
-        formatManager.registerBasicFormats();
-    }
-    
-    ~AudioRecorder() override
-    {
-        stop();
-        backgroundThread.stopThread(500);
-    }
-    
-    // 녹음 시작
-    void startRecording(const juce::File& file)
-    {
-        stop();
-        
-        if (file.existsAsFile())
-            file.deleteFile();
-            
-        if (auto fileStream = std::unique_ptr<juce::FileOutputStream>(file.createOutputStream()))
-        {
-            juce::WavAudioFormat wavFormat;
-            
-            if (auto writer = wavFormat.createWriterFor(fileStream.get(), 44100.0, 2, 16, {}, 0))
-            {
-                fileStream.release(); // writer가 파일을 소유
-                
-                threadedWriter.reset(new juce::AudioFormatWriter::ThreadedWriter(writer, backgroundThread, 32768));
-                
-                // 녹음 시작
-                nextSampleNum = 0;
-                isRecordingFlag = true;
-                
-                // 썸네일 초기화
-                thumbnail.reset(2, 44100.0);
-            }
-        }
-    }
-    
-    // 녹음 중지
-    void stop()
-    {
-        // 쓰기 중지
-        threadedWriter.reset();
-        isRecordingFlag = false;
-    }
-    
-    // 녹음 상태 확인
-    bool isRecording() const noexcept
-    {
-        return isRecordingFlag;
-    }
-    
-    void audioDeviceIOCallback(const float** inputChannelData, int numInputChannels,
-                              float** outputChannelData, int numOutputChannels, 
-                              int numSamples)
-    {
-        // 출력 채널 클리어
-        for (int i = 0; i < numOutputChannels; ++i)
-            if (outputChannelData[i] != nullptr)
-                juce::FloatVectorOperations::clear(outputChannelData[i], numSamples);
-                
-        // 녹음 중이면 데이터 저장
-        if (isRecordingFlag && threadedWriter != nullptr && numInputChannels > 0)
-        {
-            threadedWriter->write((const float**)inputChannelData, numSamples);
-            
-            // 썸네일 업데이트
-            juce::AudioBuffer<float> buffer(const_cast<float**>(inputChannelData), numInputChannels, numSamples);
-            thumbnail.addBlock(nextSampleNum, buffer, 0, numSamples);
-            nextSampleNum += numSamples;
-        }
-    }
-    
-    void audioDeviceAboutToStart(juce::AudioIODevice* device)
-    {
-        sampleRate = device->getCurrentSampleRate();
-    }
-    
-    void audioDeviceStopped()
-    {
-        // 필요시 녹음 중지
-        if (isRecordingFlag)
-            stop();
-    }
-    
-private:
-    juce::AudioFormatManager formatManager;
-    juce::TimeSliceThread backgroundThread;
-    std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter;
-    juce::AudioThumbnail& thumbnail;
-    
-    double sampleRate = 0.0;
-    juce::int64 nextSampleNum = 0;
-    bool isRecordingFlag = false;
-};
+#include "Model/RecordingThumbnail.h"
+#include "Model/AudioRecorder.h"
+#include "Util/EnvLoader.h"
+#include "Event/Event.h"
+#include "Event/EventBus.h"
 
 GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     : mainComponent(mainComp), deviceManager(mainComp.getDeviceManager())

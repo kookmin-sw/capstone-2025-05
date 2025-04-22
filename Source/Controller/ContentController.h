@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../Model/ContentModel.h"
+#include "Model/ContentModel.h"
 #include "View/ContentPanelComponent.h"  // ContentPanelComponent::SongSelectedListener 정의가 포함된 헤더 추가
 
 class MainComponent;
