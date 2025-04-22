@@ -7,7 +7,11 @@ import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Album from '../../Assets/Main/album/bndCover.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
-import graphData from '../../Data/maplegraph.json'; // AI에서 넘어오는 연주 데이터 나중에 바꿔주며됨
+import playdata from '../../Data/compare.json'; //여기에 음정,박자등을 불러오는 api 넣어
+import feedback from '../../Data/feedback_8583d5bf.json';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 export default function Feedback() {
   const record = {
@@ -20,30 +24,50 @@ export default function Feedback() {
     { title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR', image: Album },
   ];
 
-  // const chartData = Array.from({ length: 901 }, (_, i) => {
-  //   const second = parseFloat((i * 0.1).toFixed(1));
-  //   const base = 740 + Math.sin(i / 15) * 25; // original: 자연스러운 곡선
-  //   const played = base + (Math.random() - 0.5) * 12; // played: ±6 오차
+  function processCompareData(data) {
+    const user = data.comparison.user_features;
+    const ref = data.comparison.reference_features;
+    const feedback = data.feedback;
 
-  //   return {
-  //     second,
-  //     original: Math.round(base),
-  //     played: Math.round(played),
-  //   };
-  // });
-
-  //데이터 포멧 변환(noteData: ai에서 분석하여 넘어오는 json 데이터)
-  const formatChartData = (noteData) => {
-    return noteData.map((note) => ({
-      second: parseFloat(note.note_start.toFixed(2)), // X축
-      original: Math.round(note.original_pitch),
-      played: Math.round(note.user_pitch),
-      pitch_difference: note.pitch_difference,
-      technique_match: note.technique_match,
+    // pitch_comparison
+    const pitch_comparison = user.pitches.map((userPitch, i) => ({
+      note_index: i,
+      user_pitch: userPitch,
+      reference_pitch: ref.pitches[i],
     }));
-  };
 
-  const chartData = formatChartData(graphData.note_by_note);
+    // onset_comparison
+    const onset_comparison = user.onsets.map((userOnset, i) => ({
+      note_index: i,
+      user_onset: userOnset,
+      reference_onset: ref.onsets[i],
+    }));
+
+    // technique_comparison
+    const technique_comparison = user.techniques.map((userTech, i) => ({
+      note_index: i,
+      user_technique: userTech,
+      reference_technique: ref.techniques[i],
+    }));
+
+    // audio URL은 예시로 채워둠 (실제 signed URL은 서버에서 받아야 함)
+    const audio_urls = {
+      user_audio: 'signed_url_to_user_audio',
+      reference_audio: 'signed_url_to_reference_audio',
+    };
+    return {
+      pitch_comparison,
+      onset_comparison,
+      technique_comparison,
+      feedback,
+      audio_urls,
+    };
+  }
+
+  const processed = processCompareData(playdata, '연주데이터 가공처리');
+  console.log(processed);
+
+  console.log(feedback);
 
   return (
     <div className="flex flex-col">
@@ -112,11 +136,11 @@ export default function Feedback() {
                   연주 분석 그래프
                 </span>
               </div>
-              <PerformanceChart
+              {/* <PerformanceChart
                 data={chartData}
                 alt="연주 분석 그래프"
                 className="mt-6 ml-12 w-[600px]"
-              />
+              /> */}
             </Box>
           </div>
 
@@ -147,13 +171,16 @@ export default function Feedback() {
             </Box>
 
             {/* 피드백 박스 */}
-            <Box width="750px" height="280px">
-              <div className="ml-4 mt-5">
-                <span className="font-bold text-[16px] block">Feedback</span>
-                <ul className="list-disc pl-5 mt-5">
-                  <li>박자가 빨라요</li>
-                  <li>음정이 맞지 않아요 - 튜닝이 필요해요!</li>
-                </ul>
+            <Box
+              width="750px"
+              height="280px"
+              overwrite={'max-h-[400px] overflow-y-auto'}
+            >
+              <div className="ml-4 mt-5 ">
+                <span className="font-bold text-[16px] block mb-2">
+                  Feedback
+                </span>
+                <ReactMarkdown>{feedback.text}</ReactMarkdown>
               </div>
             </Box>
           </div>
