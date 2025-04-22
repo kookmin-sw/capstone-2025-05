@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../../Components/MapleHeader';
 import Logo from '../../Assets/logo.svg';
 import Google from '../../Assets/google.svg';
@@ -11,14 +12,52 @@ import Footer from '../../Components/MapleFooter';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [id, setId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleId = (e) => setId(e.target.value);
+  const handleEmail = (e) => setEmail(e.target.value);
   const handlePassword = (e) => setPassword(e.target.value);
 
-  const handleLogin = () => {
-    navigate('/main');
+  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+
+  const handleLogin = async () => {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      alert('이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      const res = await axios.post(`${BACKEND_URL}/email-login`, {
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
+
+      const uid = res.data.uid;
+
+      if (uid) {
+        localStorage.setItem('uid', uid);
+        console.log('로그인 성공');
+        navigate('/main');
+      } else {
+        alert('로그인 실패: 사용자 정보를 가져올 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('로그인 에러:', error);
+      if (error.response) {
+        console.error('서버 응답 상태:', error.response.status);
+        console.error('서버 응답 데이터:', error.response.data);
+        if (error.response.status === 422) {
+          alert('입력값이 유효하지 않습니다.');
+        } else {
+          alert('서버 오류가 발생했습니다.');
+        }
+      } else {
+        alert('네트워크 오류가 발생했습니다.');
+      }
+    }
   };
 
   const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
@@ -50,9 +89,9 @@ export default function Login() {
                   width="320px"
                   height="52px"
                   type="text"
-                  placeholder="아이디를 입력해 주세요"
-                  value={id}
-                  onChange={handleId}
+                  placeholder="이메일을 입력해 주세요"
+                  value={email}
+                  onChange={handleEmail}
                 />
                 <Input
                   width="320px"
@@ -96,6 +135,7 @@ export default function Login() {
           </button>
         </div>
       </div>
+
       <div className="flex flex-col items-center">
         <div className="absolute top-[89%]">
           <button
