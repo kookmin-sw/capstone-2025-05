@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../Components/MapleHeader';
 import Logo from '../../Assets/logo.svg';
 import Google from '../../Assets/google.svg';
+import Spotify from '../../Assets/spotify.svg';
 import Box from '../../Components/Box/Box.js';
 import Input from '../../Components/Input/input.js';
 import Button from '../../Components/Button/Button.js';
@@ -29,15 +30,19 @@ export default function Login() {
     window.location.href = googleLink;
   };
 
+  const handleSpoityLogin = () => {
+    navigate('/main');
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <div className="flex flex-col items-center justify-center flex-grow relative">
-        <div className="absolute top-[10%] z-10">
+        <div className="absolute top-[4%] z-10">
           <img src={Logo} alt="logo" className="w-52 h-auto" />
         </div>
 
-        <div className="absolute top-[18%]">
+        <div className="absolute top-[12%]">
           <Box width="400px" height="300px">
             <div className="flex flex-col items-center justify-center h-full">
               <div className="flex flex-col items-center gap-y-4">
@@ -67,9 +72,9 @@ export default function Login() {
           </Box>
         </div>
 
-        <div className="absolute top-[74%] w-[600px] border-t-2 border-[#AFAFAF]"></div>
+        <div className="absolute top-[67%] w-[600px] border-t-2 border-[#AFAFAF]"></div>
 
-        <div className="absolute top-[77%]">
+        <div className="absolute top-[69%]">
           <button
             className="flex flex-row justify-between items-center w-[400px] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[20px] font-bold bg-[white]"
             onClick={handleGoogleLogin}
@@ -79,9 +84,20 @@ export default function Login() {
             <div className="w-[24px] h-[100%]"></div>
           </button>
         </div>
+
+        <div className="absolute top-[82%]">
+          <button
+            className="flex flex-row justify-between items-center w-[400px] h-[60px] pl-5 pr-5 rounded-[10px] text-white text-[20px] font-bold bg-[#12D760]"
+            onClick={handleSpoityLogin}
+          >
+            <img src={Spotify} alt="spotify logo" className="w-12 h-12" />
+            스포티파이로 시작하기
+            <div className="w-[24px] h-[100%]"></div>
+          </button>
+        </div>
       </div>
       <div className="flex flex-col items-center">
-        <div className="absolute top-[85%]">
+        <div className="absolute top-[89%]">
           <button
             className="text-[#AFAFAF] text-sm underline hover:text-gray-500"
             onClick={() => {
