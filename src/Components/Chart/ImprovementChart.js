@@ -20,11 +20,8 @@ const data = [
 
 export default function ImprovementChart() {
   return (
-    <ResponsiveContainer width={'90%'} height={300}>
-      <LineChart
-        data={data}
-        margin={{ top: 40, right: 30, left: 0, bottom: 5 }}
-      >
+    <ResponsiveContainer width="90%" height="90%">
+      <LineChart data={data} margin={{ top: 40, right: 30, left: 0, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e2e2" />
 
         <XAxis dataKey="name" tick={{ fontSize: 12 }} />

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import Box from '../../Components/Box/Box.js';
 import Header from '../../Components/MapleHeader.js';
@@ -17,78 +18,47 @@ const recentSongs = [
   { title: 'HOME SWEET HOME', artist: 'G-DRAGON', image: Cover_4 },
 ];
 
-const practiceRecords = [
-  { date: '2025-02-01', song: 'Canon Rock', tempo: 85, rhythm: 90, pitch: 80 },
-  {
-    date: '2025-01-28',
-    song: 'Hotel California',
-    tempo: 80,
-    rhythm: 85,
-    pitch: 78,
-  },
-  { date: '2025-01-27', song: 'Stand By Me', tempo: 88, rhythm: 87, pitch: 82 },
-  { date: '2025-01-26', song: 'Wonderwall', tempo: 75, rhythm: 80, pitch: 76 },
-  { date: '2025-01-25', song: 'Hey Jude', tempo: 92, rhythm: 89, pitch: 85 },
-  { date: '2025-01-24', song: 'Canon Rock', tempo: 85, rhythm: 84, pitch: 83 },
-  { date: '2025-02-01', song: 'Canon Rock', tempo: 85, rhythm: 90, pitch: 80 },
-  {
-    date: '2025-01-28',
-    song: 'Hotel California',
-    tempo: 80,
-    rhythm: 85,
-    pitch: 78,
-  },
-  { date: '2025-01-27', song: 'Stand By Me', tempo: 88, rhythm: 87, pitch: 82 },
-  { date: '2025-01-26', song: 'Wonderwall', tempo: 75, rhythm: 80, pitch: 76 },
-  { date: '2025-01-25', song: 'Hey Jude', tempo: 92, rhythm: 89, pitch: 85 },
-  { date: '2025-01-24', song: 'Canon Rock', tempo: 85, rhythm: 84, pitch: 83 },
-  { date: '2025-02-01', song: 'Canon Rock', tempo: 85, rhythm: 90, pitch: 80 },
-  {
-    date: '2025-01-28',
-    song: 'Hotel California',
-    tempo: 80,
-    rhythm: 85,
-    pitch: 78,
-  },
-  { date: '2025-01-27', song: 'Stand By Me', tempo: 88, rhythm: 87, pitch: 82 },
-  { date: '2025-01-26', song: 'Wonderwall', tempo: 75, rhythm: 80, pitch: 76 },
-  { date: '2025-01-25', song: 'Hey Jude', tempo: 92, rhythm: 89, pitch: 85 },
-  { date: '2025-01-24', song: 'Canon Rock', tempo: 85, rhythm: 84, pitch: 83 },
-  { date: '2025-02-01', song: 'Canon Rock', tempo: 85, rhythm: 90, pitch: 80 },
-  {
-    date: '2025-01-28',
-    song: 'Hotel California',
-    tempo: 80,
-    rhythm: 85,
-    pitch: 78,
-  },
-  { date: '2025-01-27', song: 'Stand By Me', tempo: 88, rhythm: 87, pitch: 82 },
-  { date: '2025-01-26', song: 'Wonderwall', tempo: 75, rhythm: 80, pitch: 76 },
-  { date: '2025-01-25', song: 'Hey Jude', tempo: 92, rhythm: 89, pitch: 85 },
-  { date: '2025-01-24', song: 'Canon Rock', tempo: 85, rhythm: 84, pitch: 83 },
-];
+export default function PlayedMusic() {
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const uid = localStorage.getItem("uid");
 
-export default function PlayedMusic({ opacity }) {
-  console.log(opacity);
+  useEffect(() => {
+    const fetchRecords = async () => {
+      try {
+        const response = await axios.get("/mypage/records/all", {
+          params: { uid },
+        });
+        setRecords(response.data);
+      } catch (error) {
+        console.error("연습 기록 가져오기 실패:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (uid) {
+      fetchRecords();
+    } else {
+      setLoading(false);
+      console.warn("uid가 없습니다. 로그인 상태를 확인하세요.");
+    }
+  }, [uid]);
   return (
-    <div className={`flex flex-col ${opacity ? 'opacity-25' : null}`}>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="flex">
-        <div className="w-[210px] h-[780px] bg-[#463936] text-white p-4 flex flex-col justify-between">
+      {/* 헤더 아래 콘텐츠 */}
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
-                <img
-                  src={Information}
-                  alt="내 정보 아이콘"
-                  className="w-4 h-4"
-                />
-                <Link to="/mypage" className="text-white">
-                  내 정보
-                </Link>
-              </li>
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
+                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
+                <Link to="/mypage" className="text-white">내 정보</Link>
+              </li>
+              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
                 <Link to="/playedmusic">연주한 곡</Link>
               </li>
@@ -103,42 +73,38 @@ export default function PlayedMusic({ opacity }) {
           </div>
         </div>
 
-        <div className="w-full mt-8 ml-[35px]">
-          <h2 className="text-xl font-bold mb-6">최근 연주한 곡</h2>
-          <div className="flex flex-wrap gap-12 mt-4 ml-4">
+        {/* 본문 */}
+        <div className="w-[100%] overflow-y-auto p-10">
+          <h2 className="text-xl font-bold ml-8 mb-6">최근 연주한 곡</h2>
+          <div className="flex flex-wrap gap-44 ml-36 justify-start">
             {recentSongs.map((song, index) => (
-              <Box key={index} width="220px" height="288px">
+              <Box key={index} className="w-[40%] sm:w-[55%] md:w-[30%] mx-auto" overwrite={"h-[50%] p-4 flex flex-col justify-between"}>
                 <div className="flex justify-center items-center mt-4">
                   <Link to="/feedback">
                     <img
                       src={song.image}
                       alt="Album Cover"
-                      className="w-[200px] h-[200px] object-cover"
+                      className={`object-cover ${
+                        song.title === 'HOME SWEET HOME' ? 'w-[240px] h-[240px]' : 'w-full h-auto max-w-[100%]'
+                      }`}
                     />
                   </Link>
                 </div>
                 <div className="flex items-center justify-between px-4 mt-2">
                   <div className="flex flex-col w-[140px]">
-                    <span className="text-lg font-semibold truncate">
-                      {song.title}
-                    </span>
-                    <span className="text-lg mt-[-4px] truncate">
-                      {song.artist}
-                    </span>
+                    <span className="text-lg font-semibold truncate">{song.title}</span>
+                    <span className="text-sm mt-[-4px] truncate">{song.artist}</span>
                   </div>
                 </div>
               </Box>
             ))}
           </div>
 
-          <h2 className="text-xl font-bold mt-8 mb-6">연습 기록</h2>
-          <div className="w-full justify-center items-center mt-4 ml-4 mb-11">
-            <Box
-              width="1010px"
-              height="280px"
-              className="bg-white p-4 rounded-lg mt-4 overflow-hidden"
-            >
-              <div className="flex flex-col overflow-y-auto max-h-[280px]">
+          {/* 연습 기록 */}
+          <h2 className="text-xl font-bold mt-10 ml-8 mb-6">연습 기록</h2>
+          <div className="w-full justify-centermt-4 ml-9">
+          <Box width="96.5%" height="600px" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto">
+              <div className="flex flex-col overflow-y-auto max-h-[100%]">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr>
@@ -150,36 +116,37 @@ export default function PlayedMusic({ opacity }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {practiceRecords.map((record, index) => (
-                      <tr key={index} className="border-t">
-                        <td className="py-2 text-sm">{record.date}</td>
-                        <td className="py-2 text-sm">{record.song}</td>
-                        <td className="py-2 text-sm">
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                              className="bg-blue-500 h-3 rounded-full"
-                              style={{ width: `${record.tempo}%` }}
-                            ></div>
-                          </div>
-                        </td>
-                        <td className="py-1 text-sm">
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                              className="bg-green-500 h-3 rounded-full"
-                              style={{ width: `${record.rhythm}%` }}
-                            ></div>
-                          </div>
-                        </td>
-                        <td className="py-1 text-sm">
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                              className="bg-red-500 h-3 rounded-full"
-                              style={{ width: `${record.pitch}%` }}
-                            ></div>
-                          </div>
-                        </td>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="5" className="text-center py-8">로딩 중...</td>
                       </tr>
-                    ))}
+                    ) : records.length > 0 ? (
+                      records.map((record, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="py-2 text-sm">{record.date}</td>
+                          <td className="py-2 text-sm">{record.song}</td>
+                          <td className="py-2 text-sm">
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div className="bg-blue-500 h-3 rounded-full" style={{ width: `${record.tempo}%` }}></div>
+                            </div>
+                          </td>
+                          <td className="py-1 text-sm">
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div className="bg-green-500 h-3 rounded-full" style={{ width: `${record.rhythm}%` }}></div>
+                            </div>
+                          </td>
+                          <td className="py-1 text-sm">
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div className="bg-red-500 h-3 rounded-full" style={{ width: `${record.pitch}%` }}></div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="text-center py-8">연습 기록이 없습니다.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
