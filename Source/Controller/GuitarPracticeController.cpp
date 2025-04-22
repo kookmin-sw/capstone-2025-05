@@ -1,6 +1,6 @@
 #include "GuitarPracticeController.h"
-#include "../View/GuitarPracticeComponent.h"
-#include "../EnvLoader.h"
+#include "View/GuitarPracticeComponent.h"
+#include "Util/EnvLoader.h"
 
 GuitarPracticeController::GuitarPracticeController(AudioModel& model, juce::AudioDeviceManager& deviceManager)
     : audioModel(model), deviceManager(deviceManager)

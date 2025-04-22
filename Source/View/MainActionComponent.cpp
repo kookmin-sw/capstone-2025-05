@@ -1,5 +1,5 @@
 #include "MainActionComponent.h"
-#include "NewProjectDialog.h"
+#include "Dialog/NewProjectDialog.h"
 #include "MainComponent.h"
 
 MainActionComponent::MainActionComponent(MainComponent& mainComp)

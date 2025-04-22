@@ -1,6 +1,6 @@
 #include "HeaderComponent.h"
-#include "../AudioSettingsDialog.h"
-#include "../MainComponent.h"
+#include "Dialog/AudioSettingsDialog.h"
+#include "MainComponent.h"
 
 HeaderComponent::HeaderComponent()
 {

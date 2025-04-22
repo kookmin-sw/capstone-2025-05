@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include "TabPlayer.h"
+#include "Model/TabPlayer.h"
 
 class ScoreComponent : public juce::Component,
                       public juce::Timer

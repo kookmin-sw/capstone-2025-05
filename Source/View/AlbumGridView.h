@@ -1,8 +1,8 @@
 #pragma once
 #include <JuceHeader.h>
 #include "AlbumThumbnailComponent.h"
-#include "../Model/Song.h"
-#include "../SpotifyService.h"
+#include "Model/Song.h"
+#include "Model/SpotifyService.h"
 
 // 앨범 그리드 뷰 컴포넌트
 class AlbumGridView : public juce::Component

@@ -70,25 +70,7 @@ juce_generate_juce_header(MapleClientDesktop)
 target_sources(MapleClientDesktop PRIVATE
     # Main application files
     Source/Main.cpp
-    Source/AmpliTubeProcessor.cpp
-    Source/AmpliTubeProcessor.h
-    Source/ContentPanelComponent.cpp
-    Source/ContentPanelComponent.h
-    Source/BottomComponent.cpp
-    Source/BottomComponent.h
-    Source/NewProjectDialog.cpp
-    Source/NewProjectDialog.h
-    Source/SpotifyService.cpp
-    Source/SpotifyService.h
-    Source/EnvLoader.h
-    Source/MainActionComponent.cpp
-    Source/MainActionComponent.h
-    Source/MainComponent.cpp
-    Source/MainComponent.h
-    Source/ScoreComponent.cpp
-    Source/ScoreComponent.h
-    Source/TabPlayer.cpp
-    Source/TabPlayer.h
+    Source/AppConfig.h
     
     # Model
     Source/Model/AudioModel.cpp
@@ -96,8 +78,27 @@ target_sources(MapleClientDesktop PRIVATE
     Source/Model/ContentModel.cpp
     Source/Model/ContentModel.h
     Source/Model/Song.h
+    Source/Model/IAudioModelListener.h
+    Source/Model/TabPlayer.cpp
+    Source/Model/TabPlayer.h
+    Source/Model/gp_parser.cpp
+    Source/Model/gp_parser.h
+    Source/Model/SpotifyService.cpp
+    Source/Model/SpotifyService.h
     
     # View
+    Source/View/MainComponent.cpp
+    Source/View/MainComponent.h
+    Source/View/GuitarPracticeComponent.cpp
+    Source/View/GuitarPracticeComponent.h
+    Source/View/ContentPanelComponent.cpp
+    Source/View/ContentPanelComponent.h
+    Source/View/ScoreComponent.cpp
+    Source/View/ScoreComponent.h
+    Source/View/MainActionComponent.cpp
+    Source/View/MainActionComponent.h
+    Source/View/BottomComponent.cpp
+    Source/View/BottomComponent.h
     Source/View/TopBar.cpp
     Source/View/TopBar.h
     Source/View/CenterPanel.cpp
@@ -112,8 +113,11 @@ target_sources(MapleClientDesktop PRIVATE
     Source/View/AlbumGridView.h
     Source/View/AlbumThumbnailComponent.cpp
     Source/View/AlbumThumbnailComponent.h
-    Source/View/GuitarPracticeComponent.cpp
-    Source/View/GuitarPracticeComponent.h
+    
+    # View/Dialog
+    Source/View/Dialog/AudioSettingsDialog.h
+    Source/View/Dialog/NewProjectDialog.cpp
+    Source/View/Dialog/NewProjectDialog.h
     
     # Controller
     Source/Controller/AudioController.cpp
@@ -124,9 +128,17 @@ target_sources(MapleClientDesktop PRIVATE
     Source/Controller/ContentController.h
     Source/Controller/GuitarPracticeController.cpp
     Source/Controller/GuitarPracticeController.h
-
-    Source/gp_parser.cpp
-    Source/gp_parser.h
+    Source/Controller/AmpliTubeProcessor.cpp
+    Source/Controller/AmpliTubeProcessor.h
+    
+    # Event
+    Source/Event/Event.h
+    Source/Event/EventBus.h
+    Source/Event/IEventListener.h
+    
+    # Util
+    Source/Util/EnvLoader.h
+    Source/Util/xml_module.cpp
 )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
@@ -165,6 +177,13 @@ target_link_libraries(MapleClientDesktop PRIVATE
     juce::juce_audio_utils
 )
 
+# Windows 애플리케이션으로 빌드하도록 설정
+if(WIN32)
+    set_target_properties(MapleClientDesktop PROPERTIES
+        WIN32_EXECUTABLE TRUE
+    )
+endif()
+
 # Set binary output directories
 set_target_properties(MapleClientDesktop PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -189,6 +208,13 @@ endif()
 # ASIO SDK include 경로 추가
 target_include_directories(MapleClientDesktop
     PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Model"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/View"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Controller"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Util"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Event"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/View/Dialog"
         "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk/common"
         "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk/host"
 )

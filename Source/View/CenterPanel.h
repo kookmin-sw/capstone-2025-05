@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../AmpliTubeProcessor.h"
+#include "Controller/AmpliTubeProcessor.h"
 
 class CenterPanel : public juce::Component {
 public:

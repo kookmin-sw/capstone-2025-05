@@ -1,7 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../Model/Song.h"
-#include "../SpotifyService.h"
+#include "Model/Song.h"
+#include "Model/SpotifyService.h"
 
 // 앨범 썸네일을 표시하는 컴포넌트
 class AlbumThumbnailComponent : public juce::Component

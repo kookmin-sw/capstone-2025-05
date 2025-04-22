@@ -1,7 +1,7 @@
 /* Copyright Phillip Potter, 2019 under MIT License */
 #include <string>
 #include <sstream>
-#include "gp_parser.h"
+#include "../Model/gp_parser.h"
 
 namespace gp_parser {
 

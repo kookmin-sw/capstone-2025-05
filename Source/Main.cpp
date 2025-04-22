@@ -1,6 +1,6 @@
 #include <JuceHeader.h>
-#include "MainComponent.h"
-#include "EnvLoader.h"
+#include "View/MainComponent.h"
+#include "Util/EnvLoader.h"
 
 // 윈도우(창) 클래스
 class MainWindow : public juce::DocumentWindow
