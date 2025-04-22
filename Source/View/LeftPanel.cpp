@@ -4,27 +4,8 @@ LeftPanel::LeftPanel(AudioModel& model)
     : audioModel(model), 
       progressValue(0.0)
 {
-    // 입력 레벨 관련 UI 설정
-    levelLabel = std::make_unique<juce::Label>("levelLabel", "Input Level:");
-    levelLabel->setJustificationType(juce::Justification::left);
-    addAndMakeVisible(levelLabel.get());
-    
-    levelMeter = std::make_unique<juce::ProgressBar>(progressValue);
-    addAndMakeVisible(levelMeter.get());
-    levelMeter->setTextToDisplay("");
-    
-    // 볼륨 컨트롤 UI 설정
-    volumeLabel = std::make_unique<juce::Label>("volumeLabel", "Volume:");
-    volumeLabel->setJustificationType(juce::Justification::left);
-    addAndMakeVisible(volumeLabel.get());
-    
-    volumeSlider = std::make_unique<juce::Slider>(juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight);
-    volumeSlider->setRange(0.0, 1.0, 0.01);
-    volumeSlider->setValue(audioModel.getVolume());
-    volumeSlider->onValueChange = [this]() {
-        audioModel.setVolume((float)volumeSlider->getValue());
-    };
-    addAndMakeVisible(volumeSlider.get());
+    // 패널 초기화
+    initialize();
     
     // 새로운 인터페이스를 사용하여 모델에 리스너 등록
     audioModel.addListener(this);
@@ -84,4 +65,51 @@ void LeftPanel::onPositionChanged(double positionInSeconds)
 {
     // 위치가 변경되면 UI를 업데이트 (필요하다면)
     // 현재는 특별한 처리가 필요하지 않음
+}
+
+// IPanelComponent 인터페이스 구현
+void LeftPanel::initialize()
+{
+    // 입력 레벨 관련 UI 설정
+    levelLabel = std::make_unique<juce::Label>("levelLabel", "Input Level:");
+    levelLabel->setJustificationType(juce::Justification::left);
+    addAndMakeVisible(levelLabel.get());
+    
+    levelMeter = std::make_unique<juce::ProgressBar>(progressValue);
+    addAndMakeVisible(levelMeter.get());
+    levelMeter->setTextToDisplay("");
+    
+    // 볼륨 컨트롤 UI 설정
+    volumeLabel = std::make_unique<juce::Label>("volumeLabel", "Volume:");
+    volumeLabel->setJustificationType(juce::Justification::left);
+    addAndMakeVisible(volumeLabel.get());
+    
+    volumeSlider = std::make_unique<juce::Slider>(juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight);
+    volumeSlider->setRange(0.0, 1.0, 0.01);
+    volumeSlider->setValue(audioModel.getVolume());
+    volumeSlider->onValueChange = [this]() {
+        audioModel.setVolume((float)volumeSlider->getValue());
+    };
+    addAndMakeVisible(volumeSlider.get());
+}
+
+void LeftPanel::updatePanel()
+{
+    // 패널 UI 업데이트
+    if (volumeSlider != nullptr)
+        volumeSlider->setValue(audioModel.getVolume(), juce::dontSendNotification);
+    
+    repaint();
+}
+
+void LeftPanel::resetPanel()
+{
+    // 패널 상태 초기화
+    if (volumeSlider != nullptr)
+        volumeSlider->setValue(0.8f, juce::dontSendNotification); // 기본 볼륨으로 리셋
+    
+    if (levelMeter != nullptr)
+        progressValue = 0.0;
+    
+    repaint();
 }

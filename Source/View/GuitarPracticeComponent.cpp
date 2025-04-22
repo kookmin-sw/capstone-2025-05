@@ -71,11 +71,11 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     // AudioRecorder를 오디오 콜백으로 등록
     deviceManager.addAudioCallback(audioRecorder.get());
     
-    // View 컴포넌트 초기화
-    topBar = std::make_unique<TopBar>(*this);
-    centerPanel = std::make_unique<CenterPanel>();
-    leftPanel = std::make_unique<LeftPanel>(audioModel); 
-    rightPanel = std::make_unique<RightPanel>();
+    // View 컴포넌트 초기화 (인터페이스를 통한 참조)
+    topBar = std::unique_ptr<IPanelComponent>(new TopBar(*this));
+    centerPanel = std::unique_ptr<IPanelComponent>(new CenterPanel());
+    leftPanel = std::unique_ptr<IPanelComponent>(new LeftPanel(audioModel)); 
+    rightPanel = std::unique_ptr<IPanelComponent>(new RightPanel());
     
     try {
         // ScoreComponent는 controller의 TabPlayer를 사용하도록 수정
@@ -88,10 +88,10 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     }
 
     // 컴포넌트 추가
-    addAndMakeVisible(topBar.get());
-    addAndMakeVisible(centerPanel.get());
-    addAndMakeVisible(leftPanel.get());
-    addAndMakeVisible(rightPanel.get());
+    addAndMakeVisible(topBar->asComponent());
+    addAndMakeVisible(centerPanel->asComponent());
+    addAndMakeVisible(leftPanel->asComponent());
+    addAndMakeVisible(rightPanel->asComponent());
     addAndMakeVisible(recordingThumbnail.get());
 }
 
@@ -122,7 +122,7 @@ void GuitarPracticeComponent::resized()
     auto controlsHeight = 40;
     
     // 상단 바
-    topBar->setBounds(bounds.removeFromTop(topBarHeight));
+    topBar->asComponent()->setBounds(bounds.removeFromTop(topBarHeight));
     
     // 하단에 악보 표시 영역
     auto scoreHeight = 300;
@@ -150,11 +150,11 @@ void GuitarPracticeComponent::resized()
     recordingThumbnail->setBounds(waveformArea);
     
     // 좌우 패널
-    leftPanel->setBounds(bounds.removeFromLeft(300));
-    rightPanel->setBounds(bounds.removeFromRight(300));
+    leftPanel->asComponent()->setBounds(bounds.removeFromLeft(300));
+    rightPanel->asComponent()->setBounds(bounds.removeFromRight(300));
     
     // 중앙 패널
-    centerPanel->setBounds(bounds.reduced(50));
+    centerPanel->asComponent()->setBounds(bounds.reduced(50));
 }
 
 // 새로운 인터페이스 메서드 구현
@@ -226,7 +226,21 @@ void GuitarPracticeComponent::loadSong(const juce::String& songId)
 // UI 업데이트 메서드
 void GuitarPracticeComponent::updateUI()
 {
-    // 향후 추가 UI 업데이트 필요시 구현
+    // 패널 컴포넌트 업데이트
+    topBar->updatePanel();
+    centerPanel->updatePanel();
+    leftPanel->updatePanel();
+    rightPanel->updatePanel();
+    
+    // 스코어 컴포넌트 업데이트 (필요시)
+    if (scoreComponent != nullptr) {
+        try {
+            scoreComponent->updateScore();
+        }
+        catch (const std::exception& e) {
+            DBG("Error updating score component: " + juce::String(e.what()));
+        }
+    }
 }
 
 void GuitarPracticeComponent::startRecording()
