@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import axios from 'axios';
 import Header from '../../Components/MapleHeader';
 import First from '../../Assets/Main/banner1.svg';
 import Second from '../../Assets/Main/banner2.svg';
@@ -9,27 +10,40 @@ import Third from '../../Assets/Main/banner3.svg';
 import Left from '../../Assets/Main/arrowLeft.svg';
 import Right from '../../Assets/Main/arrowRight.svg';
 import Box from '../../Components/Box/Box';
-import Album1 from '../../Assets/Main/album/iveCover.svg';
-import Album2 from '../../Assets/Main/album/bndCover.svg';
-import Album3 from '../../Assets/Main/album/riizeCover.svg';
-import Album4 from '../../Assets/Main/album/gdCover.svg';
 import Footer from '../../Components/MapleFooter';
 import 'swiper/css';
 
 export default function Main() {
   const navigate = useNavigate();
   const swiperRef = useRef(null);
+  const [trend, setTrend] = useState([]);
 
   const handleMove = () => {
     navigate('/'); // 등록된 음원 페이지로 이동
   };
 
-  const albums = [
-    { cover: Album1, title: 'REBEL HEART', artist: 'IVE (아이브)' },
-    { cover: Album2, title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR' },
-    { cover: Album3, title: 'COMBO', artist: 'RIIZE' },
-    { cover: Album4, title: 'HOME SWEET HOME', artist: 'G-DRAGON' },
-  ];
+  useEffect(() => {
+    const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+
+    const fetchTrendMusic = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/spotify/new-releases`);
+        const items = res.data?.albums?.items || [];
+
+        const mapped = items.map((item) => ({
+          cover: item.images[0]?.url,
+          title: item.name,
+          artist: item.artists.map((a) => a.name).join(', '),
+        }));
+
+        setTrend(mapped);
+      } catch (error) {
+        console.error('API error:', error);
+      }
+    };
+
+    fetchTrendMusic();
+  }, []);
 
   return (
     <div className="flex flex-col h-screen">
@@ -94,7 +108,7 @@ export default function Main() {
       <div className="w-full mt-12">
         <span className="text-xl font-bold text-[24px] ml-16">인기곡 추천</span>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {albums.map((album, index) => (
+          {trend.slice(0, 4).map((album, index) => (
             <Box key={index} width="248px" height="304px">
               <div className="flex justify-center items-center mt-4">
                 <img
@@ -132,7 +146,7 @@ export default function Main() {
           onClick={handleMove}
         />
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {albums.map((album, index) => (
+          {trend.slice(4, 8).map((album, index) => (
             <Box key={index} width="248px" height="304px">
               <div className="flex justify-center items-center mt-4">
                 <img
