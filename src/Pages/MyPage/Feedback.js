@@ -8,12 +8,16 @@ import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Album from '../../Assets/Main/album/bndCover.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
+import playdata from '../../Data/compare.json'; //여기에 음정,박자등을 불러오는 api 넣어
+import feedback from '../../Data/feedback_8583d5bf.json';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import graphData from '../../Data/maplegraph.json';
 
 
 export default function Feedback() {
   const uid = localStorage.getItem("uid");
-
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,6 +28,49 @@ export default function Feedback() {
     { title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR', image: Album },
   ];
   
+
+  function processCompareData(data) {
+    const user = data.comparison.user_features;
+    const ref = data.comparison.reference_features;
+    const feedback = data.feedback;
+
+    // pitch_comparison
+    const pitch_comparison = user.pitches.map((userPitch, i) => ({
+      note_index: i,
+      user_pitch: userPitch,
+      reference_pitch: ref.pitches[i],
+    }));
+
+    // onset_comparison
+    const onset_comparison = user.onsets.map((userOnset, i) => ({
+      note_index: i,
+      user_onset: userOnset,
+      reference_onset: ref.onsets[i],
+    }));
+
+    // technique_comparison
+    const technique_comparison = user.techniques.map((userTech, i) => ({
+      note_index: i,
+      user_technique: userTech,
+      reference_technique: ref.techniques[i],
+  
+
+    // audio URL은 예시로 채워둠 (실제 signed URL은 서버에서 받아야 함)
+    const audio_urls = {
+      user_audio: 'signed_url_to_user_audio',
+      reference_audio: 'signed_url_to_reference_audio',
+    };
+    return {
+      pitch_comparison,
+      onset_comparison,
+      technique_comparison,
+      feedback,
+      audio_urls,
+    };
+  }
+  
+  
+  
   const formatChartData = (noteData) => {
     return noteData.map((note) => ({
       second: parseFloat(note.note_start.toFixed(2)), // X축
@@ -32,9 +79,11 @@ export default function Feedback() {
       pitch_difference: note.pitch_difference,
       technique_match: note.technique_match,
     }));
-  };
 
-  const chartData = formatChartData(graphData.note_by_note);
+  const processed = processCompareData(playdata, '연주데이터 가공처리');
+  console.log(processed);
+
+  console.log(feedback);
 
   useEffect(() => {
     const fetchSpecificRecord = async () => {
@@ -115,6 +164,7 @@ export default function Feedback() {
                 </div>
               </Box>
             </div>
+
 
             <div className="flex-[2] ml-16 mt-12 h-full">
               <Box width="99%" backgroundColor="white" overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto height-[400px]">
