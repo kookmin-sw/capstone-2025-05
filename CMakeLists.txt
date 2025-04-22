@@ -117,7 +117,6 @@ target_sources(MapleClientDesktop PRIVATE
     Source/View/AlbumGridView.h
     Source/View/AlbumThumbnailComponent.cpp
     Source/View/AlbumThumbnailComponent.h
-    Source/View/IPanelComponent.h
     
     # View/Dialog
     Source/View/Dialog/AudioSettingsDialog.h

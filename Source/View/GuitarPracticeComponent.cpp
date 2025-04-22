@@ -71,11 +71,11 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     // AudioRecorder를 오디오 콜백으로 등록
     deviceManager.addAudioCallback(audioRecorder.get());
     
-    // View 컴포넌트 초기화 (인터페이스를 통한 참조)
-    topBar = std::unique_ptr<IPanelComponent>(new TopBar(*this));
-    centerPanel = std::unique_ptr<IPanelComponent>(new CenterPanel());
-    leftPanel = std::unique_ptr<IPanelComponent>(new LeftPanel(audioModel)); 
-    rightPanel = std::unique_ptr<IPanelComponent>(new RightPanel());
+    // View 컴포넌트 초기화 (직접 참조)
+    topBar = std::make_unique<TopBar>(*this);
+    centerPanel = std::make_unique<CenterPanel>();
+    leftPanel = std::make_unique<LeftPanel>(audioModel); 
+    rightPanel = std::make_unique<RightPanel>();
     
     try {
         // ScoreComponent는 controller의 TabPlayer를 사용하도록 수정
@@ -88,10 +88,10 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     }
 
     // 컴포넌트 추가
-    addAndMakeVisible(topBar->asComponent());
-    addAndMakeVisible(centerPanel->asComponent());
-    addAndMakeVisible(leftPanel->asComponent());
-    addAndMakeVisible(rightPanel->asComponent());
+    addAndMakeVisible(topBar.get());
+    addAndMakeVisible(centerPanel.get());
+    addAndMakeVisible(leftPanel.get());
+    addAndMakeVisible(rightPanel.get());
     addAndMakeVisible(recordingThumbnail.get());
 }
 
@@ -122,7 +122,7 @@ void GuitarPracticeComponent::resized()
     auto controlsHeight = 40;
     
     // 상단 바
-    topBar->asComponent()->setBounds(bounds.removeFromTop(topBarHeight));
+    topBar->setBounds(bounds.removeFromTop(topBarHeight));
     
     // 하단에 악보 표시 영역
     auto scoreHeight = 300;
@@ -150,11 +150,11 @@ void GuitarPracticeComponent::resized()
     recordingThumbnail->setBounds(waveformArea);
     
     // 좌우 패널
-    leftPanel->asComponent()->setBounds(bounds.removeFromLeft(300));
-    rightPanel->asComponent()->setBounds(bounds.removeFromRight(300));
+    leftPanel->setBounds(bounds.removeFromLeft(300));
+    rightPanel->setBounds(bounds.removeFromRight(300));
     
     // 중앙 패널
-    centerPanel->asComponent()->setBounds(bounds.reduced(50));
+    centerPanel->setBounds(bounds.reduced(50));
 }
 
 // 새로운 인터페이스 메서드 구현

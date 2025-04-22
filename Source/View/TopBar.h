@@ -1,11 +1,10 @@
 #pragma once
 #include <JuceHeader.h>
-#include "IPanelComponent.h"
 
 // Forward declaration instead of including the header
 class GuitarPracticeComponent;
 
-class TopBar : public juce::Component, public IPanelComponent
+class TopBar : public juce::Component
 {
 public:
     TopBar(GuitarPracticeComponent &parent);
@@ -15,11 +14,10 @@ public:
     void paint(juce::Graphics &g) override;
     void resized() override;
     
-    // IPanelComponent 인터페이스 구현
-    void initialize() override;
-    void updatePanel() override;
-    void resetPanel() override;
-    juce::Component* asComponent() override { return this; }
+    // 패널 관련 메서드
+    void initialize();
+    void updatePanel();
+    void resetPanel();
 
 private:
     juce::TextButton recordButton{"Record"};

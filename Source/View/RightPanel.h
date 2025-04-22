@@ -1,8 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
-#include "IPanelComponent.h"
 
-class RightPanel : public juce::Component, public IPanelComponent {
+class RightPanel : public juce::Component {
 public:
     RightPanel();
     ~RightPanel() override;
@@ -10,11 +9,10 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
-    // IPanelComponent 인터페이스 구현
-    void initialize() override;
-    void updatePanel() override;
-    void resetPanel() override;
-    juce::Component* asComponent() override { return this; }
+    // 패널 관련 메서드
+    void initialize();
+    void updatePanel();
+    void resetPanel();
 
 private:
     juce::Slider bpmSlider; // 메트로놈 BPM 조절

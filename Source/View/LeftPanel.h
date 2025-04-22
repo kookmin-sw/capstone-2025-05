@@ -2,11 +2,10 @@
 #include <JuceHeader.h>
 #include "Model/AudioModel.h"
 #include "Model/IAudioModelListener.h"
-#include "IPanelComponent.h"
 
 class LeftPanel : public juce::Component, 
-                 public IAudioModelListener,
-                 public IPanelComponent {
+                 public IAudioModelListener
+{
 public:
     LeftPanel(AudioModel& model);
     ~LeftPanel() override;
@@ -20,11 +19,10 @@ public:
     void onVolumeChanged(float newVolume) override;
     void onPositionChanged(double positionInSeconds) override;
     
-    // IPanelComponent 인터페이스 구현
-    void initialize() override;
-    void updatePanel() override;
-    void resetPanel() override;
-    juce::Component* asComponent() override { return this; }
+    // 패널 관련 메서드
+    void initialize();
+    void updatePanel();
+    void resetPanel();
     
 private:
     AudioModel& audioModel;

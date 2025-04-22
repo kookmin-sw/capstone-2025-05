@@ -4,7 +4,6 @@
 #include "Model/IAudioModelListener.h"
 #include "Controller/GuitarPracticeController.h"
 #include "Event/IEventListener.h"
-#include "IPanelComponent.h"
 #include "TopBar.h"
 #include "CenterPanel.h"
 #include "LeftPanel.h"
@@ -74,11 +73,11 @@ private:
     AudioModel audioModel;
     std::unique_ptr<GuitarPracticeController> controller;
     
-    // View 컴포넌트들 (인터페이스를 통해 참조)
-    std::unique_ptr<IPanelComponent> topBar;
-    std::unique_ptr<IPanelComponent> centerPanel;
-    std::unique_ptr<IPanelComponent> leftPanel;
-    std::unique_ptr<IPanelComponent> rightPanel;
+    // View 컴포넌트들 (직접 참조)
+    std::unique_ptr<TopBar> topBar;
+    std::unique_ptr<CenterPanel> centerPanel;
+    std::unique_ptr<LeftPanel> leftPanel;
+    std::unique_ptr<RightPanel> rightPanel;
     std::unique_ptr<ScoreComponent> scoreComponent;
 
     // 녹음 관련 컴포넌트
