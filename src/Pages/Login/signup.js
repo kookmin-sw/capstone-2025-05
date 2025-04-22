@@ -8,7 +8,7 @@ import Input from '../../Components/Input/input.js';
 import Button from '../../Components/Button/Button.js';
 import Footer from '../../Components/MapleFooter';
 
-export default function Login() {
+export default function Signup() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +40,7 @@ export default function Login() {
 
     try {
       const res = await axios.post(
-        `${BACKEND_URL}/account/email-sign-up`,
+        `${BACKEND_URL}/email-sign-up`,
         {
           email: trimmedEmail,
           password: trimmedPassword,
@@ -52,25 +52,28 @@ export default function Login() {
         },
       );
 
-      const uid = res.data.data.uid;
+      const uid = res.data.uid;
 
-      if (res.data.success) {
+      if (uid) {
         localStorage.setItem('uid', uid);
         console.log('회원가입 성공');
         navigate('/profile');
       } else {
-        alert('회원가입 실패');
+        alert('회원가입 실패: 사용자 정보를 가져올 수 없습니다.');
       }
     } catch (error) {
       console.error('회원가입 에러:', error);
-      if (error.response) {
-        console.error('서버 응답 상태:', error.response.status);
-        console.error('서버 응답 데이터:', error.response.data);
-      }
-      if (error.response && error.response.status === 422) {
+
+      const detail = error.response?.data?.detail;
+
+      if (detail === '이미 등록된 이메일입니다.') {
+        alert('이미 가입된 이메일 주소입니다.');
+      } else if (error.response?.status === 422) {
         alert('입력값이 유효하지 않습니다.');
       } else {
-        alert('회원가입 중 오류가 발생했습니다.');
+        alert(
+          `회원가입 중 오류가 발생했습니다: ${detail || '알 수 없는 오류입니다.'}`,
+        );
       }
     }
   };
