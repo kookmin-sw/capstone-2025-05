@@ -19,7 +19,7 @@ export default function Main() {
   const [trend, setTrend] = useState([]);
 
   const handleMove = () => {
-    navigate('/'); // 등록된 음원 페이지로 이동
+    navigate('/ranking?song_name=덤더럼 (Dumhdurum)'); // 랭킹 테스트 - 수정하기
   };
 
   useEffect(() => {
