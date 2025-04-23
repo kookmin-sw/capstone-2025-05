@@ -19,14 +19,14 @@ export default function Admin() {
   const [profilePic, setProfilePic] = useState(Profile);
   const [isAccountDeleted, setIsAccountDeleted] = useState(false);
   const navigate = useNavigate();
-  const uid = localStorage.getItem("uid") || "cLZMFP4802a7dwMo0j4qmcxpnY63";
+  const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-          params: { uid }
+          params: { uid },
         });
 
         const userInfo = response.data['user information'];
@@ -36,7 +36,6 @@ export default function Admin() {
         setSkillLevel(userInfo.level || '');
         setGenre(userInfo.interest_genre?.[0] || '');
         setProfilePic(userInfo.profile_image || Profile);
-
       } catch (error) {
         console.error('Error fetching user info:', error.response || error);
       }
@@ -51,19 +50,17 @@ export default function Admin() {
     const trimmedNickname = nickname.trim();
 
     if (!trimmedNickname) {
-      setErrors(prev => ({ ...prev, nickname: '*닉네임을 입력해주세요' }));
+      setErrors((prev) => ({ ...prev, nickname: '*닉네임을 입력해주세요' }));
       return;
-
     }
-  };
 
     try {
       const res = await axios.put(`${BACKEND_URL}/edit-user/nickname`, null, {
-        params: { uid, nickname: trimmedNickname }
+        params: { uid, nickname: trimmedNickname },
       });
       console.log('Nickname updated:', res.data);
       setIsModalOpen(true);
-      window.location.reload();    
+      window.location.reload();
     } catch (error) {
       console.error('Error updating nickname:', error.response || error);
     }
@@ -72,9 +69,13 @@ export default function Admin() {
   const handleGenreChange = async (e) => {
     const genreValue = e.target.value;
     try {
-      const res = await axios.put(`${BACKEND_URL}/edit-user/interest-genre`, [genreValue], {
-        params: { uid }
-      });
+      const res = await axios.put(
+        `${BACKEND_URL}/edit-user/interest-genre`,
+        [genreValue],
+        {
+          params: { uid },
+        },
+      );
       console.log('Genre updated:', res.data);
     } catch (error) {
       console.error('Error updating genre:', error.response || error);
@@ -85,7 +86,7 @@ export default function Admin() {
     const skillLevelValue = Number(e.target.value);
     try {
       const res = await axios.put(`${BACKEND_URL}/edit-user/level`, null, {
-        params: { uid, level: skillLevelValue }
+        params: { uid, level: skillLevelValue },
       });
       console.log('Skill level updated:', res.data);
     } catch (error) {
@@ -97,55 +98,49 @@ export default function Admin() {
     const file = e.target.files[0];
     if (file) {
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("uid", uid);
-  
+      formData.append('file', file);
+      formData.append('uid', uid);
+
       try {
-        const response = await axios.post(`${BACKEND_URL}/change-profile-image`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        });
+        const response = await axios.post(
+          `${BACKEND_URL}/change-profile-image`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        );
         setProfilePic(URL.createObjectURL(file));
       } catch (error) {
-        console.error("Error uploading profile picture:", error.response || error);
+        console.error(
+          'Error uploading profile picture:',
+          error.response || error,
+        );
         if (error.response && error.response.data) {
-          alert(`Error: ${error.response.data.message || 'Failed to upload image'}`);
+          alert(
+            `Error: ${error.response.data.message || 'Failed to upload image'}`,
+          );
         }
       }
     }
   };
-  
 
   const handleDeleteAccount = async () => {
     try {
-      const res = await axios.delete(`${BACKEND_URL}/delete-user/${uid}`);
+      const res = await axios.delete(
+        `${BACKEND_URL}/account/delete-user/${uid}`,
+      );
       if (res.data.success) {
         setIsAccountDeleted(true);
         setTimeout(() => {
-          localStorage.removeItem("uid");
+          localStorage.removeItem('uid');
           navigate('/login');
         }, 2000);
       }
     } catch (error) {
       console.error('Error deleting account:', error.response || error);
-      alert("탈퇴하는 데 실패했습니다.");
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    try {
-      const res = await axios.delete(`${BACKEND_URL}/account/delete-user/${uid}`);
-      if (res.data.success) {
-        setIsAccountDeleted(true);
-        setTimeout(() => {
-          localStorage.removeItem("uid");
-          navigate('/login');
-        }, 2000);
-      }
-    } catch (error) {
-      console.error('Error deleting account:', error.response || error);
-      alert("탈퇴하는 데 실패했습니다.");
+      alert('탈퇴하는 데 실패했습니다.');
     }
   };
 
@@ -160,8 +155,14 @@ export default function Admin() {
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
-                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
-                <Link to="/mypage" className="text-white">내 정보</Link>
+                <img
+                  src={Information}
+                  alt="내 정보 아이콘"
+                  className="w-4 h-4"
+                />
+                <Link to="/mypage" className="text-white">
+                  내 정보
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
@@ -188,7 +189,9 @@ export default function Admin() {
                 src={profilePic}
                 alt="프로필"
                 className="w-40 h-40 rounded-full cursor-pointer"
-                onClick={() => document.getElementById('profilePicInput').click()}
+                onClick={() =>
+                  document.getElementById('profilePicInput').click()
+                }
               />
               <input
                 type="file"
@@ -201,7 +204,9 @@ export default function Admin() {
 
             <div className="space-y-8">
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">닉네임</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  닉네임
+                </label>
                 <Input
                   type="text"
                   value={nickname}
@@ -210,11 +215,15 @@ export default function Admin() {
                   placeholder="닉네임"
                   className="h-14 text-lg"
                 />
-                {errors.nickname && <p className="text-red-500 text-sm mt-1">{errors.nickname}</p>}
+                {errors.nickname && (
+                  <p className="text-red-500 text-sm mt-1">{errors.nickname}</p>
+                )}
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">이메일</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  이메일
+                </label>
                 <Input
                   type="text"
                   value={email}
@@ -223,11 +232,15 @@ export default function Admin() {
                   placeholder="이메일"
                   className="h-14 text-lg"
                 />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">스킬 레벨</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  스킬 레벨
+                </label>
                 <Dropdown
                   name="skillLevel"
                   value={skillLevel}
@@ -238,7 +251,9 @@ export default function Admin() {
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">선호 장르</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  선호 장르
+                </label>
                 <Dropdown
                   name="genre"
                   value={genre}
@@ -284,7 +299,9 @@ export default function Admin() {
       {isAccountDeleted && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-            <p className="text-lg font-bold text-red-500">계정이 성공적으로 삭제되었습니다.</p>
+            <p className="text-lg font-bold text-red-500">
+              계정이 성공적으로 삭제되었습니다.
+            </p>
           </div>
         </div>
       )}
