@@ -19,21 +19,24 @@ export default function Admin() {
   const [profilePic, setProfilePic] = useState(Profile);
   const [isAccountDeleted, setIsAccountDeleted] = useState(false);
   const navigate = useNavigate();
-  const uid = "cLZMFP4802a7dwMo0j4qmcxpnY63";
-
+  const uid = localStorage.getItem("uid") || "cLZMFP4802a7dwMo0j4qmcxpnY63";
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get(`${BACKEND_URL}/mypage/my-profile`, {
+        const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
           params: { uid }
         });
-        const data = response.data;
-        setNickname(data.nickname || '');
-        setEmail(data.email || '');
-        setSkillLevel(data.level || '');
-        setGenre(data.genreList?.[0] || '');
+
+        const userInfo = response.data['user information'];
+
+        setNickname(userInfo.nickname || '');
+        setEmail(userInfo.email || '');
+        setSkillLevel(userInfo.level || '');
+        setGenre(userInfo.interest_genre?.[0] || '');
+        setProfilePic(userInfo.profile_image || Profile);
+
       } catch (error) {
         console.error('Error fetching user info:', error.response || error);
       }
@@ -50,14 +53,17 @@ export default function Admin() {
     if (!trimmedNickname) {
       setErrors(prev => ({ ...prev, nickname: '*닉네임을 입력해주세요' }));
       return;
+
     }
+  };
 
     try {
-      const res = await axios.put(`${BACKEND_URL}/mypage/edit-user/nickname`, null, {
+      const res = await axios.put(`${BACKEND_URL}/edit-user/nickname`, null, {
         params: { uid, nickname: trimmedNickname }
       });
       console.log('Nickname updated:', res.data);
       setIsModalOpen(true);
+      window.location.reload();    
     } catch (error) {
       console.error('Error updating nickname:', error.response || error);
     }
@@ -66,7 +72,7 @@ export default function Admin() {
   const handleGenreChange = async (e) => {
     const genreValue = e.target.value;
     try {
-      const res = await axios.put(`${BACKEND_URL}/mypage/edit-user/interest-genre`, [genreValue], {
+      const res = await axios.put(`${BACKEND_URL}/edit-user/interest-genre`, [genreValue], {
         params: { uid }
       });
       console.log('Genre updated:', res.data);
@@ -78,7 +84,7 @@ export default function Admin() {
   const handleSkillChange = async (e) => {
     const skillLevelValue = Number(e.target.value);
     try {
-      const res = await axios.put(`${BACKEND_URL}/mypage/edit-user/level`, null, {
+      const res = await axios.put(`${BACKEND_URL}/edit-user/level`, null, {
         params: { uid, level: skillLevelValue }
       });
       console.log('Skill level updated:', res.data);
@@ -87,12 +93,43 @@ export default function Admin() {
     }
   };
 
-  const handleProfilePicChange = (e) => {
+  const handleProfilePicChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setProfilePic(reader.result);
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("uid", uid);
+  
+      try {
+        const response = await axios.post(`${BACKEND_URL}/change-profile-image`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        setProfilePic(URL.createObjectURL(file));
+      } catch (error) {
+        console.error("Error uploading profile picture:", error.response || error);
+        if (error.response && error.response.data) {
+          alert(`Error: ${error.response.data.message || 'Failed to upload image'}`);
+        }
+      }
+    }
+  };
+  
+
+  const handleDeleteAccount = async () => {
+    try {
+      const res = await axios.delete(`${BACKEND_URL}/delete-user/${uid}`);
+      if (res.data.success) {
+        setIsAccountDeleted(true);
+        setTimeout(() => {
+          localStorage.removeItem("uid");
+          navigate('/login');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error.response || error);
+      alert("탈퇴하는 데 실패했습니다.");
     }
   };
 
