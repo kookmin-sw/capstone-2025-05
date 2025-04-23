@@ -37,14 +37,14 @@ export default function Profile() {
     const uid = localStorage.getItem('uid');
 
     try {
-      const res = await axios.post(`${BACKEND_URL}/account/set-user-info`, {
+      const res = await axios.post(`${BACKEND_URL}/set-user-info`, {
         uid: uid,
         nickname: nickname,
         interest_genre: [genre],
         level: skillLevel,
       });
 
-      if (res.data.success) {
+      if (res.data?.message === '유저 정보 입력 완료') {
         console.log('프로필 저장 성공');
         navigate('/main');
       } else {
@@ -59,7 +59,7 @@ export default function Profile() {
       if (error.response && error.response.status === 422) {
         alert('입력값이 유효하지 않습니다.');
       } else {
-        alert('프로필 저장장 중 오류가 발생했습니다.');
+        alert('프로필 저장 중 오류가 발생했습니다.');
       }
     }
   };

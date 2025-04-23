@@ -40,6 +40,8 @@ export default function NoticeBoard() {
     return parsed.toISOString().slice(0, 10).replace(/-/g, '.');
   }
 
+  console.log(postInfo);
+
   // 현재 페이지 기준으로 시작 페이지 계산
   useEffect(() => {
     const newStartPage =
@@ -126,20 +128,20 @@ export default function NoticeBoard() {
                     state={{
                       //추후에 백엔드 필드명으로 변경
                       id: post.id,
-                      title: post.제목,
+                      title: post.title,
                       writer: post.작성자,
-                      write_time: post.작성일시,
+                      write_time: post.date,
                       view: post.조회수,
                       content: post.내용,
                       likes: post.좋아요수,
                     }}
                     onClick={() => handleClick(post.id)}
                   >
-                    {post.제목}
+                    {post.title}
                   </Link>
                 </td>
                 <td className="text-center">{post.작성자}</td>
-                <td className="text-center">{formatDate(post.작성일시)}</td>
+                <td className="text-center">{formatDate(post.date)}</td>
                 <td className="text-center">{post.조회수}</td>
               </tr>
             ))}
