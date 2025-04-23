@@ -30,6 +30,7 @@ export default function PlayedMusic() {
       }
     };
 
+
     const fetchRecentRecords = async () => {
       try {
         const response = await axios.get(`${BACKEND_URL}/recent-4-record`, {
@@ -56,7 +57,7 @@ export default function PlayedMusic() {
   }, [BACKEND_URL, uid]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <Header />
       <div className="flex flex-1">
         {/* Sidebar */}
@@ -69,6 +70,10 @@ export default function PlayedMusic() {
                 <Link to="/mypage" className="text-white">내 정보</Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
+                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
+                <Link to="/mypage" className="text-white">내 정보</Link>
+              </li>
+              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
                 <Link to="/playedmusic">연주한 곡</Link>
               </li>
@@ -82,7 +87,6 @@ export default function PlayedMusic() {
             <p className="font-semibold">Kildong Hong</p>
           </div>
         </div>
-
         <div className="w-[100%] overflow-y-auto p-10">
           <h2 className="text-xl font-bold ml-8 mb-6">최근 연주한 곡</h2>
           <div className="flex flex-wrap gap-10 ml-9 justify-start">
@@ -147,7 +151,7 @@ export default function PlayedMusic() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

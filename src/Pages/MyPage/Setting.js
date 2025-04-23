@@ -53,7 +53,9 @@ export default function Admin() {
     if (!trimmedNickname) {
       setErrors(prev => ({ ...prev, nickname: '*닉네임을 입력해주세요' }));
       return;
+
     }
+  };
 
     try {
       const res = await axios.put(`${BACKEND_URL}/edit-user/nickname`, null, {
@@ -118,6 +120,22 @@ export default function Admin() {
   const handleDeleteAccount = async () => {
     try {
       const res = await axios.delete(`${BACKEND_URL}/delete-user/${uid}`);
+      if (res.data.success) {
+        setIsAccountDeleted(true);
+        setTimeout(() => {
+          localStorage.removeItem("uid");
+          navigate('/login');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error.response || error);
+      alert("탈퇴하는 데 실패했습니다.");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const res = await axios.delete(`${BACKEND_URL}/account/delete-user/${uid}`);
       if (res.data.success) {
         setIsAccountDeleted(true);
         setTimeout(() => {

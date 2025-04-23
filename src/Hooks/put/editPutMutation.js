@@ -19,13 +19,13 @@ const updatePost = ({
   });
 };
 
-export const useEditPostMutation = () => {
+export const useEditPutMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: updatePost,
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries('postNoticeBoard'); // 캐시된 데이터 갱신
+      queryClient.invalidateQueries('putNoticeBoard'); // 캐시된 데이터 갱신
     },
   });
 };
