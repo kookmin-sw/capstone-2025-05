@@ -61,8 +61,14 @@ export default function MyPage() {
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
-                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
-                <Link to="/mypage" className="text-white">내 정보</Link>
+                <img
+                  src={Information}
+                  alt="내 정보 아이콘"
+                  className="w-4 h-4"
+                />
+                <Link to="/mypage" className="text-white">
+                  내 정보
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
@@ -91,7 +97,6 @@ export default function MyPage() {
                 <ImprovementChart alt="실력 향상 그래프" />
               </div>
             </Box>
-
             <div className="w-[25%] flex justify-center">
               <Link to="/setting" className="w-full h-full">
                 <Box width="100%" height="100%" backgroundColor="#463936">
@@ -105,6 +110,7 @@ export default function MyPage() {
                     <div className="mt-16 ml-4">
                       <p className="text-xl">이메일</p>
                       <p className="font-semibold text-xl">{userInfo.email}</p>
+
                     </div>
                   </div>
                 </Box>
@@ -157,6 +163,7 @@ export default function MyPage() {
                 <div className="rounded-lg p-5 flex items-center gap-8">
                   <img src={Profile} alt="프로필" className="w-12 h-12 " />
                   <Link to="/setting" className="text-black text-[16px] font-semibold hover:underline">{userInfo.nickname || "길동1234"}</Link>
+
                 </div>
               </div>
             </Box>

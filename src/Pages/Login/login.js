@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../../Components/MapleHeader';
 import Logo from '../../Assets/logo.svg';
 import Google from '../../Assets/google.svg';
+import Spotify from '../../Assets/spotify.svg';
 import Box from '../../Components/Box/Box.js';
 import Input from '../../Components/Input/input.js';
 import Button from '../../Components/Button/Button.js';
@@ -10,14 +12,52 @@ import Footer from '../../Components/MapleFooter';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [id, setId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleId = (e) => setId(e.target.value);
+  const handleEmail = (e) => setEmail(e.target.value);
   const handlePassword = (e) => setPassword(e.target.value);
 
-  const handleLogin = () => {
-    navigate('/main');
+  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+
+  const handleLogin = async () => {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      alert('이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      const res = await axios.post(`${BACKEND_URL}/email-login`, {
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
+
+      const uid = res.data.uid;
+
+      if (uid) {
+        localStorage.setItem('uid', uid);
+        console.log('로그인 성공');
+        navigate('/main');
+      } else {
+        alert('로그인 실패: 사용자 정보를 가져올 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('로그인 에러:', error);
+      if (error.response) {
+        console.error('서버 응답 상태:', error.response.status);
+        console.error('서버 응답 데이터:', error.response.data);
+        if (error.response.status === 422) {
+          alert('입력값이 유효하지 않습니다.');
+        } else {
+          alert('서버 오류가 발생했습니다.');
+        }
+      } else {
+        alert('네트워크 오류가 발생했습니다.');
+      }
+    }
   };
 
   const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
@@ -29,15 +69,19 @@ export default function Login() {
     window.location.href = googleLink;
   };
 
+  const handleSpoityLogin = () => {
+    navigate('/main');
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <div className="flex flex-col items-center justify-center flex-grow relative">
-        <div className="absolute top-[10%] z-10">
+        <div className="absolute top-[4%] z-10">
           <img src={Logo} alt="logo" className="w-52 h-auto" />
         </div>
 
-        <div className="absolute top-[18%]">
+        <div className="absolute top-[12%]">
           <Box width="400px" height="300px">
             <div className="flex flex-col items-center justify-center h-full">
               <div className="flex flex-col items-center gap-y-4">
@@ -45,9 +89,9 @@ export default function Login() {
                   width="320px"
                   height="52px"
                   type="text"
-                  placeholder="아이디를 입력해 주세요"
-                  value={id}
-                  onChange={handleId}
+                  placeholder="이메일을 입력해 주세요"
+                  value={email}
+                  onChange={handleEmail}
                 />
                 <Input
                   width="320px"
@@ -67,9 +111,9 @@ export default function Login() {
           </Box>
         </div>
 
-        <div className="absolute top-[74%] w-[600px] border-t-2 border-[#AFAFAF]"></div>
+        <div className="absolute top-[67%] w-[600px] border-t-2 border-[#AFAFAF]"></div>
 
-        <div className="absolute top-[77%]">
+        <div className="absolute top-[69%]">
           <button
             className="flex flex-row justify-between items-center w-[400px] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[20px] font-bold bg-[white]"
             onClick={handleGoogleLogin}
@@ -79,9 +123,21 @@ export default function Login() {
             <div className="w-[24px] h-[100%]"></div>
           </button>
         </div>
+
+        <div className="absolute top-[82%]">
+          <button
+            className="flex flex-row justify-between items-center w-[400px] h-[60px] pl-5 pr-5 rounded-[10px] text-white text-[20px] font-bold bg-[#12D760]"
+            onClick={handleSpoityLogin}
+          >
+            <img src={Spotify} alt="spotify logo" className="w-12 h-12" />
+            스포티파이로 시작하기
+            <div className="w-[24px] h-[100%]"></div>
+          </button>
+        </div>
       </div>
+
       <div className="flex flex-col items-center">
-        <div className="absolute top-[85%]">
+        <div className="absolute top-[89%]">
           <button
             className="text-[#AFAFAF] text-sm underline hover:text-gray-500"
             onClick={() => {

@@ -1,0 +1,18 @@
+services:
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/maple-client:latest
+    container_name: maple-client
+    ports:
+      - "3000:80"  # nginx는 80번 포트
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - maple-network
+networks:
+  maple-network:
+    driver: bridge

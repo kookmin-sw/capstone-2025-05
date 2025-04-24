@@ -8,6 +8,7 @@ import Button from '../Components/Button/Button.js';
 const MapleHeader = () => {
   const menuList = ['분석하기', '초보방', '자유게시판', '마이페이지'];
   const [isLogin, setIsLogin] = useState(true);
+  const [searchValue, setSearchValue] = useState();
   const navigate = useNavigate();
 
   const goPage = (menu) => {
@@ -27,6 +28,7 @@ const MapleHeader = () => {
     setIsLogin(!isLogin);
     navigate('/login');
   };
+
   return (
     <div className="flex w-full items-center justify-between bg-[#FFFFFF]/50">
       <div className="ml-8" onClick={() => navigate('/main')}>
@@ -43,9 +45,20 @@ const MapleHeader = () => {
         ))}
       </div>
       <div className="form-wrapper flex justify-between items-center">
-        <form className="input-box w-1/5" onSubmit={''}>
+        <form
+          className="input-box w-1/5"
+          onSubmit={(e) => {
+            e.preventDefault(); // 기본 새로고침 방지
+            if (!searchValue || searchValue.trim() === '') return; // 빈 값 체크
+            navigate(`/searchpage?keyword=${encodeURIComponent(searchValue)}`);
+          }}
+        >
           <div className="searchBox mr-4">
-            <SearchBox width="250px" />
+            <SearchBox
+              width="250px"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+            />
           </div>
         </form>
         <div className="flex mr-8">
