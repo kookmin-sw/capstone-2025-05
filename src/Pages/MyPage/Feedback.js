@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import Box from '../../Components/Box/Box.js';
 import Header from '../../Components/MapleHeader.js';
@@ -9,6 +10,10 @@ import Album from '../../Assets/Main/album/bndCover.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
 
 export default function Feedback() {
+
+  const [userInfo, setUserInfo] = useState({ nickname: '', email: '' });
+  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+  const uid = localStorage.getItem("uid") || "cLZMFP4802a7dwMo0j4qmcxpnY63";
 
   const record = {
       tempo: 92,
@@ -31,14 +36,31 @@ export default function Feedback() {
       played: Math.round(played),
     };
   });
+
+  useEffect(() => {
+      const fetchUserInfo = async () => {
+        try {
+          const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
+            params: { uid },
+          });
+          console.log("유저 정보 응답:", response.data["user information"]);
+          const { nickname, email, profile_image } = response.data["user information"] || {};
+          setUserInfo({ nickname, email, profile_image });
+        } catch (error) {
+          console.error("유저 정보 가져오기 실패:", error);
+        }
+      };
+      fetchUserInfo();
+    }, [BACKEND_URL, uid]);
   
   
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-screen">
       <Header />
-      <div className="flex">
-        <div className="w-[210px] h-[770px] bg-[#463936] text-white p-4 flex flex-col justify-between">
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
@@ -57,7 +79,7 @@ export default function Feedback() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">Kildong Hong</p>
+           <p className="font-semibold">{userInfo.nickname || "사용자"}</p>
           </div>
         </div>
 
