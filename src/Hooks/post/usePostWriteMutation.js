@@ -4,17 +4,24 @@ import api from '../../Utils/api';
 /* 글 작성 기능 */
 
 const postWrite = ({ post }) => {
-  return api.post(`/posts`, {
-    uid: post.uid,
-    게시판종류이름: 'string',
-    내용: post.content,
-    댓글갯수: 0,
-    비밀번호: 'string',
-    작성일시: new Date(post.write_time).toISOString(),
-    작성자: post.author,
-    제목: post.title,
-    조회수: 0,
-    좋아요수: 0,
+  const formData = new FormData();
+  formData.append('uid', post.uid);
+  formData.append('content', post.content);
+  formData.append('author', post.author);
+  formData.append('title', post.title);
+
+  // 선택적으로 이미지/오디오가 있다면 추가
+  if (post.image) {
+    formData.append('image', post.image); // post.image는 File 객체
+  }
+  if (post.audio) {
+    formData.append('audio', post.audio); // post.audio도 File 객체
+  }
+
+  return api.post(`/posts`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
   });
 };
 

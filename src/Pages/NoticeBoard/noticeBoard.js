@@ -49,14 +49,14 @@ export default function NoticeBoard() {
   const handleClick = (post_id) => {
     increaseView({ post_id: post_id });
   };
+
+  //날짜 format//
   function formatDate(dateString) {
     if (!dateString) return '-';
     const parsed = new Date(dateString);
     if (isNaN(parsed.getTime())) return '-'; // invalid date
     return parsed.toISOString().slice(0, 10).replace(/-/g, '.');
   }
-
-  console.log(postInfo, '전체게시글 데이터');
 
   // 현재 페이지 기준으로 시작 페이지 계산
   useEffect(() => {
@@ -87,9 +87,6 @@ export default function NoticeBoard() {
 
     setCurrentData(pageData);
   }, [filteredData, currentPage]);
-
-  console.log(autoCompleteSuggestions, '자동완성');
-
   return (
     <>
       <MapleHeader />
@@ -154,7 +151,7 @@ export default function NoticeBoard() {
                       title: post.title,
                       uid: post.uid,
                       writer: post.작성자,
-                      write_time: post.date,
+                      write_time: formatDate(post.date),
                       view: post.조회수,
                       content: post.내용,
                       likes: post.좋아요수,

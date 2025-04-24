@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { usePostWriteMutation } from '../../Hooks/post/usePostWriteMutation';
-import musicIcon from '../../../src/Assets/music-note.svg';
 import guitaricon from '../../Assets/electric-guitar.svg';
 
 export default function WritePage() {
@@ -22,8 +21,6 @@ export default function WritePage() {
       uid: 'dogyeong', //중복X,자동 생성 & 증가되도록 변경해야됨
       title,
       author,
-      write_time: formatDate(new Date()),
-      view: 0,
       content,
     };
     if (content.length < 10) {
