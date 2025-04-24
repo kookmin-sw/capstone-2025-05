@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
+/* 글 작성 기능 */
+
 const postWrite = ({ post }) => {
-  return api.post(`/post/posts`, {
+  return api.post(`/posts`, {
     uid: post.uid,
     게시판종류이름: 'string',
     내용: post.content,

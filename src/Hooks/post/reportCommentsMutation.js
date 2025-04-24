@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
 const commentReport = ({ commentId, reason }) => {
-  return api.post(`/post/comments/${commentId}/report`, {
+  return api.post(`/report/comment/${commentId}`, {
+    comment_id: commentId,
     reason,
   });
 };

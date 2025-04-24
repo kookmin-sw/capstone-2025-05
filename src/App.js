@@ -40,6 +40,7 @@ function App() {
     `&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
   useEffect(() => {
+    // 최초 실행 시
     const hash = window.location.hash;
     const params = new URLSearchParams(hash.replace('#', ''));
     const accessToken = params.get('access_token');
@@ -47,10 +48,8 @@ function App() {
 
     if (accessToken) {
       const expireAt = Date.now() + parseInt(expiresIn) * 1000;
-
       localStorage.setItem('spotify_access_token', accessToken);
       localStorage.setItem('spotify_token_expire_at', expireAt.toString());
-
       window.history.replaceState({}, document.title, '/');
       setToken(accessToken);
     } else {
@@ -62,9 +61,7 @@ function App() {
       if (storedToken && expireAt && Date.now() < expireAt) {
         setToken(storedToken);
       } else {
-        localStorage.removeItem('spotify_access_token');
-        localStorage.removeItem('spotify_token_expire_at');
-        window.location.href = authUrl; // 👈 재인증
+        window.location.href = authUrl;
       }
     }
   }, []);

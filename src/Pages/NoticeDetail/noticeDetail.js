@@ -11,8 +11,8 @@ import ClipLoader from 'react-spinners/ClipLoader';
 import { useComentsQuery } from '../../Hooks/get/useCommentsQuery';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEditPutMutation } from '../../Hooks/put/editPutMutation';
-import { useLikePutMutation } from '../../Hooks/put/likePutMutation';
-import { useUnlikePutMutation } from '../../Hooks/put/unlikePutMutation';
+import { useLikePutMutation } from '../../Hooks/post/likePostMutation';
+import { useDeletelikeMutation } from '../../Hooks/delete/deletelikeMutation';
 import { useReportPostMutation } from '../../Hooks/post/reportPostMutation';
 import { FaRegMinusSquare, FaRegPlusSquare } from 'react-icons/fa';
 import Input from '../../Components/Input/input';
@@ -32,13 +32,14 @@ export default function NoticeDetail() {
   const post = location.state;
   const isAdmin = true; //로그인 계정이 관리자 계정일경우
   const isLoginUser = true; //uid와 작성자 uid가 같을경우
+  const uid = 'fakeuid';
 
   /*Mutation 영역*/
   const { mutate } = useEditPutMutation(); //게시글 수정하기
   const { mutate: postCommentMutate } = usePostCommentsMutation(); //댓글 추가하기
-  const { mutate: putLikeMutate } = useLikePutMutation(); //게시글 좋아요
+  const { mutate: postLikeMutate } = useLikePutMutation(); //게시글 좋아요
   const { mutate: postReportMutate } = useReportPostMutation();
-  const { mutate: putUnlikeMutate } = useUnlikePutMutation(); //게시글 좋아요 취소
+  const { mutate: deletelikeMutate } = useDeletelikeMutation(); //게시글 좋아요 취소
   const { mutate: deletePostMutate } = useDeletePostMutation(); //게시물 삭제하기
   /***************/
 
@@ -165,8 +166,8 @@ export default function NoticeDetail() {
     //여기에는 좋아요 + 1기능을 하는 mutate를 집어넣어주면 됨
     if (!liked) {
       //하트를 새로 누른경우
-      putLikeMutate(
-        { postid },
+      postLikeMutate(
+        { postid, uid },
         {
           onSuccess: () => {
             console.log('좋아요 성공');
@@ -177,7 +178,7 @@ export default function NoticeDetail() {
       localStorage.setItem('heart', postid);
       setClickLiked(true);
     } else {
-      putUnlikeMutate(
+      deletelikeMutate(
         { postid },
         {
           onSuccess: () => {
@@ -194,10 +195,10 @@ export default function NoticeDetail() {
   const handleFlagBttn = () => {
     setReported(!reported);
     //여기에는 신고 하는 mutate를 집어넣어주면 됨
-    const postid = post.id;
+    const post_id = post.id;
     const reason = '신고 '; //입력받는 형태로 바꿔야됨
     postReportMutate(
-      { postid, reason },
+      { post_id, reason },
       {
         onSuccess: () => {
           console.log('신고하기 성공');
@@ -222,7 +223,6 @@ export default function NoticeDetail() {
       setLiked(false);
     }
   }, [liked]);
-  console.log(commentsInfo);
 
   return (
     <div>
