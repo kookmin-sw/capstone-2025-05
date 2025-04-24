@@ -1,19 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import PageButton from '../../Components/PageButton/PageButton';
 import PagePrevButton from '../../Components/PagePrevButton.js/PagePrevButton';
 import PageNextButton from '../../Components/PageNextButton/PageNextButton';
 import SearchBox from '../../Components/SearchBox/searchBox';
-import Button from '../../Components/Button/Button';
 import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePostInfoQuery } from '../../Hooks/get/usePostInfoQuery';
 import { useViewPutMutation } from '../../Hooks/put/viewPutMutation';
-import { useTopViewedPostsQuery } from '../../Hooks/get/useTopViewedPosts';
-import { FaFilter } from 'react-icons/fa6';
+import { useAutoCompleteQuery } from '../../Hooks/get/autoComplete/autoCompleteQuery';
 import guitaricon from '../../Assets/electric-guitar.svg';
-import fake_notice_data from '../../Data/fake_notice_data.json';
 import musicIcon from '../../../src/Assets/music-note.svg';
+import AutoCompleteDropdown from '../../Components/Dropdown/AutoCompleteDropdown';
 
 export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
@@ -21,14 +19,32 @@ export default function NoticeBoard() {
   const { mutate: increaseView } = useViewPutMutation();
 
   const { data: postInfo } = usePostInfoQuery();
-  const totalPage = postInfo ? Math.ceil(postInfo.length / contentsPerPage) : 1;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [startPage, setStartPage] = useState(1);
   const [currentData, setCurrentData] = useState([]);
   const [pageNumbers, setPageNumbers] = useState([]);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [totalPage, setTotalPage] = useState(
+    postInfo ? Math.ceil(postInfo.length / contentsPerPage) : 1,
+  );
 
   const navigate = useNavigate();
+
+  const { data: autoCompleteSuggestions } = useAutoCompleteQuery(searchKeyword);
+
+  // 필터링된 결과
+  const filteredData = useMemo(() => {
+    if (!searchKeyword.trim()) return postInfo || [];
+    return postInfo?.filter((post) =>
+      post.title?.toLowerCase().includes(searchKeyword.toLowerCase()),
+    );
+  }, [searchKeyword, postInfo]);
+
+  console.log(filteredData, '필터링데이터');
+  console.log(searchKeyword, '← 검색어');
+  console.log(autoCompleteSuggestions, '← 자동완성 결과');
 
   const handleClick = (post_id) => {
     increaseView({ post_id: post_id });
@@ -40,7 +56,7 @@ export default function NoticeBoard() {
     return parsed.toISOString().slice(0, 10).replace(/-/g, '.');
   }
 
-  console.log(postInfo);
+  console.log(postInfo, '전체게시글 데이터');
 
   // 현재 페이지 기준으로 시작 페이지 계산
   useEffect(() => {
@@ -57,15 +73,22 @@ export default function NoticeBoard() {
     );
   }, [startPage, totalPage]);
 
-  // 현재 페이지에 해당하는 데이터 추출
   useEffect(() => {
-    if (postInfo && Array.isArray(postInfo)) {
-      const startIndex = (currentPage - 1) * contentsPerPage;
-      setCurrentData(postInfo.slice(startIndex, startIndex + contentsPerPage));
-    } else {
-      setCurrentData(fake_notice_data.posts.slice(0, 10)); // 데이터가 없을 때 fakeData넣어줌
-    }
-  }, [currentPage, postInfo]);
+    const length = filteredData?.length || 0;
+    const pageCount = Math.ceil(length / contentsPerPage);
+    setTotalPage(pageCount || 1);
+  }, [filteredData]);
+
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * contentsPerPage;
+
+    const targetData = filteredData || [];
+    const pageData = targetData.slice(startIndex, startIndex + contentsPerPage);
+
+    setCurrentData(pageData);
+  }, [filteredData, currentPage]);
+
+  console.log(autoCompleteSuggestions, '자동완성');
 
   return (
     <>
@@ -129,6 +152,7 @@ export default function NoticeBoard() {
                       //추후에 백엔드 필드명으로 변경
                       id: post.id,
                       title: post.title,
+                      uid: post.uid,
                       writer: post.작성자,
                       write_time: post.date,
                       view: post.조회수,
@@ -149,7 +173,31 @@ export default function NoticeBoard() {
         </table>
 
         <div id="searchBar" className="flex justify-center w-[80%] mt-6">
-          <SearchBox width={'300px'} height={'40px'} />
+          <div className="relative w-[300px]">
+            <SearchBox
+              width={'300px'}
+              height={'40px'}
+              value={searchKeyword}
+              onChange={(e) => {
+                setSearchKeyword(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onSearch={(keyword) => {
+                setSearchKeyword(keyword);
+                setShowSuggestions(false);
+                // 여기에 필터 적용 로직 또는 navigate 등 추가
+              }}
+            />
+            <AutoCompleteDropdown
+              suggestions={autoCompleteSuggestions}
+              keyword={searchKeyword}
+              onSelect={(s) => {
+                setSearchKeyword(s);
+                setShowSuggestions(false);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
         </div>
         <div className="fixed bottom-10 right-10">
           <button

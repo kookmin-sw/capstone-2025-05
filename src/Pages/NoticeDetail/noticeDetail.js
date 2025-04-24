@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import MapleHeader from '../../Components/MapleHeader';
-
 import Button from '../../Components/Button/Button';
 import Review from '../../Components/Review/Review';
 import profile from '../../Assets/Images/google_profile.png';
@@ -20,10 +19,12 @@ import { usePostCommentsMutation } from '../../Hooks/post/usePostCommentsMutatio
 import Alert from '../../Components/Alert/Alert';
 import fill_heart from '../../Assets/Images/fill_heart.png';
 import fill_bookmark from '../../Assets/MyPage/filledBookmark.svg';
+import { FaFlag } from 'react-icons/fa6';
 import bookmark from '../../Assets/bookmark.svg';
 import { FaTrashAlt } from 'react-icons/fa';
 import { useDeletePostMutation } from '../../Hooks/delete/deletePostMutation';
 import Modal from '../../Components/Modal/Modal';
+import { useScrapPostMutation } from '../../Hooks/post/scrapPostMutation';
 
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
@@ -41,6 +42,8 @@ export default function NoticeDetail() {
   const { mutate: postReportMutate } = useReportPostMutation();
   const { mutate: deletelikeMutate } = useDeletelikeMutation(); //게시글 좋아요 취소
   const { mutate: deletePostMutate } = useDeletePostMutation(); //게시물 삭제하기
+  const { mutate: scrapPostMutate } = useScrapPostMutation(); //북마크
+  const { mutate: deleteScrapMutate } = useDeletePostMutation(); //북마크 취소
   /***************/
 
   const navigate = useNavigate();
@@ -80,7 +83,7 @@ export default function NoticeDetail() {
   const [liked, setLiked] = useState(false);
   const [clickLiked, setClickLiked] = useState(false);
   const [likeNum, setLikeNum] = useState(post.likes);
-  const [reported, setReported] = useState(false);
+  const [isScrap, setIsScrap] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   //수정 모드
@@ -115,9 +118,8 @@ export default function NoticeDetail() {
   };
 
   const deletePost = () => {
-    const postid = post.id;
     deletePostMutate(
-      { postid },
+      { post_id: post.id },
       {
         onSuccess: () => {
           alert('게시물을 삭제하였습니다');
@@ -134,11 +136,11 @@ export default function NoticeDetail() {
   const handlePostComment = () => {
     setIsPostComment(false);
     const commentData = {
-      uid: '랜덤',
+      uid: '랜덤', //로그인 uid로 해야됨
       작성일시: new Date().toISOString(), // 현재 시간
       postid: post.id, // 현재 게시글 ID
       작성자: '누굴까', // 작성자 이름
-      내용: reviewComment,
+      내용: reviewComment.trim(),
       비밀번호: '1234',
     };
 
@@ -159,15 +161,14 @@ export default function NoticeDetail() {
     return setIsPostComment(newIsPostComment);
   };
 
-  //좋아요&신고하기 버튼 클릭 이벤트
+  //좋아요 버튼 클릭 이벤트
   const handleHeartBttn = () => {
     setLiked(!liked);
-    const postid = post.id;
     //여기에는 좋아요 + 1기능을 하는 mutate를 집어넣어주면 됨
     if (!liked) {
       //하트를 새로 누른경우
       postLikeMutate(
-        { postid, uid },
+        { post_id: post.id, uid },
         {
           onSuccess: () => {
             console.log('좋아요 성공');
@@ -175,11 +176,11 @@ export default function NoticeDetail() {
           onError: (error) => console.log('좋아요 실패ㅠㅠ', error),
         },
       );
-      localStorage.setItem('heart', postid);
+      localStorage.setItem('heart', post.id);
       setClickLiked(true);
     } else {
       deletelikeMutate(
-        { postid },
+        { post_id: post.id },
         {
           onSuccess: () => {
             console.log('좋아요 취소 성공');
@@ -187,23 +188,49 @@ export default function NoticeDetail() {
           onError: (error) => console.log('좋아요 취소 실패ㅠㅠ', error),
         },
       );
-      localStorage.removeItem('heart', postid);
+      localStorage.removeItem('heart', post.id);
       setClickLiked(false);
     }
   };
 
-  const handleFlagBttn = () => {
-    setReported(!reported);
-    //여기에는 신고 하는 mutate를 집어넣어주면 됨
-    const post_id = post.id;
-    const reason = '신고 '; //입력받는 형태로 바꿔야됨
+  //북바크
+  const handleScrap = () => {
+    setIsScrap(!isScrap);
+    if (!isScrap) {
+      //북마크 클릭
+      scrapPostMutate(
+        { post_id: post.id, post_uid: post.uid },
+        {
+          onSuccess: () => {
+            console.log('북마크 성공');
+          },
+          onError: (error) => console.log('북마크 실패ㅠㅠ', error),
+        },
+      );
+    } else {
+      deleteScrapMutate(
+        { post_id: post.id },
+        {
+          onSuccess: () => {
+            console.log('북마크 취소 성공');
+          },
+          onError: (error) => console.log('북마크 취소 실패ㅠㅠ', error),
+        },
+      );
+    }
+  };
+
+  const handleReport = () => {
     postReportMutate(
-      { post_id, reason },
+      {
+        post_id: post.id,
+        reason: '부적절한 콘텐츠',
+      },
       {
         onSuccess: () => {
           console.log('신고하기 성공');
         },
-        onError: (error) => console.log('신고하기 실패ㅠㅠ', error),
+        onError: (error) => console.log('신고하기 실패'),
       },
     );
   };
@@ -249,11 +276,21 @@ export default function NoticeDetail() {
                   <h1 className="text-2xl font-bold align-middle">
                     {post.title}
                   </h1>
-                  <div className="duration-300 ease-in-out hover:scale-[110%]">
-                    <FaTrashAlt
-                      size={20}
-                      onClick={() => setIsModalOpen(true)}
-                    />
+                  <div className="flex items-center justify-center">
+                    <div className="flex items-center duration-300 ease-in-out hover:scale-[110%]">
+                      <FaTrashAlt
+                        size={20}
+                        onClick={() => setIsModalOpen(true)}
+                      />
+                    </div>
+                    <div className="flex items-center duration-300 ease-in-out hover:scale-[110%]">
+                      <FaFlag
+                        size={20}
+                        className="ml-3 text-red-500 cursor-pointer hover:scale-110 transition-transform"
+                        onClick={handleReport}
+                        title="신고하기"
+                      />
+                    </div>
                   </div>
                   <Modal
                     isOpen={isModalOpen}
@@ -336,9 +373,9 @@ export default function NoticeDetail() {
               />
               <span>{clickLiked ? likeNum + 1 : likeNum}</span>
             </button>
-            <button className="w-10" onClick={handleFlagBttn}>
+            <button className="w-10" onClick={handleScrap}>
               <img
-                src={reported ? fill_bookmark : bookmark}
+                src={isScrap ? fill_bookmark : bookmark}
                 className="duration-300 ease-in-out hover:scale-[110%]"
               />
             </button>
