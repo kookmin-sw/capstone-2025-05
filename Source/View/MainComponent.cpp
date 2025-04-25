@@ -41,6 +41,7 @@ MainComponent::MainComponent()
 
 MainComponent::~MainComponent()
 {
+    prepareToClose();
 }
 
 void MainComponent::paint(juce::Graphics& g)
