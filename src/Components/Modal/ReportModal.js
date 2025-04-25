@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { useEffect } from 'react';
 
 export default function ReportModal({ isOpen, onClose, onConfirm }) {
   const [reason, setReason] = useState('');
@@ -27,6 +26,12 @@ export default function ReportModal({ isOpen, onClose, onConfirm }) {
       />
       <div className="flex justify-end gap-3">
         <button
+          onClick={handleSubmit}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+        >
+          신고하기
+        </button>
+        <button
           onClick={() => {
             setReason('');
             onClose();
@@ -34,12 +39,6 @@ export default function ReportModal({ isOpen, onClose, onConfirm }) {
           className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
         >
           취소
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-        >
-          신고하기
         </button>
       </div>
     </Modal>

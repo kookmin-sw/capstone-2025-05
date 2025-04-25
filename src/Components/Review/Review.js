@@ -6,8 +6,14 @@ import { useEditCommentMutation } from '../../Hooks/put/editCommentMutation'; //
 import swal from 'sweetalert';
 import { comment } from 'postcss';
 
-export default function Review({ comments, fakeImg }) {
-  const [isReportOpen, setIsReportOpen] = useState(false);
+export default function Review({
+  comments,
+  fakeImg,
+  isSelectable,
+  isSelected,
+  onSelect,
+}) {
+  const [isCommentReportOpen, setIsCommentReportOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false); // ✨ 수정 모드 여부
   const [editedContent, setEditedContent] = useState(''); // ✨ 수정할 내용
 
@@ -80,6 +86,14 @@ export default function Review({ comments, fakeImg }) {
 
   return (
     <div className="flex items-center mb-8">
+      {isSelectable && (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onSelect}
+          className="mr-2"
+        />
+      )}
       <div className="rounded-full overflow-hidden mr-2">
         <img src={fakeImg} width="80" height="80" className="object-cover" />
       </div>
@@ -114,15 +128,15 @@ export default function Review({ comments, fakeImg }) {
 
         <div className="flex">
           <div className="relative group">
-            <button onClick={() => setIsReportOpen(true)}>
+            <button onClick={() => setIsCommentReportOpen(true)}>
               <AiFillAlert />
             </button>
             <div className="absolute -translate-x-[50%] ml-2 px-2 py-1 text-sm bg-black text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               신고하기
             </div>
             <ReportModal
-              isOpen={isReportOpen}
-              onClose={() => setIsReportOpen(false)}
+              isOpen={isCommentReportOpen}
+              onClose={() => setIsCommentReportOpen(false)}
               onConfirm={handleReport}
             />
           </div>

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import MapleHeader from '../../Components/MapleHeader';
 import Button from '../../Components/Button/Button';
 import Review from '../../Components/Review/Review';
 import profile from '../../Assets/Images/google_profile.png';
@@ -25,6 +24,9 @@ import { FaTrashAlt } from 'react-icons/fa';
 import { useDeletePostMutation } from '../../Hooks/delete/deletePostMutation';
 import Modal from '../../Components/Modal/Modal';
 import { useScrapPostMutation } from '../../Hooks/post/scrapPostMutation';
+import { useDeleteCommentMutation } from '../../Hooks/delete/deleteCommentMutation';
+import swal from 'sweetalert';
+import ReportModal from '../../Components/Modal/ReportModal';
 
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
@@ -44,15 +46,16 @@ export default function NoticeDetail() {
   const { mutate: deletePostMutate } = useDeletePostMutation(); //게시물 삭제하기
   const { mutate: scrapPostMutate } = useScrapPostMutation(); //북마크
   const { mutate: deleteScrapMutate } = useDeletePostMutation(); //북마크 취소
+  const { mutate: deleteComment } = useDeleteCommentMutation(); //댓글 삭제
   /***************/
 
   const navigate = useNavigate();
-  const filterComments = () => {
+  const filterComments = (isShow) => {
     setIsLoading(true); // 로딩 시작
     if (comments) {
       setTimeout(() => {
-        setIsShow((prevIsShow) => {
-          const newIsShow = !prevIsShow;
+        setIsShow(() => {
+          const newIsShow = isShow;
           setFilteredComments(newIsShow ? comments : comments.slice(0, 3));
           setIsLoading(false); // 로딩 완료
           return newIsShow;
@@ -60,6 +63,9 @@ export default function NoticeDetail() {
       }, 500);
     }
   };
+
+  //신고하기 게시글 모달 창을 위한 상태 관리
+  const [isWriteReportOpen, setIsWriteReportOpen] = useState(false);
 
   const [isShow, setIsShow] = useState(false);
   const [comments, setComments] = useState();
@@ -76,8 +82,10 @@ export default function NoticeDetail() {
   const [editedContent, setEditedContent] = useState(post.content);
   const [isPostComment, setIsPostComment] = useState(false);
 
-  // 댓글 내용
+  // 댓글 관련 state
   const [reviewComment, setReviewComment] = useState('');
+  const [selectedComments, setSelectedComments] = useState([]);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   //좋아요,신고하기 버튼 체크 여부
   const [liked, setLiked] = useState(false);
@@ -91,6 +99,61 @@ export default function NoticeDetail() {
     setIsEditing(!isEditing);
     setEditedTitle(post.title);
     setEditedContent(post.content);
+  };
+
+  //댓글 선택
+  const handleSelectComment = (commentId) => {
+    setSelectedComments(
+      (prevSelected) =>
+        prevSelected.includes(commentId)
+          ? prevSelected.filter((id) => id !== commentId) // 이미 선택된 건 해제
+          : [...prevSelected, commentId], // 새로 선택
+    );
+  };
+
+  //댓글 삭제
+  const handleDeleteSelectedComments = () => {
+    if (selectedComments.length === 0) {
+      swal('', '삭제할 댓글을 선택해주세요!', 'error');
+
+      return;
+    }
+    swal({
+      title: '⚠️ 정말 삭제할까요?',
+      text: `선택한 댓글 ${selectedComments.length}개를 삭제하시겠습니까?`,
+      icon: 'warning',
+      buttons: ['취소', '삭제하기'],
+      dangerMode: true,
+    }).then((willDelete) => {
+      if (willDelete) {
+        selectedComments.forEach((comment_id) => {
+          deleteComment(
+            { comment_id },
+            {
+              onSuccess: () => {
+                setComments((prev) =>
+                  prev.filter((comment) => comment.id !== comment_id),
+                );
+                setSelectedComments([]);
+                setIsShow(false);
+
+                handleCancelSelect(); // 선택모드 해제
+                swal('', '선택한 댓글이 삭제되었습니다🫡', 'success');
+              },
+              onError: () => {
+                swal('', '댓글 삭제 실패 😥', 'error');
+              },
+            },
+          );
+        });
+      }
+    });
+  };
+
+  //댓글 삭제 취소
+  const handleCancelSelect = () => {
+    setIsSelecting(false);
+    setSelectedComments([]);
   };
 
   //저장 기능
@@ -107,11 +170,11 @@ export default function NoticeDetail() {
           post.title = editedTitle;
           post.content = editedContent;
           setIsEditing(false);
-          alert('✅게시물 수정 완료');
+          swal('', '게시물 수정 완료 🫡', 'success');
         },
         onError: (error) => {
           console.error('게시물 수정 중 오류 발생:', error);
-          alert('❎게시물 수정에 실패했습니다.');
+          swal('', '게시물 수정에 실패했습니다.😥', 'error');
         },
       },
     );
@@ -122,11 +185,11 @@ export default function NoticeDetail() {
       { post_id: post.id },
       {
         onSuccess: () => {
-          alert('게시물을 삭제하였습니다');
+          swal('🫡', '게시물 삭제 완료', 'success');
         },
         onError: (error) => {
           console.error('게시물 삭제 중 오류 발생:', error);
-          alert('게시물 삭제에 실패했습니다.');
+          swal('', '게시물 삭제에 실패했습니다.😥', 'error');
         },
       },
     );
@@ -146,12 +209,12 @@ export default function NoticeDetail() {
 
     postCommentMutate(commentData, {
       onSuccess: () => {
-        alert('✅ 댓글이 추가되었습니다.');
+        swal('', '댓글이 추가되었습니다.🫡', 'success');
         setReviewComment('');
       },
       onError: (error) => {
         console.error('댓글 작성 중 오류 발생:', error);
-        alert('❎ 댓글 작성에 실패했습니다.');
+        swal('', '댓글 추가 실패😥', error);
       },
     });
   };
@@ -220,17 +283,20 @@ export default function NoticeDetail() {
     }
   };
 
-  const handleReport = () => {
+  const handlePostReport = (reason) => {
     postReportMutate(
       {
         post_id: post.id,
-        reason: '부적절한 콘텐츠',
+        reason,
       },
       {
         onSuccess: () => {
-          console.log('신고하기 성공');
+          setIsWriteReportOpen(false);
+          swal('', '신고가 접수되었습니다🫡', 'success');
         },
-        onError: (error) => console.log('신고하기 실패'),
+        onError: () => {
+          swal('❌', '신고 처리 중 오류가 발생했습니다', 'error');
+        },
       },
     );
   };
@@ -250,6 +316,8 @@ export default function NoticeDetail() {
       setLiked(false);
     }
   }, [liked]);
+
+  console.log(selectedComments, '선택된 댓글들');
 
   return (
     <div>
@@ -285,11 +353,16 @@ export default function NoticeDetail() {
                     <div className="flex items-center duration-300 ease-in-out hover:scale-[110%]">
                       <FaFlag
                         size={20}
-                        className="ml-3 text-red-500 cursor-pointer hover:scale-110 transition-transform"
-                        onClick={handleReport}
+                        className="ml-3 text-black-500 cursor-pointer hover:scale-110 transition-transform"
+                        onClick={() => setIsWriteReportOpen(true)}
                         title="신고하기"
                       />
                     </div>
+                    <ReportModal
+                      isOpen={isWriteReportOpen}
+                      onClose={() => setIsWriteReportOpen(false)}
+                      onConfirm={handlePostReport}
+                    />
                   </div>
                   <Modal
                     isOpen={isModalOpen}
@@ -437,19 +510,48 @@ export default function NoticeDetail() {
           <h className="font-bold text-xl mb-2">
             <strong>댓글 {comments ? comments?.length : 0}개</strong>{' '}
           </h>
-          {!isPostComment ? (
-            <FaRegPlusSquare
-              size={30}
-              className="duration-300 ease-in-out hover:scale-[110%]"
-              onClick={handlePlusComment}
-            />
-          ) : (
-            <FaRegMinusSquare
-              size={30}
-              className="duration-300 ease-in-out hover:scale-[110%]"
-              onClick={handlePlusComment}
-            />
-          )}
+          <div className="flex items-center justify-center">
+            {!isPostComment && !isSelecting ? (
+              <FaRegPlusSquare
+                size={30}
+                className="duration-300 ease-in-out hover:scale-[110%]"
+                onClick={handlePlusComment}
+              />
+            ) : (
+              !isSelecting && (
+                <FaRegMinusSquare
+                  size={30}
+                  className="duration-300 ease-in-out hover:scale-[110%]"
+                  onClick={handlePlusComment}
+                />
+              )
+            )}
+            {!isSelecting ? (
+              <div className="mx-2 duration-300 ease-in-out hover:scale-[110%]">
+                <FaTrashAlt
+                  onClick={() => {
+                    setIsSelecting(true);
+                  }}
+                  size={25}
+                />
+              </div>
+            ) : (
+              <div className="flex mb-1">
+                <button
+                  onClick={handleDeleteSelectedComments}
+                  className="bg-white text-[#A57865] px-3 py-1 rounded hover:bg-gray-100"
+                >
+                  선택 삭제 ({selectedComments.length}개)
+                </button>
+                <button
+                  onClick={handleCancelSelect}
+                  className="bg-[#A57865] text-white px-3 py-1 mx-1 rounded hover:bg-[#8c5c4e]"
+                >
+                  선택 취소
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         {/* 댓글 contents */}
         <div id="review-contents" className="my-4 w-[80%]">
@@ -457,7 +559,10 @@ export default function NoticeDetail() {
             comments?.map((item, index) => (
               <Review
                 comments={item}
-                fakeImg={item?.프로필이미지 == 'profile' ? profile : profile2}
+                fakeImg={item.프로필이미지 == 'profile' ? profile : profile2}
+                isSelected={selectedComments.includes(item.id)}
+                isSelectable={isSelecting}
+                onSelect={() => handleSelectComment(item.id)}
               />
             ))}
           {comments &&
@@ -466,6 +571,9 @@ export default function NoticeDetail() {
               <Review
                 comments={item}
                 fakeImg={item.프로필이미지 == 'profile' ? profile : profile2}
+                isSelected={selectedComments.includes(item.id)}
+                isSelectable={isSelecting}
+                onSelect={() => handleSelectComment(item.id)}
               />
             ))}
           {comments?.length == 0 && (
@@ -480,32 +588,34 @@ export default function NoticeDetail() {
 
         {/* 댓글 작성 박스 */}
 
-        <div
-          className={`flex w-[85%] fixed bottom-[25px]  transition-opacity ${
-            isPostComment ? 'visible' : 'hidden'
-          } ease-in-out duration-700`}
-        >
-          <div className="flex w-full relative left-[45px] ">
-            <Input
-              className="w-full"
-              height="60px"
-              placeholder="댓글을 작성해주세요..."
-              value={reviewComment}
-              onChange={(e) => {
-                setReviewComment(e.target.value);
-              }}
-            />
-            <div className="flex items-center relative right-[90px]">
-              <Button
-                height={'45px'}
-                width={'80px'}
-                onClick={handlePostComment}
-              >
-                완료
-              </Button>
+        {!isSelecting && (
+          <div
+            className={`flex w-[85%] fixed bottom-[25px]  transition-opacity ${
+              isPostComment ? 'visible' : 'hidden'
+            } ease-in-out duration-700`}
+          >
+            <div className="flex w-full relative left-[45px] ">
+              <Input
+                className="w-full"
+                height="60px"
+                placeholder="댓글을 작성해주세요..."
+                value={reviewComment}
+                onChange={(e) => {
+                  setReviewComment(e.target.value);
+                }}
+              />
+              <div className="flex items-center relative right-[90px]">
+                <Button
+                  height={'45px'}
+                  width={'80px'}
+                  onClick={handlePostComment}
+                >
+                  완료
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
         {/* 댓글 펼치기 & 접기 */}
         {comments?.length > 3 && (
           <div>
@@ -519,9 +629,9 @@ export default function NoticeDetail() {
               />
             }
             {!isShow ? (
-              <FaAngleDown size={'30px'} onClick={filterComments} />
+              <FaAngleDown size={'30px'} onClick={() => filterComments(true)} />
             ) : (
-              <FaAngleUp size={'30px'} onClick={filterComments} />
+              <FaAngleUp size={'30px'} onClick={() => filterComments(false)} />
             )}
           </div>
         )}
