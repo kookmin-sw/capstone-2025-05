@@ -67,6 +67,17 @@ void LeftPanel::onPositionChanged(double positionInSeconds)
     // 현재는 특별한 처리가 필요하지 않음
 }
 
+void LeftPanel::onInputLevelChanged(float newLevel)
+{
+    // 입력 레벨이 변경되면 레벨미터 업데이트
+    juce::MessageManager::callAsync([this, level = newLevel]() {
+        progressValue = level;
+        DBG("LeftPanel: Input Level changed to " + juce::String(level));
+        if (levelMeter != nullptr)
+            levelMeter->repaint(); // 단순히 repaint 호출로 변경
+    });
+}
+
 // IPanelComponent 인터페이스 구현
 void LeftPanel::initialize()
 {
@@ -75,6 +86,7 @@ void LeftPanel::initialize()
     levelLabel->setJustificationType(juce::Justification::left);
     addAndMakeVisible(levelLabel.get());
     
+    // progressValue 포인터를 사용하여 ProgressBar 생성
     levelMeter = std::make_unique<juce::ProgressBar>(progressValue);
     addAndMakeVisible(levelMeter.get());
     levelMeter->setTextToDisplay("");

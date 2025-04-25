@@ -26,4 +26,10 @@ public:
      * @param positionInSeconds 현재 재생 위치 (초 단위)
      */
     virtual void onPositionChanged(double positionInSeconds) = 0;
+    
+    /**
+     * 입력 레벨이 변경되었을 때 호출됩니다.
+     * @param newLevel 새 입력 레벨 값 (0.0 ~ 1.0)
+     */
+    virtual void onInputLevelChanged(float newLevel) = 0;
 };

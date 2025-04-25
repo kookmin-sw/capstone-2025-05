@@ -50,6 +50,9 @@ private:
     void notifyInputLevelChanged() {
         // 기존 리스너에게 알림
         listeners.call([this](Listener& l) { l.inputLevelChanged(currentInputLevel); });
+        
+        // 새 인터페이스 리스너에게 알림
+        modelListeners.call([this](IAudioModelListener& l) { l.onInputLevelChanged(currentInputLevel); });
     }
     
     void notifyPlayStateChanged() {

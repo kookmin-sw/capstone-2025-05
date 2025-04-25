@@ -24,6 +24,9 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     controller = std::make_unique<GuitarPracticeController>(audioModel, deviceManager);
     controller->setView(this);
     
+    // AudioController 초기화 - 오디오 입력 레벨 변경 감지용
+    audioController = std::make_unique<AudioController>(audioModel, deviceManager);
+    
     // 이벤트 버스에 구독 등록
     // 특정 이벤트 타입에만 관심이 있는 경우
     EventBus::getInstance().subscribe(Event::Type::AnalysisComplete, this);
@@ -174,6 +177,12 @@ void GuitarPracticeComponent::onPositionChanged(double positionInSeconds)
 {
     // UI 업데이트
     updatePositionDisplay(positionInSeconds);
+}
+
+void GuitarPracticeComponent::onInputLevelChanged(float newLevel)
+{
+    // 필요한 경우 여기서 입력 레벨 UI를 업데이트합니다
+    // 현재는 leftPanel에서 처리하므로 특별한 동작이 필요 없습니다
 }
 
 // UI 업데이트 메서드

@@ -18,6 +18,7 @@ public:
     void onPlayStateChanged(bool isPlaying) override;
     void onVolumeChanged(float newVolume) override;
     void onPositionChanged(double positionInSeconds) override;
+    void onInputLevelChanged(float newLevel) override;
     
     // 패널 관련 메서드
     void initialize();

@@ -3,6 +3,7 @@
 #include "Model/AudioModel.h"
 #include "Model/IAudioModelListener.h"
 #include "Controller/GuitarPracticeController.h"
+#include "Controller/AudioController.h"
 #include "Event/IEventListener.h"
 #include "TopBar.h"
 #include "CenterPanel.h"
@@ -33,6 +34,7 @@ public:
     void onPlayStateChanged(bool isPlaying) override;
     void onVolumeChanged(float newVolume) override;
     void onPositionChanged(double positionInSeconds) override;
+    void onInputLevelChanged(float newLevel) override;
     
     // IEventListener 인터페이스 구현
     bool onEvent(const Event& event) override;
@@ -72,6 +74,7 @@ private:
     // MVC 컴포넌트들
     AudioModel audioModel;
     std::unique_ptr<GuitarPracticeController> controller;
+    std::unique_ptr<AudioController> audioController;
     
     // View 컴포넌트들 (직접 참조)
     std::unique_ptr<TopBar> topBar;

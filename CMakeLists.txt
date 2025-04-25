@@ -46,6 +46,9 @@ juce_add_gui_app(MapleClientDesktop
     COMPANY_WEBSITE "lovelyoverflow.github.io"
     COMPANY_EMAIL "lovelyoverflow@gmail.com"
     
+    # Windows GUI 애플리케이션 설정
+    IS_CONSOLE_APP FALSE
+    
     # Icon files
     # ICON_BIG "Assets/icon.png"
     
@@ -70,7 +73,6 @@ juce_generate_juce_header(MapleClientDesktop)
 target_sources(MapleClientDesktop PRIVATE
     # Main application files
     Source/Main.cpp
-    Source/AppConfig.h
     
     # Model
     Source/Model/AudioModel.cpp
@@ -141,9 +143,10 @@ target_sources(MapleClientDesktop PRIVATE
     Source/Event/IEventListener.h
     
     # Util
+    Source/Util/AppConfig.h
     Source/Util/EnvLoader.h
     Source/Util/xml_module.cpp
-)
+    )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
