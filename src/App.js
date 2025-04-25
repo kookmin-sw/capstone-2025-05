@@ -18,6 +18,7 @@ import SearchPage from './Pages/SearchPage/searchPage.js';
 import PrintPage from './Pages/PrintPage/PrintPage';
 import { useEffect, useState } from 'react';
 import { SpotifyPlayerProvider } from './Context/SpotifyContext';
+import MapleHeader from './Components/MapleHeader';
 
 function App() {
   const [token, setToken] = useState(null);
@@ -61,7 +62,6 @@ function App() {
       if (storedToken && expireAt && Date.now() < expireAt) {
         setToken(storedToken);
       } else {
-        window.location.href = authUrl;
       }
     }
   }, []);
@@ -70,6 +70,7 @@ function App() {
     <div className="App">
       <SpotifyPlayerProvider token={token} authUrl={authUrl}>
         <BrowserRouter>
+          <MapleHeader />
           <Routes>
             <Route path="/test" element={<TestPage />} />
             <Route path="/login" element={<Login />} />

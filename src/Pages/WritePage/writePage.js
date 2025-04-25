@@ -43,7 +43,6 @@ export default function WritePage() {
   };
   return (
     <>
-      <MapleHeader />
       <div className="min-h-screen bg-[F0EFE6] flex justify-center items-center px-4 py-12">
         <form
           onSubmit={handleSubmit}

@@ -105,7 +105,6 @@ export default function Feedback() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <div className="flex flex-1">
         {/* Sidebar */}
         <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">

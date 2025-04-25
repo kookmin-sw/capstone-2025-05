@@ -16,7 +16,7 @@ export default function MyActivity() {
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const uid = "cLZMFP4802a7dwMo0j4qmcxpnY63";
+  const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   useEffect(() => {
@@ -31,21 +31,23 @@ export default function MyActivity() {
           axios.get(`${BACKEND_URL}/my-posts`, { params: { uid } }),
         ]);
 
-        console.log("북마크 응답 데이터:", bookmarkRes.data);
+        console.log('북마크 응답 데이터:', bookmarkRes.data);
 
         const parseData = (data) =>
-          Array.isArray(data) ? data.map(item => ({
-            title: item.title || "제목 없음",
-            content: item.content || "내용 없음"
-          })) : [];
+          Array.isArray(data)
+            ? data.map((item) => ({
+                title: item.title || '제목 없음',
+                content: item.content || '내용 없음',
+              }))
+            : [];
 
         setBookmarks(parseData(bookmarkRes.data.my_scraps));
         setLikes(parseData(likeRes.data.my_likes));
         setMyPosts(parseData(myPostRes.data.my_posts));
         setError(null);
       } catch (err) {
-        console.error("데이터 가져오는 중 오류:", err);
-        setError("데이터를 가져오는 데 실패했습니다.");
+        console.error('데이터 가져오는 중 오류:', err);
+        setError('데이터를 가져오는 데 실패했습니다.');
       } finally {
         setLoading(false);
       }
@@ -64,7 +66,6 @@ export default function MyActivity() {
 
   return (
     <div className="flex flex-col h-screen">
-      <Header />
       <div className="flex flex-1">
         {/* Sidebar */}
         <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
@@ -72,8 +73,14 @@ export default function MyActivity() {
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
-                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
-                <Link to="/mypage" className="text-white">내 정보</Link>
+                <img
+                  src={Information}
+                  alt="내 정보 아이콘"
+                  className="w-4 h-4"
+                />
+                <Link to="/mypage" className="text-white">
+                  내 정보
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
@@ -101,9 +108,13 @@ export default function MyActivity() {
                   <span className="font-bold text-[18px]">북마크</span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {loading ? <p>로딩 중...</p> :
-                    bookmarks.length === 0 ? <p className="text-gray-500">북마크한 게시글이 없습니다.</p> :
-                      renderList(bookmarks)}
+                  {loading ? (
+                    <p>로딩 중...</p>
+                  ) : bookmarks.length === 0 ? (
+                    <p className="text-gray-500">북마크한 게시글이 없습니다.</p>
+                  ) : (
+                    renderList(bookmarks)
+                  )}
                 </div>
               </Box>
             </div>
@@ -116,9 +127,13 @@ export default function MyActivity() {
                   <span className="font-bold text-[18px]">좋아요</span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {loading ? <p>로딩 중...</p> :
-                    likes.length === 0 ? <p className="text-gray-500">좋아요한 게시글이 없습니다.</p> :
-                      renderList(likes)}
+                  {loading ? (
+                    <p>로딩 중...</p>
+                  ) : likes.length === 0 ? (
+                    <p className="text-gray-500">좋아요한 게시글이 없습니다.</p>
+                  ) : (
+                    renderList(likes)
+                  )}
                 </div>
               </Box>
             </div>
@@ -131,9 +146,13 @@ export default function MyActivity() {
                   <span className="font-bold text-[18px]">내가 쓴 글</span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {loading ? <p>로딩 중...</p> :
-                    myPosts.length === 0 ? <p className="text-gray-500">작성한 게시글이 없습니다.</p> :
-                      renderList(myPosts)}
+                  {loading ? (
+                    <p>로딩 중...</p>
+                  ) : myPosts.length === 0 ? (
+                    <p className="text-gray-500">작성한 게시글이 없습니다.</p>
+                  ) : (
+                    renderList(myPosts)
+                  )}
                 </div>
               </Box>
             </div>

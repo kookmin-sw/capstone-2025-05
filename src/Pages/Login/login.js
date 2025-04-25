@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Header from '../../Components/MapleHeader';
 import Logo from '../../Assets/logo.svg';
 import Google from '../../Assets/google.svg';
 import Spotify from '../../Assets/spotify.svg';
@@ -90,7 +89,6 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <div className="flex flex-col items-center justify-center flex-grow relative">
         <div className="absolute top-[4%] z-10">
           <img src={Logo} alt="logo" className="w-52 h-auto" />

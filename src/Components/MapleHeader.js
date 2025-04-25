@@ -29,6 +29,11 @@ const MapleHeader = () => {
     navigate('/login');
   };
 
+  const handleLogout = () => {
+    setIsLogin(!isLogin);
+    localStorage.removeItem('uid');
+  };
+
   return (
     <div className="flex w-full items-center justify-between bg-[#FFFFFF]/50">
       <div className="ml-8" onClick={() => navigate('/main')}>
@@ -64,11 +69,7 @@ const MapleHeader = () => {
         <div className="flex mr-8">
           {isLogin ? (
             <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
-              <Button
-                width={'100px'}
-                height={'40px'}
-                onClick={() => setIsLogin(!isLogin)}
-              >
+              <Button width={'100px'} height={'40px'} onClick={handleLogout}>
                 <div className="flex items-center">
                   <span>로그아웃</span>
                   <RiLogoutBoxRLine />

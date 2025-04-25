@@ -3,7 +3,6 @@ import PageButton from '../../Components/PageButton/PageButton';
 import PagePrevButton from '../../Components/PagePrevButton.js/PagePrevButton';
 import PageNextButton from '../../Components/PageNextButton/PageNextButton';
 import SearchBox from '../../Components/SearchBox/searchBox';
-import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePostInfoQuery } from '../../Hooks/get/usePostInfoQuery';
@@ -89,7 +88,6 @@ export default function NoticeBoard() {
   }, [filteredData, currentPage]);
   return (
     <>
-      <MapleHeader />
       <div className="flex flex-col items-center h-[100svh]">
         <table id="table" className="w-[80%] h-[80%] m-auto">
           <thead className="text-xs text-black uppercase border-b border-[#d4c2b5]">

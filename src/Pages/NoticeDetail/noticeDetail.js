@@ -253,7 +253,6 @@ export default function NoticeDetail() {
 
   return (
     <div>
-      <MapleHeader />
       <section
         id="NoticeBoard"
         className="bg-[F0EDE6] flex flex-col items-center mt-10"

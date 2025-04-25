@@ -12,8 +12,11 @@ export default function PlayedMusic() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recentRecords, setRecentRecords] = useState([]);
-  const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
+
+  const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+
+  console.log(uid);
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -57,7 +60,6 @@ export default function PlayedMusic() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <div className="flex flex-1">
         {/* Sidebar */}
         <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
