@@ -13,7 +13,8 @@ router = APIRouter()
 @router.get("/get-user-info", tags=["My Page"])
 async def get_user_info(uid: str):
     try:
-        auth.get_user(uid)
+        user_record = auth.get_user(uid)
+        email = user_record.email
 
         user_ref = db.reference(f"/users/{uid}")
         user_data = user_ref.get()
@@ -22,7 +23,13 @@ async def get_user_info(uid: str):
             print("사용자 정보 존재 X")
             raise HTTPException(status_code=404, detail="해당 사용자 정보가 존재하지 않습니다.")
 
-        return {"user information": user_data}
+        return {
+            "uid": uid,
+            "email": email,
+            "nickname": user_data.get("nickname"),
+            "interest_genre": user_data.get("interest_genre"),
+            "level": user_data.get("level"),
+        }
 
     except auth.UserNotFoundError:
         print("등록되지 않은 사용자")
