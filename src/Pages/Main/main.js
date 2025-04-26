@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import axios from 'axios';
-import Header from '../../Components/MapleHeader';
 import First from '../../Assets/Main/banner1.svg';
 import Second from '../../Assets/Main/banner2.svg';
 import Third from '../../Assets/Main/banner3.svg';
@@ -171,7 +170,7 @@ export default function Main() {
           ))}
         </div>
       </div>
-      <Footer />
+      <Footer email={'maple@gmail.com'} />
     </div>
   );
 }
