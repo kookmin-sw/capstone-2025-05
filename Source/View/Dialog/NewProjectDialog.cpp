@@ -1,5 +1,5 @@
 #include "NewProjectDialog.h"
-#include "MainComponent.h"
+#include "View/MainComponent.h"
 
 NewProjectDialog::NewProjectDialog(MainComponent& mainComp)
     : DialogWindow(juce::String::fromUTF8("새 프로젝트 생성"), 

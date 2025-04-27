@@ -216,12 +216,6 @@ endif()
 target_include_directories(MapleClientDesktop
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/Source"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Model"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Source/View"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Controller"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Util"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Event"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Source/View/Dialog"
         "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk/common"
         "${CMAKE_CURRENT_SOURCE_DIR}/external/asio-sdk/host"
 )

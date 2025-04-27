@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include "AppConfig.h"
+#include "Util/AppConfig.h"
 #include <unordered_map>
 
 class SpotifyService

@@ -1,5 +1,5 @@
 #include "ContentController.h"
-#include "MainComponent.h"
+#include "View/MainComponent.h"
 #include "View/GuitarPracticeComponent.h"
 #include "View/ContentPanelComponent.h"
 
