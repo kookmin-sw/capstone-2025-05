@@ -62,7 +62,7 @@ async def google_auth_callback(code: str):
             headers={"Content-Type": "application/json"},
             json={
                 "postBody": f"id_token={id_token}&providerId=google.com",
-                "requestUri": redirect_uri,
+                "requestUri": "https://maple.ne.kr",
                 "returnIdpCredential": True,
                 "returnSecureToken": True,
             }
