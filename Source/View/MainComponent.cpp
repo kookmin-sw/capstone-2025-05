@@ -94,8 +94,7 @@ void MainComponent::showPracticeScreen()
 }
 
 void MainComponent::prepareToClose()
-{
-    // Stop any ongoing audio processes
+{    // Stop any ongoing audio processes
     deviceManager.closeAudioDevice();
     
     // Clean up PracticeSongComponent if it exists

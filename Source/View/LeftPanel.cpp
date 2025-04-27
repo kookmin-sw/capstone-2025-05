@@ -4,8 +4,28 @@ LeftPanel::LeftPanel(AudioModel& model)
     : audioModel(model), 
       progressValue(0.0)
 {
-    // 패널 초기화
-    initialize();
+    // 입력 레벨 관련 UI 설정
+    levelLabel = std::make_unique<juce::Label>("levelLabel", "Input Level:");
+    levelLabel->setJustificationType(juce::Justification::left);
+    addAndMakeVisible(levelLabel.get());
+    
+    // progressValue 포인터를 사용하여 ProgressBar 생성
+    levelMeter = std::make_unique<juce::ProgressBar>(progressValue);
+    addAndMakeVisible(levelMeter.get());
+    levelMeter->setTextToDisplay("");
+    
+    // 볼륨 컨트롤 UI 설정
+    volumeLabel = std::make_unique<juce::Label>("volumeLabel", "Volume:");
+    volumeLabel->setJustificationType(juce::Justification::left);
+    addAndMakeVisible(volumeLabel.get());
+    
+    volumeSlider = std::make_unique<juce::Slider>(juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight);
+    volumeSlider->setRange(0.0, 1.0, 0.01);
+    volumeSlider->setValue(audioModel.getVolume());
+    volumeSlider->onValueChange = [this]() {
+        audioModel.setVolume((float)volumeSlider->getValue());
+    };
+    addAndMakeVisible(volumeSlider.get());
     
     // 새로운 인터페이스를 사용하여 모델에 리스너 등록
     audioModel.addListener(this);
@@ -13,8 +33,14 @@ LeftPanel::LeftPanel(AudioModel& model)
 
 LeftPanel::~LeftPanel()
 {
-    // 모델에서 리스너 제거
+    // 리스너를 먼저 제거해 새로운 이벤트 구독을 방지
     audioModel.removeListener(this);
+    
+    // 미처리된 메시지들이 안전하게 처리될 수 있도록 컴포넌트 참조 해제
+    volumeSlider = nullptr;
+    levelMeter = nullptr;
+    levelLabel = nullptr;
+    volumeLabel = nullptr;
 }
 
 void LeftPanel::paint(juce::Graphics& g)
@@ -57,7 +83,8 @@ void LeftPanel::onVolumeChanged(float newVolume)
 {
     // 볼륨이 변경되면 슬라이더 값 업데이트
     juce::MessageManager::callAsync([this, vol = newVolume]() {
-        volumeSlider->setValue(vol, juce::dontSendNotification);
+        if (volumeSlider != nullptr)
+            volumeSlider->setValue(vol, juce::dontSendNotification);
     });
 }
 
@@ -70,58 +97,26 @@ void LeftPanel::onPositionChanged(double positionInSeconds)
 void LeftPanel::onInputLevelChanged(float newLevel)
 {
     // 입력 레벨이 변경되면 레벨미터 업데이트
-    juce::MessageManager::callAsync([this, level = newLevel]() {
-        progressValue = level;
-        DBG("LeftPanel: Input Level changed to " + juce::String(level));
+    progressValue = newLevel;
+    
+    // JUCE 컴포넌트 스레드에서 안전하게 UI 업데이트
+    if (juce::MessageManager::getInstance()->isThisTheMessageThread())
+    {
+        // 이미 메시지 스레드라면 직접 업데이트
+        DBG("LeftPanel: Input Level changed to " + juce::String(newLevel));
         if (levelMeter != nullptr)
-            levelMeter->repaint(); // 단순히 repaint 호출로 변경
-    });
-}
-
-// IPanelComponent 인터페이스 구현
-void LeftPanel::initialize()
-{
-    // 입력 레벨 관련 UI 설정
-    levelLabel = std::make_unique<juce::Label>("levelLabel", "Input Level:");
-    levelLabel->setJustificationType(juce::Justification::left);
-    addAndMakeVisible(levelLabel.get());
-    
-    // progressValue 포인터를 사용하여 ProgressBar 생성
-    levelMeter = std::make_unique<juce::ProgressBar>(progressValue);
-    addAndMakeVisible(levelMeter.get());
-    levelMeter->setTextToDisplay("");
-    
-    // 볼륨 컨트롤 UI 설정
-    volumeLabel = std::make_unique<juce::Label>("volumeLabel", "Volume:");
-    volumeLabel->setJustificationType(juce::Justification::left);
-    addAndMakeVisible(volumeLabel.get());
-    
-    volumeSlider = std::make_unique<juce::Slider>(juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight);
-    volumeSlider->setRange(0.0, 1.0, 0.01);
-    volumeSlider->setValue(audioModel.getVolume());
-    volumeSlider->onValueChange = [this]() {
-        audioModel.setVolume((float)volumeSlider->getValue());
-    };
-    addAndMakeVisible(volumeSlider.get());
-}
-
-void LeftPanel::updatePanel()
-{
-    // 패널 UI 업데이트
-    if (volumeSlider != nullptr)
-        volumeSlider->setValue(audioModel.getVolume(), juce::dontSendNotification);
-    
-    repaint();
-}
-
-void LeftPanel::resetPanel()
-{
-    // 패널 상태 초기화
-    if (volumeSlider != nullptr)
-        volumeSlider->setValue(0.8f, juce::dontSendNotification); // 기본 볼륨으로 리셋
-    
-    if (levelMeter != nullptr)
-        progressValue = 0.0;
-    
-    repaint();
+            levelMeter->repaint();
+    }
+    else
+    {
+        // 다른 스레드에서 호출되었다면 메시지 스레드로 전달
+        juce::MessageManager::callAsync([this, level = newLevel]() {
+            // 객체가 아직 유효한지는 직접 확인할 수 없으므로 
+            // lambda가 호출될 때 객체가 유효하다고 가정
+            // 소멸자에서 컴포넌트 포인터들을 nullptr로 설정하여 안전성 확보
+            DBG("LeftPanel: Input Level changed to " + juce::String(level));
+            if (levelMeter != nullptr)
+                levelMeter->repaint();
+        });
+    }
 }

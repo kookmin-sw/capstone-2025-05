@@ -111,6 +111,8 @@ GuitarPracticeComponent::~GuitarPracticeComponent()
         deviceManager.removeAudioCallback(audioRecorder.get());
     
     // Controller는 소멸자에서 자동으로 정리됨
+    audioController.reset();
+    deviceManager.closeAudioDevice();
 }
 
 void GuitarPracticeComponent::paint(juce::Graphics &g)
@@ -234,13 +236,7 @@ void GuitarPracticeComponent::loadSong(const juce::String& songId)
 
 // UI 업데이트 메서드
 void GuitarPracticeComponent::updateUI()
-{
-    // 패널 컴포넌트 업데이트
-    topBar->updatePanel();
-    centerPanel->updatePanel();
-    leftPanel->updatePanel();
-    rightPanel->updatePanel();
-    
+{    
     // 스코어 컴포넌트 업데이트 (필요시)
     if (scoreComponent != nullptr) {
         try {

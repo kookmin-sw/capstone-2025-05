@@ -9,11 +9,6 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
-    // 패널 관련 메서드
-    void initialize();
-    void updatePanel();
-    void resetPanel();
-
 private:
     juce::Slider bpmSlider; // 메트로놈 BPM 조절
     juce::ToggleButton metronomeToggle{"Metronome"};

@@ -10,11 +10,6 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
-    // 패널 관련 메서드
-    void initialize();
-    void updatePanel();
-    void resetPanel();
-
 private:
     juce::Image albumCover; // 앨범 커버 이미지 (나중에 로드)
     std::unique_ptr<AmpliTubeProcessor> ampliTubeProcessor; // unique_ptr로 변경

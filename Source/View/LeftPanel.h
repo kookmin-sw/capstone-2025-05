@@ -20,11 +20,6 @@ public:
     void onPositionChanged(double positionInSeconds) override;
     void onInputLevelChanged(float newLevel) override;
     
-    // 패널 관련 메서드
-    void initialize();
-    void updatePanel();
-    void resetPanel();
-    
 private:
     AudioModel& audioModel;
     

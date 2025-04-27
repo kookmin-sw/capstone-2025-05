@@ -1,8 +1,8 @@
 #include "CenterPanel.h"
 
 CenterPanel::CenterPanel() {
-    // 패널 초기화
-    initialize();
+    // 기본 앨범 커버 이미지 로드 (나중에 구현)
+    // 예: albumCover = juce::ImageCache::getFromMemory(BinaryData::default_album_jpg, BinaryData::default_album_jpgSize);
 }
 
 CenterPanel::~CenterPanel() {}
@@ -39,24 +39,4 @@ void CenterPanel::paint(juce::Graphics& g) {
 
 void CenterPanel::resized() {
     // 여기서는 별도의 컴포넌트 배치가 필요 없음
-}
-
-// IPanelComponent 인터페이스 구현
-void CenterPanel::initialize()
-{
-    // 기본 앨범 커버 이미지 로드 (나중에 구현)
-    // 예: albumCover = juce::ImageCache::getFromMemory(BinaryData::default_album_jpg, BinaryData::default_album_jpgSize);
-}
-
-void CenterPanel::updatePanel()
-{
-    // 패널 UI 업데이트
-    repaint();
-}
-
-void CenterPanel::resetPanel()
-{
-    // 패널 상태 초기화
-    albumCover = juce::Image(); // 이미지 지우기
-    repaint();
 }

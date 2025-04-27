@@ -13,11 +13,6 @@ public:
     // Component 오버라이드
     void paint(juce::Graphics &g) override;
     void resized() override;
-    
-    // 패널 관련 메서드
-    void initialize();
-    void updatePanel();
-    void resetPanel();
 
 private:
     juce::TextButton recordButton{"Record"};
