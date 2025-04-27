@@ -37,13 +37,16 @@ async def google_login():
 @router.get("/google-auth-callback", tags=["Account"])
 async def google_auth_callback(code: str):
     try:
+        # 배포 환경에 맞는 리디렉션 URI 설정
+        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://maple.ne.kr/api/google-auth-callback")
+
         response = requests.post(
             GOOGLE_TOKEN_URL,
             data={
                 "code": code,
                 "client_id": os.getenv("CLIENT_ID"),
                 "client_secret": os.getenv("CLIENT_SECRET"),
-                "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/google-auth-callback"),
+                "redirect_uri": redirect_uri,  
                 "grant_type": "authorization_code",
             },
         )
@@ -60,7 +63,7 @@ async def google_auth_callback(code: str):
             headers={"Content-Type": "application/json"},
             json={
                 "postBody": f"id_token={id_token}&providerId=google.com",
-                "requestUri": "http://localhost",
+                "requestUri": "https://maple.ne.kr/api", 
                 "returnIdpCredential": True,
                 "returnSecureToken": True,
             }
