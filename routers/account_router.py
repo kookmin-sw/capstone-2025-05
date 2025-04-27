@@ -37,7 +37,6 @@ async def google_login():
 @router.get("/google-auth-callback", tags=["Account"])
 async def google_auth_callback(code: str):
     try:
-        # 배포 환경에 맞는 리디렉션 URI 설정
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://maple.ne.kr/api/google-auth-callback")
 
         response = requests.post(
@@ -46,24 +45,24 @@ async def google_auth_callback(code: str):
                 "code": code,
                 "client_id": os.getenv("CLIENT_ID"),
                 "client_secret": os.getenv("CLIENT_SECRET"),
-                "redirect_uri": redirect_uri,  
+                "redirect_uri": redirect_uri,
                 "grant_type": "authorization_code",
             },
         )
 
         tokens = response.json()
+
         id_token = tokens.get("id_token")
 
         if not id_token:
-            print("구글 token 오류")
-            raise HTTPException(status_code=400, detail="구글 응답에서 id_token을 찾을 수 없습니다.")
+            raise HTTPException(status_code=400, detail={"error": "구글 응답에서 id_token 없음", "tokens": tokens})
 
         firebase_response = requests.post(
             f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={os.getenv('API_KEY')}",
             headers={"Content-Type": "application/json"},
             json={
                 "postBody": f"id_token={id_token}&providerId=google.com",
-                "requestUri": "https://maple.ne.kr/api", 
+                "requestUri": redirect_uri, 
                 "returnIdpCredential": True,
                 "returnSecureToken": True,
             }
@@ -73,9 +72,9 @@ async def google_auth_callback(code: str):
         firebase_data = firebase_response.json()
         
         firebase_id_token = firebase_data.get("idToken")
+
         if not firebase_id_token:
-            print("firebase token 오류")
-            raise HTTPException(status_code=400, detail="firebase에서 id_token을 가져오는 것에 실패했습니다.")
+            raise HTTPException(status_code=400, detail={"error": "firebase 응답에서 id_token 없음", "firebase_data": firebase_data})
 
         decoded_token = auth.verify_id_token(firebase_id_token)
         uid = decoded_token["uid"]
@@ -86,11 +85,11 @@ async def google_auth_callback(code: str):
         }
 
     except requests.exceptions.RequestException as e:
-        print("구글 계정 오류")
-        raise HTTPException(status_code=400, detail=f"구글 계정 오류: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"구글 계정 요청 오류: {str(e)}")
     except auth.InvalidIdTokenError:
-        print("구글 토큰 오류")
-        raise HTTPException(status_code=400, detail="구글 token 오류")
+        raise HTTPException(status_code=400, detail="firebase id_token 검증 오류")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"알 수 없는 서버 오류: {str(e)}")
 
 @router.post("/email-sign-up", tags=["Account"])
 async def email_sign_up(sign_up_data: UserEmailSignUp):
