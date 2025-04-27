@@ -2,15 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Box from '../../Components/Box/Box.js';
-import Header from '../../Components/MapleHeader.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Album from '../../Assets/Main/album/bndCover.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
 import playdata from '../../Data/compare.json'; //여기에 음정,박자등을 불러오는 api 넣어
-import feedback from '../../Data/feedback_8583d5bf.json';
 import fakedata from '../../Data/chartdata.json';
+
 export default function Feedback() {
   const uid = localStorage.getItem('uid');
   const [record, setRecord] = useState(null);
@@ -76,7 +75,7 @@ export default function Feedback() {
   const processed = processCompareData(playdata, '연주데이터 가공처리');
   console.log(processed);
 
-  console.log(feedback);
+  const audio_comparison = processed.audio_urls;
 
   useEffect(() => {
     const fetchSpecificRecord = async () => {
@@ -185,7 +184,6 @@ export default function Feedback() {
               </Box>
             </div>
           </div>
-
           <div className="flex flex-row ml-20 mt-20 gap-6">
             <div className="flex-1 max-w-[260px]">
               <Box

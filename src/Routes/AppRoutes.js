@@ -19,6 +19,7 @@ import Setting from '../Pages/MyPage/Setting';
 import MyActivity from '../Pages/MyPage/MyActivity';
 import SearchPage from '../Pages/SearchPage/searchPage';
 import PrintPage from '../Pages/PrintPage/PrintPage';
+import AudioTest from '../Pages/TestPage/audioTestPage';
 
 export default function AppRoutes() {
   const { uid } = useAuth();
@@ -41,6 +42,7 @@ export default function AppRoutes() {
           <Route path="/searchpage" element={<SearchPage />} />
           <Route path="/print" element={<PrintPage />} />
           <Route path="/test" element={<TestPage />} />
+          <Route path="/audiotest" element={<AudioTest />} />
           <Route path="*" element={<Main />} />
         </>
       ) : (
@@ -50,6 +52,7 @@ export default function AppRoutes() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<Login />} />
+          <Route path="/audiotest" element={<AudioTest />} />
         </>
       )}
     </Routes>
