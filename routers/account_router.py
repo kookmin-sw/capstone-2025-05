@@ -25,7 +25,7 @@ class UserEmailSignUp(BaseModel):
 
 @router.get("/google-login", tags=["Account"])
 async def google_login():
-    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/google-auth-callback') 
+    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'https://maple.ne.kr/api/google-auth-callback') 
     google_auth_url = (
         f"{GOOGLE_OAUTH2_URL}?response_type=code&"
         f"client_id={os.getenv('CLIENT_ID')}&"
