@@ -82,9 +82,16 @@ void LeftPanel::onPlayStateChanged(bool isPlaying)
 void LeftPanel::onVolumeChanged(float newVolume)
 {
     // 볼륨이 변경되면 슬라이더 값 업데이트
-    juce::MessageManager::callAsync([this, vol = newVolume]() {
-        if (volumeSlider != nullptr)
-            volumeSlider->setValue(vol, juce::dontSendNotification);
+    // Component::SafePointer를 사용하여 안전하게 참조
+    juce::Component::SafePointer<LeftPanel> safeThis(this);
+    
+    juce::MessageManager::callAsync([safeThis, vol = newVolume]() {
+        // 콜백 실행 시 객체가 아직 유효한지 확인
+        if (safeThis != nullptr) {
+            auto* slider = safeThis->volumeSlider.get();
+            if (slider != nullptr)
+                slider->setValue(vol, juce::dontSendNotification);
+        }
     });
 }
 
@@ -110,13 +117,19 @@ void LeftPanel::onInputLevelChanged(float newLevel)
     else
     {
         // 다른 스레드에서 호출되었다면 메시지 스레드로 전달
-        juce::MessageManager::callAsync([this, level = newLevel]() {
-            // 객체가 아직 유효한지는 직접 확인할 수 없으므로 
-            // lambda가 호출될 때 객체가 유효하다고 가정
-            // 소멸자에서 컴포넌트 포인터들을 nullptr로 설정하여 안전성 확보
-            DBG("LeftPanel: Input Level changed to " + juce::String(level));
-            if (levelMeter != nullptr)
-                levelMeter->repaint();
+        // Component::SafePointer를 사용하여 안전하게 참조
+        juce::Component::SafePointer<LeftPanel> safeThis(this);
+        
+        juce::MessageManager::callAsync([safeThis, level = newLevel]() {
+            // 콜백 실행 시 객체가 아직 유효한지 확인
+            if (safeThis != nullptr) {
+                DBG("LeftPanel: Input Level changed to " + juce::String(level));
+                
+                // 안전하게 levelMeter에 접근
+                auto* meter = safeThis->levelMeter.get();
+                if (meter != nullptr)
+                    meter->repaint();
+            }
         });
     }
 }
