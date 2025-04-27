@@ -1,0 +1,42 @@
+---
+description: "JUCE-C++ 전용 규칙(코드 스타일 제외). 메모리·모듈·빌드·스레드·네이밍을 강제."
+globs: 
+alwaysApply: false
+---
+---
+description: "JUCE-specific Cursor rules (formatting excluded).  \
+Covers naming, memory, audio-DSP, GUI, cross-platform, commit flow."
+globs:
+  - "**/*.cpp"
+  - "**/*.h"
+  - "**/CMakeLists.txt"
+  - "*.jucer"
+---
+
+## A. JUCE Coding Standards (Logic-level)
+- JUCE 공식 컨벤션 준수 <https://juce.com/coding-standards> :contentReference[oaicite:0]{index=0}  
+- **camelCase** 변수·함수 (`myVariable`, `getSampleRate`).  
+- 클래스/구조체는 **UpperCamelCase** (`MainComponent`).  
+- 불변 값에는 `const`, 컴파일-시 상수에는 `constexpr`을 사용.
+
+## B. Audio-Processing Optimisation
+1. 오디오 콜백 안에서 **동적 메모리 할당 금지**.  
+2. 고정 크기 버퍼 + `juce::AudioBuffer<float>` 사용.  
+3. 분기 최소화, `juce::dsp::SIMDRegister`로 벡터화.  
+4. DSP 객체는 RAII(`std::unique_ptr`) + `shutdown()` 자동 해제.
+
+## C. GUI Component & LookAndFeel
+- 모든 뷰는 `juce::Component` 파생.  
+- 커스텀 룩은 `juce::LookAndFeel_V4` 기반, 색·크기는 LookAndFeel API에서 정의.  
+- 마우스 이벤트 핸들러는 필요 최소한만 구현.
+
+## D. Cross-Platform Compatibility
+- 파일·문자열·스레드 등은 **JUCE 추상화**(`juce::File`, `juce::String`) 사용.  
+- 플랫폼 전용 코드 불가피할 때 `#if JUCE_WINDOWS` 등으로 스코프 한정.  
+- CI에서 Windows/macOS/Linux 빌드·테스트를 통과해야 Merge 가능.
+
+## E. Exceptions
+- 실시간 ASM/SIMD 최적화 코드가 규칙을 위반할 수 있음. \
+해당 블록마다 이유 주석 필수.
+
+
