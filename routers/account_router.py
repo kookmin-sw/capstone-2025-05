@@ -89,7 +89,9 @@ async def google_auth_callback(code: str):
     except auth.InvalidIdTokenError:
         raise HTTPException(status_code=400, detail="firebase id_token 검증 오류")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"알 수 없는 서버 오류: {str(e)}")
+        import traceback
+        tb = traceback.format_exc()
+        raise HTTPException(status_code=500, detail={"error": "알 수 없는 서버 오류", "traceback": tb})
 
 @router.post("/email-sign-up", tags=["Account"])
 async def email_sign_up(sign_up_data: UserEmailSignUp):
