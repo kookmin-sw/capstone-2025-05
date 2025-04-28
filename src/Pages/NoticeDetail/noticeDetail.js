@@ -271,7 +271,7 @@ export default function NoticeDetail() {
     if (!isScrap) {
       //북마크 클릭
       scrapPostMutate(
-        { post_id: post.id, post_uid: post.uid },
+        { post_id: post.id },
         {
           onSuccess: () => {
             console.log('북마크 성공');
