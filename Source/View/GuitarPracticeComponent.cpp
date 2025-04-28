@@ -256,7 +256,7 @@ void GuitarPracticeComponent::startRecording()
     
     // 임시 녹음 파일 경로 설정
     auto parentDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
-    lastRecording = parentDir.getNonexistentChildFile("Recording", ".wav");
+    lastRecording = parentDir.getNonexistentChildFile("Maple_Recording", ".wav");
     
     // 녹음 시작 (AudioRecorder 호출)
     audioRecorder->startRecording(lastRecording);
@@ -264,6 +264,9 @@ void GuitarPracticeComponent::startRecording()
     // UI 업데이트
     recordButton.setButtonText("Stop");
     analyzeButton.setEnabled(false);
+    
+    // 썸네일 표시 모드 설정
+    recordingThumbnail->setDisplayFullThumbnail(false);
 }
 
 void GuitarPracticeComponent::stopRecording()
@@ -271,8 +274,9 @@ void GuitarPracticeComponent::stopRecording()
     // 녹음 중지 (AudioRecorder 호출)
     audioRecorder->stop();
     
-    // 썸네일 업데이트
+    // 썸네일 설정
     recordingThumbnail->setSource(lastRecording);
+    recordingThumbnail->setDisplayFullThumbnail(true);
     
     // UI 업데이트
     recordButton.setButtonText("Record");

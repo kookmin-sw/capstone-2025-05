@@ -30,24 +30,24 @@ public:
      * 현재 녹음 중인지 상태 확인
      * @return 녹음 중이면 true, 아니면 false
      */
-    bool isRecording() const noexcept;
+    bool isRecording() const;
     
     // AudioIODeviceCallback 인터페이스 구현
-    void audioDeviceIOCallback(const float** inputChannelData, int numInputChannels,
-                             float** outputChannelData, int numOutputChannels,
-                             int numSamples);
-    void audioDeviceAboutToStart(juce::AudioIODevice* device);
-    void audioDeviceStopped();
+    void audioDeviceAboutToStart(juce::AudioIODevice* device) override;
+    void audioDeviceStopped() override;
+    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels,
+                                         float* const* outputChannelData, int numOutputChannels,
+                                         int numSamples, const juce::AudioIODeviceCallbackContext& context) override;
     
 private:
-    juce::AudioFormatManager formatManager;
+    juce::AudioThumbnail& thumbnail;
     juce::TimeSliceThread backgroundThread{"Audio Recorder Thread"};
     std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter;
-    juce::AudioThumbnail& thumbnail;
-    
     double sampleRate = 0.0;
     juce::int64 nextSampleNum = 0;
-    bool isRecordingFlag = false;
+    
+    juce::CriticalSection writerLock;
+    std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter {nullptr};
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioRecorder)
 }; 

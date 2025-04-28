@@ -25,16 +25,24 @@ public:
      */
     juce::AudioThumbnail& getAudioThumbnail();
     
+    /**
+     * 전체 썸네일을 표시할지 아니면 최근 부분만 표시할지 설정합니다.
+     * @param displayFull true면 전체 썸네일 표시, false면 최근 부분만 표시
+     */
+    void setDisplayFullThumbnail(bool displayFull);
+    
     /** Component 오버라이드 */
     void paint(juce::Graphics& g) override;
     
-    /** ChangeListener 인터페이스 구현 */
-    void changeListenerCallback(juce::ChangeBroadcaster*) override;
-    
 private:
     juce::AudioFormatManager formatManager;
-    std::unique_ptr<juce::AudioThumbnailCache> thumbnailCache;
-    std::unique_ptr<juce::AudioThumbnail> thumbnail;
+    juce::AudioThumbnailCache thumbnailCache {10};
+    juce::AudioThumbnail thumbnail {512, formatManager, thumbnailCache};
+    
+    bool displayFullThumb = false;
+    
+    /** ChangeListener 인터페이스 구현 */
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RecordingThumbnail)
 }; 
