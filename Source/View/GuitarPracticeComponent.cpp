@@ -117,49 +117,71 @@ GuitarPracticeComponent::~GuitarPracticeComponent()
 
 void GuitarPracticeComponent::paint(juce::Graphics &g)
 {
-    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+    // 배경색 설정
+    g.fillAll(MapleTheme::getBackgroundColour());
+    
+    // 컴포넌트 경계를 표시하는 것은 생략
 }
 
 void GuitarPracticeComponent::resized()
 {
     auto bounds = getLocalBounds();
-    auto topBarHeight = 50;
-    auto controlsHeight = 40;
     
-    // 상단 바
+    // 상단 바 (백 버튼, 제목 등)
+    auto topBarHeight = 60;
     topBar->setBounds(bounds.removeFromTop(topBarHeight));
     
-    // 하단에 악보 표시 영역
-    auto scoreHeight = 300;
-    auto scoreArea = bounds.removeFromBottom(scoreHeight);
-    if (scoreComponent)
-        scoreComponent->setBounds(scoreArea);
+    // 왼쪽 패널 (입력 레벨, 볼륨 컨트롤 등)
+    auto leftPanelWidth = 250;
+    leftPanel->setBounds(bounds.removeFromLeft(leftPanelWidth));
     
-    // 하단 컨트롤 영역 (재생, 녹음, 분석 버튼, 위치 레이블)
+    // 오른쪽 패널 (메트로놈, 튜너 등)
+    auto rightPanelWidth = 250;
+    rightPanel->setBounds(bounds.removeFromRight(rightPanelWidth));
+    
+    // 하단 컨트롤 패널 (재생, 녹음, 분석 버튼 등)
+    auto controlsHeight = 80;
     auto controlsArea = bounds.removeFromBottom(controlsHeight);
+    
+    // 버튼 및 컨트롤 크기 설정
     auto buttonWidth = 120;
+    auto buttonHeight = 40;
     auto labelWidth = 100;
     auto spacing = 10;
     
-    playButton.setBounds(controlsArea.removeFromLeft(buttonWidth));
-    controlsArea.removeFromLeft(spacing);
-    positionLabel.setBounds(controlsArea.removeFromLeft(labelWidth));
-    controlsArea.removeFromLeft(spacing);
-    recordButton.setBounds(controlsArea.removeFromLeft(buttonWidth));
-    controlsArea.removeFromLeft(spacing);
-    analyzeButton.setBounds(controlsArea.removeFromLeft(buttonWidth));
+    // 버튼 중앙 정렬을 위한 계산
+    auto totalControlsWidth = (buttonWidth * 3) + labelWidth + (spacing * 3);
+    auto startX = (controlsArea.getWidth() - totalControlsWidth) / 2;
+    auto startY = (controlsArea.getHeight() - buttonHeight) / 2;
+    
+    // 버튼 배치
+    playButton.setBounds(controlsArea.getX() + startX, 
+                         controlsArea.getY() + startY, 
+                         buttonWidth, buttonHeight);
+    
+    positionLabel.setBounds(playButton.getRight() + spacing, 
+                            controlsArea.getY() + startY, 
+                            labelWidth, buttonHeight);
+    
+    recordButton.setBounds(positionLabel.getRight() + spacing, 
+                          controlsArea.getY() + startY, 
+                          buttonWidth, buttonHeight);
+    
+    analyzeButton.setBounds(recordButton.getRight() + spacing, 
+                           controlsArea.getY() + startY, 
+                           buttonWidth, buttonHeight);
     
     // 녹음된 오디오 파형 표시 영역
     auto waveformHeight = 100;
     auto waveformArea = bounds.removeFromBottom(waveformHeight);
-    recordingThumbnail->setBounds(waveformArea);
+    recordingThumbnail->setBounds(waveformArea.reduced(10));
     
-    // 좌우 패널
-    leftPanel->setBounds(bounds.removeFromLeft(300));
-    rightPanel->setBounds(bounds.removeFromRight(300));
+    // 악보 표시 영역 (중앙)
+    if (scoreComponent)
+        scoreComponent->setBounds(bounds.reduced(10));
     
-    // 중앙 패널
-    centerPanel->setBounds(bounds.reduced(50));
+    // 센터 패널 (전체 음악 시각화 등) - 필요한 경우
+    centerPanel->setBounds(bounds.reduced(10));
 }
 
 // 새로운 인터페이스 메서드 구현

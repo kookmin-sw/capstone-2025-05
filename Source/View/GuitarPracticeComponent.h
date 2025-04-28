@@ -10,6 +10,7 @@
 #include "LeftPanel.h"
 #include "RightPanel.h"
 #include "ScoreComponent.h"
+#include "LookAndFeel/MapleTheme.h"
 
 // 녹음 기능을 위한 전방 선언
 class AudioRecorder;
