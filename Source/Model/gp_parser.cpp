@@ -20,179 +20,243 @@ Parser::Parser(const char *filePath)
 		throw std::logic_error("Null file path passed to constructor");
 	std::ifstream file;
 	file.open(filePath, std::ifstream::in | std::ifstream::binary);
-
-	// Initialise vector
-	fileBuffer = std::vector<char>(
-		     std::istreambuf_iterator<char>(file),
-		     {}
-		     );
+    
+    if (!file.is_open()) {
+        throw std::logic_error("Failed to open file");
+    }
+    
+    // 파일 크기 확인
+    file.seekg(0, std::ios::end);
+    std::streamsize fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+    
+    // 비정상적으로 큰 파일이면 오류
+    if (fileSize <= 0 || fileSize > 10 * 1024 * 1024) { // 10MB 제한
+        throw std::logic_error("File size is invalid or too large");
+    }
+    
+    // 읽기 시도
+    try {
+        // Initialise vector
+        fileBuffer = std::vector<char>(
+                std::istreambuf_iterator<char>(file),
+                {}
+                );
+    }
+    catch(const std::exception& e) {
+        throw std::logic_error(std::string("Failed to load file: ") + e.what());
+    }
 
 	// Close file
 	file.close();
+    
+    // 파일 버퍼 크기 확인
+    if (fileBuffer.empty()) {
+        throw std::logic_error("File is empty");
+    }
+    
+    if (fileBuffer.size() > 10 * 1024 * 1024) { // 10MB 제한
+        throw std::logic_error("File buffer size is too large");
+    }
+    
+    try {
+        // Parse version and check it is supported
+        readVersion();
+        if (!isSupportedVersion(version))
+            throw std::logic_error("Unsupported version");
 
-	// Parse version and check it is supported
-	readVersion();
-	if (!isSupportedVersion(version))
-		throw std::logic_error("Unsupported version");
+        // Parse out major and minor version numbers
+        std::regex majorAndMinorExp("(\\d+)\\.(\\d+)");
+        major = std::stoi(std::regex_replace(
+                      version,
+                      majorAndMinorExp,
+                      "$1",
+                      std::regex_constants::format_no_copy));
+        minor = std::stoi(std::regex_replace(
+                      version,
+                      majorAndMinorExp,
+                      "$2",
+                      std::regex_constants::format_no_copy));
 
-	// Parse out major and minor version numbers
-	std::regex majorAndMinorExp("(\\d+)\\.(\\d+)");
-	major = std::stoi(std::regex_replace(
-			  version,
-			  majorAndMinorExp,
-			  "$1",
-			  std::regex_constants::format_no_copy));
-	minor = std::stoi(std::regex_replace(
-			  version,
-			  majorAndMinorExp,
-			  "$2",
-			  std::regex_constants::format_no_copy));
+        // Read attributes of tab file
+        title = readStringByteSizeOfInteger();
+        subtitle = readStringByteSizeOfInteger();
+        artist = readStringByteSizeOfInteger();
+        album = readStringByteSizeOfInteger();
+        lyricsAuthor = readStringByteSizeOfInteger();
+        musicAuthor = readStringByteSizeOfInteger();
+        copyright = readStringByteSizeOfInteger();
+        tab = readStringByteSizeOfInteger();
+        instructions = readStringByteSizeOfInteger();
+        auto commentLen = readInt();
+        
+        // 안전장치: 댓글 수 확인
+        if (commentLen < 0 || commentLen > 1000) {
+            printf("GP Parser - Warning: Invalid comment count: %d, using 0\n", commentLen);
+            commentLen = 0;
+        }
+        
+        for (auto i = 0; i < commentLen; ++i)
+            comments.push_back(readStringByteSizeOfInteger());
 
-	// Read attributes of tab file
-	title = readStringByteSizeOfInteger();
-	subtitle = readStringByteSizeOfInteger();
-	artist = readStringByteSizeOfInteger();
-	album = readStringByteSizeOfInteger();
-	lyricsAuthor = readStringByteSizeOfInteger();
-	musicAuthor = readStringByteSizeOfInteger();
-	copyright = readStringByteSizeOfInteger();
-	tab = readStringByteSizeOfInteger();
-	instructions = readStringByteSizeOfInteger();
-	auto commentLen = readInt();
-	for (auto i = 0; i < commentLen; ++i)
-		comments.push_back(readStringByteSizeOfInteger());
+        // Read lyrics data
+        lyricTrack = readInt();
+        lyric = readLyrics();
 
-	// Read lyrics data
-	lyricTrack = readInt();
-	lyric = readLyrics();
+        // Read page setup
+        readPageSetup();
 
-	// Read page setup
-	readPageSetup();
+        // Read tempo value
+        tempoValue = readInt();
 
-	// Read tempo value
-	tempoValue = readInt();
+        if (versionIndex > 0)
+            skip(1);
 
-	if (versionIndex > 0)
-		skip(1);
+        // Read key signature
+        globalKeySignature = readKeySignature();
+        
+        skip(3);
 
-	// Read key signature
-	globalKeySignature = readKeySignature();
-	
-	skip(3);
+        // Octave
+        readByte();
 
-	// Octave
-	readByte();
+        // Read channels
+        channels = readChannels();
 
-	// Read channels
-	channels = readChannels();
+        skip(42);
 
-	skip(42);
+        // Read measures and track count info
+        measures = readInt();
+        trackCount = readInt();
+        
+        // 안전장치: 마디 수와 트랙 수 검증
+        if (measures <= 0 || measures > 1000) {
+            printf("GP Parser - Warning: Invalid measure count: %d, using default\n", measures);
+            measures = 1;
+        }
+        
+        if (trackCount <= 0 || trackCount > 100) {
+            printf("GP Parser - Warning: Invalid track count: %d, using default\n", trackCount);
+            trackCount = 1;
+        }
 
-	// Read measures and track count info
-	measures = readInt();
-	trackCount = readInt();
+        // Read measure headers
+        auto timeSignature = TimeSignature();
+        timeSignature.numerator = 4;
+        timeSignature.denominator.value = QUARTER;
+        timeSignature.denominator.division.enters = 1;
+        timeSignature.denominator.division.times = 1;
+        for (auto i = 0; i < measures; ++i) {
+            if (i > 0)
+                skip(1);
+            std::uint8_t flags = readUnsignedByte();
+            auto header = MeasureHeader();
+            header.number = i + 1;
+            header.start = 0;
+            header.tempo.value = 120;
+            header.repeatOpen = (flags & 0x04) != 0;
+            if ((flags & 0x01) != 0)
+                timeSignature.numerator = readByte();
+            if ((flags & 0x02) != 0)
+                timeSignature.denominator.value = readByte();
+            header.timeSignature = timeSignature;
+            if ((flags & 0x08) != 0)
+                header.repeatClose = (readByte() & 0xFF) - 1;
+            if ((flags & 0x20) != 0) {
+                header.marker.measure = header.number;
+                header.marker.title = readStringByteSizeOfInteger();
+                header.marker.color = readColor();
+            }
+            if ((flags & 0x10) != 0)
+                header.repeatAlternative = readUnsignedByte();
+            if ((flags & 0x40) != 0) {
+                globalKeySignature = readKeySignature();
+                skip(1);
+            }
+            if ((flags & 0x01) != 0 || (flags & 0x02) != 0)
+                skip(4);
+            if ((flags & 0x10) == 0)
+                skip(1);
+            auto tripletFeel = readByte();
+            if (tripletFeel == 1)
+                header.tripletFeel = "eigth";
+            else if (tripletFeel == 2)
+                header.tripletFeel = "sixteents";
+            else
+                header.tripletFeel = "none";
 
-	// Read measure headers
-	auto timeSignature = TimeSignature();
-	timeSignature.numerator = 4;
-	timeSignature.denominator.value = QUARTER;
-	timeSignature.denominator.division.enters = 1;
-	timeSignature.denominator.division.times = 1;
-	for (auto i = 0; i < measures; ++i) {
-		if (i > 0)
-			skip(1);
-		std::uint8_t flags = readUnsignedByte();
-		auto header = MeasureHeader();
-		header.number = i + 1;
-		header.start = 0;
-		header.tempo.value = 120;
-		header.repeatOpen = (flags & 0x04) != 0;
-		if ((flags & 0x01) != 0)
-			timeSignature.numerator = readByte();
-		if ((flags & 0x02) != 0)
-			timeSignature.denominator.value = readByte();
-		header.timeSignature = timeSignature;
-		if ((flags & 0x08) != 0)
-			header.repeatClose = (readByte() & 0xFF) - 1;
-		if ((flags & 0x20) != 0) {
-			header.marker.measure = header.number;
-			header.marker.title = readStringByteSizeOfInteger();
-			header.marker.color = readColor();
-		}
-		if ((flags & 0x10) != 0)
-			header.repeatAlternative = readUnsignedByte();
-		if ((flags & 0x40) != 0) {
-			globalKeySignature = readKeySignature();
-			skip(1);
-		}
-		if ((flags & 0x01) != 0 || (flags & 0x02) != 0)
-			skip(4);
-		if ((flags & 0x10) == 0)
-			skip(1);
-		auto tripletFeel = readByte();
-		if (tripletFeel == 1)
-			header.tripletFeel = "eigth";
-		else if (tripletFeel == 2)
-			header.tripletFeel = "sixteents";
-		else
-			header.tripletFeel = "none";
+            // Push header to vector
+            measureHeaders.push_back(header);
+        }
 
-		// Push header to vector
-		measureHeaders.push_back(header);
-	}
+        // Read tracks
+        for (auto number = 1; number <= trackCount; ++number) {
+            auto track = Track();
+            readUnsignedByte();
+            if (number == 1 || versionIndex == 0)
+                skip(1);
+            track.number = number;
+            track.lyrics = number == lyricTrack ? lyric : Lyric();
+            track.name = readStringByte(40);
+            auto stringCount = readInt();
+            
+            // 안전장치: 현 개수 검증
+            if (stringCount < 0 || stringCount > 10) {
+                printf("GP Parser - Warning: Invalid string count: %d, using default\n", stringCount);
+                stringCount = 6;
+            }
+            
+            for (auto i = 0; i < 7; ++i) {
+                auto tuning = readInt();
+                if (stringCount > i) {
+                    auto string = GuitarString();
+                    string.number = i + 1;
+                    string.value = tuning;
+                    track.strings.push_back(string);
+                }
+            }
+            readInt();
+            readChannel(track);
+            readInt();
+            track.offset = readInt();
+            track.color = readColor();
+            skip(versionIndex > 0 ? 49 : 44);
+            if (versionIndex > 0) {
+                readStringByteSizeOfInteger();
+                readStringByteSizeOfInteger();
+            }
+            tracks.push_back(track);
+        }
+        skip(versionIndex == 0 ? 2 : 1);
 
-	// Read tracks
-	for (auto number = 1; number <= trackCount; ++number) {
-		auto track = Track();
-		readUnsignedByte();
-		if (number == 1 || versionIndex == 0)
-			skip(1);
-		track.number = number;
-		track.lyrics = number == lyricTrack ? lyric : Lyric();
-		track.name = readStringByte(40);
-		auto stringCount = readInt();
-		for (auto i = 0; i < 7; ++i) {
-			auto tuning = readInt();
-			if (stringCount > i) {
-				auto string = GuitarString();
-				string.number = i + 1;
-				string.value = tuning;
-				track.strings.push_back(string);
-			}
-		}
-		readInt();
-		readChannel(track);
-		readInt();
-		track.offset = readInt();
-		track.color = readColor();
-		skip(versionIndex > 0 ? 49 : 44);
-		if (versionIndex > 0) {
-			readStringByteSizeOfInteger();
-			readStringByteSizeOfInteger();
-		}
-		tracks.push_back(track);
-	}
-	skip(versionIndex == 0 ? 2 : 1);
-
-	// Iterate through measures
-	auto tempo = Tempo();
-	tempo.value = tempoValue;
-	auto start = QUARTER_TIME;
-	for (auto i = 0; i < measures; ++i) {
-		auto& header = measureHeaders[i];
-		header.start = start;
-		for (auto j = 0; j < trackCount; ++j) {
-			Track& track = tracks[j];
-			auto measure = Measure();
-			measure.header = &header;
-			measure.start = start;
-			track.measures.push_back(measure);
-			readMeasure(track.measures[track.measures.size() - 1], track, tempo, globalKeySignature);
-			skip(1);
-		}
-		header.tempo = tempo;
-		start += getLength(header);
-	}
+        // Iterate through measures
+        auto tempo = Tempo();
+        tempo.value = tempoValue;
+        auto start = QUARTER_TIME;
+        for (auto i = 0; i < measures; ++i) {
+            auto& header = measureHeaders[i];
+            header.start = start;
+            for (auto j = 0; j < trackCount; ++j) {
+                Track& track = tracks[j];
+                auto measure = Measure();
+                measure.header = &header;
+                measure.start = start;
+                track.measures.push_back(measure);
+                readMeasure(track.measures[track.measures.size() - 1], track, tempo, globalKeySignature);
+                skip(1);
+            }
+            header.tempo = tempo;
+            start += getLength(header);
+        }
+    }
+    catch(const std::exception& e) {
+        // 파싱 과정에서 예외가 발생하면 원래 예외를 다시 던짐
+        throw;
+    }
+    catch(...) {
+        // 알 수 없는 예외 처리
+        throw std::logic_error("Unknown error during parsing");
+    }
 }
 
 /* This reads an unsigned byte from the file buffer and increments the
@@ -238,27 +302,64 @@ std::string Parser::readString(size_t size, size_t len)
 {
 	// Work out number of bytes to read
 	auto bytesToRead = size > 0 ? size : len;
+    
+    // 안전장치: 읽을 바이트 수가 너무 많거나 0인 경우
+    if (bytesToRead == 0) {
+        return "";
+    }
+    
+    if (bytesToRead > 10000 || bufferPosition + bytesToRead > fileBuffer.size()) {
+        printf("GP Parser - Warning: Requested string size is too large or exceeds buffer: %zu\n", bytesToRead);
+        bytesToRead = std::min(bytesToRead, static_cast<size_t>(10000));
+        bytesToRead = std::min(bytesToRead, fileBuffer.size() - bufferPosition);
+    }
 
 	// Read this number of bytes from the file buffer
 	auto bytes = std::vector<char>(bytesToRead);
-	std::copy(fileBuffer.begin() + bufferPosition,
-		  fileBuffer.begin() + bufferPosition + bytesToRead,
-		  bytes.begin());
+    try {
+        std::copy(fileBuffer.begin() + bufferPosition,
+                fileBuffer.begin() + bufferPosition + bytesToRead,
+                bytes.begin());
+    }
+    catch(const std::exception& e) {
+        printf("GP Parser - Error copying bytes: %s\n", e.what());
+        bytes.resize(1);
+        if (!fileBuffer.empty() && bufferPosition < fileBuffer.size()) {
+            bytes[0] = fileBuffer[bufferPosition];
+        }
+        else {
+            bytes[0] = 0;
+        }
+    }
 
 	// Increment position
 	bufferPosition += bytesToRead;
 
 	// Convert to string and return
+    size_t finalLen = len;
+    if (finalLen > bytesToRead) {
+        finalLen = bytesToRead;
+    }
+    
 	return std::string(bytes.begin(),
-			   len >= 0 && len <= bytesToRead ?
-			   (bytes.begin() + len) : (bytes.begin() + size));
+			   finalLen >= 0 && finalLen <= bytesToRead ?
+			   (bytes.begin() + finalLen) : (bytes.begin() + size));
 }
 
 /* This returns a string from the file buffer, but using a byte before it to
  * tell it the length of the string */
 std::string Parser::readStringByte(size_t size)
 {
-	return readString(size, readUnsignedByte());
+    unsigned char len = readUnsignedByte();
+    
+    // 안전장치: 문자열 길이가 size 또는 버퍼 남은 크기보다 크면 제한
+    if (len > size || bufferPosition + len > fileBuffer.size()) {
+        printf("GP Parser - Warning: String length %d exceeds limit %zu or remaining buffer size %zu\n", 
+               len, size, fileBuffer.size() - bufferPosition);
+        len = static_cast<unsigned char>(std::min(size, fileBuffer.size() - bufferPosition));
+    }
+    
+	return readString(size, len);
 }
 
 /* This returns a string from the file buffer, but using an integer before it
@@ -266,7 +367,21 @@ std::string Parser::readStringByte(size_t size)
  * read still gives the string length */
 std::string Parser::readStringByteSizeOfInteger()
 {
-	return readStringByte(readInt() - 1);
+    int strSize = readInt();
+    
+    // 안전장치: 비정상적인 크기 체크 (음수거나 너무 큰 경우)
+    if (strSize <= 0 || strSize > 100000) {
+        printf("GP Parser - Warning: Invalid string size: %d, using 0\n", strSize);
+        return "";
+    }
+    
+    if (strSize > static_cast<int>(fileBuffer.size() - bufferPosition)) {
+        printf("GP Parser - Warning: String size %d exceeds remaining buffer size %zu\n", 
+               strSize, fileBuffer.size() - bufferPosition);
+        strSize = static_cast<int>(fileBuffer.size() - bufferPosition);
+    }
+    
+	return readStringByte(strSize - 1);
 }
 
 std::string Parser::readStringInteger()
@@ -283,12 +398,42 @@ void Parser::skip(std::size_t n)
 /* This reads the version data from the file buffer */
 void Parser::readVersion()
 {
+	// 버전을 읽기 전에 가능한 BOM 또는 헤더 바이트 건너뛰기
+	char firstByte = fileBuffer[0];
+	if ((unsigned char)firstByte == 0x18 || (unsigned char)firstByte == 0xEF || (unsigned char)firstByte == 0xBB || (unsigned char)firstByte == 0xBF)
+	{
+		// BOM이나 특수 바이트가 발견되면 건너뛰기
+		bufferPosition = 1;
+	}
+    
 	version = readStringByte(30);
 }
 
 /* This checks if the supplied version is supported by the parser */
 bool Parser::isSupportedVersion(std::string& version)
 {
+	// 특수 로그 추가
+	printf("GP Parser - Checking version: %s\n", version.c_str());
+    
+	// 직접적인 숫자 버전 확인을 위한 정규식
+	std::regex versionRegex(".*v(\\d+)\\.(\\d+).*");
+	std::smatch matches;
+    
+	if (std::regex_search(version, matches, versionRegex) && matches.size() > 2) {
+		int major = std::stoi(matches[1].str());
+		int minor = std::stoi(matches[2].str());
+        
+		printf("GP Parser - Detected version numbers: %d.%d\n", major, minor);
+        
+		// 버전 5.x 지원
+		if (major == 5) {
+			// version 인덱스 설정 (v5.00은 0, v5.10은 1, 그 외는 1)
+			versionIndex = (minor == 0) ? 0 : 1;
+			return true;
+		}
+	}
+    
+	// 정규식 매칭이 안 되면 표준 비교 수행
 	auto versionsCount = sizeof(VERSIONS) / sizeof(const char *);
 	for (auto i = 0; i < versionsCount; ++i) {
 		if (version.compare(VERSIONS[i]) == 0) {
@@ -296,6 +441,14 @@ bool Parser::isSupportedVersion(std::string& version)
 			return true;
 		}
 	}
+	
+	// 마지막 수단으로 "FICHIER GUITAR PRO" 문자열이 포함되어 있는지 확인
+	if (version.find("FICHIER GUITAR PRO") != std::string::npos) {
+		printf("GP Parser - Found 'FICHIER GUITAR PRO' in version string, accepting as v5.00\n");
+		versionIndex = 0; // v5.00으로 처리
+		return true;
+	}
+    
 	return false;
 }
 

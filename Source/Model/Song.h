@@ -81,6 +81,13 @@ public:
         // 악보 데이터 URL
         song.scoreDataUrl = json.getProperty("sheet_music", "").toString();
         
+        // 악보 데이터 URL이 비어있을 경우 ID 기반으로 생성
+        if (song.scoreDataUrl.isEmpty() && !song.id.isEmpty())
+        {
+            song.scoreDataUrl = "/songs/" + song.id + "/sheet_music";
+            DBG("Song::fromJson - generated score data URL from ID: " + song.scoreDataUrl);
+        }
+        
         song.genre = json.getProperty("genre", "").toString();
         song.albumName = json.getProperty("album", "").toString();
         

@@ -64,95 +64,311 @@ void GuitarPracticeController::togglePlayback()
 
 bool GuitarPracticeController::loadSong(const juce::String& songId)
 {
-    // 서버가 준비되지 않았으므로 로컬 파일 경로를 사용하여 테스트
-    juce::String filePath;
+    // 로그 남기기
+    DBG("GuitarPracticeController::loadSong - Attempting to load song: " + songId);
     
     // 현재 디버깅 중인 위치와 현재 경로 로깅
     DBG("Current working directory: " + juce::File::getCurrentWorkingDirectory().getFullPathName());
     
-    // 테스트용 곡 ID와 경로 매핑
-    if (songId == "song1")
-        filePath = "D:/audio_dataset/recording/homecoming/homecoming.gp5";
-    else if (songId == "song2")
-        filePath = "D:/audio_dataset/recording/song2/song2.gp5";
-    else if (songId == "song3")
-        filePath = "D:/audio_dataset/recording/song3/song3.gp5";
-    else if (songId == "song4")
-        filePath = "D:/audio_dataset/recording/song4/song4.gp5";
-    else if (songId == "song5")
-        filePath = "D:/audio_dataset/recording/song5/song5.gp5";
-    else {
-        // 지원하지 않는 곡 ID - 이벤트 발행
-        publishSongLoadFailedEvent(songId, "Unsupported song ID");
-        return false;
+    // API에서 다운로드한 악보 파일 확인 (캐시 확인)
+    juce::File scoreCache = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                          .getChildFile("MapleClient/ScoreCache");
+    
+    // scoreCache 디렉토리가 없으면 생성
+    if (!scoreCache.exists())
+        scoreCache.createDirectory();
+    
+    // 지원되는 파일 형식 목록
+    juce::StringArray supportedExtensions = {".gp5", ".gp4", ".gp3", ".gpx", ".musicxml", ".xml", ".mid"};
+    
+    // 캐시에서 악보 파일 찾기 (여러 확장자 시도)
+    juce::File scoreFile;
+    bool scoreFileFound = false;
+    
+    for (const auto& ext : supportedExtensions)
+    {
+        juce::File testFile = scoreCache.getChildFile(songId + ext);
+        if (testFile.existsAsFile())
+        {
+            scoreFile = testFile;
+            scoreFileFound = true;
+            DBG("GuitarPracticeController::loadSong - Found score file: " + scoreFile.getFullPathName());
+            break;
+        }
     }
     
-    // 파일 존재 여부 확인
-    juce::File gpFile(filePath);
-    if (!gpFile.existsAsFile()) {
-        DBG("GP file does not exist: " + filePath);
+    // 기본적으로 먼저 GP5 파일을 확인
+    if (!scoreFileFound)
+    {
+        // 마지막으로 gp5 확장자로 한번 더 확인 (주요 타겟 파일 형식)
+        scoreFile = scoreCache.getChildFile(songId + ".gp5");
+        scoreFileFound = scoreFile.existsAsFile();
+        
+        if (scoreFileFound)
+            DBG("GuitarPracticeController::loadSong - Found default GP5 file: " + scoreFile.getFullPathName());
+        else
+            DBG("GuitarPracticeController::loadSong - No supported score file found for ID: " + songId);
+    }
+    
+    // 로컬 파일이 없는 경우 실패 처리
+    if (!scoreFileFound) {
+        DBG("GuitarPracticeController::loadSong - No score file found for ID: " + songId);
         
         // 빈 TabFile 설정
         player.setTabFile(gp_parser::TabFile(major, minor, title, subtitle, artist, album,
-                                           lyricsAuthor, musicAuthor, copyright, tab, instructions,
-                                           comments, lyric, tempoValue, globalKeySignature, channels,
-                                           measures, trackCount, measureHeaders, tracks));
+                                          lyricsAuthor, musicAuthor, copyright, tab, instructions,
+                                          comments, lyric, tempoValue, globalKeySignature, channels,
+                                          measures, trackCount, measureHeaders, tracks));
         
-        // 이벤트 발행 - 파일은 없지만 빈 탭 생성 완료
-        publishSongLoadedEvent(songId);
-        return true;
+        // 이벤트 발행 - 악보를 찾을 수 없음을 알림
+        publishSongLoadFailedEvent(songId, "Score file not found. Please download it first.");
+        return false;
     }
     
     resetParser();
     
     try {
-        // 파서 생성 및 악보 로드 (포인터로 변경됨)
-        DBG("Loading GP file from: " + filePath);
-        parserPtr = std::make_unique<gp_parser::Parser>(filePath.toRawUTF8());
-        
-        try {
-            // TabPlayer에 악보 데이터 설정
-            // Parser로부터 TabFile 획득
-            auto tabFile = parserPtr->getTabFile();
-            
-            // 벡터 요소 유효성 검사 (빈 트랙 검사)
-            if (tabFile.tracks.empty()) {
-                DBG("Warning: Loaded TabFile has no tracks");
-                
-                // 빈 트랙이 있는 경우 기본 TabFile 생성
-                tracks.clear();
-                measureHeaders.clear();
-                channels.clear();
-                // 디폴트 값으로 빈 TabFile 생성
-                player.setTabFile(gp_parser::TabFile(major, minor, title, subtitle, artist, album,
-                                                 lyricsAuthor, musicAuthor, copyright, tab, instructions,
-                                                 comments, lyric, tempoValue, globalKeySignature, channels,
-                                                 measures, trackCount, measureHeaders, tracks));
-            } 
-            else {
-                DBG("TabFile loaded successfully with " + juce::String(tabFile.tracks.size()) + " tracks");
-                
-                // 첫 번째 트랙에 마디가 있는지 확인
-                if (tabFile.tracks[0].measures.empty()) {
-                    DBG("Warning: First track has no measures");
-                }
-                else {
-                    DBG("First track has " + juce::String(tabFile.tracks[0].measures.size()) + " measures");
-                }
-                
-                // TabPlayer에 TabFile 설정
-                player.setTabFile(tabFile);
-            }
-        }
-        catch (const std::exception& e) {
-            DBG("Error in parser.getTabFile() or player.setTabFile(): " + juce::String(e.what()));
-            publishSongLoadFailedEvent(songId, "Error parsing file: " + juce::String(e.what()));
+        // 파일 검증
+        if (!scoreFile.existsAsFile())
+        {
+            DBG("GuitarPracticeController::loadSong - Score file doesn't exist: " + scoreFile.getFullPathName());
+            publishSongLoadFailedEvent(songId, "Score file not found.");
             return false;
         }
         
-        DBG("Song loaded successfully: " + songId);
-        publishSongLoadedEvent(songId);
-        return true;
+        // 파일 크기 체크
+        auto fileSize = scoreFile.getSize();
+        DBG("GuitarPracticeController::loadSong - Score file size: " + juce::String(fileSize) + " bytes");
+        
+        if (fileSize < 10)
+        {
+            DBG("GuitarPracticeController::loadSong - Score file too small: " + juce::String(fileSize) + " bytes");
+            publishSongLoadFailedEvent(songId, "Invalid score file. The file may be corrupted (too small).");
+            return false;
+        }
+        
+        // 파일의 내용을 확인하여 Guitar Pro 파일인지 검사
+        juce::FileInputStream fileStream(scoreFile);
+        if (!fileStream.openedOk())
+        {
+            DBG("GuitarPracticeController::loadSong - Failed to open file: " + scoreFile.getFullPathName());
+            publishSongLoadFailedEvent(songId, "Failed to open score file.");
+            return false;
+        }
+        
+        // 전체 파일 내용 로깅 (최대 100바이트)
+        juce::MemoryBlock fileData;
+        fileStream.readIntoMemoryBlock(fileData, 100);
+        
+        // 헥사 덤프 생성
+        juce::String hexDump;
+        const unsigned char* data = static_cast<const unsigned char*>(fileData.getData());
+        
+        for (int i = 0; i < juce::jmin(100, static_cast<int>(fileData.getSize())); ++i)
+        {
+            hexDump += juce::String::formatted("%02X ", data[i]);
+            
+            // 10바이트마다 줄바꿈
+            if ((i + 1) % 10 == 0)
+                hexDump += "\n";
+        }
+        
+        DBG("GuitarPracticeController::loadSong - File hex dump:\n" + hexDump);
+        
+        // ASCII 출력 (읽을 수 있는 문자만)
+        juce::String textPreview;
+        for (int i = 0; i < juce::jmin(100, static_cast<int>(fileData.getSize())); ++i)
+        {
+            char c = static_cast<char>(data[i]);
+            // 출력 가능한 ASCII 문자만 표시
+            if (c >= 32 && c <= 126)
+                textPreview += c;
+            else
+                textPreview += '.'; // 비ASCII 문자는 점으로 표시
+        }
+        
+        DBG("GuitarPracticeController::loadSong - File text preview:\n" + textPreview);
+        
+        // Guitar Pro 파일 특유의 헤더 확인 (파일 스트림 위치 리셋 필요)
+        fileStream.setPosition(0);
+        char header[10];
+        fileStream.read(header, 10);
+        
+        // GP5 파일은 "FICHIER GUITAR PRO"로 시작하거나, BCFZ/BCFS 바이너리 헤더를 가짐
+        bool isValidGPFile = false;
+        
+        // "FICHIER " 검사
+        if (header[0] == 'F' && header[1] == 'I' && header[2] == 'C' && 
+            header[3] == 'H' && header[4] == 'I' && header[5] == 'E' && 
+            header[6] == 'R' && header[7] == ' ')
+        {
+            isValidGPFile = true;
+            DBG("GuitarPracticeController::loadSong - Valid Guitar Pro 5 header found (FICHIER)");
+        }
+        else if (header[0] == 'B' && header[1] == 'C' && 
+                (header[2] == 'F' && (header[3] == 'Z' || header[3] == 'S')))
+        {
+            isValidGPFile = true;
+            DBG("GuitarPracticeController::loadSong - Valid Guitar Pro 6+ header found (BCFS/BCFZ)");
+        }
+        else
+        {
+            // 헤더 바이트 로깅
+            juce::String headerHex;
+            for (int i = 0; i < 10; ++i)
+            {
+                headerHex += juce::String::formatted("%02X ", static_cast<unsigned char>(header[i]));
+            }
+            
+            DBG("GuitarPracticeController::loadSong - Invalid Guitar Pro header: " + headerHex);
+            
+            // 로드를 시도할 지 결정
+            if (headerHex.containsIgnoreCase("46 49 43 48 49 45 52"))  // 'FICHIER'의 헥스 코드
+            {
+                isValidGPFile = true;
+                DBG("GuitarPracticeController::loadSong - Found partial match to FICHIER, will attempt to load");
+            }
+            else
+            {
+                DBG("GuitarPracticeController::loadSong - No Guitar Pro signature found");
+                
+                // 로드를 모두 실패하는 것을 방지하기 위해 테스트 목적으로 로드 시도
+                isValidGPFile = true;
+                DBG("GuitarPracticeController::loadSong - Forcing load attempt for testing");
+            }
+        }
+                            
+        if (!isValidGPFile)
+        {
+            DBG("GuitarPracticeController::loadSong - File is not a valid Guitar Pro file: " + scoreFile.getFullPathName());
+            
+            // 파일 내용 검증 실패 - 더미 TabFile 로드
+            title = "Dummy Song";
+            artist = "Unknown Artist";
+            
+            // 빈 TabFile 생성
+            player.setTabFile(gp_parser::TabFile(major, minor, title, subtitle, artist, album,
+                                             lyricsAuthor, musicAuthor, copyright, tab, instructions,
+                                             comments, lyric, tempoValue, globalKeySignature, channels,
+                                             measures, trackCount, measureHeaders, tracks));
+            
+            publishSongLoadFailedEvent(songId, "The file is not a valid Guitar Pro file. Please download the correct format.");
+            return false;
+        }
+        
+        // 파일 확장자 확인 (GP5 파일에 맞는 확장자인지)
+        juce::String extension = scoreFile.getFileExtension().toLowerCase();
+        bool isGuitarProExtension = (extension == ".gp5" || extension == ".gp4" || 
+                                    extension == ".gp3" || extension == ".gpx" || 
+                                    extension == ".gp");
+        
+        if (!isGuitarProExtension)
+        {
+            DBG("GuitarPracticeController::loadSong - Warning: File has Guitar Pro header but non-standard extension: " + extension);
+            // 여기서는 실패 처리하지 않고 계속 진행
+        }
+        
+        // 파서 생성 및 악보 로드 시도 (안전 영역)
+        DBG("Loading GP file from: " + scoreFile.getFullPathName());
+        
+        try {
+            // 파서를 안전하게 생성
+            std::unique_ptr<gp_parser::Parser> tempParser;
+            try {
+                DBG("GuitarPracticeController::loadSong - Creating parser for: " + scoreFile.getFullPathName());
+                tempParser = std::make_unique<gp_parser::Parser>(scoreFile.getFullPathName().toRawUTF8());
+                DBG("GuitarPracticeController::loadSong - Parser created successfully");
+            }
+            catch (const std::exception& e) {
+                DBG("Error creating parser: " + juce::String(e.what()));
+                publishSongLoadFailedEvent(songId, "Error parsing file: " + juce::String(e.what()));
+                return false;
+            }
+            
+            // 임시 파서가 성공적으로 생성되면 실제 파서에 할당
+            parserPtr = std::move(tempParser);
+            
+            if (!parserPtr)
+            {
+                DBG("Parser creation failed, pointer is null");
+                publishSongLoadFailedEvent(songId, "Failed to create GP parser");
+                return false;
+            }
+            
+            // 이제 안전하게 TabFile 획득 시도
+            try {
+                DBG("GuitarPracticeController::loadSong - Getting TabFile from parser");
+                
+                // 직접 TabFile을 auto로 받아서 사용
+                auto tabFile = parserPtr->getTabFile();
+                
+                DBG("GuitarPracticeController::loadSong - TabFile obtained successfully");
+                
+                // 벡터 요소 유효성 검사 (빈 트랙 검사)
+                if (tabFile.tracks.empty()) {
+                    DBG("Warning: Loaded TabFile has no tracks");
+                    
+                    // 빈 트랙이 있는 경우 기본 TabFile 생성
+                    tracks.clear();
+                    measureHeaders.clear();
+                    channels.clear();
+                    // 디폴트 값으로 빈 TabFile 생성
+                    player.setTabFile(gp_parser::TabFile(major, minor, title, subtitle, artist, album,
+                                                     lyricsAuthor, musicAuthor, copyright, tab, instructions,
+                                                     comments, lyric, tempoValue, globalKeySignature, channels,
+                                                     measures, trackCount, measureHeaders, tracks));
+                    
+                    // 이벤트 발행 - 빈 탭 파일 생성
+                    publishSongLoadedEvent(songId);
+                } 
+                else {
+                    DBG("TabFile loaded successfully with " + juce::String(tabFile.tracks.size()) + " tracks");
+                    
+                    // 첫 번째 트랙에 마디가 있는지 확인
+                    if (tabFile.tracks[0].measures.empty()) {
+                        DBG("Warning: First track has no measures");
+                    }
+                    else {
+                        DBG("First track has " + juce::String(tabFile.tracks[0].measures.size()) + " measures");
+                    }
+                    
+                    try {
+                        // TabPlayer에 TabFile 설정
+                        player.setTabFile(tabFile);
+                        
+                        // 이벤트 발행 - 성공
+                        publishSongLoadedEvent(songId);
+                    }
+                    catch (const std::exception& e) {
+                        DBG("Error in player.setTabFile(): " + juce::String(e.what()));
+                        publishSongLoadFailedEvent(songId, "Error setting tab file: " + juce::String(e.what()));
+                        return false;
+                    }
+                    catch (...) {
+                        DBG("Unknown error in player.setTabFile()");
+                        publishSongLoadFailedEvent(songId, "Unknown error setting tab file");
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            catch (const std::exception& e) {
+                DBG("Error in parser.getTabFile(): " + juce::String(e.what()));
+                publishSongLoadFailedEvent(songId, "Error extracting tab data: " + juce::String(e.what()));
+                return false;
+            }
+            catch (...) {
+                DBG("Unknown error in parser.getTabFile()");
+                publishSongLoadFailedEvent(songId, "Unknown error extracting tab data");
+                return false;
+            }
+        }
+        catch (const std::exception& e) {
+            DBG("Error in general TabFile processing: " + juce::String(e.what()));
+            publishSongLoadFailedEvent(songId, "Error processing tab file: " + juce::String(e.what()));
+            return false;
+        }
     }
     catch (const std::exception& e) {
         DBG("Error loading song: " + juce::String(e.what()));

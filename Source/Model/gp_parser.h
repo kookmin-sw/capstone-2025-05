@@ -14,7 +14,13 @@ namespace gp_parser {
 // Supported versions and other data
 static const char *VERSIONS[] = {
 	"FICHIER GUITAR PRO v5.00",
-	"FICHIER GUITAR PRO v5.10"
+	"FICHIER GUITAR PRO v5.10",
+    // 필요한 경우 추가 버전 지원
+    "FICHIER GUITAR PRO v5.10.0",
+    "FICHIER GUITAR PRO v5.10.00",
+    "FICHIER GUITAR PRO v5.00.0",
+    "FICHIER GUITAR PRO v5.0",
+    "FICHIER GUITAR PRO v5.1"
 };
 static const int QUARTER_TIME = 960;
 static const int QUARTER = 4;
