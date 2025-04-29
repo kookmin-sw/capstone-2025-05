@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
 const deletePost = ({ postid }) => {
-  return api.delete(`/post/posts/${postid}`);
+  return api.delete(`/posts/${postid}`);
 };
 
 export const useDeletePostMutation = () => {

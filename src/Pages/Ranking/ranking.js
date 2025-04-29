@@ -43,8 +43,6 @@ export default function Ranking() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
-
       <div className="flex flex-col items-center flex-grow relative mt-6">
         {rankData.length === 0 ? (
           <div className="text-center mt-20 text-xl font-semibold text-gray-500">

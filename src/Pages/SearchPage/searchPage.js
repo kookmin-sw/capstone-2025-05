@@ -12,7 +12,6 @@ export default function SearchPage() {
   const [playerTarget, setPlayerTarget] = useState();
   return (
     <>
-      <MapleHeader />
       <div className="flex ml-32 mb-8 mt-12">
         <h1 className="font-bold text-xl">
           "{searchKeyword}"에 대한 검색결과 입니다.

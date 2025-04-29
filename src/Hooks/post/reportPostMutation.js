@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
-const postReport = ({ postid, reason }) => {
-  return api.post(`/post/posts/${postid}/report`, {
+const postReport = ({ post_id, reason }) => {
+  return api.post(`/report/post/${post_id}?reason=${reason}`, {
+    post_id,
     reason,
   });
 };
@@ -13,7 +14,7 @@ export const useReportPostMutation = () => {
   return useMutation({
     mutationFn: postReport,
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['post/report', variables.postid]); // 캐시된 데이터 갱신
+      queryClient.invalidateQueries(['post/report', variables.post_id]); // 캐시된 데이터 갱신
     },
   });
 };

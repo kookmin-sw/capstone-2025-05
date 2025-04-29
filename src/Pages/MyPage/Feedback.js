@@ -221,6 +221,7 @@ export default function Feedback() {
   };
 
   return (
+
     <div className="flex min-h-screen">
       {/* 사이드바 */}
       <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">

@@ -47,7 +47,6 @@ export default function Main() {
 
   return (
     <div className="flex flex-col h-screen">
-      <Header />
       <div className="flex flex-grow items-center justify-center mt-12 relative">
         <Swiper
           ref={swiperRef}

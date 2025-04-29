@@ -13,11 +13,16 @@ export default function SearchBox(props) {
         onClick={props.onClick}
         onChange={props.onChange}
         value={props.value}
-        onKeyDown={props.onKeyDown}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            props.onSearch?.(props.value);
+          }
+          props.onKeyDown?.(e); // 기존 핸들링 유지
+        }}
       />
       <button
         className="absolute right-4 top-1/2 transform -translate-y-1/2"
-        onClick={props.onSearch}
+        onClick={() => props.onSearch?.(props.value)}
       >
         <img src={Search} alt="검색" />
       </button>

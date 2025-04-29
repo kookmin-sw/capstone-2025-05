@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Header from '../../Components/MapleHeader';
 import Logo from '../../Assets/logo.svg';
 import Google from '../../Assets/google.svg';
 import Spotify from '../../Assets/spotify.svg';
@@ -9,11 +8,13 @@ import Box from '../../Components/Box/Box.js';
 import Input from '../../Components/Input/input.js';
 import Button from '../../Components/Button/Button.js';
 import Footer from '../../Components/MapleFooter';
+import { useAuth } from '../../Context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { login, logout } = useAuth();
 
   const handleEmail = (e) => setEmail(e.target.value);
   const handlePassword = (e) => setPassword(e.target.value);
@@ -53,8 +54,7 @@ export default function Login() {
       const uid = res.data.uid;
 
       if (uid) {
-        localStorage.setItem('uid', uid);
-        console.log('로그인 성공');
+        login(uid); //sessionstorage에 세팅 + context uid 세팅
         navigate('/main');
       } else {
         alert('로그인 실패: 사용자 정보를 가져올 수 없습니다.');
@@ -90,7 +90,6 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <div className="flex flex-col items-center justify-center flex-grow relative">
         <div className="absolute top-[4%] z-10">
           <img src={Logo} alt="logo" className="w-52 h-auto" />

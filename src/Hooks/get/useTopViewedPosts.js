@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
 const fetchTop = () => {
-  return api.get('/post/posts/top-viewed');
+  return api.get('/posts/top-viewed');
 };
 
 export const useTopViewedPostsQuery = () => {

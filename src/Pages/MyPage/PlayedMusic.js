@@ -15,6 +15,8 @@ export default function PlayedMusic() {
   const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
+  console.log(uid);
+
   useEffect(() => {
     const fetchRecords = async () => {
       try {
