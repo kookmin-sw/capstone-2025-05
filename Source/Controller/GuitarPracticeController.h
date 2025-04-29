@@ -7,6 +7,7 @@
 
 // 전방 선언
 class GuitarPracticeComponent;
+class SongsAPIService;
 
 /**
  * GuitarPracticeController - 기타 연습 기능의 Controller 역할
@@ -46,6 +47,9 @@ public:
     // TabPlayer 접근자
     TabPlayer& getTabPlayer() { return player; }
     
+    // 현재 로드된 곡 ID 반환
+    juce::String getCurrentSongId() const { return currentSongId; }
+    
 private:
     // 분석 스레드 결과 처리 메서드
     void handleAnalysisThreadComplete();
@@ -61,12 +65,18 @@ private:
     juce::AudioDeviceManager& deviceManager;
     GuitarPracticeComponent* view = nullptr; // 약한 참조
     
+    // API 서비스
+    std::unique_ptr<SongsAPIService> apiService;
+    
     // Guitar Pro 파서 및 플레이어
     std::unique_ptr<gp_parser::Parser> parserPtr;
     TabPlayer player;
     
     // 녹음 관련 상태
     juce::File lastRecordingFile;
+    
+    // 현재 곡 ID
+    juce::String currentSongId;
     
     // 분석 스레드
     std::unique_ptr<AnalysisThread> currentAnalysisThread;

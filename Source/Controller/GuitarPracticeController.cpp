@@ -1,6 +1,7 @@
 #include "GuitarPracticeController.h"
 #include "View/GuitarPracticeComponent.h"
 #include "Util/EnvLoader.h"
+#include "API/SongsAPIService.h"
 
 GuitarPracticeController::GuitarPracticeController(AudioModel& model, juce::AudioDeviceManager& deviceManager)
     : audioModel(model), deviceManager(deviceManager)
@@ -23,6 +24,22 @@ GuitarPracticeController::GuitarPracticeController(AudioModel& model, juce::Audi
     
     // TabPlayer를 오디오 콜백으로 등록
     deviceManager.addAudioCallback(&player);
+    
+    // SongsAPIService 초기화
+    apiService = std::make_unique<SongsAPIService>();
+    
+    // 환경 변수에서 API URL 설정
+    juce::String apiUrl = EnvLoader::get("MAPLE_API_URL");
+    if (apiUrl.isNotEmpty())
+    {
+        apiService->setApiBaseUrl(apiUrl);
+    }
+    #ifdef JUCE_DEBUG
+    // 디버그 모드에서는 localhost 사용
+    apiService->setApiBaseUrl("http://localhost:8000");
+    #endif
+    
+    DBG("GuitarPracticeController: API URL set to: " + apiService->getApiBaseUrl());
 }
 
 GuitarPracticeController::~GuitarPracticeController()
@@ -64,106 +81,130 @@ void GuitarPracticeController::togglePlayback()
 
 bool GuitarPracticeController::loadSong(const juce::String& songId)
 {
-    // 서버가 준비되지 않았으므로 로컬 파일 경로를 사용하여 테스트
-    juce::String filePath;
+    DBG("GuitarPracticeController::loadSong - ID: " + songId);
     
-    // 현재 디버깅 중인 위치와 현재 경로 로깅
-    DBG("Current working directory: " + juce::File::getCurrentWorkingDirectory().getFullPathName());
-    
-    // 테스트용 곡 ID와 경로 매핑
-    if (songId == "song1")
-        filePath = "D:/audio_dataset/recording/homecoming/homecoming.gp5";
-    else if (songId == "song2")
-        filePath = "D:/audio_dataset/recording/song2/song2.gp5";
-    else if (songId == "song3")
-        filePath = "D:/audio_dataset/recording/song3/song3.gp5";
-    else if (songId == "song4")
-        filePath = "D:/audio_dataset/recording/song4/song4.gp5";
-    else if (songId == "song5")
-        filePath = "D:/audio_dataset/recording/song5/song5.gp5";
-    else {
-        // 지원하지 않는 곡 ID - 이벤트 발행
-        publishSongLoadFailedEvent(songId, "Unsupported song ID");
-        return false;
-    }
-    
-    // 파일 존재 여부 확인
-    juce::File gpFile(filePath);
-    if (!gpFile.existsAsFile()) {
-        DBG("GP file does not exist: " + filePath);
-        
-        // 빈 TabFile 설정
-        player.setTabFile(gp_parser::TabFile(major, minor, title, subtitle, artist, album,
-                                           lyricsAuthor, musicAuthor, copyright, tab, instructions,
-                                           comments, lyric, tempoValue, globalKeySignature, channels,
-                                           measures, trackCount, measureHeaders, tracks));
-        
-        // 이벤트 발행 - 파일은 없지만 빈 탭 생성 완료
-        publishSongLoadedEvent(songId);
-        return true;
+    // 기존에 재생 중이라면 중지
+    if (audioModel.isPlaying())
+    {
+        stopPlayback();
     }
     
     resetParser();
     
-    try {
-        // 파서 생성 및 악보 로드 (포인터로 변경됨)
-        DBG("Loading GP file from: " + filePath);
-        parserPtr = std::make_unique<gp_parser::Parser>(filePath.toRawUTF8());
+    // 최근 로드한 곡 ID 저장
+    currentSongId = songId;
+    
+    // 서버에서 곡 정보 조회
+    apiService->getSongById(songId, [this, songId](ApiResponse response) {
+        if (!response.success)
+        {
+            DBG("Error loading song info: " + response.errorMessage);
+            publishSongLoadFailedEvent(songId, "Failed to get song info from server: " + response.errorMessage);
+            return;
+        }
         
-        try {
-            // TabPlayer에 악보 데이터 설정
-            // Parser로부터 TabFile 획득
-            auto tabFile = parserPtr->getTabFile();
-            
-            // 벡터 요소 유효성 검사 (빈 트랙 검사)
-            if (tabFile.tracks.empty()) {
-                DBG("Warning: Loaded TabFile has no tracks");
-                
-                // 빈 트랙이 있는 경우 기본 TabFile 생성
-                tracks.clear();
-                measureHeaders.clear();
-                channels.clear();
-                // 디폴트 값으로 빈 TabFile 생성
-                player.setTabFile(gp_parser::TabFile(major, minor, title, subtitle, artist, album,
-                                                 lyricsAuthor, musicAuthor, copyright, tab, instructions,
-                                                 comments, lyric, tempoValue, globalKeySignature, channels,
-                                                 measures, trackCount, measureHeaders, tracks));
-            } 
-            else {
-                DBG("TabFile loaded successfully with " + juce::String(tabFile.tracks.size()) + " tracks");
-                
-                // 첫 번째 트랙에 마디가 있는지 확인
-                if (tabFile.tracks[0].measures.empty()) {
-                    DBG("Warning: First track has no measures");
-                }
-                else {
-                    DBG("First track has " + juce::String(tabFile.tracks[0].measures.size()) + " measures");
-                }
-                
-                // TabPlayer에 TabFile 설정
-                player.setTabFile(tabFile);
+        // 곡 정보에서 악보 파일 URL 추출
+        juce::String sheetMusicUrl = response.data.getProperty("sheet_music", "").toString();
+        
+        if (sheetMusicUrl.isEmpty())
+        {
+            DBG("Sheet music URL is empty for song ID: " + songId);
+            publishSongLoadFailedEvent(songId, "Sheet music URL not found");
+            return;
+        }
+        
+        DBG("Found sheet music URL: " + sheetMusicUrl);
+        
+        // 캐시 디렉토리 준비
+        juce::File cacheDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                              .getChildFile("MapleClientDesktop/cache/sheet_music");
+        if (!cacheDir.exists())
+            cacheDir.createDirectory();
+        
+        // 파일 이름 추출
+        juce::String fileName = sheetMusicUrl.fromLastOccurrenceOf("/", false, false);
+        if (fileName.isEmpty())
+            fileName = songId + ".gp5";
+        
+        // 캐시 파일 경로 설정
+        juce::File cacheFile = cacheDir.getChildFile(fileName);
+        
+        DBG("Downloading sheet music file to: " + cacheFile.getFullPathName());
+        
+        // 악보 데이터 URL 엔드포인트 직접 구성 (선택 사항)
+        juce::String scoreEndpoint = "/songs/" + songId + "/sheet";
+        
+        // 오디오 서비스의 downloadAudioFile 메서드 사용 - 악보 파일도 바이너리 파일이므로 이 메서드 활용
+        apiService->downloadAudioFile(sheetMusicUrl, cacheFile, [this, songId](bool success, juce::String filePath) {
+            if (!success)
+            {
+                DBG("Failed to download sheet music file");
+                publishSongLoadFailedEvent(songId, "Failed to download sheet music file");
+                return;
             }
-        }
-        catch (const std::exception& e) {
-            DBG("Error in parser.getTabFile() or player.setTabFile(): " + juce::String(e.what()));
-            publishSongLoadFailedEvent(songId, "Error parsing file: " + juce::String(e.what()));
-            return false;
-        }
-        
-        DBG("Song loaded successfully: " + songId);
-        publishSongLoadedEvent(songId);
-        return true;
-    }
-    catch (const std::exception& e) {
-        DBG("Error loading song: " + juce::String(e.what()));
-        publishSongLoadFailedEvent(songId, "Error loading file: " + juce::String(e.what()));
-        return false;
-    }
-    catch (...) {
-        DBG("Unknown error loading song");
-        publishSongLoadFailedEvent(songId, "Unknown error loading file");
-        return false;
-    }
+            
+            DBG("Sheet music file downloaded to: " + filePath);
+            
+            try {
+                // 파서 생성 및 악보 로드 (포인터로 변경됨)
+                DBG("Loading GP file from: " + filePath);
+                parserPtr = std::make_unique<gp_parser::Parser>(filePath.toRawUTF8());
+                
+                try {
+                    // TabPlayer에 악보 데이터 설정
+                    // Parser로부터 TabFile 획득
+                    auto tabFile = parserPtr->getTabFile();
+                    
+                    // 벡터 요소 유효성 검사 (빈 트랙 검사)
+                    if (tabFile.tracks.empty()) {
+                        DBG("Warning: Loaded TabFile has no tracks");
+                        
+                        // 빈 트랙이 있는 경우 기본 TabFile 생성
+                        tracks.clear();
+                        measureHeaders.clear();
+                        channels.clear();
+                        // 디폴트 값으로 빈 TabFile 생성
+                        player.setTabFile(gp_parser::TabFile(major, minor, title, subtitle, artist, album,
+                                                        lyricsAuthor, musicAuthor, copyright, tab, instructions,
+                                                        comments, lyric, tempoValue, globalKeySignature, channels,
+                                                        measures, trackCount, measureHeaders, tracks));
+                    } 
+                    else {
+                        DBG("TabFile loaded successfully with " + juce::String(tabFile.tracks.size()) + " tracks");
+                        
+                        // 첫 번째 트랙에 마디가 있는지 확인
+                        if (tabFile.tracks[0].measures.empty()) {
+                            DBG("Warning: First track has no measures");
+                        }
+                        else {
+                            DBG("First track has " + juce::String(tabFile.tracks[0].measures.size()) + " measures");
+                        }
+                        
+                        // TabPlayer에 TabFile 설정
+                        player.setTabFile(tabFile);
+                    }
+                    
+                    DBG("Song loaded successfully: " + songId);
+                    publishSongLoadedEvent(songId);
+                }
+                catch (const std::exception& e) {
+                    DBG("Error in parser.getTabFile() or player.setTabFile(): " + juce::String(e.what()));
+                    publishSongLoadFailedEvent(songId, "Error parsing sheet music file: " + juce::String(e.what()));
+                }
+            }
+            catch (const std::exception& e) {
+                DBG("Error loading song: " + juce::String(e.what()));
+                publishSongLoadFailedEvent(songId, "Error loading sheet music file: " + juce::String(e.what()));
+            }
+            catch (...) {
+                DBG("Unknown error loading song");
+                publishSongLoadFailedEvent(songId, "Unknown error occurred");
+            }
+        });
+    });
+    
+    // 비동기 작업이 진행 중임을 표시하기 위해 true 반환
+    return true;
 }
 
 void GuitarPracticeController::resetParser()
@@ -417,22 +458,22 @@ void GuitarPracticeController::analyzeRecording(const juce::File& recordingFile)
     serverUrl = "http://localhost:8000/api/v1/analyze";
     #endif
     
-    // 기존 스레드 정리
+    // Clean up existing thread
     currentAnalysisThread = nullptr;
     
-    // 새 분석 스레드 생성
+    // Create new analysis thread
     currentAnalysisThread = std::make_unique<AnalysisThread>(serverUrl, recordingFile);
     
-    // 프로그레스 창 메시지 설정
+    // Set progress window message
     currentAnalysisThread->setStatusMessage("Preparing analysis...");
     
-    // 스레드 시작 (비동기식)
+    // Start thread (asynchronously)
     currentAnalysisThread->launchThread();
     
-    // 디버깅 정보
+    // Debug info
     DBG("[ANALYSIS] Thread launched");
     
-    // 타이머 시작
+    // Start timer
     analysisTimer->startTimer(500);
 }
 
@@ -461,10 +502,10 @@ void GuitarPracticeController::handleAnalysisThreadComplete()
         {
             DBG("[ANALYSIS] Successful analysis detected");
             
-            // 이벤트 발행: 분석 결과를 EventBus를 통해 전송
+            // Publish event: Send analysis results through EventBus
             publishAnalysisCompleteEvent(currentAnalysisThread->statusJson);
             
-            // 기존 방식 - UI 직접 업데이트 (이벤트 기반 방식 적용 중에 중복으로 일단 유지)
+            // Legacy approach - direct UI update (temporarily keeping both methods)
             if (view)
             {
                 juce::MessageManager::callAsync([this]() {
@@ -482,10 +523,10 @@ void GuitarPracticeController::handleAnalysisThreadComplete()
     {
         DBG("[ANALYSIS] Thread failed: " + currentAnalysisThread->errorMessage);
         
-        // 이벤트 발행: 분석 실패를 EventBus를 통해 전송
+        // Publish event: Send analysis failure through EventBus
         publishAnalysisFailedEvent(currentAnalysisThread->errorMessage);
         
-        // 기존 방식 - UI 직접 업데이트 (이벤트 기반 방식 적용 중에 중복으로 일단 유지)
+        // Legacy approach - direct UI update (temporarily keeping both methods)
         if (view)
         {
             juce::String errorMsg = currentAnalysisThread->errorMessage;
@@ -505,7 +546,7 @@ void GuitarPracticeController::handleAnalysisThreadComplete()
         DBG("[ANALYSIS] Thread finished with unknown status");
         publishAnalysisFailedEvent("The analysis process completed, but the result is unknown");
         
-        // 기존 방식 - UI 직접 업데이트 (이벤트 기반 방식 적용 중에 중복으로 일단 유지)
+        // Legacy approach - direct UI update (temporarily keeping both methods)
         if (view)
         {
             juce::MessageManager::callAsync([this]() {
@@ -519,21 +560,21 @@ void GuitarPracticeController::handleAnalysisThreadComplete()
         }
     }
     
-    // 스레드 객체 정리
+    // Clean up thread object
     currentAnalysisThread = nullptr;
 }
 
-// AnalysisTimer 타이머 콜백 구현
+// AnalysisTimer callback implementation
 void GuitarPracticeController::AnalysisTimer::timerCallback()
 {
-    // 분석 스레드가 없으면 타이머 중지
+    // Stop timer if no analysis thread exists
     if (!controller.currentAnalysisThread)
     {
         stopTimer();
         return;
     }
     
-    // 스레드가 실행 중이 아니면 (완료되었거나 취소됨)
+    // If thread is not running (completed or cancelled)
     if (!controller.currentAnalysisThread->isThreadRunning())
     {
         DBG("[ANALYSIS] Thread is no longer running - checking results");
@@ -544,7 +585,7 @@ void GuitarPracticeController::AnalysisTimer::timerCallback()
 
 void GuitarPracticeController::publishAnalysisCompleteEvent(const juce::var& result)
 {
-    // 분석 완료 이벤트 생성 및 발행
+    // Create and publish analysis complete event
     auto event = std::make_shared<AnalysisCompleteEvent>(result);
     EventBus::getInstance().publishOnMainThread(event);
     
@@ -553,7 +594,7 @@ void GuitarPracticeController::publishAnalysisCompleteEvent(const juce::var& res
 
 void GuitarPracticeController::publishAnalysisFailedEvent(const juce::String& errorMessage)
 {
-    // 분석 실패 이벤트 생성 및 발행
+    // Create and publish analysis failed event
     auto event = std::make_shared<AnalysisFailedEvent>(errorMessage);
     EventBus::getInstance().publishOnMainThread(event);
     
@@ -562,7 +603,7 @@ void GuitarPracticeController::publishAnalysisFailedEvent(const juce::String& er
 
 void GuitarPracticeController::publishSongLoadedEvent(const juce::String& songId)
 {
-    // 곡 로드 완료 이벤트 생성 및 발행
+    // Create and publish song loaded event
     auto event = std::make_shared<SongLoadedEvent>(songId);
     EventBus::getInstance().publishOnMainThread(event);
     
@@ -571,7 +612,7 @@ void GuitarPracticeController::publishSongLoadedEvent(const juce::String& songId
 
 void GuitarPracticeController::publishSongLoadFailedEvent(const juce::String& songId, const juce::String& errorMessage)
 {
-    // 곡 로드 실패 이벤트 생성 및 발행
+    // Create and publish song load failed event
     auto event = std::make_shared<SongLoadFailedEvent>(songId, errorMessage);
     EventBus::getInstance().publishOnMainThread(event);
     
