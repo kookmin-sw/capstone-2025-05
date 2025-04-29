@@ -12,6 +12,8 @@ export default function Review({
   isSelectable,
   isSelected,
   onSelect,
+  isAdmin,
+  isUser,
 }) {
   const [isCommentReportOpen, setIsCommentReportOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false); // ✨ 수정 모드 여부
@@ -86,7 +88,7 @@ export default function Review({
 
   return (
     <div className="flex items-center mb-8">
-      {isSelectable && (
+      {isSelectable && (isAdmin || isUser) && (
         <input
           type="checkbox"
           checked={isSelected}

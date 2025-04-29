@@ -27,16 +27,17 @@ import { useScrapPostMutation } from '../../Hooks/post/scrapPostMutation';
 import { useDeleteCommentMutation } from '../../Hooks/delete/deleteCommentMutation';
 import swal from 'sweetalert';
 import ReportModal from '../../Components/Modal/ReportModal';
+import { useAuth } from '../../Context/AuthContext';
 
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
 export default function NoticeDetail() {
   const location = useLocation();
   const post = location.state;
+  const { uid } = useAuth();
+  const post_uid = post.uid;
   const isAdmin = true; //로그인 계정이 관리자 계정일경우
-  const isLoginUser = true; //uid와 작성자 uid가 같을경우
-  const uid = 'fakeuid';
-
+  const isUser = uid == post_uid;
   /*Mutation 영역*/
   const { mutate } = useEditPutMutation(); //게시글 수정하기
   const { mutate: postCommentMutate } = usePostCommentsMutation(); //댓글 추가하기
@@ -116,6 +117,14 @@ export default function NoticeDetail() {
     if (selectedComments.length === 0) {
       swal('', '삭제할 댓글을 선택해주세요!', 'error');
 
+      return;
+    }
+    if (!isAdmin) {
+      swal(
+        '',
+        '관리자 또는 본인이 쓴 댓글일 경우에만 삭제가능합니다!',
+        'error',
+      );
       return;
     }
     swal({
@@ -262,7 +271,7 @@ export default function NoticeDetail() {
     if (!isScrap) {
       //북마크 클릭
       scrapPostMutate(
-        { post_id: post.id, post_uid: post.uid },
+        { post_id: post.id },
         {
           onSuccess: () => {
             console.log('북마크 성공');
@@ -317,8 +326,6 @@ export default function NoticeDetail() {
     }
   }, [liked]);
 
-  console.log(selectedComments, '선택된 댓글들');
-
   return (
     <div>
       <section
@@ -344,12 +351,15 @@ export default function NoticeDetail() {
                     {post.title}
                   </h1>
                   <div className="flex items-center justify-center">
-                    <div className="flex items-center duration-300 ease-in-out hover:scale-[110%]">
-                      <FaTrashAlt
-                        size={20}
-                        onClick={() => setIsModalOpen(true)}
-                      />
-                    </div>
+                    {/* 관리자 계정이거나 현재 글이 사용자가 작성한 글 일경우 삭제 가능 */}
+                    {(isAdmin || isUser) && (
+                      <div className="flex items-center duration-300 ease-in-out hover:scale-[110%]">
+                        <FaTrashAlt
+                          size={20}
+                          onClick={() => setIsModalOpen(true)}
+                        />
+                      </div>
+                    )}
                     <div className="flex items-center duration-300 ease-in-out hover:scale-[110%]">
                       <FaFlag
                         size={20}
@@ -473,11 +483,15 @@ export default function NoticeDetail() {
               </div>
             ) : (
               <>
-                <div className="duration-300 ease-in-out hover:scale-[110%]">
-                  <Button width="60px" height="40px" onClick={toggleEditMode}>
-                    수정
-                  </Button>
-                </div>
+                {/* 사용자가 작성한 글일 경우에만 수정 가능(현재는 테스트 중이므로 그냥 true로 설정)*/}
+                {/* {isUser &&  */}
+                {true && (
+                  <div className="duration-300 ease-in-out hover:scale-[110%]">
+                    <Button width="60px" height="40px" onClick={toggleEditMode}>
+                      수정
+                    </Button>
+                  </div>
+                )}
                 <div className="duration-300 ease-in-out hover:scale-[110%]">
                   <Button
                     width="60px"
@@ -526,6 +540,7 @@ export default function NoticeDetail() {
                 />
               )
             )}
+
             {!isSelecting ? (
               <div className="mx-2 duration-300 ease-in-out hover:scale-[110%]">
                 <FaTrashAlt
@@ -563,6 +578,8 @@ export default function NoticeDetail() {
                 isSelected={selectedComments.includes(item.id)}
                 isSelectable={isSelecting}
                 onSelect={() => handleSelectComment(item.id)}
+                isAdmin={isAdmin}
+                isUser={isUser}
               />
             ))}
           {comments &&
@@ -574,6 +591,8 @@ export default function NoticeDetail() {
                 isSelected={selectedComments.includes(item.id)}
                 isSelectable={isSelecting}
                 onSelect={() => handleSelectComment(item.id)}
+                isAdmin={isAdmin}
+                isUser={isUser}
               />
             ))}
           {comments?.length == 0 && (
