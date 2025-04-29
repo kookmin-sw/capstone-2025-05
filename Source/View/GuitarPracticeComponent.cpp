@@ -131,14 +131,6 @@ void GuitarPracticeComponent::resized()
     auto topBarHeight = 60;
     topBar->setBounds(bounds.removeFromTop(topBarHeight));
     
-    // 왼쪽 패널 (입력 레벨, 볼륨 컨트롤 등)
-    auto leftPanelWidth = 250;
-    leftPanel->setBounds(bounds.removeFromLeft(leftPanelWidth));
-    
-    // 오른쪽 패널 (메트로놈, 튜너 등)
-    auto rightPanelWidth = 250;
-    rightPanel->setBounds(bounds.removeFromRight(rightPanelWidth));
-    
     // 하단 컨트롤 패널 (재생, 녹음, 분석 버튼 등)
     auto controlsHeight = 80;
     auto controlsArea = bounds.removeFromBottom(controlsHeight);
@@ -172,16 +164,31 @@ void GuitarPracticeComponent::resized()
                            buttonWidth, buttonHeight);
     
     // 녹음된 오디오 파형 표시 영역
-    auto waveformHeight = 100;
+    auto waveformHeight = 80;
     auto waveformArea = bounds.removeFromBottom(waveformHeight);
     recordingThumbnail->setBounds(waveformArea.reduced(10));
     
-    // 악보 표시 영역 (중앙)
-    if (scoreComponent)
-        scoreComponent->setBounds(bounds.reduced(10));
+    // 사이드 패널 - 좌우 패널 모두 왼쪽에 배치하여 악보 표시 영역 확보
+    auto sideWidth = 250;
+    auto leftArea = bounds.removeFromLeft(sideWidth);
     
-    // 센터 패널 (전체 음악 시각화 등) - 필요한 경우
-    centerPanel->setBounds(bounds.reduced(10));
+    // 왼쪽 패널 (입력 레벨, 볼륨 컨트롤 등)
+    auto leftPanelHeight = leftArea.getHeight() / 2;
+    leftPanel->setBounds(leftArea.removeFromTop(leftPanelHeight));
+    
+    // 오른쪽 패널 (메트로놈, 튜너 등)
+    rightPanel->setBounds(leftArea);
+    
+    // 악보 표시 영역 - 남은 모든 공간 사용
+    if (scoreComponent)
+    {
+        DBG("Setting ScoreComponent bounds: " + juce::String(bounds.getWidth()) + "x" + juce::String(bounds.getHeight()));
+        scoreComponent->setBounds(bounds.reduced(10));
+        scoreComponent->toFront(false);
+    }
+    
+    // 센터 패널은 더 이상 사용하지 않거나 필요한 경우에만 사용
+    // centerPanel->setBounds(bounds.reduced(10));
 }
 
 // 새로운 인터페이스 메서드 구현
@@ -212,7 +219,17 @@ void GuitarPracticeComponent::onInputLevelChanged(float newLevel)
 // UI 업데이트 메서드
 void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
 {
-    playButton.setButtonText(isNowPlaying ? "Stop" : "Play");
+    // 재생 버튼 텍스트 업데이트
+    playButton.setButtonText(isNowPlaying ? "Pause" : "Play");
+    
+    // ScoreComponent 업데이트
+    if (scoreComponent != nullptr)
+    {
+        if (isNowPlaying)
+            scoreComponent->startPlayback();
+        else
+            scoreComponent->stopPlayback();
+    }
 }
 
 void GuitarPracticeComponent::updateVolumeDisplay(float volume)
@@ -455,6 +472,14 @@ void GuitarPracticeComponent::handleSongLoadedEvent(const SongLoadedEvent& event
         if (scoreComponent != nullptr) {
             try {
                 scoreComponent->updateScore();
+                
+                // 포커스 설정으로 키보드 내비게이션 활성화
+                scoreComponent->grabKeyboardFocus();
+                
+                // 스코어 컴포넌트를 최상위로 가져오기
+                scoreComponent->toFront(false);
+                
+                DBG("Score component updated successfully");
             }
             catch (const std::exception& e) {
                 DBG("Error updating score component: " + juce::String(e.what()));

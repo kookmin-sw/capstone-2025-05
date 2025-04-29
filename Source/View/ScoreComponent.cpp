@@ -17,40 +17,92 @@ ScoreComponent::~ScoreComponent()
 
 void ScoreComponent::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::white);
+    // 배경 채우기 - 흰색 대신 부드러운 색상 사용
+    g.fillAll(juce::Colour(248, 248, 252));
 
     if (!tabPlayer.getTabFile())
     {
-        g.setColour(juce::Colours::black);
-        g.drawText("No tab file loaded", 20, 20, 200, 20, juce::Justification::left);
+        // 악보가 없을 때 메시지 표시
+        g.setColour(juce::Colours::grey);
+        g.setFont(juce::Font(18.0f).italicised());
+        g.drawText("No tab file loaded. Please select a song to view the sheet music.",
+                  getLocalBounds().reduced(30), juce::Justification::centred, true);
         return;
     }
 
     const auto& tabFile = *tabPlayer.getTabFile();
-    g.setColour(juce::Colours::black);
-    g.setFont(16.0f);
+    
+    // 곡 정보 표시
+    g.setColour(juce::Colours::darkblue);
+    g.setFont(juce::Font(22.0f).boldened());
+    g.drawText(tabFile.title, xOffset, 10, getWidth() - 40, 30, juce::Justification::left);
+    
+    g.setColour(juce::Colours::darkgrey);
+    g.setFont(juce::Font(16.0f));
+    g.drawText(tabFile.artist, xOffset + 10, 35, getWidth() - 60, 20, juce::Justification::left);
 
     float currentY = yOffset;
 
+    // 모든 트랙 렌더링
     for (size_t trackIdx = 0; trackIdx < tabFile.tracks.size(); ++trackIdx)
     {
         const auto& track = tabFile.tracks[trackIdx];
+        
+        // 트랙 제목에 스타일 적용
+        g.setColour(juce::Colours::black);
+        g.setFont(juce::Font(18.0f).boldened());
         g.drawText(track.name, xOffset, currentY, 200, 20, juce::Justification::left);
         currentY += 30.0f;
 
-        // 기타 현 그리기
+        // 기타 현 그리기 - 현 별로 다른 색상 사용하여 가독성 개선
         float trackWidth = xOffset;
         for (int string = 1; string <= 6; ++string)
         {
             float y = currentY + (string - 1) * stringSpacing;
-            g.drawLine(xOffset, y, xOffset + 1000, y, 1.0f); // 임시 고정 폭
+            // 현 색상 조정 - 저음 현은 더 두껍게
+            float thickness = 1.0f + (6 - string) * 0.2f;
+            juce::Colour stringColour = juce::Colour(
+                juce::uint8(20 + (string * 30)), 
+                juce::uint8(20 + (string * 20)), 
+                juce::uint8(50 + (string * 30))
+            ).withAlpha(0.7f);
+            
+            g.setColour(stringColour);
+            g.drawLine(xOffset, y, xOffset + 2000, y, thickness);
         }
 
-        // 마디와 비트 렌더링
+        // 마디를 구분하는 사각형 표시 추가
         float x = xOffset;
+        g.setColour(juce::Colours::black);
         for (size_t measureIdx = 0; measureIdx < track.measures.size(); ++measureIdx)
         {
             const auto& measure = track.measures[measureIdx];
+            
+            // 마디 번호 표시 (작은 숫자로)
+            g.setFont(12.0f);
+            g.drawText(juce::String(measureIdx + 1), 
+                      x, currentY - 25, 
+                      30, 20, 
+                      juce::Justification::left);
+            
+            // 마디 시작 세로선
+            g.drawLine(x, currentY - 10, x, currentY + 5 * stringSpacing + 10, 1.5f);
+            
+            // 마디 배경 - 짝수/홀수 마디 구분
+            juce::Rectangle<float> measureRect(
+                x, currentY - 10,
+                measure.beats.size() * noteSpacing, 5 * stringSpacing + 20
+            );
+            
+            if (measureIdx % 2 == 0)
+                g.setColour(juce::Colour(240, 240, 250).withAlpha(0.5f));
+            else
+                g.setColour(juce::Colour(245, 245, 255).withAlpha(0.3f));
+                
+            g.fillRect(measureRect);
+            g.setColour(juce::Colours::black);
+            
+            // 비트 렌더링
             for (size_t beatIdx = 0; beatIdx < measure.beats.size(); ++beatIdx)
             {
                 const auto& beat = measure.beats[beatIdx];
@@ -60,13 +112,26 @@ void ScoreComponent::paint(juce::Graphics& g)
                     for (const auto& note : voice.notes)
                     {
                         float y = currentY + (note.string - 1) * stringSpacing;
-                        g.drawText(juce::String(note.value), x, y - 10, 20, 20, juce::Justification::centred);
+                        
+                        // 노트 표시 개선 - 동그란 배경 추가
+                        g.setColour(juce::Colours::white);
+                        g.fillEllipse(x - 10, y - 10, 20, 20);
+                        
+                        g.setColour(juce::Colours::black);
+                        g.setFont(juce::Font(14.0f).boldened());
+                        g.drawText(juce::String(note.value), 
+                                  x - 10, y - 10, 
+                                  20, 20, 
+                                  juce::Justification::centred);
                     }
                 }
                 x += noteSpacing;
             }
             trackWidth = x;
-            g.drawLine(x, currentY - 10, x, currentY + 5 * stringSpacing + 10, 2.0f);
+            
+            // 마디 끝 세로선
+            g.setColour(juce::Colours::black);
+            g.drawLine(x, currentY - 10, x, currentY + 5 * stringSpacing + 10, 1.5f);
         }
 
         // 커서 렌더링 - 인덱스 범위 유효성 검사 추가
@@ -104,8 +169,13 @@ void ScoreComponent::paint(juce::Graphics& g)
                     viewport.setViewPosition(cursorX - viewArea.getWidth() / 4, viewArea.getY());
                 }
 
+                // 커서 렌더링 개선 - 반투명 배경과 컬러 사용
+                g.setColour(juce::Colours::red.withAlpha(0.3f));
+                juce::Rectangle<float> cursorRect(cursorX - 5, currentY - 20, 10, 5 * stringSpacing + 30);
+                g.fillRect(cursorRect);
+                
                 g.setColour(juce::Colours::red);
-                g.drawLine(cursorX, currentY - 30, cursorX, currentY + 5 * stringSpacing + 10, 2.0f);
+                g.drawLine(cursorX, currentY - 20, cursorX, currentY + 5 * stringSpacing + 10, 2.0f);
 
                 DBG("Rendering cursor at Track: " + juce::String(trackIdx) +
                     ", Measure: " + juce::String(currentMeasure) +
@@ -114,6 +184,7 @@ void ScoreComponent::paint(juce::Graphics& g)
             }
         }
 
+        // 다음 트랙으로 이동
         currentY += 6 * stringSpacing + 50.0f;
     }
 }
@@ -263,6 +334,14 @@ void ScoreComponent::updateScore()
     {
         DBG("ScoreComponent: No tab file loaded");
         return;
+    }
+    
+    // 트랙과 초기 위치 설정
+    if (tabPlayer.getTabFile()->tracks.size() > 0)
+    {
+        // 첫 번째 트랙으로 설정
+        tabPlayer.setPlaybackPosition(0, 0, 0);
+        DBG("ScoreComponent: Reset to first track, measure 0, beat 0");
     }
     
     // 뷰포트 위치 초기화
