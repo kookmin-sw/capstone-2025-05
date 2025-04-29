@@ -9,6 +9,7 @@ import Input from '../../Components/Input/input.js';
 import Button from '../../Components/Button/Button.js';
 import Footer from '../../Components/MapleFooter';
 import { useAuth } from '../../Context/AuthContext';
+import swal from 'sweetalert';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -55,9 +56,10 @@ export default function Login() {
 
       if (uid) {
         login(uid); //sessionstorage에 세팅 + context uid 세팅
+        swal('', '로그인성공🫡', 'success');
         navigate('/main');
       } else {
-        alert('로그인 실패: 사용자 정보를 가져올 수 없습니다.');
+        swal('', '로그인 실패: 사용자 정보를 가져올 수 없습니다😥', 'error');
       }
     } catch (error) {
       console.error('로그인 에러:', error);
@@ -90,17 +92,17 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex flex-col items-center justify-center flex-grow relative">
-        <div className="absolute top-[4%] z-10">
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="flex z-10 mt-16">
           <img src={Logo} alt="logo" className="w-52 h-auto" />
         </div>
 
-        <div className="absolute top-[12%]">
-          <Box width="400px" height="300px">
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="flex flex-col items-center gap-y-4">
+        <div className="flex justify-center w-full">
+          <Box width="35%" height="50vh">
+            <div className="flex flex-col items-center justify-center w-full h-full">
+              <div className="flex flex-col items-center gap-y-4 w-full">
                 <Input
-                  width="320px"
+                  width="80%"
                   height="52px"
                   type="text"
                   placeholder="이메일을 입력해 주세요"
@@ -108,7 +110,7 @@ export default function Login() {
                   onChange={handleEmail}
                 />
                 <Input
-                  width="320px"
+                  width="80%"
                   height="52px"
                   type="password"
                   placeholder="비밀번호를 입력해 주세요"
@@ -116,8 +118,8 @@ export default function Login() {
                   onChange={handlePassword}
                 />
               </div>
-              <div className="mt-8">
-                <Button width="320px" height="52px" onClick={handleLogin}>
+              <div className="mt-8 w-full flex justify-center">
+                <Button width="80%" height="52px" onClick={handleLogin}>
                   로그인
                 </Button>
               </div>
@@ -125,33 +127,44 @@ export default function Login() {
           </Box>
         </div>
 
-        <div className="absolute top-[67%] w-[600px] border-t-2 border-[#AFAFAF]"></div>
-
-        <div className="absolute top-[69%]">
-          <button
-            className="flex flex-row justify-between items-center w-[400px] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[20px] font-bold bg-[white]"
-            onClick={handleGoogleLogin}
-          >
-            <img src={Google} alt="google logo" />
-            구글로 시작하기
-            <div className="w-[24px] h-[100%]"></div>
-          </button>
+        <div className="flex items-center w-[35%] mt-10 mb-8">
+          <div className="flex-grow border-t-2 border-[#AFAFAF]"></div>
+          <span className="px-4 text-gray-500 text-sm">또는</span>
+          <div className="flex-grow border-t-2 border-[#AFAFAF]"></div>
         </div>
 
-        <div className="absolute top-[82%]">
-          <button
-            className="flex flex-row justify-between items-center w-[400px] h-[60px] pl-5 pr-5 rounded-[10px] text-white text-[20px] font-bold bg-[#12D760]"
-            onClick={handleSpoityLogin}
-          >
-            <img src={Spotify} alt="spotify logo" className="w-12 h-12" />
-            스포티파이로 시작하기
-            <div className="w-[24px] h-[100%]"></div>
-          </button>
+        <div className="flex flex-col items-center mb-2 w-full">
+          <div className="flex justify-center w-full">
+            <button
+              className=" w-[35%] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[20px] font-bold bg-[white]"
+              onClick={handleGoogleLogin}
+            >
+              <div className="flex justify-center items-center">
+                <img src={Google} alt="google logo" />
+                <span className="ml-2 text-center">구글로 시작하기</span>
+              </div>
+            </button>
+          </div>
+          <div className="flex flex-col items-center mt-2 w-full">
+            <button
+              className=" w-[35%] h-[60px] pl-5 pr-5 rounded-[10px] text-white text-[20px] font-bold bg-[#12D760]"
+              onClick={handleSpoityLogin}
+            >
+              <div className="flex justify-center items-center">
+                <img src={Spotify} alt="spotify logo" className="w-12 h-12" />
+                <span className="ml-1 text-center">스포티파이 인증</span>
+              </div>
+            </button>
+            <p className="mt-4 text-sm text-gray-500">
+              * 스포티파이 인증을 완료해야 곡 스트리밍 서비스를 이용하실 수
+              있습니다.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col items-center">
-        <div className="absolute top-[89%]">
+      <div className="flex flex-col items-center mt-2">
+        <div className="flex">
           <button
             className="text-[#AFAFAF] text-sm underline hover:text-gray-500"
             onClick={() => {
