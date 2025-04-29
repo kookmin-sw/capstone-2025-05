@@ -1,4 +1,5 @@
 #include "LeftPanel.h"
+#include "LookAndFeel/MapleTheme.h"
 
 LeftPanel::LeftPanel(AudioModel& model)
     : audioModel(model), 
@@ -7,21 +8,32 @@ LeftPanel::LeftPanel(AudioModel& model)
     // 입력 레벨 관련 UI 설정
     levelLabel = std::make_unique<juce::Label>("levelLabel", "Input Level:");
     levelLabel->setJustificationType(juce::Justification::left);
+    levelLabel->setColour(juce::Label::textColourId, MapleTheme::getTextColour());
+    levelLabel->setFont(juce::Font(16.0f).boldened());
     addAndMakeVisible(levelLabel.get());
     
     // progressValue 포인터를 사용하여 ProgressBar 생성
     levelMeter = std::make_unique<juce::ProgressBar>(progressValue);
+    levelMeter->setColour(juce::ProgressBar::backgroundColourId, MapleTheme::getBackgroundColour().brighter(0.1f));
+    levelMeter->setColour(juce::ProgressBar::foregroundColourId, MapleTheme::getAccentColour());
     addAndMakeVisible(levelMeter.get());
     levelMeter->setTextToDisplay("");
     
     // 볼륨 컨트롤 UI 설정
     volumeLabel = std::make_unique<juce::Label>("volumeLabel", "Volume:");
     volumeLabel->setJustificationType(juce::Justification::left);
+    volumeLabel->setColour(juce::Label::textColourId, MapleTheme::getTextColour());
+    volumeLabel->setFont(juce::Font(16.0f).boldened());
     addAndMakeVisible(volumeLabel.get());
     
     volumeSlider = std::make_unique<juce::Slider>(juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight);
     volumeSlider->setRange(0.0, 1.0, 0.01);
     volumeSlider->setValue(audioModel.getVolume());
+    volumeSlider->setColour(juce::Slider::thumbColourId, MapleTheme::getAccentColour());
+    volumeSlider->setColour(juce::Slider::trackColourId, MapleTheme::getAccentColour().withAlpha(0.6f));
+    volumeSlider->setColour(juce::Slider::textBoxTextColourId, MapleTheme::getTextColour());
+    volumeSlider->setColour(juce::Slider::textBoxOutlineColourId, MapleTheme::getBackgroundColour());
+    volumeSlider->setColour(juce::Slider::textBoxBackgroundColourId, MapleTheme::getBackgroundColour().brighter(0.1f));
     volumeSlider->onValueChange = [this]() {
         audioModel.setVolume((float)volumeSlider->getValue());
     };
@@ -45,30 +57,33 @@ LeftPanel::~LeftPanel()
 
 void LeftPanel::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::darkgrey);
+    // 배경 및 테두리 그리기
+    g.fillAll(MapleTheme::getCardColour());
+    g.setColour(MapleTheme::getAccentColour().withAlpha(0.3f));
+    g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(1.0f), 8.0f, 1.0f);
     
     // 패널 제목 그리기
-    g.setColour(juce::Colours::white);
-    g.setFont(18.0f);
-    g.drawText("Controls", getLocalBounds().reduced(10).removeFromTop(30),
+    g.setColour(MapleTheme::getHighlightColour());
+    g.setFont(juce::Font(22.0f).boldened());
+    g.drawText("Controls", getLocalBounds().reduced(10).removeFromTop(35),
                juce::Justification::centred, true);
 }
 
 void LeftPanel::resized()
 {
-    auto bounds = getLocalBounds().reduced(10);
+    auto bounds = getLocalBounds().reduced(15);
     
     // 패널 제목을 위한 공간
     bounds.removeFromTop(40);
     
     // 입력 레벨 컨트롤
-    levelLabel->setBounds(bounds.removeFromTop(20));
+    levelLabel->setBounds(bounds.removeFromTop(25));
     levelMeter->setBounds(bounds.removeFromTop(30));
     
-    bounds.removeFromTop(20); // 간격 추가
+    bounds.removeFromTop(25); // 간격 추가
     
     // 볼륨 컨트롤
-    volumeLabel->setBounds(bounds.removeFromTop(20));
+    volumeLabel->setBounds(bounds.removeFromTop(25));
     volumeSlider->setBounds(bounds.removeFromTop(30));
 }
 
