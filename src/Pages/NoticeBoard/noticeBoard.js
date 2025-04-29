@@ -230,7 +230,7 @@ export default function NoticeBoard() {
           )}
         </div>
       </div>
-      <MapleFooter />
+      <MapleFooter email={'maple@gmail.com'} />
     </>
   );
 }

@@ -8,6 +8,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
+    "@wavesurfer/react": "^1.0.11",
     "axios": "^1.7.9",
     "lucide-react": "^0.487.0",
     "react": "^19.0.0",
@@ -21,6 +22,7 @@
     "sweetalert": "^2.1.2",
     "swiper": "^11.2.5",
     "tanstack": "^1.0.0",
+    "wavesurfer.js": "^7.9.4",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
