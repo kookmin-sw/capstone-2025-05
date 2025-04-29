@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../../Components/MapleHeader';
-import Footer from '../../Components/MapleFooter';
 import Podium from '../../Assets/Ranking/podium.svg';
 import Crown from '../../Assets/Ranking/crown.svg';
 import Box from '../../Components/Box/Box';
+import Footer from '../../Components/MapleFooter';
 
 export default function Ranking() {
   const [rankData, setRankData] = useState([]);
@@ -52,7 +52,11 @@ export default function Ranking() {
           <>
             {/* Podium + Top 3 */}
             <div className="relative w-full flex justify-center items-end mt-6">
-              <img src={Podium} alt="podium" className="mt-[320px]" />
+              <img
+                src={Podium}
+                alt="podium"
+                className="w-[960px] h-auto mt-[320px]"
+              />
               <img
                 src={Crown}
                 alt="crown"
@@ -62,8 +66,8 @@ export default function Ranking() {
               {top3.map((user, idx) => {
                 const positions = [
                   'top-[12%]', // 1등
-                  'top-[20%] right-[66%]', // 2등
-                  'top-[24%] left-[66%]', // 3등
+                  'top-[20%] transform -translate-x-72', // 2등
+                  'top-[24%] transform translate-x-72', // 3등
                 ];
                 return (
                   <div key={idx} className={`absolute ${positions[idx]}`}>

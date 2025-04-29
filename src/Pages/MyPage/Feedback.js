@@ -2,112 +2,229 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Box from '../../Components/Box/Box.js';
-import Header from '../../Components/MapleHeader.js';
+import Button from '../../Components/Button/Button.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
-import Album from '../../Assets/Main/album/bndCover.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
-import playdata from '../../Data/compare.json'; //여기에 음정,박자등을 불러오는 api 넣어
+import playdata from '../../Data/compare.json';
 import feedback from '../../Data/feedback_8583d5bf.json';
 import fakedata from '../../Data/chartdata.json';
+import ReactMarkdown from 'react-markdown';
+
 export default function Feedback() {
-  const uid = localStorage.getItem('uid');
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [feedbackData, setFeedbackData] = useState('');
+  const [userInfo, setUserInfo] = useState({ nickname: '', email: '' });
+  const [rank, setRank] = useState(null);
+  const [currentGraphIndex, setCurrentGraphIndex] = useState(0);
+  const [specificSong, setSpecificSong] = useState({
+    title: 'Drowning',
+    artist: '',
+    cover_url: '',
+  });
 
-  const songName = '오늘만 I LOVE YOU';
+  const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
+  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+  const songName = 'Drowning';
   const uploadCount = 1;
 
-  const recentSong = [
-    { title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR', image: Album },
+  const graphs = [
+    {
+      label: '음정 분석',
+      key: 'pitch',
+      color: 'red',
+      data: fakedata.note_by_note,
+    },
+    {
+      label: '박자 분석',
+      key: 'onset',
+      color: 'green',
+      data: fakedata.note_by_note,
+    },
+    {
+      label: '기술 분석',
+      key: 'technique',
+      color: 'blue',
+      data: fakedata.note_by_note,
+    },
   ];
 
   function processCompareData(data) {
     const user = data.comparison.user_features;
     const ref = data.comparison.reference_features;
-    const feedback = data.feedback;
 
-    // pitch_comparison
-    const pitch_comparison = user.pitches.map((userPitch, i) => ({
-      note_index: i,
-      user_pitch: userPitch,
-      reference_pitch: ref.pitches[i],
-    }));
-
-    // onset_comparison
-    const onset_comparison = user.onsets.map((userOnset, i) => ({
-      note_index: i,
-      user_onset: userOnset,
-      reference_onset: ref.onsets[i],
-    }));
-
-    // technique_comparison
-    const technique_comparison = user.techniques.map((userTech, i) => ({
-      note_index: i,
-      user_technique: userTech,
-      reference_technique: ref.techniques[i],
-    }));
-
-    // audio URL은 예시로 채워둠 (실제 signed URL은 서버에서 받아야 함)
-    const audio_urls = {
-      user_audio: 'signed_url_to_user_audio',
-      reference_audio: 'signed_url_to_reference_audio',
-    };
     return {
-      pitch_comparison,
-      onset_comparison,
-      technique_comparison,
-      feedback,
-      audio_urls,
+      pitch_comparison: user.pitches.map((p, i) => ({
+        note_index: i,
+        user_pitch: p,
+        reference_pitch: ref.pitches[i],
+      })),
+      onset_comparison: user.onsets.map((o, i) => ({
+        note_index: i,
+        user_onset: o,
+        reference_onset: ref.onsets[i],
+      })),
+      technique_comparison: user.techniques.map((t, i) => ({
+        note_index: i,
+        user_technique: t,
+        reference_technique: ref.techniques[i],
+      })),
+      feedback: data.feedback,
+      audio_urls: {
+        user_audio: 'signed_url_to_user_audio',
+        reference_audio: 'signed_url_to_reference_audio',
+      },
     };
   }
 
-  const formatChartData = (noteData) => {
-    return noteData.map((note) => ({
-      second: parseFloat(note.note_start.toFixed(2)), // X축
-      original: Math.round(note.original_pitch),
-      played: Math.round(note.user_pitch),
-      pitch_difference: note.pitch_difference,
-      technique_match: note.technique_match,
-    }));
+  const processed = processCompareData(playdata);
+  console.log(fakedata.note_by_note[0]);
+  console.log(record);
+
+  const getChartDataByType = (type) => {
+    if (type === 'pitch') {
+      return processed.pitch_comparison.map((item, i) => ({
+        second: parseFloat((i * 0.5).toFixed(2)),
+        original: Math.round(item.reference_pitch),
+        played: Math.round(item.user_pitch),
+        pitch_difference: Math.abs(item.reference_pitch - item.user_pitch),
+        technique_match: true,
+      }));
+    }
+    if (type === 'onset') {
+      return processed.onset_comparison.map((item, i) => ({
+        second: parseFloat((i * 0.5).toFixed(2)),
+        original: parseFloat(item.reference_onset.toFixed(2)),
+        played: parseFloat(item.user_onset.toFixed(2)),
+        pitch_difference: parseFloat(
+          Math.abs(item.reference_onset - item.user_onset).toFixed(2),
+        ),
+        technique_match: true,
+      }));
+    }
+    if (type === 'technique') {
+      return processed.technique_comparison.map((item, i) => ({
+        second: parseFloat((i * 0.5).toFixed(2)),
+        original: item.reference_technique || 'None',
+        played: item.user_technique || 'None',
+        pitch_difference: 0,
+        technique_match: item.user_technique === item.reference_technique,
+      }));
+    }
+    return [];
   };
 
-  const processed = processCompareData(playdata, '연주데이터 가공처리');
-  console.log(processed);
-
-  console.log(feedback);
+  const fetchUserInfo = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
+        params: { uid },
+      });
+      console.log("유저 정보 응답 전체:", response.data);
+      const { nickname, email } = response.data || {};
+      setUserInfo({ nickname, email });
+    } catch (error) {
+      console.error("유저 정보 가져오기 실패:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchSpecificRecord = async () => {
+      if (!BACKEND_URL) {
+        console.error(
+          'REACT_APP_API_DATABASE_URL 환경변수가 설정되지 않았습니다.',
+        );
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await axios.get('/mypage/records/specific', {
+        console.log('Fetching specific record...');
+        const response = await axios.get(`${BACKEND_URL}/records/specific`, {
           params: {
             uid,
             song_name: songName,
             upload_count: uploadCount,
           },
         });
-        setRecord(response.data);
+        console.log('Response Data:', response.data);
+
+        if (response.data?.record) {
+          setRecord(response.data.record);
+          setFeedbackData(feedback.text);
+          setSpecificSong({
+            title: songName,
+            artist: response.data.record.artist || '',
+            cover_url: response.data.song_cover_url || '',
+          });
+        } else if (
+          response.data?.pitch !== undefined &&
+          response.data?.onset !== undefined &&
+          response.data?.technique !== undefined
+        ) {
+          setRecord({
+            pitch: response.data.pitch,
+            onset: response.data.onset,
+            technique: response.data.technique,
+          });
+          setFeedbackData(response.data.feedback || '');
+          setSpecificSong({
+            title: songName,
+            artist: response.data.artist || '',
+            cover_url: response.data.song_cover_url || '',
+          });
+        }
+
+        const rankResponse = await axios.get(
+          `${BACKEND_URL}/my-specific-song-rank`,
+          {
+            params: { uid, song_name: songName },
+          },
+        );
+        console.log('Rank Response:', rankResponse.data);
+        setRank(rankResponse.data);
       } catch (error) {
-        console.error('특정 연습 기록 조회 실패:', error);
+        console.error('요청 오류:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (uid) fetchSpecificRecord();
-    else {
-      console.warn('uid가 없습니다.');
+    if (uid) {
+      fetchSpecificRecord();
+      fetchUserInfo();  // 여기서 유저 정보 가져오기 호출!
+    } else {
       setLoading(false);
     }
-  }, [uid, songName, uploadCount]);
+  }, [uid, songName, uploadCount, BACKEND_URL]);  // 추가한 변수도 의존성 배열에 포함시켜야 함
+
+  const handleCompareClick = () => {
+    console.log('동시 재생 버튼 클릭');
+    // TODO: 모달 추가 예정
+  };
+
+  const handlePrevGraph = () => {
+    setCurrentGraphIndex((prevIndex) => {
+      const newIndex = prevIndex === 0 ? graphs.length - 1 : prevIndex - 1;
+      console.log('Prev Graph Index:', newIndex);
+      return newIndex;
+    });
+  };
+
+  const handleNextGraph = () => {
+    setCurrentGraphIndex((prevIndex) => {
+      const newIndex = prevIndex === graphs.length - 1 ? 0 : prevIndex + 1;
+      console.log('Next Graph Index:', newIndex);
+      return newIndex;
+    });
+  };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
+
+    <div className="flex min-h-screen">
+      {/* 사이드바 */}
+      <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
@@ -132,120 +249,150 @@ export default function Feedback() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">Kildong Hong</p>
+            <p className="font-semibold">{userInfo.nickname || "사용자"}</p>
           </div>
         </div>
 
-        {/* 메인 컨텐츠 */}
+      {/* 메인 콘텐츠 */}
+      <div className="flex-1 overflow-y-auto p-10 space-y-12">
+        {/* 곡 정보 + 오디오 */}
+        <div className="flex gap-10">
+          <Box
+            width="300px"
+            height="100%"
+            backgroundColor="white"
+            overwrite="p-6 shadow-lg"
+          >
+            <div className="flex flex-col items-center space-y-4">
+              {specificSong.cover_url ? (
+                <img
+                  src={specificSong.cover_url}
+                  alt="cover"
+                  className="w-56 h-56 object-cover rounded-md"
+                />
+              ) : (
+                <div className="w-56 h-56 bg-gray-200 flex items-center justify-center text-gray-400">
+                  이미지 없음
+                </div>
+              )}
+              <div className="text-center">
+                <h3 className="text-lg font-bold">{specificSong.title}</h3>
+                <p className="text-gray-600">{specificSong.artist}</p>
+                <p className="mt-2 font-semibold">
+                  {rank ? `${rank.rank}위` : '랭크 없음'}
+                </p>
+              </div>
 
-        <div className="w-full pr-6">
-          <div className="flex flex-row mt-5 ml-24 gap-6 items-start">
-            <div className="flex-1 mt-28 max-w-[260px]">
-              <Box
-                width="96.5%"
-                height="100%"
-                backgroundColor="white"
-                overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto h-full"
+              <div className="w-full mt-4 space-y-2">
+                <span className="font-semibold text-sm">사용자 연주</span>
+                <audio controls className="w-full">
+                  <source
+                    src={processed.audio_urls.user_audio}
+                    type="audio/mpeg"
+                  />
+                  브라우저가 오디오를 지원하지 않습니다.
+                </audio>
+              </div>
+
+              <div className="w-full mt-4 space-y-2">
+                <span className="font-semibold text-sm">원본 연주</span>
+                <audio controls className="w-full">
+                  <source
+                    src={processed.audio_urls.reference_audio}
+                    type="audio/mpeg"
+                  />
+                  브라우저가 오디오를 지원하지 않습니다.
+                </audio>
+              </div>
+
+              <Button width="100%" height="40px" onClick={handleCompareClick}>
+                동시 재생 및 비교
+              </Button>
+            </div>
+          </Box>
+
+          <div className="flex-[2] ml-4 h-full">
+            <Box
+              width="100%"
+              height="608px"
+              backgroundColor="white"
+              overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto height-[400px]"
+            >
+              <div className="ml-4 mt-5">
+                <span className="font-bold text-[16px] block mb-4">
+                  🎧 Feedback
+                </span>
+                {feedback ? (
+                  <div className="prose prose-sm lg:prose-lg prose-slate max-w-none mt-4 leading-relaxed text-gray-700">
+                    <ReactMarkdown>{feedback.text}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="mt-5 text-gray-500">피드백이 없습니다.</p>
+                )}
+              </div>
+            </Box>
+          </div>
+        </div>
+
+        {/* 분석 부분 */}
+        <Box
+          width="100%"
+          height="45%"
+          overwrite="p-6 shadow-lg"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold">{graphs[currentGraphIndex].label}</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={handlePrevGraph}
+                className="px-4 py-2 bg-gray-200 rounded-full"
               >
-                <div className="flex justify-center items-center mt-3">
-                  <img
-                    src={recentSong.image}
-                    alt="Album Cover"
-                    className="w-[200px] h-[200px] mt-4 object-cover"
+                ◀
+              </button>
+              <button
+                onClick={handleNextGraph}
+                className="px-4 py-2 bg-gray-200 rounded-full"
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+
+          {record ? (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <p
+                  className={`font-bold text-${graphs[currentGraphIndex].color}-500`}
+                >
+                  {record[graphs[currentGraphIndex].key]}%
+                </p>
+                <div className="flex-1 bg-gray-300 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`bg-${graphs[currentGraphIndex].color}-500 h-full`}
+                    style={{
+                      width: `${record[graphs[currentGraphIndex].key]}%`,
+                    }}
                   />
                 </div>
-                <div className="flex items-center justify-between px-4 mt-2">
-                  <div className="flex flex-col w-full">
-                    <span className="text-lg font-semibold truncate">
-                      {recentSong.title}
-                    </span>
-                    <span className="text-lg mt-[-4px] truncate">
-                      {recentSong.artist}
-                    </span>
-                  </div>
-                </div>
-              </Box>
-            </div>
-
-            <div className="flex-[2] ml-16 mt-12 h-full">
-              <Box
-                width="99%"
-                backgroundColor="white"
-                overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto height-[400px]"
-              >
-                <div className="ml-4 mt-5">
-                  <span className="font-bold text-[16px] block">
-                    연주 분석 그래프
-                  </span>
-                </div>
-                <PerformanceChart
-                  data={formatChartData(fakedata.note_by_note)}
-                  className="w-full h-full"
-                />
-              </Box>
-            </div>
-          </div>
-
-          <div className="flex flex-row ml-20 mt-20 gap-6">
-            <div className="flex-1 max-w-[260px]">
-              <Box
-                width="110%"
-                height="295%"
-                backgroundColor="white"
-                overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto"
-              >
-                <div className="ml-4 mt-7">
-                  <p className="text-lg font-semibold">{recentSong.title}</p>
-                  <p className="text-sm text-gray-500">{recentSong.artist}</p>
-                  {loading ? (
-                    <p className="mt-6 text-blue-300">로딩 중...</p>
-                  ) : record ? (
-                    <div className="ml-0 mt-5">
-                      <p className="text-blue-500">템포: {record.tempo}%</p>
-                      <div
-                        className="bg-blue-500 h-3 rounded-full"
-                        style={{ width: `${record.tempo}%` }}
-                      ></div>
-                      <p className="text-green-500 mt-5">
-                        박자: {record.rhythm}%
-                      </p>
-                      <div
-                        className="bg-green-500 h-3 rounded-full"
-                        style={{ width: `${record.rhythm}%` }}
-                      ></div>
-                      <p className="text-red-500 mt-5">음정: {record.pitch}%</p>
-                      <div
-                        className="bg-red-500 h-3 rounded-full"
-                        style={{ width: `${record.pitch}%` }}
-                      ></div>
-                    </div>
-                  ) : (
-                    <p className="mt-6 text-red-500">
-                      기록을 찾을 수 없습니다.
-                    </p>
-                  )}
-                </div>
-              </Box>
-            </div>
-
-            <div className="flex-[2 ml-20">
-              <Box
-                width="480%"
-                height="295%"
-                backgroundColor="white"
-                overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto"
-              >
-                <div className="ml-4 mt-5">
-                  <span className="font-bold text-[16px] block">Feedback</span>
-                  <ul className="list-disc pl-5 mt-5">
-                    <li>박자가 빨라요</li>
-                    <li>음정이 맞지 않아요 - 튜닝이 필요해요!</li>
-                  </ul>
-                </div>
-              </Box>
-            </div>
-          </div>
-        </div>
+              </div>
+              <div className="flex justify-center">
+                {graphs.map((_, index) => (
+                  <div
+                     key={index}
+                     className={`w-2 h-2 rounded-full mx-1 ${
+                       currentGraphIndex === index ? 'bg-black' : 'bg-gray-300'
+                     }`}
+                  />
+               ))}
+              </div>
+              <PerformanceChart
+                data={getChartDataByType(graphs[currentGraphIndex].key)}
+              />
+            </>
+          ) : (
+            <p>로딩 중...</p>
+          )}
+        </Box>
       </div>
     </div>
   );

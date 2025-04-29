@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import Box from '../../Components/Box/Box.js';
-import Header from '../../Components/MapleHeader.js';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Music from '../../Assets/MyPage/Vector.svg';
@@ -25,21 +24,25 @@ export default function MyActivity() {
     const fetchData = async () => {
       setLoading(true);
       try {
+        console.log("백엔드 URL:", BACKEND_URL);
+    
         const [bookmarkRes, likeRes, myPostRes] = await Promise.all([
           axios.get(`${BACKEND_URL}/my-scraps`, { params: { uid } }),
           axios.get(`${BACKEND_URL}/my-likes`, { params: { uid } }),
           axios.get(`${BACKEND_URL}/my-posts`, { params: { uid } }),
         ]);
 
-        console.log('북마크 응답 데이터:', bookmarkRes.data);
-
+    
+        console.log("북마크 응답 데이터:", bookmarkRes.data);
+        console.log("좋아요 응답 데이터:", likeRes.data);
+        console.log("내 글 응답 데이터:", myPostRes.data);
+    
         const parseData = (data) =>
-          Array.isArray(data)
-            ? data.map((item) => ({
-                title: item.title || '제목 없음',
-                content: item.content || '내용 없음',
-              }))
-            : [];
+          Array.isArray(data) ? data.map(item => ({
+            title: item.title || "제목 없음",
+            content: item.content || "내용 없음"
+          })) : [];
+    
 
         setBookmarks(parseData(bookmarkRes.data.my_scraps));
         setLikes(parseData(likeRes.data.my_likes));
@@ -52,6 +55,7 @@ export default function MyActivity() {
         setLoading(false);
       }
     };
+    
 
     fetchData();
   }, [uid, BACKEND_URL]);
