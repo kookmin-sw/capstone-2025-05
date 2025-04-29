@@ -7,6 +7,7 @@
 #include "LeftPanel.h"
 #include "RightPanel.h"
 #include "ScoreComponent.h"
+#include "PracticeSettingsComponent.h"
 
 #include "Model/RecordingThumbnail.h"
 #include "Model/AudioRecorder.h"
@@ -79,6 +80,18 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     centerPanel = std::make_unique<CenterPanel>();
     leftPanel = std::make_unique<LeftPanel>(audioModel); 
     rightPanel = std::make_unique<RightPanel>();
+    
+    // 연습 설정 컴포넌트 초기화
+    practiceSettingsComponent = std::make_unique<PracticeSettingsComponent>();
+    practiceSettingsComponent->setOnSettingsChanged([this]() {
+        // 설정 변경 시 TabPlayer에 적용하는 코드
+        if (controller != nullptr) {
+            // 템포, 루프 설정, 재생 속도 등을 적용
+            // TODO: TabPlayer에서 이러한 설정을 적용하는 메서드 구현 필요
+            DBG("Practice settings changed: Tempo=" + juce::String(practiceSettingsComponent->getTempo()));
+        }
+    });
+    addAndMakeVisible(practiceSettingsComponent.get());
     
     try {
         // ScoreComponent는 controller의 TabPlayer를 사용하도록 수정
@@ -168,16 +181,19 @@ void GuitarPracticeComponent::resized()
     auto waveformArea = bounds.removeFromBottom(waveformHeight);
     recordingThumbnail->setBounds(waveformArea.reduced(10));
     
-    // 사이드 패널 - 좌우 패널 모두 왼쪽에 배치하여 악보 표시 영역 확보
+    // 사이드 패널 - 왼쪽과 오른쪽에 패널 배치
     auto sideWidth = 250;
-    auto leftArea = bounds.removeFromLeft(sideWidth);
     
     // 왼쪽 패널 (입력 레벨, 볼륨 컨트롤 등)
-    auto leftPanelHeight = leftArea.getHeight() / 2;
-    leftPanel->setBounds(leftArea.removeFromTop(leftPanelHeight));
+    auto leftArea = bounds.removeFromLeft(sideWidth);
+    leftPanel->setBounds(leftArea.removeFromTop(leftArea.getHeight() / 2));
+    
+    // 연습 설정 컴포넌트 (왼쪽 아래 배치)
+    practiceSettingsComponent->setBounds(leftArea);
     
     // 오른쪽 패널 (메트로놈, 튜너 등)
-    rightPanel->setBounds(leftArea);
+    auto rightArea = bounds.removeFromRight(sideWidth);
+    rightPanel->setBounds(rightArea);
     
     // 악보 표시 영역 - 남은 모든 공간 사용
     if (scoreComponent)

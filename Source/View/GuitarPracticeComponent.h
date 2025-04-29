@@ -10,6 +10,7 @@
 #include "LeftPanel.h"
 #include "RightPanel.h"
 #include "ScoreComponent.h"
+#include "PracticeSettingsComponent.h"
 #include "LookAndFeel/MapleTheme.h"
 
 // 녹음 기능을 위한 전방 선언
@@ -83,6 +84,7 @@ private:
     std::unique_ptr<LeftPanel> leftPanel;
     std::unique_ptr<RightPanel> rightPanel;
     std::unique_ptr<ScoreComponent> scoreComponent;
+    std::unique_ptr<PracticeSettingsComponent> practiceSettingsComponent;
 
     // 녹음 관련 컴포넌트
     std::unique_ptr<RecordingThumbnail> recordingThumbnail;
