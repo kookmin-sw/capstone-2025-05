@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Box from '../../Components/Box/Box.js';
-import Header from '../../Components/MapleHeader.js';
 import Profile from '../../Assets/MyPage/profile.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
@@ -39,9 +38,9 @@ export default function MyPage() {
         const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
           params: { uid },
         });
-        console.log("유저 정보 응답:", response.data["user information"]);
-        const { nickname, email, profile_image } = response.data["user information"] || {};
-        setUserInfo({ nickname, email, profile_image });
+        console.log("유저 정보 응답 전체:", response.data);
+        const { nickname, email} = response.data || {};
+        setUserInfo({ nickname, email});
       } catch (error) {
         console.error("유저 정보 가져오기 실패:", error);
       }
@@ -53,7 +52,6 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       <div className="flex">
         {/* Sidebar */}
         <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
@@ -120,10 +118,10 @@ export default function MyPage() {
 
           {/* 최근 연주한 곡 + 나의 활동 */}
           <div className="flex gap-16 h-[50vh] mt-16">
-            <Box width="70%" height="100%">
+            <Box width="70%" height="105%">
               <div className="flex items-center ml-4 mt-5">
                 <span className="font-bold text-[20px]">최근 연주한 곡</span>
-                <Link to="/playedmusic" className="ml-2 text-lg text-gray-500 hover:text-gray-700">&gt;</Link>
+                <Link to="/playedmusic" className="ml-2 mt-1text-lg text-gray-500 hover:text-gray-700">&gt;</Link>
               </div>
               <ul className="mt-8 space-y-5 ml-8">
                 {loading ? (
@@ -142,7 +140,7 @@ export default function MyPage() {
               </ul>
             </Box>
 
-            <Box width="25%" height="100%">
+            <Box width="25%" height="105%">
               <div className="ml-4 mt-5">
                 <span className="font-bold text-[20px]">나의 활동</span>
                 <Link to="/myactivity" className="ml-2 text-lg text-gray-500 hover:text-gray-700">&gt;</Link>
