@@ -48,9 +48,11 @@ export default function AppRoutes() {
       ) : (
         // 로그인 안 한 경우
         <>
+          <Route path="/main" element={<Main />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/" element={<Main />} />
           <Route path="*" element={<Login />} />
           <Route path="/audiotest" element={<AudioTest />} />
         </>
