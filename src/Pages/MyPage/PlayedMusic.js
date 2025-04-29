@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Box from '../../Components/Box/Box.js';
-import Header from '../../Components/MapleHeader.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
@@ -11,8 +10,8 @@ import Cover_1 from '../../Assets/Main/album/iveCover.svg';
 export default function PlayedMusic() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState({ nickname: '', email: '' });
   const [recentRecords, setRecentRecords] = useState([]);
-
   const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
@@ -25,11 +24,36 @@ export default function PlayedMusic() {
           params: { uid },
         });
         console.log('기록 응답:', response.data);
-        setRecords(response.data.records?.Drowning || []);
+    
+        const allRecords = [];
+    
+        for (const [songName, recordsArray] of Object.entries(response.data)) {
+          recordsArray.forEach(record => {
+            allRecords.push({
+              ...record,
+              song: songName,
+            });
+          });
+        }
+    
+        setRecords(allRecords || []);
       } catch (error) {
         console.error('연습 기록 가져오기 실패:', error);
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchUserInfo = async () => {
+      try {
+        const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
+          params: { uid },
+        });
+        console.log("유저 정보 응답 전체:", response.data);
+        const { nickname, email} = response.data || {};
+        setUserInfo({ nickname, email});
+      } catch (error) {
+        console.error("유저 정보 가져오기 실패:", error);
       }
     };
 
@@ -52,6 +76,7 @@ export default function PlayedMusic() {
     if (uid) {
       fetchRecords();
       fetchRecentRecords();
+      fetchUserInfo();
     } else {
       setLoading(false);
       console.warn('uid가 없습니다. 로그인 상태를 확인하세요.');
@@ -59,23 +84,13 @@ export default function PlayedMusic() {
   }, [BACKEND_URL, uid]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex flex-1">
+    <div className="min-h-screen">
+      <div className="flex">
         {/* Sidebar */}
         <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
-                <img
-                  src={Information}
-                  alt="내 정보 아이콘"
-                  className="w-4 h-4"
-                />
-                <Link to="/mypage" className="text-white">
-                  내 정보
-                </Link>
-              </li>
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
                 <img
                   src={Information}
@@ -97,19 +112,20 @@ export default function PlayedMusic() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">Kildong Hong</p>
+            <p className="font-semibold">{userInfo.nickname || "사용자"}</p>
           </div>
         </div>
+
         <div className="w-[100%] overflow-y-auto p-10">
           <h2 className="text-xl font-bold ml-8 mb-6">최근 연주한 곡</h2>
-          <div className="flex flex-wrap gap-10 ml-9 justify-start">
+          <div className="flex flex-wrap gap-10 ml-2 justify-start">
             {recentRecords.length > 0 ? (
               recentRecords.map((song, index) => (
                 <Box
-                  key={index}
+                  key={song.song_id || index}
                   width="23%"
                   height="50%"
-                  overwrite={'h-[18%] p-4 flex flex-col justify-between'}
+                  overwrite="h-[18%] p-4 flex flex-col justify-between"
                 >
                   <div className="flex justify-center items-center mt-4">
                     <Link to="/feedback">
@@ -133,13 +149,13 @@ export default function PlayedMusic() {
                 </Box>
               ))
             ) : (
-              <p>최근 연주한 곡이 없습니다.</p>
+              <p>로딩 중...</p>
             )}
           </div>
 
           {/* 연습 기록 */}
           <h2 className="text-xl font-bold mt-10 ml-8 mb-6">연습 기록</h2>
-          <div className="w-full justify-centermt-4 ml-9">
+          <div className="w-full justify-center mt-4 ml-9">
             <Box
               width="96.5%"
               height="600px"
@@ -166,7 +182,7 @@ export default function PlayedMusic() {
                           <div className="w-full bg-gray-200 rounded-full h-3">
                             <div
                               className="bg-blue-500 h-3 rounded-full"
-                              style={{ width: `${record.tempo}%` }}
+                              style={{ width: `${record.onset}%` }}
                             ></div>
                           </div>
                         </td>
@@ -174,7 +190,7 @@ export default function PlayedMusic() {
                           <div className="w-full bg-gray-200 rounded-full h-3">
                             <div
                               className="bg-green-500 h-3 rounded-full"
-                              style={{ width: `${record.rhythm}%` }}
+                              style={{ width: `${record.technique}%` }}
                             ></div>
                           </div>
                         </td>

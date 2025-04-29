@@ -28,6 +28,7 @@ function App() {
     `&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
   useEffect(() => {
+    // 최초 실행 시
     const hash = window.location.hash;
     const params = new URLSearchParams(hash.replace('#', ''));
     const accessToken = params.get('access_token');

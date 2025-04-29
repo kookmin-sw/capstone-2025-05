@@ -18,7 +18,7 @@ export default function Main() {
   const [trend, setTrend] = useState([]);
 
   const handleMove = () => {
-    navigate('/ranking?song_name=덤더럼 (Dumhdurum)'); // 랭킹 테스트 - 수정하기
+    navigate('/ranking?song_name=Drowning'); // 랭킹 테스트 - 수정하기
   };
 
   useEffect(() => {
