@@ -35,15 +35,21 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     EventBus::getInstance().subscribe(Event::Type::SongLoaded, this);
     EventBus::getInstance().subscribe(Event::Type::SongLoadFailed, this);
     
-    // 재생 버튼 초기화
+    // 재생 버튼 초기화 - Maple 테마 적용
     playButton.setButtonText("Play");
     playButton.onClick = [this]() { togglePlayback(); };
+    playButton.setColour(juce::TextButton::buttonColourId, MapleTheme::getAccentColour());
+    playButton.setColour(juce::TextButton::buttonOnColourId, MapleTheme::getHighlightColour());
+    playButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+    playButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
     addAndMakeVisible(playButton);
     playButton.setEnabled(false); // 곡이 선택되기 전까지 비활성화
     
     // 재생 위치 표시 레이블 초기화
     positionLabel.setText("00:00", juce::dontSendNotification);
     positionLabel.setJustificationType(juce::Justification::centred);
+    positionLabel.setColour(juce::Label::textColourId, MapleTheme::getTextColour());
+    positionLabel.setFont(juce::Font(16.0f).boldened());
     addAndMakeVisible(positionLabel);
     
     // 녹음 관련 컴포넌트 초기화 
@@ -54,7 +60,9 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     // 녹음 버튼 초기화
     recordButton.setButtonText("Record");
     recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff5c5c));
+    recordButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffff7c7c));
     recordButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+    recordButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
     recordButton.onClick = [this]() {
         if (isRecording())
             stopRecording();
@@ -67,7 +75,9 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     // 분석 버튼 초기화
     analyzeButton.setButtonText("Analyze");
     analyzeButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff5c5cff));
+    analyzeButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff7c7cff));
     analyzeButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+    analyzeButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
     analyzeButton.onClick = [this]() { analyzeRecording(); };
     addAndMakeVisible(analyzeButton);
     analyzeButton.setEnabled(false); // 녹음된 파일이 없으면 비활성화
@@ -133,7 +143,20 @@ void GuitarPracticeComponent::paint(juce::Graphics &g)
     // 배경색 설정
     g.fillAll(MapleTheme::getBackgroundColour());
     
-    // 컴포넌트 경계를 표시하는 것은 생략
+    // 컨트롤 패널 배경
+    auto bounds = getLocalBounds();
+    auto topBarHeight = 60;
+    bounds.removeFromTop(topBarHeight);
+    
+    auto controlsHeight = 80;
+    auto controlsArea = bounds.removeFromBottom(controlsHeight);
+    g.setColour(MapleTheme::getCardColour());
+    g.fillRoundedRectangle(controlsArea.toFloat().reduced(5.0f), 8.0f);
+    
+    auto waveformHeight = 80;
+    auto waveformArea = bounds.removeFromBottom(waveformHeight);
+    g.setColour(MapleTheme::getCardColour().darker(0.05f));
+    g.fillRoundedRectangle(waveformArea.toFloat().reduced(5.0f), 8.0f);
 }
 
 void GuitarPracticeComponent::resized()
@@ -144,22 +167,22 @@ void GuitarPracticeComponent::resized()
     auto topBarHeight = 60;
     topBar->setBounds(bounds.removeFromTop(topBarHeight));
     
-    // 하단 컨트롤 패널 (재생, 녹음, 분석 버튼 등)
+    // 하단 컨트롤 패널 (재생, 녹음, 분석 버튼 등) - 약간의 마진 추가
     auto controlsHeight = 80;
-    auto controlsArea = bounds.removeFromBottom(controlsHeight);
+    auto controlsArea = bounds.removeFromBottom(controlsHeight).reduced(10, 5);
     
-    // 버튼 및 컨트롤 크기 설정
+    // 버튼 및 컨트롤 크기 설정 - 더 큰 버튼과 레이블
     auto buttonWidth = 120;
-    auto buttonHeight = 40;
+    auto buttonHeight = 45;
     auto labelWidth = 100;
-    auto spacing = 10;
+    auto spacing = 15;
     
     // 버튼 중앙 정렬을 위한 계산
     auto totalControlsWidth = (buttonWidth * 3) + labelWidth + (spacing * 3);
     auto startX = (controlsArea.getWidth() - totalControlsWidth) / 2;
     auto startY = (controlsArea.getHeight() - buttonHeight) / 2;
     
-    // 버튼 배치
+    // 버튼 배치 - 둥근 모서리로 스타일 개선
     playButton.setBounds(controlsArea.getX() + startX, 
                          controlsArea.getY() + startY, 
                          buttonWidth, buttonHeight);
@@ -176,30 +199,30 @@ void GuitarPracticeComponent::resized()
                            controlsArea.getY() + startY, 
                            buttonWidth, buttonHeight);
     
-    // 녹음된 오디오 파형 표시 영역
+    // 녹음된 오디오 파형 표시 영역 - 마진 추가
     auto waveformHeight = 80;
-    auto waveformArea = bounds.removeFromBottom(waveformHeight);
-    recordingThumbnail->setBounds(waveformArea.reduced(10));
+    auto waveformArea = bounds.removeFromBottom(waveformHeight).reduced(15, 5);
+    recordingThumbnail->setBounds(waveformArea);
     
-    // 사이드 패널 - 왼쪽과 오른쪽에 패널 배치
+    // 사이드 패널 - 왼쪽과 오른쪽에 패널 배치, 마진 추가
     auto sideWidth = 250;
     
     // 왼쪽 패널 (입력 레벨, 볼륨 컨트롤 등)
-    auto leftArea = bounds.removeFromLeft(sideWidth);
-    leftPanel->setBounds(leftArea.removeFromTop(leftArea.getHeight() / 2));
+    auto leftArea = bounds.removeFromLeft(sideWidth).reduced(5, 10);
+    leftPanel->setBounds(leftArea.removeFromTop(leftArea.getHeight() / 2 - 5));
     
     // 연습 설정 컴포넌트 (왼쪽 아래 배치)
-    practiceSettingsComponent->setBounds(leftArea);
+    practiceSettingsComponent->setBounds(leftArea.removeFromBottom(leftArea.getHeight() - 5));
     
     // 오른쪽 패널 (메트로놈, 튜너 등)
-    auto rightArea = bounds.removeFromRight(sideWidth);
+    auto rightArea = bounds.removeFromRight(sideWidth).reduced(5, 10);
     rightPanel->setBounds(rightArea);
     
-    // 악보 표시 영역 - 남은 모든 공간 사용
+    // 악보 표시 영역 - 남은 모든 공간 사용, 마진 추가
     if (scoreComponent)
     {
         DBG("Setting ScoreComponent bounds: " + juce::String(bounds.getWidth()) + "x" + juce::String(bounds.getHeight()));
-        scoreComponent->setBounds(bounds.reduced(10));
+        scoreComponent->setBounds(bounds.reduced(15));
         scoreComponent->toFront(false);
     }
     
@@ -235,8 +258,11 @@ void GuitarPracticeComponent::onInputLevelChanged(float newLevel)
 // UI 업데이트 메서드
 void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
 {
-    // 재생 버튼 텍스트 업데이트
+    // 재생 버튼 텍스트와 색상 업데이트
     playButton.setButtonText(isNowPlaying ? "Pause" : "Play");
+    
+    // 재생 중일 때는 분석 버튼 비활성화
+    analyzeButton.setEnabled(!isNowPlaying && lastRecording.existsAsFile());
     
     // ScoreComponent 업데이트
     if (scoreComponent != nullptr)
@@ -274,6 +300,7 @@ void GuitarPracticeComponent::loadSong(const juce::String& songId)
     
     // UI 업데이트 (View의 책임)
     if (success) {
+        // 버튼 활성화
         playButton.setEnabled(true);
         recordButton.setEnabled(true);
         
@@ -318,6 +345,7 @@ void GuitarPracticeComponent::startRecording()
     
     // UI 업데이트
     recordButton.setButtonText("Stop");
+    recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff0000)); // 녹음 중일 때 더 밝은 빨간색
     analyzeButton.setEnabled(false);
     
     // 썸네일 표시 모드 설정
@@ -335,6 +363,7 @@ void GuitarPracticeComponent::stopRecording()
     
     // UI 업데이트
     recordButton.setButtonText("Record");
+    recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff5c5c)); // 원래 색상으로 복귀
     analyzeButton.setEnabled(true);
 }
 
@@ -348,6 +377,10 @@ void GuitarPracticeComponent::analyzeRecording()
 {
     // Controller에게 분석 작업 위임
     if (lastRecording.existsAsFile()) {
+        // 분석 중 UI 업데이트
+        analyzeButton.setEnabled(false);
+        analyzeButton.setButtonText("Analyzing...");
+        
         controller->analyzeRecording(lastRecording);
     } else {
         DBG("No recorded file to analyze.");
@@ -391,6 +424,12 @@ void GuitarPracticeComponent::handleAnalysisCompleteEvent(const AnalysisComplete
 {
     DBG("GuitarPracticeComponent: Handling AnalysisCompleteEvent");
     
+    // UI 업데이트
+    juce::MessageManager::callAsync([this]() {
+        analyzeButton.setEnabled(true);
+        analyzeButton.setButtonText("Analyze");
+    });
+    
     const juce::var& result = event.getResult();
     
     // 분석 결과를 UI에 표시
@@ -414,13 +453,15 @@ void GuitarPracticeComponent::handleAnalysisCompleteEvent(const AnalysisComplete
         {
             juce::MessageManager::callAsync([this, text = feedbackText]() {
                 auto* dialog = new juce::DialogWindow("Analysis Feedback", 
-                                                     juce::Colours::lightgrey,
+                                                     MapleTheme::getCardColour(),
                                                      true, true);
                                                      
                 auto* textEditor = new juce::TextEditor();
                 textEditor->setMultiLine(true);
                 textEditor->setReadOnly(true);
                 textEditor->setText(text);
+                textEditor->setColour(juce::TextEditor::backgroundColourId, MapleTheme::getCardColour());
+                textEditor->setColour(juce::TextEditor::textColourId, MapleTheme::getTextColour());
                 textEditor->setSize(400, 300);
                 
                 dialog->setContentOwned(textEditor, true);
@@ -461,6 +502,12 @@ void GuitarPracticeComponent::handleAnalysisCompleteEvent(const AnalysisComplete
 void GuitarPracticeComponent::handleAnalysisFailedEvent(const AnalysisFailedEvent& event)
 {
     DBG("GuitarPracticeComponent: Handling AnalysisFailedEvent");
+    
+    // UI 업데이트
+    juce::MessageManager::callAsync([this]() {
+        analyzeButton.setEnabled(true);
+        analyzeButton.setButtonText("Analyze");
+    });
     
     // 실패 메시지를 UI에 표시
     juce::String errorMessage = event.getErrorMessage();
