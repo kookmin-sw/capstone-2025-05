@@ -110,7 +110,7 @@ void LeftPanel::onInputLevelChanged(float newLevel)
     if (juce::MessageManager::getInstance()->isThisTheMessageThread())
     {
         // 이미 메시지 스레드라면 직접 업데이트
-        DBG("LeftPanel: Input Level changed to " + juce::String(newLevel));
+        // DBG("LeftPanel: Input Level changed to " + juce::String(newLevel));
         if (levelMeter != nullptr)
             levelMeter->repaint();
     }
@@ -123,7 +123,7 @@ void LeftPanel::onInputLevelChanged(float newLevel)
         juce::MessageManager::callAsync([safeThis, level = newLevel]() {
             // 콜백 실행 시 객체가 아직 유효한지 확인
             if (safeThis != nullptr) {
-                DBG("LeftPanel: Input Level changed to " + juce::String(level));
+                // DBG("LeftPanel: Input Level changed to " + juce::String(level));
                 
                 // 안전하게 levelMeter에 접근
                 auto* meter = safeThis->levelMeter.get();
