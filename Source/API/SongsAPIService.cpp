@@ -181,7 +181,7 @@ void SongsAPIService::downloadFile(const juce::String& url, const juce::File& de
                         
                         if (filenameSection.startsWith("\""))
                         {
-                            // 따옴표로 둘러싸인 경우 (indexOf 대신 다른 방식으로 처리)
+                            // 따옴표로 둘러싸인 경우
                             juce::String quotePart = filenameSection.substring(1);
                             int endQuotePos = quotePart.indexOf("\"");
                             if (endQuotePos != -1)
@@ -355,7 +355,6 @@ void SongsAPIService::downloadScoreData(const juce::String& scoreDataUrl,
 {
     // 악보 데이터는 텍스트로 직접 불러옴
     juce::String fullUrl = scoreDataUrl.startsWith("http") ? scoreDataUrl : apiBaseUrl + scoreDataUrl;
-    DBG("SongsAPIService::downloadScoreData - start for URL: " + fullUrl);
     
     juce::Thread::launch([fullUrl, callback]()
     {
@@ -365,7 +364,7 @@ void SongsAPIService::downloadScoreData(const juce::String& scoreDataUrl,
         
         // HTTP 요청을 위한 옵션 설정
         auto options = juce::URL::InputStreamOptions(juce::URL::ParameterHandling::inAddress)
-                .withConnectionTimeoutMs(15000)  // 15초 타임아웃
+                .withConnectionTimeoutMs(10000)
                 .withResponseHeaders(&responseHeaders)
                 .withStatusCode(&statusCode);
                 
@@ -374,114 +373,8 @@ void SongsAPIService::downloadScoreData(const juce::String& scoreDataUrl,
         
         if (stream != nullptr)
         {
-            // 응답 헤더 로깅
-            DBG("SongsAPIService::downloadScoreData - response headers: ");
-            for (int i = 0; i < responseHeaders.size(); ++i)
-            {
-                DBG("  " + responseHeaders.getAllKeys()[i] + ": " + responseHeaders.getAllValues()[i]);
-            }
-            
-            // Content-Type 확인
-            juce::String contentType = responseHeaders["content-type"];
-            DBG("SongsAPIService::downloadScoreData - Content-Type: " + contentType);
-            
-            // 서버에서 오는 모든 데이터를 Guitar Pro 파일로 취급
-            DBG("SongsAPIService::downloadScoreData - treating all data as Guitar Pro file regardless of Content-Type");
-            
-            // 메모리에 데이터 로드
-            juce::MemoryBlock memoryBlock;
-            stream->readIntoMemoryBlock(memoryBlock);
-            
-            // 데이터 크기 확인
-            DBG("SongsAPIService::downloadScoreData - received data size: " + juce::String(memoryBlock.getSize()) + " bytes");
-            
-            // 데이터의 첫 100바이트 확인 (16진수로 표시)
-            juce::String hexDump;
-            const char* data = static_cast<const char*>(memoryBlock.getData());
-            int bytesToShow = juce::jmin(100, static_cast<int>(memoryBlock.getSize()));
-            
-            for (int i = 0; i < bytesToShow; ++i)
-            {
-                unsigned char byte = static_cast<unsigned char>(data[i]);
-                hexDump += juce::String::formatted("%02X ", byte);
-                
-                // 10바이트마다 줄바꿈
-                if ((i + 1) % 10 == 0)
-                    hexDump += "\n";
-            }
-            
-            DBG("SongsAPIService::downloadScoreData - First bytes of data:\n" + hexDump);
-            
-            // 텍스트 파일인지 확인하기 위해 첫 100바이트를 문자열로 표시
-            juce::String textPreview;
-            for (int i = 0; i < bytesToShow; ++i)
-            {
-                char c = data[i];
-                // 출력 가능한 ASCII 문자만 표시
-                if (c >= 32 && c <= 126)
-                    textPreview += c;
-                else
-                    textPreview += '.'; // 비ASCII 문자는 점으로 표시
-            }
-            
-            DBG("SongsAPIService::downloadScoreData - Text preview:\n" + textPreview);
-            
-            // GP5 헤더 확인 및 수정
-            juce::MemoryBlock cleanedBlock;
-            
-            // 첫 바이트가 "FICHIER"의 ASCII 값이 아니면 스킵해야 함
-            bool needsCleaning = false;
-            int offsetToSkip = 0;
-            
-            // "FICHIER " 문자열 탐색 (ASCII: 70 73 67 72 73 69 82 32)
-            for (size_t i = 0; i < memoryBlock.getSize() - 8; ++i) {
-                const unsigned char* bytes = static_cast<const unsigned char*>(memoryBlock.getData());
-                
-                // "FICHIER" 시작 부분 검색
-                if (bytes[i] == 'F' && bytes[i+1] == 'I' && bytes[i+2] == 'C' && 
-                    bytes[i+3] == 'H' && bytes[i+4] == 'I' && bytes[i+5] == 'E' && 
-                    bytes[i+6] == 'R' && bytes[i+7] == ' ') {
-                    needsCleaning = (i > 0); // 0이 아닌 위치에서 발견되면 정리 필요
-                    offsetToSkip = static_cast<int>(i);
-                    DBG("SongsAPIService::downloadScoreData - Found GP5 header at offset: " + juce::String(offsetToSkip));
-                    break;
-                }
-            }
-            
-            if (needsCleaning && offsetToSkip > 0) {
-                // 오프셋 이후의 데이터만 사용
-                const char* rawData = static_cast<const char*>(memoryBlock.getData());
-                size_t newSize = memoryBlock.getSize() - offsetToSkip;
-                
-                cleanedBlock.setSize(newSize);
-                cleanedBlock.copyFrom(rawData + offsetToSkip, 0, newSize);
-                
-                DBG("SongsAPIService::downloadScoreData - Cleaned data by removing " + juce::String(offsetToSkip) + 
-                    " bytes from the beginning, new size: " + juce::String(cleanedBlock.getSize()) + " bytes");
-                
-                // 정리된 데이터의 헤더 확인
-                if (cleanedBlock.getSize() > 20) {
-                    juce::String cleanedHeader;
-                    const char* cleanedData = static_cast<const char*>(cleanedBlock.getData());
-                    
-                    for (int i = 0; i < 20; ++i) {
-                        unsigned char byte = static_cast<unsigned char>(cleanedData[i]);
-                        cleanedHeader += juce::String::formatted("%02X ", byte);
-                    }
-                    
-                    DBG("SongsAPIService::downloadScoreData - Cleaned data header: " + cleanedHeader);
-                }
-            } else {
-                // 정리가 필요 없으면 원본 데이터 사용
-                cleanedBlock = memoryBlock;
-            }
-            
-            // Base64로 인코딩하여 Guitar Pro 파일 MIME 타입으로 지정
-            juce::String base64Data = cleanedBlock.toBase64Encoding();
-            juce::String scoreData = "data:application/x-guitar-pro;base64," + base64Data;
-            
-            DBG("SongsAPIService::downloadScoreData - encoded data as Guitar Pro file, length: " + 
-                juce::String(scoreData.length()) + " chars");
+            // 악보 데이터를 문자열로 읽기
+            juce::String scoreData = stream->readEntireStreamAsString();
             
             // 메인 스레드에서 콜백 호출
             juce::MessageManager::callAsync([callback, scoreData]()
@@ -493,18 +386,6 @@ void SongsAPIService::downloadScoreData(const juce::String& scoreDataUrl,
         else
         {
             // 다운로드 오류
-            DBG("SongsAPIService::downloadScoreData - failed to create stream, status: " + juce::String(statusCode));
-            
-            // 응답 헤더 확인 (존재하는 경우)
-            if (responseHeaders.size() > 0)
-            {
-                DBG("SongsAPIService::downloadScoreData - response headers: ");
-                for (int i = 0; i < responseHeaders.size(); ++i)
-                {
-                    DBG("  " + responseHeaders.getAllKeys()[i] + ": " + responseHeaders.getAllValues()[i]);
-                }
-            }
-            
             juce::MessageManager::callAsync([callback]()
             {
                 if (callback)
