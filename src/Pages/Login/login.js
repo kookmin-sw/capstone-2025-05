@@ -19,6 +19,21 @@ export default function Login() {
   const handlePassword = (e) => setPassword(e.target.value);
 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+  const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
+  const redirectUri = process.env.REACT_APP_SPOTIFY_REDIRECT_URI;
+  const scopes = [
+    'streaming',
+    'user-read-email',
+    'user-read-private',
+    'user-read-playback-state',
+    'user-modify-playback-state',
+  ];
+  const authUrl =
+    'https://accounts.spotify.com/authorize' +
+    '?response_type=token' +
+    `&client_id=${clientId}` +
+    `&scope=${encodeURIComponent(scopes.join(' '))}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
@@ -70,7 +85,7 @@ export default function Login() {
   };
 
   const handleSpoityLogin = () => {
-    navigate('/main');
+    window.location.href = authUrl;
   };
 
   return (
