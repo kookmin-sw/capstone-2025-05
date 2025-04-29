@@ -1,8 +1,10 @@
 #pragma once
 #include <JuceHeader.h>
 #include "AlbumThumbnailComponent.h"
-#include "Model/Song.h"
-#include "Model/SpotifyService.h"
+#include "../Model/Song.h"
+#include "../Model/SpotifyService.h"
+
+class ContentController;
 
 // 앨범 그리드 뷰 컴포넌트
 class AlbumGridView : public juce::Component
@@ -15,6 +17,9 @@ public:
     void addSong(const Song& song, std::function<void(const juce::String&)> onSongSelected);
     void clear();
     
+    // ContentController 설정
+    void setContentController(ContentController* controller);
+    
     void setNumColumns(int columns);
     void setThumbnailSize(int size);
     void setSpacing(int newSpacing);
@@ -26,4 +31,5 @@ private:
     int numColumns;
     int thumbnailSize;
     int spacing;
+    ContentController* contentController = nullptr;
 };

@@ -2,12 +2,13 @@
 #include <JuceHeader.h>
 #include "Components/SidebarComponent.h"
 #include "Components/SearchHeaderComponent.h"
-#include "Components/SongGridView.h"
+#include "ContentPanelComponent.h"
 #include "LookAndFeel/MapleTheme.h"
 
 // 전방 선언
 class GuitarPracticeComponent;
 class ContentController;
+class ContentModel;
 
 class MainComponent : public juce::Component
 {
@@ -32,29 +33,24 @@ private:
     // 메뉴 선택 처리
     void handleMenuItemSelected(SidebarComponent::ItemType menuItem);
     
-    // 곡 선택 처리
-    void handleSongSelected(const juce::String& songId);
-    
-    // 테스트용 더미 데이터 추가
-    void addDummySongs();
-    
     // UI 테마
     MapleTheme theme;
     
     // 오디오 시스템
     juce::AudioDeviceManager deviceManager;
     
-    // UI 컴포넌트 (Spotify 스타일)
+    // UI 컴포넌트
     std::unique_ptr<SidebarComponent> sidebarComponent;
     std::unique_ptr<SearchHeaderComponent> headerComponent;
-    std::unique_ptr<SongGridView> featuredSongsView;
-    std::unique_ptr<SongGridView> recentlyPlayedView;
-    std::unique_ptr<SongGridView> recommendedView;
+    
+    // 콘텐츠 패널 (API에서 데이터 로드 및 표시)
+    std::unique_ptr<ContentPanelComponent> contentPanelComponent;
     
     // 연습 화면
     std::unique_ptr<GuitarPracticeComponent> guitarPracticeComponent;
     
-    // 컨트롤러
+    // MVC 구성 요소
+    std::shared_ptr<ContentModel> contentModel;
     std::shared_ptr<ContentController> contentController;
     
     // 스크롤 뷰 (메인 콘텐츠용)

@@ -1,4 +1,5 @@
 #include "AlbumGridView.h"
+#include "../Controller/ContentController.h"
 
 AlbumGridView::AlbumGridView()
 {
@@ -11,6 +12,11 @@ AlbumGridView::AlbumGridView()
 void AlbumGridView::addAlbum(const juce::String& title, const juce::Image& thumbnail)
 {
     auto* newItem = new AlbumThumbnailComponent(title, thumbnail);
+    
+    // ContentController 설정
+    if (contentController != nullptr)
+        newItem->setContentController(contentController);
+        
     addAndMakeVisible(newItem);
     thumbnails.add(newItem);
     resized();
@@ -20,6 +26,11 @@ void AlbumGridView::addAlbumFromSpotify(const SpotifyService::Album& album)
 {
     auto* newItem = new AlbumThumbnailComponent(album.name);
     newItem->setAlbumInfo(album);
+    
+    // ContentController 설정
+    if (contentController != nullptr)
+        newItem->setContentController(contentController);
+        
     addAndMakeVisible(newItem);
     thumbnails.add(newItem);
     resized();
@@ -27,8 +38,21 @@ void AlbumGridView::addAlbumFromSpotify(const SpotifyService::Album& album)
 
 void AlbumGridView::addSong(const Song& song, std::function<void(const juce::String&)> onSongSelected)
 {
+    DBG("AlbumGridView::addSong - start: " + song.getTitle() + " (ID: " + song.getId() + ")");
+    
     auto* newItem = new AlbumThumbnailComponent(song.getTitle());
     newItem->setSongInfo(song);
+    
+    // ContentController 설정
+    if (contentController != nullptr)
+    {
+        DBG("AlbumGridView::addSong - contentController is set");
+        newItem->setContentController(contentController);
+    }
+    else
+    {
+        DBG("AlbumGridView::addSong - contentController is null!");
+    }
     
     // 클릭 이벤트 핸들러 설정
     newItem->onClick = [this, newItem, onSongSelected]() {
@@ -39,7 +63,22 @@ void AlbumGridView::addSong(const Song& song, std::function<void(const juce::Str
     
     addAndMakeVisible(newItem);
     thumbnails.add(newItem);
+    
+    DBG("AlbumGridView::addSong - thumbnail count: " + juce::String(thumbnails.size()));
+    
     resized();
+    DBG("AlbumGridView::addSong - complete");
+}
+
+void AlbumGridView::setContentController(ContentController* controller)
+{
+    contentController = controller;
+    
+    // 기존 썸네일 컴포넌트들에게 ContentController 설정
+    for (auto* thumbnail : thumbnails)
+    {
+        thumbnail->setContentController(contentController);
+    }
 }
 
 void AlbumGridView::clear()
@@ -67,7 +106,10 @@ void AlbumGridView::setSpacing(int newSpacing)
 
 void AlbumGridView::resized()
 {
+    DBG("AlbumGridView::resized - start, thumbnail count: " + juce::String(thumbnails.size()));
+    
     auto bounds = getLocalBounds();
+    DBG("AlbumGridView::resized - component size: " + juce::String(bounds.getWidth()) + "x" + juce::String(bounds.getHeight()));
     
     // Calculate item width including spacing
     int itemWidth = thumbnailSize;
@@ -82,6 +124,10 @@ void AlbumGridView::resized()
                             row * (itemHeight + spacing),
                             itemWidth, itemHeight);
         
+        DBG("AlbumGridView::resized - thumbnail [" + juce::String(col) + "," + juce::String(row) + "] position: " + 
+            juce::String(col * (itemWidth + spacing)) + "," + juce::String(row * (itemHeight + spacing)) + 
+            " size: " + juce::String(itemWidth) + "x" + juce::String(itemHeight));
+        
         // Move to next column or row
         col++;
         if (col >= numColumns)
@@ -94,5 +140,8 @@ void AlbumGridView::resized()
     // Set component size based on content
     int minHeight = thumbnails.isEmpty() ? 0 : 
                     ((thumbnails.size() - 1) / numColumns + 1) * (itemHeight + spacing) - spacing;
+    
+    DBG("AlbumGridView::resized - calculated min height: " + juce::String(minHeight));
     setSize(getWidth(), minHeight);
+    DBG("AlbumGridView::resized - complete");
 }
