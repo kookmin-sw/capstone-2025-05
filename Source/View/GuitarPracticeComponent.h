@@ -88,6 +88,9 @@ public:
     // 현재 하단 뷰 가져오기
     BottomViewType getCurrentBottomView() const { return currentBottomView; }
     
+    // 오디오 디바이스 매니저 접근자
+    juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
+    
 private:
     // 이벤트 핸들러 메서드
     void handleAnalysisCompleteEvent(const AnalysisCompleteEvent& event);

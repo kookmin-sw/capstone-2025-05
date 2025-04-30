@@ -16,6 +16,9 @@ public:
 
 private:
     GuitarPracticeComponent &parentComponent;
+    
+    // 오디오 설정 버튼
+    juce::TextButton audioSettingsButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TopBar)
 };
