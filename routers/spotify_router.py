@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-spotify_router = APIRouter(prefix="/api/spotify", tags=["Spotify"])
+spotify_router = APIRouter(prefix="/spotify", tags=["Spotify"])
 
 def get_spotify_token():
     auth_url = "https://accounts.spotify.com/api/token"
@@ -31,20 +31,8 @@ def get_spotify_token():
         return response.json().get('access_token')
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail="Spotify API 토큰 요청 실패 : {str(e)}")
-@spotify_router.get("/top-tracks")
-def get_top_tracks():
-    token = get_spotify_token()
-    url = "https://api.spotify.com/v1/browse/categories/toplists/playlists"
-    headers = {"Authorization": f"Bearer {token}"}
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        print(f"Spotify API Response: {response.status_code}, {response.text}")
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Spotify 인기곡 데이터 요청 실패: {str(e)}")
 
-#최신곡 가져오는 코드
+#최신곡 가져오는 코드 -> 인기곡으로 둔갑시키던 그건 알아서
 @spotify_router.get("/new-releases")
 def get_new_releases():
     token = get_spotify_token()
@@ -56,9 +44,17 @@ def get_new_releases():
         response = requests.get(url, headers=headers, timeout = 10)
         print(f"Spotify API Response: {response.status_code}, {response.text}")
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+
+        new_releases = [
+            {
+                "title": album["name"],
+                "artist": ", ".join([artist["name"] for artist in album["artists"]]),
+                "album_cover": album.get("images", [{}])[0].get("url", "")
+            }
+            for album in data.get("albums", {}).get("items", [])
+        ]
+        return {"new_releases": new_releases}
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Spotify 신곡 데이터 요청 실패: {str(e)}")
 
-
-#서버 실행 명령어 : uvicorn spotify_manager:app --reload
