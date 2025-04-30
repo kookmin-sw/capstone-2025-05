@@ -1,4 +1,3 @@
-# https://github.com/Bipasori/ProjectCafeCOP/tree/main/FastAPI_MYSQL
 from fastapi import FastAPI, APIRouter, Form, File, UploadFile, HTTPException, Query
 from starlette.requests import Request
 from fastapi.responses import HTMLResponse
@@ -40,21 +39,8 @@ reports_ref = firestore_db.collection("reports")
 scrap_ref = firestore_db.collection("scrap")
 users_ref = firestore_db.collection("users")
 load_dotenv()
-#postkeys = postTable.__dict__.keys()
-#postkeylist = list(postkeys)
-#todeletepostkeylist = ['__module__', '__tablename__', '__doc__', '_sa_class_manager', '__table__', '__init__',
- #                  '__mapper__']
-#for i in range(len(todeletepostkeylist)):
- #   postkeylist.remove(todeletepostkeylist[i])
 
-
-#commentkeys = commentTable.__dict__.keys()
-#commentkeylist = list(commentkeys)
-#todeletecommentkeylist = ['__module__', '__tablename__', '__doc__', '_sa_class_manager', '__table__', '__init__',
- #                  '__mapper__']
-#for i in range(len(todeletecommentkeylist)):
-#    commentkeylist.remove(todeletecommentkeylist[i])
-posting_router = APIRouter()
+router = APIRouter()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_DIR = os.path.join(BASE_DIR,'static/')
@@ -66,16 +52,13 @@ UPLOAD_AUDIO_DIR = "static/audio"
 os.makedirs(UPLOAD_IMAGE_DIR, exist_ok = True)
 os.makedirs(UPLOAD_AUDIO_DIR, exist_ok = True)
 ADMIN_UID = os.getenv("ADMIN_UID")
-# -------------------------------
-# --------------홈---------------
-# -------------------------------
-#전체 목록 가져오기
+
 def get_user_profile_image(uid: str) -> str:
     user_doc = users_ref.document(uid).get()
     if user_doc.exists:
         return user_doc.to_dict().get("profile_image", "")
     return ""
-@posting_router.get("/", response_class=JSONResponse, tags=["Post"])
+@router.get("/", response_class=JSONResponse, tags=["Post"])
 async def root(request: Request):
     try:
         postsdictlist = []
@@ -100,11 +83,8 @@ async def root(request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"목록 가져오기 실패: {str(e)}")
-# ----------------------------------------------------
-# ----------글 추가수정삭제, 댓글 추가삭제------------
-# ----------------------------------------------------
-#조회수 증가 기능 추가
-@posting_router.put("/posts/{post_id}/views", response_class=JSONResponse, tags=["Post"])
+
+@router.put("/posts/{post_id}/views", response_class=JSONResponse, tags=["Post"])
 async def increase_views(post_id: int):
     string_number = str(post_id).zfill(8)
     post_ref = posts_ref.document(string_number)
@@ -120,7 +100,7 @@ async def increase_views(post_id: int):
     post_data["조회수"] = new_views
     return post_data
 
-@posting_router.get("/posts/top-viewed", response_class=JSONResponse, tags=["Post"])
+@router.get("/posts/top-viewed", response_class=JSONResponse, tags=["Post"])
 async def get_top_viewed_posts():
     postsdictlist = []
     alldocs = posts_ref.stream()
@@ -138,7 +118,7 @@ async def get_top_viewed_posts():
                 post[key] = value.strftime("%Y년 %m월 %d일 %H시 %M분")
     return JSONResponse(content={"posts": postsdictlist})
 
-@posting_router.get("/posts/{post_id}", response_class=JSONResponse, tags=["Post"])
+@router.get("/posts/{post_id}", response_class=JSONResponse, tags=["Post"])
 async def read_post(request: Request, post_id: int):
     context = {'post_id': post_id}
     postkeyvaluedict = []
@@ -166,7 +146,6 @@ async def read_post(request: Request, post_id: int):
     else:
         context['postexist'] = "yes"
 
-        # 댓글 처리
         comments_keyvaluelists = []
         alldocs = comments_ref.stream()
         for doc in alldocs:
@@ -195,8 +174,8 @@ async def upload_file_to_firebase(file:UploadFile, path: str) -> Optional[str]:
     except Exception as e:
         print(f"[Firebase Storage Upload Error] {e}")
         return None
-#게시글 추가
-@posting_router.post("/posts", tags=["Post"])
+
+@router.post("/posts", tags=["Post"])
 async def create_post(
     uid : str = Form(),
     content : str= Form(),
@@ -240,7 +219,6 @@ async def create_post(
 
     posts_ref.document(string_number).set(post_data)
 
-    # 내 활동 DB에 저장
     firestore.client().collection("my_activity").document(str(uid)).collection("post").document(string_number).set({
         "post_id": string_number,
         "제목": title,
@@ -248,8 +226,8 @@ async def create_post(
     })
 
     return {"result_msg": "게시글이 성공적으로 등록되었습니다.", "post_id": string_number}
-#게시글 수정
-@posting_router.put("/posts/{post_id}", tags=["Post"])
+
+@router.put("/posts/{post_id}", tags=["Post"])
 async def modify_post(
     post_id: int,
     uid: Optional[str] = Form(),
@@ -288,8 +266,8 @@ async def modify_post(
         })
 
     return {'result_msg': f"{postid} updated..."}
-#게시글 삭제
-@posting_router.delete("/posts/{post_id}", tags=["Post"])
+
+@router.delete("/posts/{post_id}", tags=["Post"])
 async def delete_post(post_id: int):
     global posts_ref, comments_ref
     print("delete_post >>>")
@@ -308,7 +286,7 @@ async def delete_post(post_id: int):
     db.collection("my_activity").document(uid).collection("post").document(string_number).delete()
     return {'result_msg' : f"Post {post_id} and its comments deleted."}
 
-@posting_router.delete("/posts/admin/{post_id}", tags=["Post"])
+@router.delete("/posts/admin/{post_id}", tags=["Post"])
 async def delete_post(post_id: int, uid:str = Query(...)):
     string_number = str(post_id).zfill(8)
 
@@ -324,7 +302,7 @@ async def delete_post(post_id: int, uid:str = Query(...)):
     firestore.client().collection("my_activity").document(uid).collection("post").document(string_number).delete()
 
     return {"result_msg": f"{post_id}번 게시글이 삭제됐습니다."}
-@posting_router.delete("/comments/admin/{comment_id}", tags=["Comment"])
+@router.delete("/comments/admin/{comment_id}", tags=["Comment"])
 async def delete_comment(comment_id: str, uid:str = Query(...)):
     if uid != ADMIN_UID:
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
@@ -334,8 +312,8 @@ async def delete_comment(comment_id: str, uid:str = Query(...)):
         raise HTTPException(status_code=404, detail="댓글을 찾을 수 없습니다.")
     comment_ref.delete()
     return {"result_msg" : f"{comment_id}번 댓글이 삭제됐습니다."}
-#댓글 추가 페이지
-@posting_router.post("/comment", tags=["Comment"])
+
+@router.post("/comment", tags=["Comment"])
 async def create_comment(comment: Comment):
     global posts_ref, comments_ref
     
@@ -371,10 +349,10 @@ async def create_comment(comment: Comment):
         "post_id": post_id_str,
         "date": now.isoformat()
     })
-    #댓글이 달린 글의 firestore DB에 댓글갯수 +1
+
     return { 'result_msg': f'{"put"} Registered...' }
-#댓글 수정
-@posting_router.put("/comment/{comment_id}", tags=["Comment"])
+
+@router.put("/comment/{comment_id}", tags=["Comment"])
 async def modify_post(comment: Comment, comment_id : int):
 
     print("modify_post >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
@@ -384,7 +362,7 @@ async def modify_post(comment: Comment, comment_id : int):
 
     toupdate_commentcontent=comment.내용
     updated_at = datetime.datetime.utcnow()
-    #firestore DB에 업데이트
+
     comments_ref.document(string_number).update({
     
         "내용": toupdate_commentcontent,
@@ -401,8 +379,8 @@ async def modify_post(comment: Comment, comment_id : int):
             })
 
     return {'result_msg': f"{commentid} updated..."}
-#댓글 삭제 기능
-@posting_router.delete("/comment/{comment_id}", tags=["Comment"])
+
+@router.delete("/comment/{comment_id}", tags=["Comment"])
 async def delete_comment(comment_id: int):
     global posts_ref, comments_ref
     print("delete_post >>>")
@@ -445,8 +423,8 @@ async def delete_comment(comment_id: int):
         
     return {'result_msg' : f"댓글 {comment_id} 삭제 성공"}
 
-#게시글 좋아요 기능 추가
-@posting_router.post("/posts/{post_id}/like", tags=["Post"])
+
+@router.post("/posts/{post_id}/like", tags=["Post"])
 async def like_post(post_id: int, uid: str, request: Request):
     db = firestore.client()
 
@@ -455,23 +433,18 @@ async def like_post(post_id: int, uid: str, request: Request):
 
     string_number = str(post_id).zfill(8)
     
-    # 좋아요 도큐먼트 위치를 my_activity/{uid}/like/{post_id} 로 설정
     like_doc_ref = db.collection("my_activity").document(uid).collection("like").document(string_number)
     post_doc_ref = db.collection("post").document(string_number)
 
-    # 이미 좋아요한 경우
     if like_doc_ref.get().exists:
         raise HTTPException(status_code=400, detail="이미 좋아요한 게시글입니다.")
 
-    # 게시글이 존재하지 않는 경우
     post_doc = post_doc_ref.get()
     if not post_doc.exists:
         raise HTTPException(status_code=404, detail="게시글이 존재하지 않습니다.")
 
-    # 좋아요수 증가
     post_doc_ref.update({"좋아요수": firestore.Increment(1)})
 
-    # 좋아요 기록 저장 (my_activity/{uid}/like)
     like_doc_ref.set({
         "user_id" : uid,
         "post_id": string_number,
@@ -480,8 +453,8 @@ async def like_post(post_id: int, uid: str, request: Request):
 
     return {"result_msg": "좋아요가 추가되었습니다.", "post_id": post_id}
 
-#게시글 좋아요 삭제
-@posting_router.delete("/posts/{post_id}/like", tags=["Post"])
+
+@router.delete("/posts/{post_id}/like", tags=["Post"])
 async def unlike_post(post_id: int, request: Request):
     user = request.headers.get("uid")
     if not user:
@@ -502,8 +475,7 @@ async def unlike_post(post_id: int, request: Request):
     like_doc_ref.delete()
     return {"result_msg": "좋아요가 취소되었습니다.", "post_id": post_id}
 
-#스크랩하기
-@posting_router.post("/posts/{post_id}/scrap", tags=["Post"])
+@router.post("/posts/{post_id}/scrap", tags=["Post"])
 async def scrap_post(post_id: str, request: Request):
     user = request.headers.get("uid")
     if not user:
@@ -526,8 +498,7 @@ async def scrap_post(post_id: str, request: Request):
 
     return {"message": "스크랩이 추가되었습니다.", "post_id": post_id}
 
-#스크랩  취소하기
-@posting_router.delete("/posts/{post_id}/scrap", tags=["Post"])
+@router.delete("/posts/{post_id}/scrap", tags=["Post"])
 async def remove_scrap(post_id: str, request: Request):
     user = request.headers.get("uid")
     if not user:
@@ -541,8 +512,7 @@ async def remove_scrap(post_id: str, request: Request):
     return {"message": "스크랩이 취소되었습니다.", "post_id": post_id}
 
 
-#게시글 신고 기능
-@posting_router.post("/report/post/{post_id}", tags=["Post"])
+@router.post("/report/post/{post_id}", tags=["Post"])
 async def report_post(post_id : int, reason: str):
     global reports_ref
     print("report_post >>")
@@ -557,8 +527,7 @@ async def report_post(post_id : int, reason: str):
     reports_ref.add(report_data)
     return {"result_msg": f"Post {post_id} reported for reason: {reason}"}
 
-#댓글 신고 기능
-@posting_router.post("/report/comment/{comment_id}", tags=["Comment"])
+@router.post("/report/comment/{comment_id}", tags=["Comment"])
 async def report_comment(comment_id: int, reason: str):
     global reports_ref
     print("report_comment >>>")
@@ -571,19 +540,19 @@ async def report_comment(comment_id: int, reason: str):
     reports_ref.add(report_data)
     return {"result_msg": f"Comment {comment_id} reported for reason: {reason}"}
 
-#게시글 검색 기능
-@posting_router.get("/search", tags=["Post"])
+
+@router.get("/search", tags=["Post"])
 def search_post(
     query: str = Query(..., description="검색어 입력")
 ):
     try:
         query_lower = query.lower()
 
-        # Firestore에서 날짜 내림차순 정렬, 같은 날짜면 제목 오름차순 정렬
+ 
         docs = (
             posts_ref
-            .order_by("date", direction="DESCENDING")  # 최신순 정렬
-            .order_by("title", direction="ASCENDING")  # 같은 날짜일 경우 제목 정렬
+            .order_by("date", direction="DESCENDING")
+            .order_by("title", direction="ASCENDING") 
             .stream()
         )
 
@@ -591,8 +560,7 @@ def search_post(
         for doc in docs:
             data = doc.to_dict()
             title = data.get("title", "").lower()
-            
-            # 검색어가 제목에 포함된 경우만 필터링
+        
             if query_lower in title:
                 results.append({
                     "id": doc.id,
@@ -605,13 +573,13 @@ def search_post(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"검색 실패: {str(e)}")
-@posting_router.get("/autocomplete", tags=["Post"])
+@router.get("/autocomplete", tags=["Post"])
 def autocomplete(query: str = Query(..., description="자동완성 검색어 입력")):
     try:
         query_lower = query.lower()
         docs = (
             posts_ref
-            .order_by("title")  # Firestore에서 제목 필드 정렬
+            .order_by("title")  
             .start_at([query_lower])
             .end_at([query_lower + "\uf8ff"])
             .stream()
@@ -622,19 +590,12 @@ def autocomplete(query: str = Query(..., description="자동완성 검색어 입
         return {"suggestions": suggestions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"자동완성 실패: {str(e)}")
-#게시글에 스크랩하기 기능도 추가하고 게시글 검색할때 뭐가 뜨게 할건지, 타이틀 순으로 할건지 날짜 순으로 검색되게 할건지
-#스크랩하고 좋아요 누를 때 uid 보내주기
-@posting_router.get("/comment/{post_id}", response_class=JSONResponse, tags=["Comment"])
+
+@router.get("/comment/{post_id}", response_class=JSONResponse, tags=["Comment"])
 async def read_comment(request: Request, post_id: int):
-    #Request객체를 JSONResponse에 포함시키려고 하면 문제가 발생함
-    #Request객체는 JSON으로 직렬화할 수 없기 때문에 이 객체를 content에 포함시키는 것 자체가 문제가 됨
+    
     context = {'post_id': post_id}
 
-    print("read_postdetail >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-
-    #이 글의 상세정보 firestore DB에서 가져오기
-  
-    #이 글의 댓글들 정보 firestore DB에서 가져오기
     comments_keyvaluelists=[]
     alldocs=comments_ref.stream()
     for doc in alldocs:
