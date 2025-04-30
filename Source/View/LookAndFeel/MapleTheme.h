@@ -5,6 +5,7 @@
  * Spotify 스타일의 커스텀 LookAndFeel 클래스
  * 앱 전체에 일관된 테마를 적용하기 위해 사용합니다.
  */
+
 class MapleTheme : public juce::LookAndFeel_V4
 {
 public:

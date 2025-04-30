@@ -15,6 +15,11 @@
 #include "Event/Event.h"
 #include "Event/EventBus.h"
 
+// 커스텀 LookAndFeel 클래스 포함 - 반드시 개별 헤더 파일로 정의된 클래스들만 포함
+#include "LookAndFeel/MaplePlayButton.h"
+#include "LookAndFeel/MapleRecordButton.h"
+#include "LookAndFeel/MapleAnalyzeButton.h"
+
 GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     : mainComponent(mainComp), deviceManager(mainComp.getDeviceManager())
 {
@@ -35,13 +40,15 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     EventBus::getInstance().subscribe(Event::Type::SongLoaded, this);
     EventBus::getInstance().subscribe(Event::Type::SongLoadFailed, this);
     
-    // 재생 버튼 초기화 - Maple 테마 적용
-    playButton.setButtonText("Play");
+    // LookAndFeel 인스턴스 초기화
+    recordButtonLookAndFeel = std::make_unique<MapleRecordButton>();
+    analyzeButtonLookAndFeel = std::make_unique<MapleAnalyzeButton>();
+    playButtonLookAndFeel = std::make_unique<MaplePlayButton>();
+    
+    // 재생 버튼 초기화 - 커스텀 LookAndFeel 적용
+    playButton.setButtonText("");  // 텍스트 제거 (아이콘으로 표시됨)
     playButton.onClick = [this]() { togglePlayback(); };
-    playButton.setColour(juce::TextButton::buttonColourId, MapleTheme::getAccentColour());
-    playButton.setColour(juce::TextButton::buttonOnColourId, MapleTheme::getHighlightColour());
-    playButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-    playButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+    playButton.setLookAndFeel(playButtonLookAndFeel.get());
     addAndMakeVisible(playButton);
     playButton.setEnabled(false); // 곡이 선택되기 전까지 비활성화
     
@@ -57,31 +64,25 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     recordingThumbnail = std::make_unique<RecordingThumbnail>();
     audioRecorder = std::make_unique<AudioRecorder>(recordingThumbnail->getAudioThumbnail());
     
-    // 녹음 버튼 초기화
-    recordButton.setButtonText("Record");
-    recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff5c5c));
-    recordButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffff7c7c));
-    recordButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-    recordButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+    // 녹음 버튼 초기화 - 원형 버튼으로 개선
+    recordButton.setButtonText("");
     recordButton.onClick = [this]() {
         if (isRecording())
             stopRecording();
         else
             startRecording();
     };
-    addAndMakeVisible(recordButton);
     recordButton.setEnabled(false); // 곡이 선택되기 전까지 비활성화
-    
-    // 분석 버튼 초기화
-    analyzeButton.setButtonText("Analyze");
-    analyzeButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff5c5cff));
-    analyzeButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff7c7cff));
-    analyzeButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-    analyzeButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-    analyzeButton.onClick = [this]() { analyzeRecording(); };
-    addAndMakeVisible(analyzeButton);
-    analyzeButton.setEnabled(false); // 녹음된 파일이 없으면 비활성화
+    recordButton.setLookAndFeel(recordButtonLookAndFeel.get());
+    addAndMakeVisible(recordButton);
 
+    // 분석 버튼 초기화 - 원형 버튼으로 개선 
+    analyzeButton.setButtonText("");
+    analyzeButton.onClick = [this]() { analyzeRecording(); };
+    analyzeButton.setEnabled(false); // 녹음된 파일이 없으면 비활성화
+    analyzeButton.setLookAndFeel(analyzeButtonLookAndFeel.get());
+    addAndMakeVisible(analyzeButton);
+    
     // AudioRecorder를 오디오 콜백으로 등록
     deviceManager.addAudioCallback(audioRecorder.get());
     
@@ -123,6 +124,9 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
 
 GuitarPracticeComponent::~GuitarPracticeComponent()
 {
+    // 타이머 정리
+    stopTimer();
+
     // 모델에서 리스너 제거 (새 인터페이스 사용)
     audioModel.removeListener(this);
     
@@ -132,6 +136,11 @@ GuitarPracticeComponent::~GuitarPracticeComponent()
     // 녹음기 제거
     if (audioRecorder)
         deviceManager.removeAudioCallback(audioRecorder.get());
+    
+    // LookAndFeel 정리
+    recordButton.setLookAndFeel(nullptr);
+    analyzeButton.setLookAndFeel(nullptr);
+    playButton.setLookAndFeel(nullptr);
     
     // Controller는 소멸자에서 자동으로 정리됨
     audioController.reset();
@@ -171,14 +180,15 @@ void GuitarPracticeComponent::resized()
     auto controlsHeight = 80;
     auto controlsArea = bounds.removeFromBottom(controlsHeight).reduced(10, 5);
     
-    // 버튼 및 컨트롤 크기 설정 - 더 큰 버튼과 레이블
-    auto buttonWidth = 120;
+    // 버튼 및 컨트롤 크기 설정 - 원형 버튼으로 변경
+    auto buttonSize = 50; // 원형 버튼 크기
+    auto buttonWidth = 120; // 일반 버튼 너비 
     auto buttonHeight = 45;
     auto labelWidth = 100;
     auto spacing = 15;
     
     // 버튼 중앙 정렬을 위한 계산
-    auto totalControlsWidth = (buttonWidth * 3) + labelWidth + (spacing * 3);
+    auto totalControlsWidth = buttonWidth + (buttonSize * 2) + labelWidth + (spacing * 3);
     auto startX = (controlsArea.getWidth() - totalControlsWidth) / 2;
     auto startY = (controlsArea.getHeight() - buttonHeight) / 2;
     
@@ -191,13 +201,14 @@ void GuitarPracticeComponent::resized()
                             controlsArea.getY() + startY, 
                             labelWidth, buttonHeight);
     
+    // 녹음/분석 버튼은 원형으로 설정
     recordButton.setBounds(positionLabel.getRight() + spacing, 
-                          controlsArea.getY() + startY, 
-                          buttonWidth, buttonHeight);
+                          controlsArea.getY() + startY - (buttonSize - buttonHeight)/2, 
+                          buttonSize, buttonSize);
     
     analyzeButton.setBounds(recordButton.getRight() + spacing, 
-                           controlsArea.getY() + startY, 
-                           buttonWidth, buttonHeight);
+                           controlsArea.getY() + startY - (buttonSize - buttonHeight)/2, 
+                           buttonSize, buttonSize);
     
     // 녹음된 오디오 파형 표시 영역 - 마진 추가
     auto waveformHeight = 80;
@@ -258,8 +269,8 @@ void GuitarPracticeComponent::onInputLevelChanged(float newLevel)
 // UI 업데이트 메서드
 void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
 {
-    // 재생 버튼 텍스트와 색상 업데이트
-    playButton.setButtonText(isNowPlaying ? "Pause" : "Play");
+    // 재생 버튼 토글 상태 업데이트 (텍스트 대신 토글 상태 사용)
+    playButton.setToggleState(isNowPlaying, juce::dontSendNotification);
     
     // 재생 중일 때는 분석 버튼 비활성화
     analyzeButton.setEnabled(!isNowPlaying && lastRecording.existsAsFile());
@@ -343,13 +354,16 @@ void GuitarPracticeComponent::startRecording()
     // 녹음 시작 (AudioRecorder 호출)
     audioRecorder->startRecording(lastRecording);
     
-    // UI 업데이트
-    recordButton.setButtonText("Stop");
-    recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff0000)); // 녹음 중일 때 더 밝은 빨간색
+    // UI 업데이트 - 녹음 중 상태 표시 (pulsing 효과)
+    recordButtonLookAndFeel->setRecording(true);
+    recordButton.repaint();
     analyzeButton.setEnabled(false);
     
     // 썸네일 표시 모드 설정
     recordingThumbnail->setDisplayFullThumbnail(false);
+    
+    // 녹음 중 애니메이션 시작
+    startTimer(100); // 100ms 간격으로 타이머 시작
 }
 
 void GuitarPracticeComponent::stopRecording()
@@ -361,10 +375,13 @@ void GuitarPracticeComponent::stopRecording()
     recordingThumbnail->setSource(lastRecording);
     recordingThumbnail->setDisplayFullThumbnail(true);
     
-    // UI 업데이트
-    recordButton.setButtonText("Record");
-    recordButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xffff5c5c)); // 원래 색상으로 복귀
+    // UI 업데이트 - 녹음 중지 상태 표시
+    recordButtonLookAndFeel->setRecording(false);
+    recordButton.repaint();
     analyzeButton.setEnabled(true);
+    
+    // 타이머 중지
+    stopTimer();
 }
 
 bool GuitarPracticeComponent::isRecording() const
@@ -379,7 +396,12 @@ void GuitarPracticeComponent::analyzeRecording()
     if (lastRecording.existsAsFile()) {
         // 분석 중 UI 업데이트
         analyzeButton.setEnabled(false);
-        analyzeButton.setButtonText("Analyzing...");
+        analyzeButtonLookAndFeel->setAnalyzing(true);
+        analyzeButton.repaint();
+        
+        // 분석 중 애니메이션 시작 (이미 타이머가 동작 중이 아니라면)
+        if (!isTimerRunning())
+            startTimer(50); // 50ms 간격으로 타이머 시작 (더 부드러운 애니메이션)
         
         controller->analyzeRecording(lastRecording);
     } else {
@@ -388,6 +410,21 @@ void GuitarPracticeComponent::analyzeRecording()
                                               "Analysis Error",
                                               "No recording file found. Please record audio first.",
                                               "OK");
+    }
+}
+
+// GuitarPracticeComponent 클래스에 추가할 새 메서드
+void GuitarPracticeComponent::timerCallback()
+{
+    // 녹음 중일 때 버튼 펄싱 효과를 위한 메서드
+    if (isRecording() && recordButtonLookAndFeel) {
+        recordButtonLookAndFeel->updatePulse();
+        recordButton.repaint();
+    }
+    
+    // 분석 중일 때 버튼 애니메이션 처리
+    if (analyzeButtonLookAndFeel && !analyzeButton.isEnabled()) {
+        analyzeButton.repaint();
     }
 }
 
@@ -427,7 +464,12 @@ void GuitarPracticeComponent::handleAnalysisCompleteEvent(const AnalysisComplete
     // UI 업데이트
     juce::MessageManager::callAsync([this]() {
         analyzeButton.setEnabled(true);
-        analyzeButton.setButtonText("Analyze");
+        analyzeButtonLookAndFeel->setAnalyzing(false);
+        analyzeButton.repaint();
+        
+        // 녹음 중이 아니라면 타이머 중지
+        if (!isRecording())
+            stopTimer();
     });
     
     const juce::var& result = event.getResult();
@@ -506,7 +548,12 @@ void GuitarPracticeComponent::handleAnalysisFailedEvent(const AnalysisFailedEven
     // UI 업데이트
     juce::MessageManager::callAsync([this]() {
         analyzeButton.setEnabled(true);
-        analyzeButton.setButtonText("Analyze");
+        analyzeButtonLookAndFeel->setAnalyzing(false);
+        analyzeButton.repaint();
+        
+        // 녹음 중이 아니라면 타이머 중지
+        if (!isRecording())
+            stopTimer();
     });
     
     // 실패 메시지를 UI에 표시

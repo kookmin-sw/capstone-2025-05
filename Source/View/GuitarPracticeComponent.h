@@ -17,13 +17,19 @@
 class AudioRecorder;
 class RecordingThumbnail;
 
+// LookAndFeel 클래스들 전방 선언
+class MapleRecordButton;
+class MapleAnalyzeButton; 
+class MaplePlayButton; // Play 버튼용 LookAndFeel 클래스 선언 추가
+
 class MainComponent;  // 전방 선언
 
 // GuitarPracticeComponent - 기타 연습 기능의 View 역할
 // MVC 패턴 중 View 역할만 담당하며, 비즈니스 로직은 Controller에 위임
 class GuitarPracticeComponent : public juce::Component,
                                public IAudioModelListener,  // 오디오 모델 리스너
-                               public IEventListener       // 이벤트 시스템 리스너
+                               public IEventListener,      // 이벤트 시스템 리스너
+                               public juce::Timer         // 애니메이션을 위한 타이머 추가
 {
 public:
     GuitarPracticeComponent(MainComponent& mainComponent);
@@ -40,6 +46,9 @@ public:
     
     // IEventListener 인터페이스 구현
     bool onEvent(const Event& event) override;
+    
+    // Timer 인터페이스 구현
+    void timerCallback() override;
     
     // 곡 선택 관련 메서드 (UI에서 호출됨)
     void loadSong(const juce::String& songId);
@@ -94,7 +103,12 @@ private:
     juce::TextButton analyzeButton;
     juce::File lastRecording;
     
+    // 커스텀 LookAndFeel 인스턴스
+    std::unique_ptr<MapleRecordButton> recordButtonLookAndFeel;
+    std::unique_ptr<MapleAnalyzeButton> analyzeButtonLookAndFeel;
+    std::unique_ptr<MaplePlayButton> playButtonLookAndFeel; // Play 버튼용 LookAndFeel 추가
+    
     // UI 컨트롤
-    juce::TextButton playButton;
+    juce::TextButton playButton; // 세련된 디자인이 적용될 예정
     juce::Label positionLabel;
 };
