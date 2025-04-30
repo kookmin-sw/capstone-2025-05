@@ -57,4 +57,3 @@ def get_new_releases():
         return {"new_releases": new_releases}
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Spotify 신곡 데이터 요청 실패: {str(e)}")
-
