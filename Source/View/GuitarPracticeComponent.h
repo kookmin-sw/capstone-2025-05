@@ -29,7 +29,8 @@ class MainComponent;  // 전방 선언
 class GuitarPracticeComponent : public juce::Component,
                                public IAudioModelListener,  // 오디오 모델 리스너
                                public IEventListener,      // 이벤트 시스템 리스너
-                               public juce::Timer         // 애니메이션을 위한 타이머 추가
+                               public juce::Timer,         // 애니메이션을 위한 타이머 추가
+                               public PlaybackStateChangeListener // ScoreComponent의 재생 상태 변경 리스너
 {
 public:
     GuitarPracticeComponent(MainComponent& mainComponent);
@@ -37,6 +38,7 @@ public:
     
     void paint(juce::Graphics& g) override;
     void resized() override;
+    bool keyPressed(const juce::KeyPress& key) override; // 키보드 입력 처리
     
     // IAudioModelListener 인터페이스 구현
     void onPlayStateChanged(bool isPlaying) override;
@@ -46,6 +48,9 @@ public:
     
     // IEventListener 인터페이스 구현
     bool onEvent(const Event& event) override;
+    
+    // PlaybackStateChangeListener 인터페이스 구현
+    void onPlaybackStateChanged(bool isPlaying) override;
     
     // Timer 인터페이스 구현
     void timerCallback() override;

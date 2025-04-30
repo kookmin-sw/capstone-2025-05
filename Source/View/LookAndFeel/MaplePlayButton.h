@@ -76,15 +76,16 @@ public:
         
         if (button.getToggleState()) {
             // 일시정지 아이콘 (두 개의 세로 막대)
-            const float pauseBarWidth = width * 0.04f;  // 더 얇게 (0.08f → 0.06f)
-            const float pauseBarHeight = height * 0.45f; // 약간 더 길게 (0.45f → 0.48f)
-            const float pauseBarGap = width * 0.05f;     // 간격 좁히기 (0.12f → 0.08f)
+            const float pauseBarWidth = width * 0.04f;  // 더 얇게 (0.08f → 0.04f)
+            const float pauseBarHeight = height * 0.48f; // 약간 더 길게 (0.45f → 0.48f)
+            const float pauseBarGap = width * 0.08f;     // 간격 설정 (0.12f → 0.08f)
             const float yOffset = (height - pauseBarHeight) * 0.5f;
             const float xOffset = (width - (pauseBarWidth * 2 + pauseBarGap)) * 0.5f;
             
             g.fillRect(xOffset, yOffset, pauseBarWidth, pauseBarHeight);
             g.fillRect(xOffset + pauseBarWidth + pauseBarGap, yOffset, pauseBarWidth, pauseBarHeight);
-        } else {
+        }
+        else {
             // 재생 아이콘 (삼각형)
             juce::Path path;
             const float triangleSize = juce::jmin(width, height) * 0.35f;

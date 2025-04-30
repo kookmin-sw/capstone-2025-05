@@ -23,6 +23,15 @@ ScoreComponent::~ScoreComponent()
     stopTimer();
 }
 
+// 리스너에게 재생 상태 변경 알림
+void ScoreComponent::notifyPlaybackStateChanged(bool isPlaying)
+{
+    if (playbackListener != nullptr)
+    {
+        playbackListener->onPlaybackStateChanged(isPlaying);
+    }
+}
+
 void ScoreComponent::paint(juce::Graphics& g)
 {
     // 배경 채우기 - MapleTheme 컬러 사용
@@ -244,94 +253,255 @@ void ScoreComponent::mouseDown(const juce::MouseEvent& event)
 
     const auto& tabFile = *tabPlayer.getTabFile();
     
-    // 현재 트랙 인덱스가 유효한지 확인
-    int currentTrack = tabPlayer.getCurrentTrack();
-    if (currentTrack < 0 || currentTrack >= static_cast<int>(tabFile.tracks.size()))
-    {
-        DBG("Invalid track index: " + juce::String(currentTrack));
-        return;
-    }
+    // 클릭한 위치가 scoreContent 내부에 있는지 확인
+    juce::Point<int> posInContent = event.position.toInt() - viewport.getViewPosition();
     
-    float clickX = event.getMouseDownX() + viewport.getViewPositionX();
-    int beatIndex = static_cast<int>((clickX - xOffset) / noteSpacing);
-    int measureIndex = 0, beatCount = 0;
+    float currentY = yOffset;
+    int trackIndex = -1;
+    int measureIndex = -1;
+    int beatIndex = -1;
 
-    const auto& track = tabFile.tracks[currentTrack];
-    for (size_t i = 0; i < track.measures.size(); ++i)
+    // 클릭한 위치에 해당하는 트랙, 마디, 비트를 찾기
+    for (size_t trackIdx = 0; trackIdx < tabFile.tracks.size(); ++trackIdx)
     {
-        const auto& measure = track.measures[i];
-        if (beatCount + measure.beats.size() > beatIndex)
+        const auto& track = tabFile.tracks[trackIdx];
+        
+        // 각 트랙의 세로 범위 계산
+        float trackTopY = currentY;
+        float trackBottomY = currentY + 6 * stringSpacing + 30.0f;
+        
+        // 클릭한 Y좌표가 현재 트랙 범위 내에 있는지 확인
+        if (posInContent.y >= trackTopY && posInContent.y <= trackBottomY)
         {
-            int targetBeat = beatIndex - beatCount;
-            // 비트 인덱스가 유효한지 확인
-            if (targetBeat >= 0 && targetBeat < static_cast<int>(measure.beats.size()))
+            trackIndex = static_cast<int>(trackIdx);
+            
+            // 클릭한 위치에 해당하는 마디와 비트 찾기
+            float x = xOffset;
+            for (size_t measureIdx = 0; measureIdx < track.measures.size(); ++measureIdx)
             {
-                tabPlayer.setPlaybackPosition(currentTrack, static_cast<int>(i), targetBeat);
-                DBG("Mouse click set position to Track: " + juce::String(currentTrack) +
-                    ", Measure: " + juce::String(i) +
-                    ", Beat: " + juce::String(targetBeat));
-                scoreContent.repaint();
+                const auto& measure = track.measures[measureIdx];
+                float measureWidth = measure.beats.size() * noteSpacing;
+                
+                // 클릭한 X좌표가 현재 마디 범위 내에 있는지 확인
+                if (posInContent.x >= x && posInContent.x < x + measureWidth)
+                {
+                    measureIndex = static_cast<int>(measureIdx);
+                    
+                    // 비트 인덱스 계산
+                    beatIndex = static_cast<int>((posInContent.x - x) / noteSpacing);
+                    
+                    // 비트 인덱스가 유효 범위 내에 있는지 확인하고 제한
+                    beatIndex = juce::jlimit(0, static_cast<int>(measure.beats.size()) - 1, beatIndex);
+                    break;
+                }
+                
+                x += measureWidth;
             }
+            
             break;
         }
-        beatCount += measure.beats.size();
+        
+        // 다음 트랙으로 이동
+        currentY = trackBottomY + 20.0f;
+    }
+    
+    // 유효한 위치가 찾아졌으면 TabPlayer에 재생 위치 설정
+    if (trackIndex >= 0 && measureIndex >= 0 && beatIndex >= 0)
+    {
+        DBG("Click position: Track=" + juce::String(trackIndex) + 
+            ", Measure=" + juce::String(measureIndex) + 
+            ", Beat=" + juce::String(beatIndex));
+        
+        // 재생 위치 설정
+        tabPlayer.setPlaybackPosition(trackIndex, measureIndex, beatIndex);
+        
+        // 이미 재생 중이면 중지했다가 새 위치에서 다시 시작
+        bool wasPlaying = tabPlayer.isPlaying();
+        
+        // 한번 정지
+        if (wasPlaying)
+        {
+            tabPlayer.stopPlaying();
+        }
+        
+        // 중지된 상태에서 Ctrl 또는 Command 키를 누른 상태로 클릭하면 
+        // 그 위치에서 재생 시작 (토글 동작)
+        if (event.mods.isCtrlDown() || event.mods.isCommandDown())
+        {
+            wasPlaying = !wasPlaying;
+        }
+        
+        // 원래 재생 중이었거나 Ctrl+클릭한 경우 재생 시작
+        if (wasPlaying)
+        {
+            tabPlayer.startPlaying();
+            notifyPlaybackStateChanged(true);
+        }
+        else
+        {
+            // 그대로 정지 상태 유지
+            notifyPlaybackStateChanged(false);
+        }
+        
+        // 항상 스코어를 업데이트하고 다시 그림
+        updateScore();
+        
+        // 커서가 보이도록 뷰포트 위치 조정
+        float cursorX = xOffset;
+        int beatSum = 0;
+        
+        const auto& track = tabFile.tracks[trackIndex];
+        for (int m = 0; m < measureIndex; ++m)
+            beatSum += track.measures[m].beats.size();
+        
+        beatSum += beatIndex;
+        cursorX += beatSum * noteSpacing;
+        
+        // 커서 위치로 스크롤
+        viewport.setViewPosition(cursorX - viewport.getWidth() / 4, viewport.getViewPosition().getY());
     }
 }
 
 bool ScoreComponent::keyPressed(const juce::KeyPress& key)
 {
-    if (!tabPlayer.getTabFile()) return false;
-    const auto& tabFile = *tabPlayer.getTabFile();
-    
-    int currentTrack = tabPlayer.getCurrentTrack();
-    int currentMeasure = tabPlayer.getCurrentMeasure();
-    int currentBeat = tabPlayer.getCurrentBeat();
-    
-    if (currentTrack < 0 || currentTrack >= static_cast<int>(tabFile.tracks.size()))
-        return false;
+    // 스페이스바로 재생/정지 토글
+    if (key == juce::KeyPress::spaceKey)
+    {
+        bool wasPlaying = tabPlayer.isPlaying();
         
-    const auto& track = tabFile.tracks[currentTrack];
-    
-    // 왼쪽 화살표 - 이전 비트로 이동
-    if (key == juce::KeyPress::leftKey)
-    {
-        if (currentBeat > 0)
+        if (wasPlaying)
         {
-            tabPlayer.setPlaybackPosition(currentTrack, currentMeasure, currentBeat - 1);
-        }
-        else if (currentMeasure > 0)
-        {
-            // 이전 마디의 마지막 비트로 이동
-            int prevMeasureBeats = track.measures[currentMeasure - 1].beats.size();
-            tabPlayer.setPlaybackPosition(currentTrack, currentMeasure - 1, prevMeasureBeats - 1);
-        }
-        return true;
-    }
-    
-    // 오른쪽 화살표 - 다음 비트로 이동
-    else if (key == juce::KeyPress::rightKey)
-    {
-        if (currentMeasure < static_cast<int>(track.measures.size()) && 
-            currentBeat < static_cast<int>(track.measures[currentMeasure].beats.size()) - 1)
-        {
-            tabPlayer.setPlaybackPosition(currentTrack, currentMeasure, currentBeat + 1);
-        }
-        else if (currentMeasure < static_cast<int>(track.measures.size()) - 1)
-        {
-            // 다음 마디의 첫 비트로 이동
-            tabPlayer.setPlaybackPosition(currentTrack, currentMeasure + 1, 0);
-        }
-        return true;
-    }
-    
-    // 스페이스 - 재생/일시정지 토글
-    else if (key == juce::KeyPress::spaceKey)
-    {
-        if (tabPlayer.isPlaying())
             tabPlayer.stopPlaying();
+        }
         else
+        {
             tabPlayer.startPlaying();
+        }
+            
+        // 재생 상태 변경 알림 (토글된 상태로)
+        notifyPlaybackStateChanged(!wasPlaying);
+        
         return true;
+    }
+    
+    // 왼쪽/오른쪽 화살표 키로 비트 단위 이동
+    else if (key == juce::KeyPress::leftKey || key == juce::KeyPress::rightKey)
+    {
+        if (!tabPlayer.getTabFile()) return false;
+        
+        int track = tabPlayer.getCurrentTrack();
+        int measure = tabPlayer.getCurrentMeasure();
+        int beat = tabPlayer.getCurrentBeat();
+        
+        const auto& tabFile = *tabPlayer.getTabFile();
+        if (track < 0 || track >= static_cast<int>(tabFile.tracks.size()))
+            return false;
+            
+        const auto& trackData = tabFile.tracks[track];
+        
+        // 왼쪽 화살표: 이전 비트로 이동
+        if (key == juce::KeyPress::leftKey)
+        {
+            // 현재 마디의 첫 비트에서 왼쪽 화살표를 누르면 이전 마디의 마지막 비트로
+            if (beat <= 0)
+            {
+                if (measure > 0)
+                {
+                    measure--;
+                    beat = static_cast<int>(trackData.measures[measure].beats.size()) - 1;
+                }
+            }
+            else
+            {
+                beat--;
+            }
+        }
+        // 오른쪽 화살표: 다음 비트로 이동
+        else
+        {
+            // 현재 마디의 마지막 비트에서 오른쪽 화살표를 누르면 다음 마디의 첫 비트로
+            if (measure < static_cast<int>(trackData.measures.size()) && 
+                beat >= static_cast<int>(trackData.measures[measure].beats.size()) - 1)
+            {
+                if (measure < static_cast<int>(trackData.measures.size()) - 1)
+                {
+                    measure++;
+                    beat = 0;
+                }
+            }
+            else
+            {
+                beat++;
+            }
+        }
+        
+        // 위치 설정 및 업데이트
+        tabPlayer.setPlaybackPosition(track, measure, beat);
+        updateScore();
+        
+        // 커서가 보이도록 뷰포트 조정
+        float cursorX = xOffset;
+        int beatSum = 0;
+        
+        for (int m = 0; m < measure; ++m)
+            beatSum += trackData.measures[m].beats.size();
+        
+        beatSum += beat;
+        cursorX += beatSum * noteSpacing;
+        
+        viewport.setViewPosition(cursorX - viewport.getWidth() / 4, viewport.getViewPosition().getY());
+        
+        return true;
+    }
+    
+    // 위/아래 화살표 키로 트랙 간 이동
+    else if (key == juce::KeyPress::upKey || key == juce::KeyPress::downKey)
+    {
+        if (!tabPlayer.getTabFile()) return false;
+        
+        int track = tabPlayer.getCurrentTrack();
+        int measure = tabPlayer.getCurrentMeasure();
+        int beat = tabPlayer.getCurrentBeat();
+        
+        const auto& tabFile = *tabPlayer.getTabFile();
+        
+        // 위 화살표: 이전 트랙으로
+        if (key == juce::KeyPress::upKey && track > 0)
+        {
+            track--;
+        }
+        // 아래 화살표: 다음 트랙으로
+        else if (key == juce::KeyPress::downKey && track < static_cast<int>(tabFile.tracks.size()) - 1)
+        {
+            track++;
+        }
+        else
+        {
+            return false;
+        }
+        
+        // 새 트랙의 마디/비트 범위 확인
+        if (track >= 0 && track < static_cast<int>(tabFile.tracks.size()))
+        {
+            const auto& trackData = tabFile.tracks[track];
+            
+            // 마디와 비트가 범위 내에 있는지 확인하고 조정
+            measure = juce::jmin(measure, static_cast<int>(trackData.measures.size()) - 1);
+            if (measure >= 0 && measure < static_cast<int>(trackData.measures.size()))
+            {
+                beat = juce::jmin(beat, static_cast<int>(trackData.measures[measure].beats.size()) - 1);
+            }
+            else
+            {
+                measure = 0;
+                beat = 0;
+            }
+            
+            // 위치 설정 및 업데이트
+            tabPlayer.setPlaybackPosition(track, measure, beat);
+            updateScore();
+            return true;
+        }
     }
     
     return false;
@@ -339,28 +509,85 @@ bool ScoreComponent::keyPressed(const juce::KeyPress& key)
 
 void ScoreComponent::startPlayback()
 {
+    // UI 상태 업데이트 뿐만 아니라 재생 상태 확인
+    if (!tabPlayer.isPlaying())
+    {
+        tabPlayer.startPlaying();
+    }
     scoreContent.repaint();
 }
 
 void ScoreComponent::stopPlayback()
 {
+    // UI 상태 업데이트 뿐만 아니라 정지 상태 확인
+    if (tabPlayer.isPlaying())
+    {
+        tabPlayer.stopPlaying();
+    }
     scoreContent.repaint();
 }
 
 void ScoreComponent::updateScore()
 {
-    // 스코어 콘텐츠 크기 업데이트
-    resized();
-    
-    // 스코어 다시 그리기
     scoreContent.repaint();
+    resized(); // 콘텐츠 크기 업데이트
 }
 
 void ScoreComponent::timerCallback()
 {
-    // 재생 위치 업데이트를 위해 악보 다시 그리기
-    if (tabPlayer.isPlaying())
+    // TabPlayer 상태 확인
+    bool isPlayerPlaying = tabPlayer.isPlaying();
+    static bool lastPlayingState = false;
+    
+    // 이전 상태와 다른 경우 리스너에게 알림 (상태 변경 감지)
+    if (isPlayerPlaying != lastPlayingState)
     {
-        scoreContent.repaint();
+        DBG("ScoreComponent detected playback state change: " + juce::String(isPlayerPlaying ? "playing" : "stopped"));
+        notifyPlaybackStateChanged(isPlayerPlaying);
+        lastPlayingState = isPlayerPlaying;
+    }
+    
+    // 재생 상태와 관계없이 악보 커서 위치 표시를 위한 리페인트
+    scoreContent.repaint();
+    
+    // 재생 중일 때 자동 스크롤 처리
+    if (isPlayerPlaying && tabPlayer.getTabFile())
+    {
+        // 현재 재생 위치에 해당하는 커서 위치 계산
+        int currentTrack = tabPlayer.getCurrentTrack();
+        int currentMeasure = tabPlayer.getCurrentMeasure();
+        int currentBeat = tabPlayer.getCurrentBeat();
+        
+        const auto& tabFile = *tabPlayer.getTabFile();
+        
+        // 위치가 유효한지 확인
+        if (currentTrack >= 0 && currentTrack < static_cast<int>(tabFile.tracks.size()) &&
+            currentMeasure >= 0 && currentMeasure < static_cast<int>(tabFile.tracks[currentTrack].measures.size()))
+        {
+            float cursorX = xOffset;
+            int beatSum = 0;
+            
+            const auto& track = tabFile.tracks[currentTrack];
+            for (int m = 0; m < currentMeasure; ++m)
+                beatSum += track.measures[m].beats.size();
+            
+            beatSum += currentBeat;
+            cursorX += beatSum * noteSpacing;
+            
+            // 현재 뷰포트 영역
+            auto viewArea = viewport.getViewArea();
+            
+            // 커서가 뷰포트 영역의 오른쪽 1/3 지점을 넘어가면 자동 스크롤
+            float threshold = viewArea.getX() + (viewArea.getWidth() * 2 / 3);
+            if (cursorX > threshold)
+            {
+                // 부드러운 스크롤을 위해 현재 뷰포트 위치에서 약간씩 이동
+                int currentX = viewport.getViewPositionX();
+                int targetX = static_cast<int>(cursorX - viewArea.getWidth() / 3);
+                int newX = currentX + juce::jmin(10, targetX - currentX); // 최대 10픽셀씩 이동
+                
+                viewport.setViewPosition(newX, viewport.getViewPositionY());
+            }
+        }
     }
 }

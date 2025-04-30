@@ -57,25 +57,62 @@ GuitarPracticeController::~GuitarPracticeController()
 
 void GuitarPracticeController::startPlayback()
 {
-    audioModel.setPlaying(true);
-    player.startPlaying();
+    // 이미 재생 중인지 확인하여 중복 호출 방지
+    if (!audioModel.isPlaying())
+    {
+        // 모델의 재생 상태 변경
+        audioModel.setPlaying(true);
+        
+        // TabPlayer의 실제 재생 시작
+        if (!player.isPlaying())
+        {
+            player.startPlaying();
+            DBG("TabPlayer: Playback started");
+        }
+    }
 }
 
 void GuitarPracticeController::stopPlayback()
 {
-    audioModel.setPlaying(false);
-    player.stopPlaying();
+    // 이미 정지 상태인지 확인하여 중복 호출 방지
+    if (audioModel.isPlaying())
+    {
+        // 모델의 재생 상태 변경
+        audioModel.setPlaying(false);
+        
+        // TabPlayer의 실제 재생 중지
+        if (player.isPlaying())
+        {
+            player.stopPlaying();
+            DBG("TabPlayer: Playback stopped");
+        }
+    }
 }
 
 void GuitarPracticeController::togglePlayback()
 {
-    if (!audioModel.isPlaying())
+    // TabPlayer와 AudioModel의 상태 확인
+    bool playerIsPlaying = player.isPlaying();
+    bool modelIsPlaying = audioModel.isPlaying();
+    
+    // 상태가 불일치하면 동기화
+    if (playerIsPlaying != modelIsPlaying)
     {
-        startPlayback();
+        DBG("State mismatch detected! Player playing: " + juce::String(playerIsPlaying ? "true" : "false") + 
+            ", Model playing: " + juce::String(modelIsPlaying ? "true" : "false"));
+        
+        // TabPlayer 상태를 기준으로 AudioModel 동기화
+        audioModel.setPlaying(playerIsPlaying);
+    }
+    
+    // 이제 상태가 동기화되었으므로 토글
+    if (audioModel.isPlaying())
+    {
+        stopPlayback();
     }
     else
     {
-        stopPlayback();
+        startPlayback();
     }
 }
 

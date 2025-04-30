@@ -107,6 +107,10 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     try {
         // ScoreComponent는 controller의 TabPlayer를 사용하도록 수정
         scoreComponent = std::make_unique<ScoreComponent>(controller->getTabPlayer());
+        // PlaybackStateChangeListener 등록
+        scoreComponent->setPlaybackStateChangeListener(this);
+        // 컴포넌트가 키보드 포커스를 받을 수 있도록 설정
+        scoreComponent->setWantsKeyboardFocus(true);
         addAndMakeVisible(scoreComponent.get());
     }
     catch (const std::exception& e) {
@@ -120,6 +124,9 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     addAndMakeVisible(leftPanel.get());
     addAndMakeVisible(rightPanel.get());
     addAndMakeVisible(recordingThumbnail.get());
+    
+    // 전체 컴포넌트가 키보드 포커스를 받을 수 있도록 설정
+    setWantsKeyboardFocus(true);
 }
 
 GuitarPracticeComponent::~GuitarPracticeComponent()
@@ -266,11 +273,36 @@ void GuitarPracticeComponent::onInputLevelChanged(float newLevel)
     // 현재는 leftPanel에서 처리하므로 특별한 동작이 필요 없습니다
 }
 
+// PlaybackStateChangeListener 인터페이스 구현
+void GuitarPracticeComponent::onPlaybackStateChanged(bool isPlaying)
+{
+    // TabPlayer에서 발생한 상태 변경을 AudioModel에 전달
+    // 이미 같은 상태이면 불필요한 이벤트 발생 방지
+    if (audioModel.isPlaying() != isPlaying)
+    {
+        // 오디오 모델 상태 변경
+        audioModel.setPlaying(isPlaying);
+        
+        // 컨트롤러도 동기화
+        if (isPlaying)
+            controller->startPlayback();
+        else
+            controller->stopPlayback();
+    }
+    
+    // UI 업데이트 - 재생 상태 변경
+    updatePlaybackState(isPlaying);
+}
+
 // UI 업데이트 메서드
 void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
 {
-    // 재생 버튼 토글 상태 업데이트 (텍스트 대신 토글 상태 사용)
-    playButton.setToggleState(isNowPlaying, juce::dontSendNotification);
+    // 플레이 버튼의 토글 상태만 업데이트 (이벤트 발생 없이)
+    if (playButton.getToggleState() != isNowPlaying)
+    {
+        playButton.setToggleState(isNowPlaying, juce::dontSendNotification);
+        playButton.repaint(); // 확실히 UI 업데이트
+    }
     
     // 재생 중일 때는 분석 버튼 비활성화
     analyzeButton.setEnabled(!isNowPlaying && lastRecording.existsAsFile());
@@ -302,6 +334,15 @@ void GuitarPracticeComponent::togglePlayback()
 {
     // Controller에게 로직 위임
     controller->togglePlayback();
+    
+    // ScoreComponent 상태와 동기화
+    if (scoreComponent != nullptr)
+    {
+        if (audioModel.isPlaying())
+            scoreComponent->startPlayback();
+        else
+            scoreComponent->stopPlayback();
+    }
 }
 
 // UI에서 호출되는 메서드 - Controller에게 위임
@@ -614,4 +655,18 @@ void GuitarPracticeComponent::handleSongLoadFailedEvent(const SongLoadFailedEven
             "OK"
         );
     });
+}
+
+// 전체 컴포넌트도 스페이스바를 처리하기 위한 메서드 추가
+bool GuitarPracticeComponent::keyPressed(const juce::KeyPress& key)
+{
+    // 스페이스바로 재생/정지 토글
+    if (key == juce::KeyPress::spaceKey)
+    {
+        togglePlayback();
+        return true;
+    }
+    
+    // 다른 키는 상위 컴포넌트에 위임
+    return juce::Component::keyPressed(key);
 }
