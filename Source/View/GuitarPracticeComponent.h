@@ -22,6 +22,11 @@ class MapleRecordButton;
 class MapleAnalyzeButton; 
 class MaplePlayButton; // Play 버튼용 LookAndFeel 클래스 선언 추가
 
+// 새로운 컴포넌트 추가
+class PerformanceAnalysisComponent;
+class FingeringGuideComponent;
+class PracticeProgressComponent;
+
 class MainComponent;  // 전방 선언
 
 // GuitarPracticeComponent - 기타 연습 기능의 View 역할
@@ -33,6 +38,14 @@ class GuitarPracticeComponent : public juce::Component,
                                public PlaybackStateChangeListener // ScoreComponent의 재생 상태 변경 리스너
 {
 public:
+    // 표시할 악보 아래 컴포넌트 유형
+    enum class BottomViewType {
+        PerformanceAnalysis,
+        FingeringGuide,
+        PracticeProgress,
+        None
+    };
+    
     GuitarPracticeComponent(MainComponent& mainComponent);
     ~GuitarPracticeComponent() override;
     
@@ -69,6 +82,12 @@ public:
     // UI 업데이트 메서드
     void updateUI();
     
+    // 하단 뷰 전환 메서드
+    void switchBottomView(BottomViewType viewType);
+    
+    // 현재 하단 뷰 가져오기
+    BottomViewType getCurrentBottomView() const { return currentBottomView; }
+    
 private:
     // 이벤트 핸들러 메서드
     void handleAnalysisCompleteEvent(const AnalysisCompleteEvent& event);
@@ -81,6 +100,12 @@ private:
     void updateVolumeDisplay(float volume);
     void updatePositionDisplay(double positionInSeconds);
     void togglePlayback();  // UI 이벤트 핸들러
+    
+    // 하단 뷰 가시성 업데이트
+    void updateBottomViewVisibility();
+    
+    // 뷰 전환 버튼 상태 업데이트
+    void updateViewButtonStates();
 
     MainComponent& mainComponent;
     
@@ -99,6 +124,11 @@ private:
     std::unique_ptr<RightPanel> rightPanel;
     std::unique_ptr<ScoreComponent> scoreComponent;
     std::unique_ptr<PracticeSettingsComponent> practiceSettingsComponent;
+    
+    // 새로운 컴포넌트들
+    std::unique_ptr<PerformanceAnalysisComponent> performanceAnalysisComponent;
+    std::unique_ptr<FingeringGuideComponent> fingeringGuideComponent;
+    std::unique_ptr<PracticeProgressComponent> practiceProgressComponent;
 
     // 녹음 관련 컴포넌트
     std::unique_ptr<RecordingThumbnail> recordingThumbnail;
@@ -116,4 +146,12 @@ private:
     // UI 컨트롤
     juce::TextButton playButton; // 세련된 디자인이 적용될 예정
     juce::Label positionLabel;
+    
+    // 뷰 전환 버튼
+    juce::TextButton analysisViewButton;
+    juce::TextButton fingeringViewButton;
+    juce::TextButton progressViewButton;
+    
+    // 현재 표시 중인 하단 뷰
+    BottomViewType currentBottomView = BottomViewType::PerformanceAnalysis;
 };

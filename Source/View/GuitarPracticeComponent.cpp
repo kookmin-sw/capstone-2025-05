@@ -8,6 +8,9 @@
 #include "RightPanel.h"
 #include "ScoreComponent.h"
 #include "PracticeSettingsComponent.h"
+#include "PerformanceAnalysisComponent.h"
+#include "FingeringGuideComponent.h"
+#include "PracticeProgressComponent.h"
 
 #include "Model/RecordingThumbnail.h"
 #include "Model/AudioRecorder.h"
@@ -23,44 +26,61 @@
 GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     : mainComponent(mainComp), deviceManager(mainComp.getDeviceManager())
 {
-    // 새 인터페이스를 사용하여 모델에 등록
+    DBG("GuitarPracticeComponent - constructor start");
+    
+    // 오디오 모델 초기화 및 리스너 등록 (새 인터페이스 사용)
     audioModel.addListener(this);
     
-    // 컨트롤러 초기화 
-    controller = std::make_unique<GuitarPracticeController>(audioModel, deviceManager);
-    controller->setView(this);
+    // 모델 초기 상태 업데이트
+    updateUI();
     
-    // AudioController 초기화 - 오디오 입력 레벨 변경 감지용
+    // AudioController 초기화
     audioController = std::make_unique<AudioController>(audioModel, deviceManager);
     
-    // 이벤트 버스에 구독 등록
-    // 특정 이벤트 타입에만 관심이 있는 경우
+    // GuitarPracticeController 초기화 (파라미터 추가)
+    controller = std::make_unique<GuitarPracticeController>(audioModel, deviceManager);
+    
+    // 이벤트 버스에 리스너로 등록
     EventBus::getInstance().subscribe(Event::Type::AnalysisComplete, this);
     EventBus::getInstance().subscribe(Event::Type::AnalysisFailed, this);
     EventBus::getInstance().subscribe(Event::Type::SongLoaded, this);
     EventBus::getInstance().subscribe(Event::Type::SongLoadFailed, this);
     
-    // LookAndFeel 인스턴스 초기화
+    // 커스텀 LookAndFeel 인스턴스 생성
     recordButtonLookAndFeel = std::make_unique<MapleRecordButton>();
     analyzeButtonLookAndFeel = std::make_unique<MapleAnalyzeButton>();
-    playButtonLookAndFeel = std::make_unique<MaplePlayButton>();
+    playButtonLookAndFeel = std::make_unique<MaplePlayButton>(); // Play 버튼 LookAndFeel 추가
     
-    // 재생 버튼 초기화 - 커스텀 LookAndFeel 적용
-    playButton.setButtonText("");  // 텍스트 제거 (아이콘으로 표시됨)
+    // UI 컴포넌트 초기화
+    playButton.setButtonText("Play");
     playButton.onClick = [this]() { togglePlayback(); };
+    playButton.setToggleState(false, juce::dontSendNotification);
     playButton.setLookAndFeel(playButtonLookAndFeel.get());
     addAndMakeVisible(playButton);
-    playButton.setEnabled(false); // 곡이 선택되기 전까지 비활성화
     
-    // 재생 위치 표시 레이블 초기화
     positionLabel.setText("00:00", juce::dontSendNotification);
     positionLabel.setJustificationType(juce::Justification::centred);
-    positionLabel.setColour(juce::Label::textColourId, MapleTheme::getTextColour());
-    positionLabel.setFont(juce::Font(16.0f).boldened());
     addAndMakeVisible(positionLabel);
     
-    // 녹음 관련 컴포넌트 초기화 
+    // 뷰 전환 버튼 초기화
+    analysisViewButton.setButtonText("Performance Analysis");
+    analysisViewButton.onClick = [this]() { switchBottomView(BottomViewType::PerformanceAnalysis); };
+    analysisViewButton.setToggleState(true, juce::dontSendNotification);
+    addAndMakeVisible(analysisViewButton);
+    
+    fingeringViewButton.setButtonText("Fingering Guide");
+    fingeringViewButton.onClick = [this]() { switchBottomView(BottomViewType::FingeringGuide); };
+    fingeringViewButton.setToggleState(false, juce::dontSendNotification);
+    addAndMakeVisible(fingeringViewButton);
+    
+    progressViewButton.setButtonText("Practice Progress");
+    progressViewButton.onClick = [this]() { switchBottomView(BottomViewType::PracticeProgress); };
+    progressViewButton.setToggleState(false, juce::dontSendNotification);
+    addAndMakeVisible(progressViewButton);
+    
+    // 오디오 포맷 매니저 초기화
     formatManager.registerBasicFormats();
+    
     recordingThumbnail = std::make_unique<RecordingThumbnail>();
     audioRecorder = std::make_unique<AudioRecorder>(recordingThumbnail->getAudioThumbnail());
     
@@ -117,6 +137,15 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
         DBG("Error creating ScoreComponent: " + juce::String(e.what()));
         // 예외가 발생해도 계속 진행
     }
+    
+    // 새로운 컴포넌트 초기화
+    performanceAnalysisComponent = std::make_unique<PerformanceAnalysisComponent>();
+    fingeringGuideComponent = std::make_unique<FingeringGuideComponent>();
+    practiceProgressComponent = std::make_unique<PracticeProgressComponent>();
+    
+    addAndMakeVisible(performanceAnalysisComponent.get());
+    addChildComponent(fingeringGuideComponent.get());
+    addChildComponent(practiceProgressComponent.get());
 
     // 컴포넌트 추가
     addAndMakeVisible(topBar.get());
@@ -127,6 +156,15 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     
     // 전체 컴포넌트가 키보드 포커스를 받을 수 있도록 설정
     setWantsKeyboardFocus(true);
+    
+    // 현재 표시할 하단 뷰 설정
+    currentBottomView = BottomViewType::PerformanceAnalysis;
+    updateBottomViewVisibility();
+    
+    // 버튼 상태 업데이트
+    updateViewButtonStates();
+    
+    DBG("GuitarPracticeComponent - constructor complete");
 }
 
 GuitarPracticeComponent::~GuitarPracticeComponent()
@@ -236,13 +274,34 @@ void GuitarPracticeComponent::resized()
     auto rightArea = bounds.removeFromRight(sideWidth).reduced(5, 10);
     rightPanel->setBounds(rightArea);
     
-    // 악보 표시 영역 - 남은 모든 공간 사용, 마진 추가
+    // 악보 표시 영역 - 높이를 줄여서 하단에 새 컴포넌트를 위한 공간 확보
     if (scoreComponent)
     {
-        DBG("Setting ScoreComponent bounds: " + juce::String(bounds.getWidth()) + "x" + juce::String(bounds.getHeight()));
-        scoreComponent->setBounds(bounds.reduced(15));
+        auto scoreHeight = bounds.getHeight() * 0.4f; // 높이의 40%만 악보에 할당
+        auto scoreArea = bounds.removeFromTop(scoreHeight).reduced(15, 10);
+        DBG("Setting ScoreComponent bounds: " + juce::String(scoreArea.getWidth()) + "x" + juce::String(scoreArea.getHeight()));
+        scoreComponent->setBounds(scoreArea);
         scoreComponent->toFront(false);
     }
+    
+    // 뷰 전환 버튼 배치 - 악보와 하단 뷰 사이
+    auto buttonBarHeight = 30;
+    auto buttonBar = bounds.removeFromTop(buttonBarHeight);
+    
+    // 버튼 사이즈 및 위치 계산
+    auto tabButtonWidth = 120;
+    auto totalTabsWidth = tabButtonWidth * 3 + spacing * 2;
+    auto tabStartX = buttonBar.getCentreX() - totalTabsWidth / 2;
+    
+    analysisViewButton.setBounds(tabStartX, buttonBar.getY(), tabButtonWidth, buttonBarHeight);
+    fingeringViewButton.setBounds(analysisViewButton.getRight() + spacing, buttonBar.getY(), tabButtonWidth, buttonBarHeight);
+    progressViewButton.setBounds(fingeringViewButton.getRight() + spacing, buttonBar.getY(), tabButtonWidth, buttonBarHeight);
+    
+    // 하단 뷰 컴포넌트 배치 (악보 아래 공간)
+    auto bottomViewArea = bounds.reduced(15, 10);
+    performanceAnalysisComponent->setBounds(bottomViewArea);
+    fingeringGuideComponent->setBounds(bottomViewArea);
+    practiceProgressComponent->setBounds(bottomViewArea);
     
     // 센터 패널은 더 이상 사용하지 않거나 필요한 경우에만 사용
     // centerPanel->setBounds(bounds.reduced(10));
@@ -669,4 +728,32 @@ bool GuitarPracticeComponent::keyPressed(const juce::KeyPress& key)
     
     // 다른 키는 상위 컴포넌트에 위임
     return juce::Component::keyPressed(key);
+}
+
+// 새로운 메서드: 하단 뷰 가시성 업데이트
+void GuitarPracticeComponent::updateBottomViewVisibility()
+{
+    performanceAnalysisComponent->setVisible(currentBottomView == BottomViewType::PerformanceAnalysis);
+    fingeringGuideComponent->setVisible(currentBottomView == BottomViewType::FingeringGuide);
+    practiceProgressComponent->setVisible(currentBottomView == BottomViewType::PracticeProgress);
+}
+
+// 새로운 메서드: 하단 뷰 전환
+void GuitarPracticeComponent::switchBottomView(BottomViewType viewType)
+{
+    if (currentBottomView != viewType)
+    {
+        currentBottomView = viewType;
+        updateBottomViewVisibility();
+        updateViewButtonStates();
+        resized(); // 레이아웃 업데이트
+    }
+}
+
+// 버튼 상태 업데이트 메서드 추가
+void GuitarPracticeComponent::updateViewButtonStates()
+{
+    analysisViewButton.setToggleState(currentBottomView == BottomViewType::PerformanceAnalysis, juce::dontSendNotification);
+    fingeringViewButton.setToggleState(currentBottomView == BottomViewType::FingeringGuide, juce::dontSendNotification);
+    progressViewButton.setToggleState(currentBottomView == BottomViewType::PracticeProgress, juce::dontSendNotification);
 }
