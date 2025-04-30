@@ -16,6 +16,7 @@ export default function Main() {
   const navigate = useNavigate();
   const swiperRef = useRef(null);
   const [trend, setTrend] = useState([]);
+  const [top, setTop] = useState([]);
 
   const handleMove = () => {
     navigate('/ranking?song_name=Drowning'); // 랭킹 테스트 - 수정하기
@@ -42,6 +43,31 @@ export default function Main() {
     };
 
     fetchTrendMusic();
+  }, []);
+
+  useEffect(() => {
+    const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+
+    const fetchTopMusic = async () => {
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/spotify/top-tracks`);
+        const items = res.data?.albums?.items || [];
+
+        const mapped = items.map((item) => ({
+          cover: item.images[0]?.url,
+          title: item.name,
+          artist: item.artists.map((a) => a.name).join(', '),
+        }));
+
+        console.log(res, 'topMusic');
+
+        setTop(mapped);
+      } catch (error) {
+        console.error('API error:', error);
+      }
+    };
+
+    fetchTopMusic();
   }, []);
 
   return (

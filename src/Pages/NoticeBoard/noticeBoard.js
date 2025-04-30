@@ -17,7 +17,10 @@ export default function NoticeBoard() {
   const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
   const { mutate: increaseView } = useViewPutMutation();
 
+  console.log(increaseView, '조회수');
+
   const { data: postInfo } = usePostInfoQuery();
+  console.log(postInfo, 'postinfo');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [startPage, setStartPage] = useState(1);
@@ -153,6 +156,8 @@ export default function NoticeBoard() {
                       view: post.조회수,
                       content: post.내용,
                       likes: post.좋아요수,
+                      audio_url: post.audio_url,
+                      image_url: post.image_url,
                     }}
                     onClick={() => handleClick(post.id)}
                   >

@@ -3,25 +3,30 @@ import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { usePostWriteMutation } from '../../Hooks/post/usePostWriteMutation';
 import guitaricon from '../../Assets/electric-guitar.svg';
+import { useAuth } from '../../Context/AuthContext';
+import FileDropBox from '../../Components/Box/FileDropBox';
+import { useNavigate } from 'react-router-dom';
 
 export default function WritePage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [author, setAuthor] = useState('');
+  const { uid } = useAuth();
+  const [imageFile, setImageFile] = useState(null);
+  const [audioFile, setAudioFile] = useState(null);
   const { mutate: writePost } = usePostWriteMutation();
 
-  // 오늘 날짜 format
-  const formatDate = (date) => {
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
-  };
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const post = {
-      uid: 'dogyeong', //중복X,자동 생성 & 증가되도록 변경해야됨
+      uid,
       title,
       author,
       content,
+      imageFile,
+      audioFile,
     };
     if (content.length < 10) {
       alert('내용을 10자 이상 입력해주세요');
@@ -40,6 +45,7 @@ export default function WritePage() {
         },
       },
     );
+    navigate('/notice');
   };
   return (
     <>
@@ -67,6 +73,19 @@ export default function WritePage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="제목을 입력해주세요"
               required="true"
+            />
+          </div>
+          {/* 파일 업로드 */}
+          <div className="flex justify-betweenㅈ">
+            <FileDropBox
+              label="이미지 업로드"
+              accept="image/*"
+              onFileSelect={(file) => setImageFile(file)}
+            />
+            <FileDropBox
+              label="오디오 업로드"
+              accept="audio/*"
+              onFileSelect={(file) => setAudioFile(file)}
             />
           </div>
 
