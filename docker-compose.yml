@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/maple-api:latest
+    container_name: maple-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - maple-network
+networks:
+  maple-network:
+    driver: bridge

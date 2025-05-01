@@ -618,4 +618,3 @@ async def read_comment(request: Request, post_id: int):
         context['comments_exist'] = "yes"
         context['comments_keyvaluelists'] = comments_keyvaluelists
     return JSONResponse(content=context)
-
