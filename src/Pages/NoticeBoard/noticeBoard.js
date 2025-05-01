@@ -16,7 +16,6 @@ export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
   const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
   const { mutate: increaseView } = useViewPutMutation();
-  const { data: autoCompleteSuggestions } = useAutoCompleteQuery(searchKeyword);
   const { data: postInfo } = usePostInfoQuery();
 
   console.log(postInfo, '게시물데이터 hooks');
@@ -30,6 +29,8 @@ export default function NoticeBoard() {
   const [totalPage, setTotalPage] = useState(
     postInfo ? Math.ceil(postInfo.length / contentsPerPage) : 1,
   );
+
+  const { data: autoCompleteSuggestions } = useAutoCompleteQuery(searchKeyword);
 
   const navigate = useNavigate();
 
