@@ -10,46 +10,14 @@ import Heart from '../../Assets/MyPage/filledHeart.svg';
 import Write from '../../Assets/MyPage/wirte.svg';
 import ImprovementChart from '../../Components/Chart/ImprovementChart.js';
 import { Link } from 'react-router-dom';
+import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
+import { useRecordQuery } from '../../Hooks/MyPage/PlayedMusic/useRecordQuery.js';
 
 export default function MyPage() {
-  const [records, setRecords] = useState([]);
-  const [userInfo, setUserInfo] = useState({ nickname: '', email: '' });
-  const [loading, setLoading] = useState(true);
-  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
   const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
-
-  useEffect(() => {
-    const fetchRecentRecords = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/recent-4-record`, {
-          params: { uid },
-        });
-        console.log('최근 기록 응답:', response.data);
-        setRecords(response.data.recent_uploads || []);
-      } catch (error) {
-        console.error('연습 기록 가져오기 실패:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchUserInfo = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-          params: { uid },
-        });
-
-        console.log("유저 정보 응답 전체:", response.data);
-        const { nickname, email} = response.data || {};
-        setUserInfo({ nickname, email});
-      } catch (error) {
-        console.error('유저 정보 가져오기 실패:', error);
-      }
-    };
-
-    fetchRecentRecords();
-    fetchUserInfo();
-  }, [BACKEND_URL, uid]);
+  const { data: userInfo } = useUserQuery(uid);
+  const { data: records } = useRecordQuery(uid);
+  const [loading, setLoading] = useState(true);
 
   return (
     <div className="min-h-screen">
@@ -132,7 +100,12 @@ export default function MyPage() {
               <div className="flex items-center ml-4 mt-5">
                 <span className="font-bold text-[20px]">최근 연주한 곡</span>
 
-                <Link to="/playedmusic" className="ml-2 mt-1text-lg text-gray-500 hover:text-gray-700">&gt;</Link>
+                <Link
+                  to="/playedmusic"
+                  className="ml-2 mt-1text-lg text-gray-500 hover:text-gray-700"
+                >
+                  &gt;
+                </Link>
               </div>
               <ul className="mt-8 space-y-5 ml-8">
                 {loading ? (
