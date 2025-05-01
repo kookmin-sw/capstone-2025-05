@@ -51,29 +51,41 @@ UPLOAD_AUDIO_DIR = "static/audio"
 
 os.makedirs(UPLOAD_IMAGE_DIR, exist_ok = True)
 os.makedirs(UPLOAD_AUDIO_DIR, exist_ok = True)
+ADMIN_UID = os.getenv("ADMIN_UID")
 
-def get_user_profile_image(uid: str) -> str:
-    user_doc = users_ref.document(uid).get()
-    if user_doc.exists:
-        return user_doc.to_dict().get("profile_image", "")
-    return ""
+async def get_user_profile_image(uid: str) -> str:
+    bucket = storage.bucket()
+    prefix = f"{uid}/profile/"
+
+    blob = list(bucket.list_blobs(prefix=prefix))
+    if blobs:
+        return blobs[0].generate_signed_url(version="v4", expiration=datetime.timedelta(minutes=15), method="GET")
+
+        return ""
 @router.get("/", response_class=JSONResponse, tags=["Post"])
-async def root(request: Request, limit: int = Query(10, description="가져올 게시글 수")):
+async def root(request: Request):
     try:
         postsdictlist = []
-        alldocs = posts_ref.order_by("date", direction=firestore.Query.DESCENDING).limit(limit).stream()
+        alldocs = posts_ref.order_by("created_at", direction=firestore.Query.DESCENDING).stream()
 
         for doc in alldocs:
             datadict = doc.to_dict()
             for key, value in datadict.items():
                 if isinstance(value, datetime.datetime):
                     datadict[key] = value.strftime("%Y년 %m월 %d일 %H시 %M분")
-            postsdictlist.append(datadict)
+                else:
+                    datadict[key] = str(value)
+            # image_url과 audio_url도 포함되도록 그대로 추가
+            postsdictlist.append({
+                "id": datadict.get("uid"),
+                "제목": datadict.get("제목"),
+                "작성자": datadict.get("작성자"),
+                "created_at": datadict.get("created_at"),
+                "image_url": datadict.get("image_url", ""),
+                "audio_url": datadict.get("audio_url", "")
+            })
 
-        return JSONResponse(content={
-            "limit": limit,
-            "posts": postsdictlist
-        })
+        return JSONResponse(content={ "posts": postsdictlist })
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"목록 가져오기 실패: {str(e)}")
@@ -95,7 +107,7 @@ async def increase_views(post_id: int):
     return post_data
 
 @router.get("/posts/top-viewed", response_class=JSONResponse, tags=["Post"])
-async def get_top_viewed_post():
+async def get_top_viewed_posts():
     postsdictlist = []
     alldocs = posts_ref.stream()
 
@@ -104,43 +116,47 @@ async def get_top_viewed_post():
         if '조회수' not in datadict:
             datadict['조회수'] = 0
         postsdictlist.append(datadict)
-
     postsdictlist.sort(key=lambda x: x.get('조회수', 0), reverse=True)
 
-    top_post = postsdictlist[0] if postsdictlist else {}
-    for key, value in top_post.items():
-        if isinstance(value, datetime.datetime):
-            top_post[key] = value.strftime("%Y년 %m월 %d일 %H시 %M분")
-
-    return JSONResponse(content=top_post)
+    for post in postsdictlist:
+        for key, value in post.items():
+            if isinstance(value, datetime.datetime):
+                post[key] = value.strftime("%Y년 %m월 %d일 %H시 %M분")
+    return JSONResponse(content={"posts": postsdictlist})
 
 @router.get("/posts/{post_id}", response_class=JSONResponse, tags=["Post"])
 async def read_post(request: Request, post_id: int):
-    
     context = {'post_id': post_id}
+    postkeyvaluedict = []
 
-    print("read_postdetail >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-
-    postkeyvaluedict=[]
-    alldocs=posts_ref.stream()
+    alldocs = posts_ref.stream()
     for doc in alldocs:
-        datadict=doc.to_dict()
-        if datadict.get("id")==post_id:
+        datadict = doc.to_dict()
+        if datadict.get("uid") == post_id:
             for key, value in datadict.items():
                 if isinstance(value, datetime.datetime):
                     datadict[key] = value.strftime("%Y년 %m월 %d일 %H시 %M분")
-            postkeyvaluedict.append(datadict)
+            postkeyvaluedict.append({
+                "uid": datadict.get("uid"),
+                "제목": datadict.get("제목"),
+                "내용": datadict.get("내용"),
+                "작성자": datadict.get("작성자"),
+                "created_at": datadict.get("created_at"),
+                "image_url": datadict.get("image_url", ""),
+                "audio_url": datadict.get("audio_url", "")
+            })
             break
+
     if not postkeyvaluedict:
-        context['postexist']="no"
+        context['postexist'] = "no"
     else:
         context['postexist'] = "yes"
-  
-        comments_keyvaluelists=[]
-        alldocs=comments_ref.stream()
+
+        comments_keyvaluelists = []
+        alldocs = comments_ref.stream()
         for doc in alldocs:
-            datadict=doc.to_dict()
-            if datadict.get("postid")==post_id:
+            datadict = doc.to_dict()
+            if datadict.get("postid") == post_id:
                 for key, value in datadict.items():
                     if isinstance(value, datetime.datetime):
                         datadict[key] = value.strftime("%Y년 %m월 %d일 %H시 %M분")
@@ -148,6 +164,7 @@ async def read_post(request: Request, post_id: int):
 
         context['keyvaluedict'] = postkeyvaluedict
         context['comments_keyvaluelists'] = comments_keyvaluelists
+
     return JSONResponse(content=context)
 
 async def upload_file_to_firebase(file:UploadFile, path: str) -> Optional[str]:
@@ -170,6 +187,7 @@ async def create_post(
     content : str= Form(),
     author : str = Form(),
     title : str = Form(),
+    password: str = Form(),
     image: Optional[UploadFile] = File(default=None), 
     audio: Optional[UploadFile] = File(default=None)):
     db = firestore.client()
@@ -191,14 +209,16 @@ async def create_post(
         audio_url = await upload_file_to_firebase(audio, audio_path)
 
     post_data = {
+        "id": lastdbid + 1,
         "uid": int(string_number),
         "내용": content,
         "댓글갯수": 0,
-        "date": now.isoformat(),
+        "created_at": now,
         "작성자": author,
-        "title": title,
+        "제목": title,
         "조회수": 0,
         "좋아요수": 0,
+        "비밀번호" : password,
         "image_url": image_url,
         "audio_url": audio_url
     }
@@ -207,8 +227,8 @@ async def create_post(
 
     firestore.client().collection("my_activity").document(str(uid)).collection("post").document(string_number).set({
         "post_id": string_number,
-        "title": title,
-        "date": now.isoformat()
+        "제목": title,
+        "created_at": now.isoformat()
     })
 
     return {"result_msg": "게시글이 성공적으로 등록되었습니다.", "post_id": string_number}
@@ -216,10 +236,8 @@ async def create_post(
 @router.put("/posts/{post_id}", tags=["Post"])
 async def modify_post(
     post_id: int,
-    uid: str = Form(),
-    title: str = Form(...),
-    content: str = Form(...),
-    author: str = Form(...),
+    title: Optional[str] = Form(...),
+    content: Optional[str] = Form(...),
     image: Optional[UploadFile] = File(None),
     audio: Optional[UploadFile] = File(None)
 ):
@@ -228,11 +246,12 @@ async def modify_post(
     string_number = postid.zfill(8)
     updated_at = datetime.datetime.utcnow()
 
-    update_data = {
-        "title": title,
-        "내용": content,
-        "date" : updated_at
-    }
+    update_data = {}
+    if title is not None:
+        update_data["제목"] = title
+    if content is not None:
+        update_data["내용"] = content
+    update_data["created_at"] = updated_at
     if image:
         image_path = f"post/image/{string_number}_{image.filename}"
         image_url = await upload_file_to_firebase(image, image_path)
@@ -246,8 +265,8 @@ async def modify_post(
     post_doc = posts_ref.document(string_number).get()
     if post_doc.exists:
         db.collection("my_activity").document(uid).collection("post").document(string_number).update({
-            "title": title,
-            "date": updated_at.isoformat()
+            "제목": title,
+            "created_at": updated_at.isoformat()
         })
 
     return {'result_msg': f"{postid} updated..."}
@@ -270,6 +289,34 @@ async def delete_post(post_id: int):
             comments_ref.document(doc.id).delete()
     db.collection("my_activity").document(uid).collection("post").document(string_number).delete()
     return {'result_msg' : f"Post {post_id} and its comments deleted."}
+
+@router.delete("/posts/admin/{post_id}", tags=["Post"])
+async def delete_post(post_id: int, uid:str = Query(...)):
+    string_number = str(post_id).zfill(8)
+
+    if uid != ADMIN_UID:
+        raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
+
+    post_ref = posts_ref.document(string_number)
+    if not post_ref.get().exists:
+        raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+    
+    post_ref.delete()
+
+    firestore.client().collection("my_activity").document(uid).collection("post").document(string_number).delete()
+
+    return {"result_msg": f"{post_id}번 게시글이 삭제됐습니다."}
+@router.delete("/comments/admin/{comment_id}", tags=["Comment"])
+async def delete_comment(comment_id: str, uid:str = Query(...)):
+    if uid != ADMIN_UID:
+        raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
+
+    comment_ref = comments_ref.document(comment_id)
+    if not comment_ref.get().exists:
+        raise HTTPException(status_code=404, detail="댓글을 찾을 수 없습니다.")
+    comment_ref.delete()
+    return {"result_msg" : f"{comment_id}번 댓글이 삭제됐습니다."}
+
 
 @router.post("/comment", tags=["Comment"])
 async def create_comment(comment: Comment):
@@ -297,7 +344,9 @@ async def create_comment(comment: Comment):
     now = datetime.datetime.utcnow()
     comment_data["date"] = now
     if comment_data.get("uid"):
-        comment_data["profile_image"] = get_user_profile_image(comment_data["uid"])
+        profile_image = await get_user_profile_image(comment_data["uid"])
+        if profile_image:
+            comment_data["profile_image"] = profile_image
     with firestore_db.transaction() as transaction:
         new_comment_id = transaction_create_comment(transaction, firestore_db, comment_data)
     if comment_data.get("uid"):
@@ -320,7 +369,7 @@ async def modify_post(comment: Comment, comment_id : int):
 
     toupdate_commentcontent=comment.내용
     updated_at = datetime.datetime.utcnow()
-    #firestore DB에 업데이트
+
     comments_ref.document(string_number).update({
     
         "내용": toupdate_commentcontent,
@@ -381,36 +430,36 @@ async def delete_comment(comment_id: int):
         
     return {'result_msg' : f"댓글 {comment_id} 삭제 성공"}
 
+
 @router.post("/posts/{post_id}/like", tags=["Post"])
 async def like_post(post_id: int, uid: str, request: Request):
     db = firestore.client()
-    user = request.headers.get("uid")
-    if not user:
+
+    if not uid:
         raise HTTPException(status_code=400, detail="User UID is required")
 
     string_number = str(post_id).zfill(8)
     
-    like_doc_ref = db.collection("my_activity").document(user).collection("like").document(string_number)
+    like_doc_ref = db.collection("my_activity").document(uid).collection("like").document(string_number)
     post_doc_ref = db.collection("post").document(string_number)
 
     if like_doc_ref.get().exists:
         raise HTTPException(status_code=400, detail="이미 좋아요한 게시글입니다.")
-     
+
     post_doc = post_doc_ref.get()
     if not post_doc.exists:
         raise HTTPException(status_code=404, detail="게시글이 존재하지 않습니다.")
 
-    
     post_doc_ref.update({"좋아요수": firestore.Increment(1)})
 
-   
     like_doc_ref.set({
-        "user_id" : user,
+        "user_id" : uid,
         "post_id": string_number,
         "like_date": datetime.datetime.utcnow()
     })
 
     return {"result_msg": "좋아요가 추가되었습니다.", "post_id": post_id}
+
 
 @router.delete("/posts/{post_id}/like", tags=["Post"])
 async def unlike_post(post_id: int, request: Request):
@@ -469,6 +518,7 @@ async def remove_scrap(post_id: str, request: Request):
     scrap_doc.delete()
     return {"message": "스크랩이 취소되었습니다.", "post_id": post_id}
 
+
 @router.post("/report/post/{post_id}", tags=["Post"])
 async def report_post(post_id : int, reason: str):
     global reports_ref
@@ -497,6 +547,7 @@ async def report_comment(comment_id: int, reason: str):
     reports_ref.add(report_data)
     return {"result_msg": f"Comment {comment_id} reported for reason: {reason}"}
 
+
 @router.get("/search", tags=["Post"])
 def search_post(
     query: str = Query(..., description="검색어 입력")
@@ -504,10 +555,11 @@ def search_post(
     try:
         query_lower = query.lower()
 
+ 
         docs = (
             posts_ref
             .order_by("date", direction="DESCENDING")
-            .order_by("title", direction="ASCENDING")  
+            .order_by("title", direction="ASCENDING") 
             .stream()
         )
 
@@ -515,7 +567,7 @@ def search_post(
         for doc in docs:
             data = doc.to_dict()
             title = data.get("title", "").lower()
-            
+        
             if query_lower in title:
                 results.append({
                     "id": doc.id,
@@ -534,7 +586,7 @@ def autocomplete(query: str = Query(..., description="자동완성 검색어 입
         query_lower = query.lower()
         docs = (
             posts_ref
-            .order_by("title") 
+            .order_by("title")  
             .start_at([query_lower])
             .end_at([query_lower + "\uf8ff"])
             .stream()
@@ -545,9 +597,12 @@ def autocomplete(query: str = Query(..., description="자동완성 검색어 입
         return {"suggestions": suggestions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"자동완성 실패: {str(e)}")
+
 @router.get("/comment/{post_id}", response_class=JSONResponse, tags=["Comment"])
 async def read_comment(request: Request, post_id: int):
+    
     context = {'post_id': post_id}
+
     comments_keyvaluelists=[]
     alldocs=comments_ref.stream()
     for doc in alldocs:
