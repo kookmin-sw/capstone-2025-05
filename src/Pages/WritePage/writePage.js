@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import MapleHeader from '../../Components/MapleHeader';
 import MapleFooter from '../../Components/MapleFooter';
 import { usePostWriteMutation } from '../../Hooks/post/usePostWriteMutation';
 import guitaricon from '../../Assets/electric-guitar.svg';
@@ -49,10 +48,10 @@ export default function WritePage() {
   };
   return (
     <>
-      <div className="min-h-screen bg-[F0EFE6] flex justify-center items-center px-4 py-12">
+      <div className="flex justify-center items-center bg-[F0EFE6] px-4 py-12 w-full">
         <form
           onSubmit={handleSubmit}
-          className="bg-white w-full max-w-2xl rounded-2xl shadow-lg p-10 space-y-6 transition-all duration-300"
+          className="bg-white rounded-2xl shadow-lg p-10 space-y-6 transition-all duration-300 lg:w-[60%] xl:w-[40%] 2xl:w-[35%]"
         >
           <h1 className="text-3xl font-bold text-center text-[#5f4532] tracking-wide">
             <div className="flex items-center justify-center">
@@ -64,7 +63,7 @@ export default function WritePage() {
 
           {/* 제목 */}
           <div>
-            <label className="block mb-2 text-sm font-medium text-[#5f4532]">
+            <label className="block ml-[1px] mb-2 text-lg font-medium text-[#5f4532]">
               제목
             </label>
             <input
@@ -76,7 +75,7 @@ export default function WritePage() {
             />
           </div>
           {/* 파일 업로드 */}
-          <div className="flex justify-betweenㅈ">
+          <div className="flex justify-between">
             <FileDropBox
               label="이미지 업로드"
               accept="image/*"
@@ -91,21 +90,31 @@ export default function WritePage() {
 
           {/* 내용 */}
           <div>
-            <label className="block mb-2 text-sm font-medium text-[#5f4532]">
+            <label className="block mb-2 ml-[1px] text-lg font-medium text-[#5f4532]">
               내용
             </label>
             <textarea
               className="w-full h-48 px-4 py-3 border border-[#A57865] rounded-xl shadow-sm resize-none focus:ring-2 focus:ring-[#a57865] focus:outline-none bg-[#fdfaf6] placeholder:text-[#b28c74]"
               value={content}
+              maxLength={300}
               onChange={(e) => setContent(e.target.value)}
               placeholder="10자 이상 입력해주세요"
               required="true"
             />
+            <div className="text-right text-lg text-[#a57865] mt-1">
+              {content.length < 10 ? (
+                <span className="text-red-500">
+                  내용을 10자 이상 입력해주세요 ({content.length}/300)
+                </span>
+              ) : (
+                <span>{content.length}/300</span>
+              )}
+            </div>
           </div>
 
           {/* 작성자 */}
           <div>
-            <label className="block mb-2 text-sm font-medium text-[#5f4532]">
+            <label className="block mb-2 ml-[1px] text-lg font-medium text-[#5f4532]">
               작성자
             </label>
             <input
