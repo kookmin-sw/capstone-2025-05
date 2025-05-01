@@ -7,6 +7,8 @@ import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
+import BeatChart from '../../Components/Chart/beatChart.js';
+import TechniqueChart from '../../Components/Chart/techniqueChart.js';
 import playdata from '../../Data/compare.json';
 import feedback from '../../Data/feedback_8583d5bf.json';
 import fakedata from '../../Data/chartdata.json';
@@ -109,7 +111,6 @@ export default function Feedback() {
         second: parseFloat((i * 0.5).toFixed(2)),
         original: item.reference_technique || 'None',
         played: item.user_technique || 'None',
-        pitch_difference: 0,
         technique_match: item.user_technique === item.reference_technique,
       }));
     }
@@ -121,11 +122,11 @@ export default function Feedback() {
       const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
         params: { uid },
       });
-      console.log("유저 정보 응답 전체:", response.data);
+      console.log('유저 정보 응답 전체:', response.data);
       const { nickname, email } = response.data || {};
       setUserInfo({ nickname, email });
     } catch (error) {
-      console.error("유저 정보 가져오기 실패:", error);
+      console.error('유저 정보 가져오기 실패:', error);
     }
   };
 
@@ -193,11 +194,11 @@ export default function Feedback() {
 
     if (uid) {
       fetchSpecificRecord();
-      fetchUserInfo();  // 여기서 유저 정보 가져오기 호출!
+      fetchUserInfo(); // 여기서 유저 정보 가져오기 호출!
     } else {
       setLoading(false);
     }
-  }, [uid, songName, uploadCount, BACKEND_URL]);  // 추가한 변수도 의존성 배열에 포함시켜야 함
+  }, [uid, songName, uploadCount, BACKEND_URL]); // 추가한 변수도 의존성 배열에 포함시켜야 함
 
   const handleCompareClick = () => {
     console.log('동시 재생 버튼 클릭');
@@ -221,37 +222,32 @@ export default function Feedback() {
   };
 
   return (
-
     <div className="flex min-h-screen">
       {/* 사이드바 */}
       <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
-          <div>
-            <h2 className="text-md font-bold">MAPLE</h2>
-            <ul className="mt-4 space-y-2">
-              <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
-                <img
-                  src={Information}
-                  alt="내 정보 아이콘"
-                  className="w-4 h-4"
-                />
-                <Link to="/mypage" className="text-white">
-                  내 정보
-                </Link>
-              </li>
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
-                <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
-                <Link to="/playedmusic">연주한 곡</Link>
-              </li>
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
-                <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
-                <Link to="/setting">관리</Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="font-semibold">{userInfo.nickname || "사용자"}</p>
-          </div>
+        <div>
+          <h2 className="text-md font-bold">MAPLE</h2>
+          <ul className="mt-4 space-y-2">
+            <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
+              <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
+              <Link to="/mypage" className="text-white">
+                내 정보
+              </Link>
+            </li>
+            <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
+              <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
+              <Link to="/playedmusic">연주한 곡</Link>
+            </li>
+            <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
+              <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
+              <Link to="/setting">관리</Link>
+            </li>
+          </ul>
         </div>
+        <div>
+          <p className="font-semibold">{userInfo.nickname || '사용자'}</p>
+        </div>
+      </div>
 
       {/* 메인 콘텐츠 */}
       <div className="flex-1 overflow-y-auto p-10 space-y-12">
@@ -335,11 +331,7 @@ export default function Feedback() {
         </div>
 
         {/* 분석 부분 */}
-        <Box
-          width="100%"
-          height="45%"
-          overwrite="p-6 shadow-lg"
-        >
+        <Box width="100%" height="45%" overwrite="p-6 shadow-lg">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold">{graphs[currentGraphIndex].label}</h3>
             <div className="flex gap-2">
@@ -378,16 +370,21 @@ export default function Feedback() {
               <div className="flex justify-center">
                 {graphs.map((_, index) => (
                   <div
-                     key={index}
-                     className={`w-2 h-2 rounded-full mx-1 ${
-                       currentGraphIndex === index ? 'bg-black' : 'bg-gray-300'
-                     }`}
+                    key={index}
+                    className={`w-2 h-2 rounded-full mx-1 ${
+                      currentGraphIndex === index ? 'bg-black' : 'bg-gray-300'
+                    }`}
                   />
-               ))}
+                ))}
               </div>
-              <PerformanceChart
-                data={getChartDataByType(graphs[currentGraphIndex].key)}
-              />
+
+              {graphs[currentGraphIndex].key === 'technique' ? (
+                <TechniqueChart data={getChartDataByType('technique')} />
+              ) : graphs[currentGraphIndex].key === 'onset' ? (
+                <BeatChart data={getChartDataByType('onset')} />
+              ) : (
+                <PerformanceChart data={getChartDataByType('pitch')} />
+              )}
             </>
           ) : (
             <p>로딩 중...</p>

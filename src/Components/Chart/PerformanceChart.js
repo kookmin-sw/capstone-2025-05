@@ -13,14 +13,17 @@ import {
   ReferenceArea,
 } from 'recharts';
 
-export default function PerformanceChart({ data, measureTimes = [], largeDiffSections = [] }) {
-  const allValues = data.flatMap(d => [d.original, d.played]);
+export default function PerformanceChart({
+  data,
+  measureTimes = [],
+  largeDiffSections = [],
+}) {
+  const allValues = data.flatMap((d) => [d.original, d.played]);
   const minY = Math.max(0, Math.min(...allValues) - 50);
   const maxY = Math.max(...allValues) + 50;
 
   const ticks = [];
   for (let y = minY; y <= maxY; y += 20) ticks.push(y);
-
 
   const FillBetweenLines = ({ height, width, xAxisMap, yAxisMap }) => {
     const yScale = yAxisMap[0].scale;
@@ -49,7 +52,7 @@ export default function PerformanceChart({ data, measureTimes = [], largeDiffSec
             ${x1},${yScale(bottom1)}
           `}
           fill="rgba(255, 99, 132, 0.3)"
-        />
+        />,
       );
     }
 
@@ -62,8 +65,15 @@ export default function PerformanceChart({ data, measureTimes = [], largeDiffSec
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="second" tickFormatter={(value) => value.toFixed(1)} />
-            <YAxis domain={[minY, maxY]} ticks={ticks} tickFormatter={(value) => `${value}`} />
+            <XAxis
+              dataKey="second"
+              tickFormatter={(value) => value.toFixed(1)}
+            />
+            <YAxis
+              domain={[minY, maxY]}
+              ticks={ticks}
+              tickFormatter={(value) => `${value}`}
+            />
             <Tooltip />
             <Legend />
 
@@ -76,9 +86,9 @@ export default function PerformanceChart({ data, measureTimes = [], largeDiffSec
                 strokeDasharray="4 4"
                 label={{
                   value: `|`,
-                  position: "top",
+                  position: 'top',
                   fontSize: 12,
-                  fill: "#aaa"
+                  fill: '#aaa',
                 }}
               />
             ))}
@@ -89,16 +99,28 @@ export default function PerformanceChart({ data, measureTimes = [], largeDiffSec
                 x1={section.startTime}
                 x2={section.endTime}
                 strokeOpacity={0}
-                fill="rgba(255, 165, 0, 0.3)"  // 연한 주황
+                fill="rgba(255, 165, 0, 0.3)" // 연한 주황
               />
             ))}
 
+            <Customized
+              component={(props) => <FillBetweenLines {...props} />}
+            />
 
-            <Customized component={(props) => <FillBetweenLines {...props} />} />
-
-
-            <Line type="linear" dataKey="original" stroke="#8884d8" dot={false} name="Original Pitch" />
-            <Line type="linear" dataKey="played" stroke="#82ca9d" dot={false} name="User Pitch" />
+            <Line
+              type="linear"
+              dataKey="original"
+              stroke="green"
+              dot={false}
+              name="Original Pitch"
+            />
+            <Line
+              type="linear"
+              dataKey="played"
+              stroke="blue"
+              dot={false}
+              name="User Pitch"
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
