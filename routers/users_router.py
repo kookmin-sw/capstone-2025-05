@@ -3,7 +3,7 @@ from firebase_admin import auth, db
 
 router = APIRouter()
 
-@router.get("/users")
+@router.get("/users", tags=["Users"])
 async def get_all_users():
     try:
         users = []
@@ -25,7 +25,7 @@ async def get_all_users():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/users-one")
+@router.get("/users-one", tags=["Users"])
 async def get_user_by_uid(uid: str):
     try:
         user = auth.get_user(uid)
