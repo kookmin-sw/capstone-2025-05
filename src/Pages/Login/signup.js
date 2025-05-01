@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Header from '../../Components/MapleHeader';
 import Logo from '../../Assets/logo.svg';
 import Box from '../../Components/Box/Box.js';
 import Input from '../../Components/Input/input.js';
@@ -18,7 +17,6 @@ export default function Signup() {
 
   const handleSignup = async () => {
     const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
-
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
 
@@ -41,15 +39,8 @@ export default function Signup() {
     try {
       const res = await axios.post(
         `${BACKEND_URL}/email-sign-up`,
-        {
-          email: trimmedEmail,
-          password: trimmedPassword,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
+        { email: trimmedEmail, password: trimmedPassword },
+        { headers: { 'Content-Type': 'application/json' } },
       );
 
       const uid = res.data.uid;
@@ -63,9 +54,7 @@ export default function Signup() {
       }
     } catch (error) {
       console.error('회원가입 에러:', error);
-
       const detail = error.response?.data?.detail;
-
       if (detail === '이미 등록된 이메일입니다.') {
         alert('이미 가입된 이메일 주소입니다.');
       } else if (error.response?.status === 422) {
@@ -80,37 +69,37 @@ export default function Signup() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex flex-col items-center justify-center flex-grow relative">
-        <div className="absolute top-[10%] z-10">
+      <div className="flex flex-col items-center justify-center h-full pt-[20px]">
+        <div className="flex z-10 translate-y-10">
           <img src={Logo} alt="logo" className="w-52 h-auto" />
         </div>
 
-        <div className="absolute top-[18%]">
-          <Box width="400px" height="432px">
-            <div className="flex flex-col items-center justify-center h-full">
+        <div className="flex justify-center w-full">
+          <Box width="600px" height="480px">
+            <div className="flex flex-col items-center justify-center w-full h-full">
               <span className="text-center text-lg font-semibold mb-8">
                 사용할 이메일과 비밀번호를 입력해 주세요
               </span>
-              <div className="flex flex-col items-center gap-y-6">
+              <div className="flex flex-col items-center justify center gap-y-4">
                 <Input
-                  width="320px"
-                  height="52px"
-                  type="email"
+                  width="448px"
+                  height="60px"
+                  type="text"
                   placeholder="이메일을 입력해 주세요"
                   value={email}
                   onChange={handleEmail}
                 />
                 <Input
-                  width="320px"
-                  height="52px"
+                  width="448px"
+                  height="60px"
                   type="password"
                   placeholder="비밀번호를 입력해 주세요"
                   value={password}
                   onChange={handlePassword}
                 />
               </div>
-              <div className="mt-16">
-                <Button width="320px" height="52px" onClick={handleSignup}>
+              <div className="flex justify-center mt-12 font-bold">
+                <Button width="448px" height="60px" onClick={handleSignup}>
                   회원가입
                 </Button>
               </div>
@@ -119,7 +108,17 @@ export default function Signup() {
         </div>
       </div>
 
-      <Footer className="absolute bottom-0 w-full" />
+      <div className="flex flex-col items-center mt-10 mb-[296px]">
+        <div className="flex">
+          <button
+            className="text-[#AFAFAF] text-sm underline hover:text-gray-500"
+            onClick={() => navigate('/login')}
+          >
+            로그인으로 돌아가기
+          </button>
+        </div>
+      </div>
+      <Footer />
     </div>
   );
 }
