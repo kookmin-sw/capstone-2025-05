@@ -11,13 +11,13 @@ import Write from '../../Assets/MyPage/wirte.svg';
 import ImprovementChart from '../../Components/Chart/ImprovementChart.js';
 import { Link } from 'react-router-dom';
 import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
-import { useRecordQuery } from '../../Hooks/MyPage/PlayedMusic/useRecordQuery.js';
+import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
 
 export default function MyPage() {
   const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const { data: userInfo } = useUserQuery(uid);
-  const { data: records } = useRecordQuery(uid);
-  const [loading, setLoading] = useState(true);
+  const { data: records, isLoading } = useRecentRecordsQuery(uid);
+  console.log(records);
 
   return (
     <div className="min-h-screen">
@@ -48,7 +48,7 @@ export default function MyPage() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">{userInfo.nickname || '사용자'}</p>
+            <p className="font-semibold">{'사용자' || userInfo?.nickname}</p>
           </div>
         </div>
 
@@ -76,17 +76,17 @@ export default function MyPage() {
                       className="w-40 h-40 rounded-full mx-auto cursor-pointer"
                     />
                     <h3 className="text-center text-xl font-bold mt-6">
-                      {userInfo.nickname || '홍길동'}
+                      {userInfo?.nickname || '홍길동'}
                     </h3>
                     <div className="mt-16 ml-4">
                       <p className="text-xl">닉네임</p>
                       <p className="font-semibold text-xl">
-                        {userInfo.nickname}
+                        {userInfo?.nickname}
                       </p>
                     </div>
                     <div className="mt-16 ml-4">
                       <p className="text-xl">이메일</p>
-                      <p className="font-semibold text-xl">{userInfo.email}</p>
+                      <p className="font-semibold text-xl">{userInfo?.email}</p>
                     </div>
                   </div>
                 </Box>
@@ -108,9 +108,10 @@ export default function MyPage() {
                 </Link>
               </div>
               <ul className="mt-8 space-y-5 ml-8">
-                {loading ? (
+                {isLoading ? (
                   <li>Loading...</li>
                 ) : (
+                  records &&
                   records.map((song, index) => (
                     <li
                       key={index}
@@ -179,7 +180,7 @@ export default function MyPage() {
                     to="/setting"
                     className="text-black text-[16px] font-semibold hover:underline"
                   >
-                    {userInfo.nickname || '길동1234'}
+                    {userInfo?.nickname || '길동1234'}
                   </Link>
                 </div>
               </div>
