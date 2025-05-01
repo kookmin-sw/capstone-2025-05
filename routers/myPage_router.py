@@ -235,8 +235,14 @@ async def get_all_records(uid: str):
 
 @router.get("/records/specific", tags=["My Page"])
 async def get_specific_record(uid: str, song_name: str, upload_count: int):
-    """특정 연습 기록 조회"""
     try:
+        album_blob = storage_bucket.blob(f"album_covers/{song_name}.jpg")
+        cover_url = (
+            album_blob.generate_signed_url(datetime.timedelta(minutes=60))
+            if album_blob.exists()
+            else None
+        )
+
         if upload_count == 0:  # 모든 연습 내역 조회
             blob_path = f"{uid}/record/{song_name}/"
             blobs = list(storage_bucket.list_blobs(prefix=blob_path))
@@ -257,7 +263,10 @@ async def get_specific_record(uid: str, song_name: str, upload_count: int):
             if not records:
                 raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
 
-            return records
+            return {
+                "album_cover_url": cover_url,
+                "records": records
+            }
 
         else:
             score_data = get_score_data(uid, song_name, upload_count)
@@ -272,12 +281,14 @@ async def get_specific_record(uid: str, song_name: str, upload_count: int):
                 "date": extract_date(score_data.get("date"))
             }
 
-            return record_data
+            return {
+                "album_cover_url": cover_url,
+                "record": record_data
+            }
 
     except Exception as e:
         print(f"특정 연습 기록 조회 실패: {str(e)}")
         raise HTTPException(status_code=500, detail="특정 연습 기록 조회에 실패했습니다.")
-
 
 @router.get("/records/audio", tags=["My Page"])
 async def get_record_audio(uid: str, song_name: str, upload_count: int):

@@ -37,7 +37,6 @@ async def google_login():
 @router.get("/google-auth-callback", tags=["Account"])
 async def google_auth_callback(code: str):
     try:
-        # 배포 환경에 맞는 리디렉션 URI 설정
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://maple.ne.kr/api/google-auth-callback")
 
         response = requests.post(
