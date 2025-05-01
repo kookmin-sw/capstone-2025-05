@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
+/*게시글 수정하기 */
 const updatePost = ({
   id,
   editedTitle,

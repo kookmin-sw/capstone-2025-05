@@ -66,7 +66,6 @@ export default function Profile() {
 
   return (
     <div className="flex flex-col h-screen">
-      <Header />
       <div className="flex flex-col items-center flex-grow relative">
         <div className="absolute top-[12%]">
           <img src={Logo} alt="logo" className="w-60 h-auto" />

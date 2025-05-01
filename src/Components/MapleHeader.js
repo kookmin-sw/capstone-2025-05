@@ -4,11 +4,13 @@ import { RiLogoutBoxRLine, RiLoginBoxLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import SearchBox from '../Components/SearchBox/searchBox.js';
 import Button from '../Components/Button/Button.js';
+import { useAuth } from '../Context/AuthContext.js';
 
 const MapleHeader = () => {
   const menuList = ['분석하기', '초보방', '자유게시판', '마이페이지'];
   const [isLogin, setIsLogin] = useState(true);
   const [searchValue, setSearchValue] = useState();
+  const { uid, logout } = useAuth();
   const navigate = useNavigate();
 
   const goPage = (menu) => {
@@ -24,9 +26,12 @@ const MapleHeader = () => {
     }
   };
 
-  const clickLogin = () => {
-    setIsLogin(!isLogin);
+  const handleLogin = () => {
     navigate('/login');
+  };
+
+  const handleLogout = () => {
+    logout();
   };
 
   return (
@@ -62,13 +67,9 @@ const MapleHeader = () => {
           </div>
         </form>
         <div className="flex mr-8">
-          {isLogin ? (
+          {uid ? (
             <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
-              <Button
-                width={'100px'}
-                height={'40px'}
-                onClick={() => setIsLogin(!isLogin)}
-              >
+              <Button width={'100px'} height={'40px'} onClick={handleLogout}>
                 <div className="flex items-center">
                   <span>로그아웃</span>
                   <RiLogoutBoxRLine />
@@ -77,11 +78,7 @@ const MapleHeader = () => {
             </div>
           ) : (
             <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
-              <Button
-                width={'100px'}
-                height={'40px'}
-                onClick={() => clickLogin()}
-              >
+              <Button width={'100px'} height={'40px'} onClick={handleLogin}>
                 <div className="flex items-center">
                   <span>로그인</span>
                   <RiLoginBoxLine />

@@ -3,7 +3,6 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import Dropdown from '../../Components/Dropdown/dropdown.js';
 import Input from '../../Components/Input/input.js';
-import Header from '../../Components/MapleHeader.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
@@ -19,26 +18,34 @@ export default function Admin() {
   const [profilePic, setProfilePic] = useState(Profile);
   const [isAccountDeleted, setIsAccountDeleted] = useState(false);
   const navigate = useNavigate();
-  const uid = "cLZMFP4802a7dwMo0j4qmcxpnY63";
-
+  const uid = localStorage.getItem("uid") || "cLZMFP4802a7dwMo0j4qmcxpnY63";
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get(`${BACKEND_URL}/mypage/my-profile`, {
+        const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
           params: { uid }
         });
-        const data = response.data;
-        setNickname(data.nickname || '');
-        setEmail(data.email || '');
-        setSkillLevel(data.level || '');
-        setGenre(data.genreList?.[0] || '');
+    
+        const userInfo = response.data; // 수정한 부분
+    
+        if (!userInfo) {
+          console.error('No user information found:', response.data);
+          return;
+        }
+    
+        setNickname(userInfo.nickname || '');
+        setEmail(userInfo.email || '');
+        setSkillLevel(userInfo.level || '');
+        setGenre(userInfo.interest_genre?.[0] || '');
+        setProfilePic(userInfo.profile_image || Profile);
+        console.log('Fetched user info:', userInfo);
+    
       } catch (error) {
         console.error('Error fetching user info:', error.response || error);
       }
     };
-
     fetchUserInfo();
   }, [BACKEND_URL, uid]);
 
@@ -53,11 +60,12 @@ export default function Admin() {
     }
 
     try {
-      const res = await axios.put(`${BACKEND_URL}/mypage/edit-user/nickname`, null, {
+      const res = await axios.put(`${BACKEND_URL}/edit-user/nickname`, null, {
         params: { uid, nickname: trimmedNickname }
       });
       console.log('Nickname updated:', res.data);
       setIsModalOpen(true);
+      window.location.reload();    
     } catch (error) {
       console.error('Error updating nickname:', error.response || error);
     }
@@ -66,39 +74,69 @@ export default function Admin() {
   const handleGenreChange = async (e) => {
     const genreValue = e.target.value;
     try {
-      const res = await axios.put(`${BACKEND_URL}/mypage/edit-user/interest-genre`, [genreValue], {
+      const res = await axios.put(`${BACKEND_URL}/edit-user/interest-genre`, [genreValue], {
         params: { uid }
       });
       console.log('Genre updated:', res.data);
+      setGenre(genreValue); // ★ 추가: state 업데이트
     } catch (error) {
       console.error('Error updating genre:', error.response || error);
     }
   };
-
+  
   const handleSkillChange = async (e) => {
     const skillLevelValue = Number(e.target.value);
     try {
-      const res = await axios.put(`${BACKEND_URL}/mypage/edit-user/level`, null, {
+      const res = await axios.put(`${BACKEND_URL}/edit-user/level`, null, {
         params: { uid, level: skillLevelValue }
       });
       console.log('Skill level updated:', res.data);
+      setSkillLevel(skillLevelValue); // ★ 추가
     } catch (error) {
       console.error('Error updating skill level:', error.response || error);
     }
   };
+  
 
-  const handleProfilePicChange = (e) => {
+  const handleProfilePicChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setProfilePic(reader.result);
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("uid", uid);
+  
+      // 파일 크기 및 형식 체크
+      if (!file.type.startsWith("image/")) {
+        alert("이미지 파일만 업로드할 수 있습니다.");
+        return;
+      }
+      if (file.size > 5000000) { // 예: 5MB 제한
+        alert("파일 크기가 너무 큽니다. 5MB 이하로 업로드해 주세요.");
+        return;
+      }
+  
+      try {
+        const response = await axios.post(`${BACKEND_URL}/change-profile-image`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        setProfilePic(URL.createObjectURL(file)); // 미리보기
+        console.log("Uploaded Image URL:", URL.createObjectURL(file));
+      } catch (error) {
+        console.error("Error uploading profile picture:", error.response || error);
+        if (error.response && error.response.data) {
+          alert(`Error: ${error.response.data.message || '이미지 업로드에 실패했습니다.'}`);
+        } else {
+          alert("알 수 없는 오류가 발생했습니다.");
+        }
+      }
     }
   };
 
   const handleDeleteAccount = async () => {
     try {
-      const res = await axios.delete(`${BACKEND_URL}/account/delete-user/${uid}`);
+      const res = await axios.delete(`${BACKEND_URL}/delete-user/${uid}`);
       if (res.data.success) {
         setIsAccountDeleted(true);
         setTimeout(() => {
@@ -114,8 +152,6 @@ export default function Admin() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
-
       <div className="flex flex-1">
         {/* Sidebar */}
         <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
@@ -137,7 +173,7 @@ export default function Admin() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">Kildong Hong</p>
+             <p className="font-semibold">{nickname || '사용자'}</p>
           </div>
         </div>
 
