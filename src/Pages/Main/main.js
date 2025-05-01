@@ -11,64 +11,35 @@ import Right from '../../Assets/Main/arrowRight.svg';
 import Box from '../../Components/Box/Box';
 import Footer from '../../Components/MapleFooter';
 import 'swiper/css';
+import { useNewReleases } from '../../Hooks/Main/getNewReleases';
+import swal from 'sweetalert';
 
 export default function Main() {
   const navigate = useNavigate();
   const swiperRef = useRef(null);
   const [trend, setTrend] = useState([]);
   const [top, setTop] = useState([]);
+  const { data: TrendMusic } = useNewReleases(); //items
 
   const handleMove = () => {
     navigate('/ranking?song_name=Drowning'); // 랭킹 테스트 - 수정하기
   };
 
   useEffect(() => {
-    const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+    try {
+      // 여기서 인기곡은 top에 세팅, 최신곡은 trend에 세팅
+      const mapped = TrendMusic.map((item) => ({
+        cover: item.images[0]?.url,
+        title: item.name,
+        artist: item.artists.map((a) => a.name).join(', '),
+      }));
 
-    const fetchTrendMusic = async () => {
-      try {
-        const res = await axios.get(`${BACKEND_URL}/api/spotify/new-releases`);
-        const items = res.data?.albums?.items || [];
-
-        const mapped = items.map((item) => ({
-          cover: item.images[0]?.url,
-          title: item.name,
-          artist: item.artists.map((a) => a.name).join(', '),
-        }));
-
-        setTrend(mapped);
-      } catch (error) {
-        console.error('API error:', error);
-      }
-    };
-
-    fetchTrendMusic();
-  }, []);
-
-  useEffect(() => {
-    const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
-
-    const fetchTopMusic = async () => {
-      try {
-        const res = await axios.get(`${BACKEND_URL}/api/spotify/top-tracks`);
-        const items = res.data?.albums?.items || [];
-
-        const mapped = items.map((item) => ({
-          cover: item.images[0]?.url,
-          title: item.name,
-          artist: item.artists.map((a) => a.name).join(', '),
-        }));
-
-        console.log(res, 'topMusic');
-
-        setTop(mapped);
-      } catch (error) {
-        console.error('API error:', error);
-      }
-    };
-
-    fetchTopMusic();
-  }, []);
+      setTrend(mapped);
+      setTop(mapped);
+    } catch (error) {
+      swal('', `API error:${error}`, 'error');
+    }
+  }, [TrendMusic]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -170,7 +141,7 @@ export default function Main() {
           onClick={handleMove}
         />
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {trend.slice(4, 8).map((album, index) => (
+          {top.slice(4, 8).map((album, index) => (
             <Box key={index} width="248px" height="304px">
               <div className="flex justify-center items-center mt-4">
                 <img
