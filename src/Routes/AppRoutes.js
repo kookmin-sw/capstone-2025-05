@@ -5,6 +5,7 @@ import { useAuth } from '../Context/AuthContext';
 // 페이지 컴포넌트 불러오기
 import TestPage from '../Pages/TestPage/testPage';
 import Login from '../Pages/Login/login';
+import GoogleCallback from '../Pages/Login/googleCallback';
 import Signup from '../Pages/Login/signup';
 import Profile from '../Pages/Login/profile';
 import Main from '../Pages/Main/main';
@@ -49,10 +50,11 @@ export default function AppRoutes() {
         // 로그인 안 한 경우
         <>
           <Route path="/login" element={<Login />} />
+          <Route path="/google-auth-callback" element={<GoogleCallback />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<Login />} />
           <Route path="/audiotest" element={<AudioTest />} />
+          <Route path="*" element={<Main />} />
         </>
       )}
     </Routes>
