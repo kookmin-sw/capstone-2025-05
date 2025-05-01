@@ -40,6 +40,12 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     // GuitarPracticeController 초기화 (파라미터 추가)
     controller = std::make_unique<GuitarPracticeController>(audioModel, deviceManager);
     
+    // AudioController에 GuitarPracticeController 설정 (음원 재생 연결)
+    audioController->setGuitarPracticeController(controller.get());
+    
+    // 오디오 콜백 등록 (컨트롤러를 콜백으로 추가하여 음원 재생 가능)
+    deviceManager.addAudioCallback(audioController.get());
+    
     // 이벤트 버스에 리스너로 등록
     EventBus::getInstance().subscribe(Event::Type::AnalysisComplete, this);
     EventBus::getInstance().subscribe(Event::Type::AnalysisFailed, this);
@@ -181,6 +187,10 @@ GuitarPracticeComponent::~GuitarPracticeComponent()
     // 녹음기 제거
     if (audioRecorder)
         deviceManager.removeAudioCallback(audioRecorder.get());
+    
+    // 오디오 컨트롤러 제거
+    if (audioController)
+        deviceManager.removeAudioCallback(audioController.get());
     
     // LookAndFeel 정리
     recordButton.setLookAndFeel(nullptr);

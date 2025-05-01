@@ -39,8 +39,10 @@ void TransportController::loadFile(const juce::File& audioFile)
     
     if (reader != nullptr)
     {
+        double readerSampleRate = reader->sampleRate;
+        
         auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
-        transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
+        transportSource.setSource(newSource.get(), 0, nullptr, readerSampleRate);
         readerSource = std::move(newSource);
     }
 }

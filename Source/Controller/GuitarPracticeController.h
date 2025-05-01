@@ -32,6 +32,12 @@ public:
     void stopPlayback();
     void togglePlayback();
     
+    // 음원 파일 재생 관련 메서드
+    bool loadAudioFile(const juce::File& audioFile);
+    void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill);
+    void releaseResources();
+    
     // 녹음 관련 메서드
     void startRecording();
     void stopRecording();
@@ -71,6 +77,13 @@ private:
     // Guitar Pro 파서 및 플레이어
     std::unique_ptr<gp_parser::Parser> parserPtr;
     TabPlayer player;
+    
+    // 오디오 파일 재생을 위한 컴포넌트
+    juce::AudioFormatManager formatManager;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+    juce::AudioTransportSource transportSource;
+    juce::File currentAudioFile;
+    bool warnedAboutNoSource = false; // 오디오 소스가 null일 때 한 번만 경고를 출력하기 위한 플래그
     
     // 녹음 관련 상태
     juce::File lastRecordingFile;

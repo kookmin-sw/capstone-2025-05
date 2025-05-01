@@ -2,10 +2,43 @@
 #include "View/GuitarPracticeComponent.h"
 #include "Util/EnvLoader.h"
 #include "API/SongsAPIService.h"
+#include "Controller/ContentController.h"
+#include "Event/Event.h"
 
 GuitarPracticeController::GuitarPracticeController(AudioModel& model, juce::AudioDeviceManager& deviceManager)
-    : audioModel(model), deviceManager(deviceManager)
+    : audioModel(model), deviceManager(deviceManager), player()
 {
+    DBG("GuitarPracticeController - constructor start");
+    
+    // 오디오 포맷 매니저 초기화
+    formatManager.registerBasicFormats();
+    
+    // MP3 포맷이 등록되었는지 확인
+    bool mp3Supported = false;
+    for (int i = 0; i < formatManager.getNumKnownFormats(); ++i)
+    {
+        auto* format = formatManager.getKnownFormat(i);
+        if (format->getFormatName().containsIgnoreCase("mp3"))
+        {
+            mp3Supported = true;
+            break;
+        }
+    }
+    
+    // 지원되는 모든 포맷 로깅
+    juce::StringArray supportedFormats;
+    for (int i = 0; i < formatManager.getNumKnownFormats(); ++i)
+    {
+        auto* format = formatManager.getKnownFormat(i);
+        supportedFormats.add(format->getFormatName());
+    }
+    DBG("GuitarPracticeController - Supported audio formats: " + supportedFormats.joinIntoString(", "));
+    
+    if (!mp3Supported)
+    {
+        DBG("GuitarPracticeController - WARNING: MP3 format is not supported!");
+    }
+    
     // 컨트롤러 초기화
     analysisTimer = std::make_unique<AnalysisTimer>(*this);
     
@@ -40,6 +73,8 @@ GuitarPracticeController::GuitarPracticeController(AudioModel& model, juce::Audi
     #endif
     
     DBG("GuitarPracticeController: API URL set to: " + apiService->getApiBaseUrl());
+    
+    DBG("GuitarPracticeController - constructor complete");
 }
 
 GuitarPracticeController::~GuitarPracticeController()
@@ -57,63 +92,95 @@ GuitarPracticeController::~GuitarPracticeController()
 
 void GuitarPracticeController::startPlayback()
 {
-    // 이미 재생 중인지 확인하여 중복 호출 방지
-    if (!audioModel.isPlaying())
+    DBG("GuitarPracticeController::startPlayback - starting playback");
+    
+    // 플레이어 재생
+    player.startPlaying();
+    
+    // 오디오 파일 재생 (reader가 있는 경우에만)
+    if (readerSource != nullptr)
     {
-        // 모델의 재생 상태 변경
-        audioModel.setPlaying(true);
+        DBG("GuitarPracticeController::startPlayback - Starting transportSource");
         
-        // TabPlayer의 실제 재생 시작
-        if (!player.isPlaying())
-        {
-            player.startPlaying();
-            DBG("TabPlayer: Playback started");
-        }
+        // 재생 위치를 처음으로 설정
+        transportSource.setPosition(0.0);
+        
+        // 명시적으로 start() 호출
+        transportSource.start();
+        
+        // 실제로 재생되었는지 확인
+        if (transportSource.isPlaying())
+            DBG("GuitarPracticeController::startPlayback - transportSource started");
+        else
+            DBG("GuitarPracticeController::startPlayback - transportSource start failed");
     }
+    else
+    {
+        DBG("GuitarPracticeController::startPlayback - No audio file to play");
+    }
+    
+    // 모델 상태 업데이트
+    audioModel.setPlaying(true);
+    
+    DBG("GuitarPracticeController::startPlayback - Current playback state:");
+    DBG("  player.isPlaying() = " + juce::String(player.isPlaying() ? "true" : "false"));
+    DBG("  transportSource.isPlaying() = " + juce::String(transportSource.isPlaying() ? "true" : "false"));
+    DBG("  audioModel.isPlaying() = " + juce::String(audioModel.isPlaying() ? "true" : "false"));
 }
 
 void GuitarPracticeController::stopPlayback()
 {
-    // 이미 정지 상태인지 확인하여 중복 호출 방지
-    if (audioModel.isPlaying())
-    {
-        // 모델의 재생 상태 변경
-        audioModel.setPlaying(false);
-        
-        // TabPlayer의 실제 재생 중지
-        if (player.isPlaying())
-        {
-            player.stopPlaying();
-            DBG("TabPlayer: Playback stopped");
-        }
-    }
+    DBG("GuitarPracticeController::stopPlayback - stopping playback");
+    
+    // 플레이어 정지
+    player.stopPlaying();
+    
+    // 오디오 파일 재생 정지
+    transportSource.stop();
+    
+    // 모델 상태 업데이트
+    audioModel.setPlaying(false);
+    
+    DBG("GuitarPracticeController::stopPlayback - Current playback state:");
+    DBG("  player.isPlaying() = " + juce::String(player.isPlaying() ? "true" : "false"));
+    DBG("  transportSource.isPlaying() = " + juce::String(transportSource.isPlaying() ? "true" : "false"));
+    DBG("  audioModel.isPlaying() = " + juce::String(audioModel.isPlaying() ? "true" : "false"));
 }
 
 void GuitarPracticeController::togglePlayback()
 {
     // TabPlayer와 AudioModel의 상태 확인
     bool playerIsPlaying = player.isPlaying();
+    bool transportIsPlaying = transportSource.isPlaying();
     bool modelIsPlaying = audioModel.isPlaying();
     
-    // 상태가 불일치하면 동기화
-    if (playerIsPlaying != modelIsPlaying)
-    {
-        DBG("State mismatch detected! Player playing: " + juce::String(playerIsPlaying ? "true" : "false") + 
-            ", Model playing: " + juce::String(modelIsPlaying ? "true" : "false"));
-        
-        // TabPlayer 상태를 기준으로 AudioModel 동기화
-        audioModel.setPlaying(playerIsPlaying);
-    }
+    DBG("GuitarPracticeController::togglePlayback - Current state:");
+    DBG("  TabPlayer playing: " + juce::String(playerIsPlaying ? "true" : "false"));
+    DBG("  TransportSource playing: " + juce::String(transportIsPlaying ? "true" : "false"));
+    DBG("  AudioModel playing: " + juce::String(modelIsPlaying ? "true" : "false"));
+    DBG("  readerSource valid: " + juce::String(readerSource != nullptr ? "true" : "false"));
     
-    // 이제 상태가 동기화되었으므로 토글
-    if (audioModel.isPlaying())
+    // 토글 작업 수행
+    if (modelIsPlaying)
     {
+        DBG("GuitarPracticeController::togglePlayback - Playing, stopping playback");
         stopPlayback();
     }
     else
     {
+        DBG("GuitarPracticeController::togglePlayback - Stopped, starting playback");
         startPlayback();
     }
+    
+    // 로깅을 위해 상태 다시 확인
+    playerIsPlaying = player.isPlaying();
+    transportIsPlaying = transportSource.isPlaying();
+    modelIsPlaying = audioModel.isPlaying();
+    
+    DBG("GuitarPracticeController::togglePlayback - After change:");
+    DBG("  TabPlayer playing: " + juce::String(playerIsPlaying ? "true" : "false"));
+    DBG("  TransportSource playing: " + juce::String(transportIsPlaying ? "true" : "false"));
+    DBG("  AudioModel playing: " + juce::String(modelIsPlaying ? "true" : "false"));
 }
 
 bool GuitarPracticeController::loadSong(const juce::String& songId)
@@ -168,11 +235,14 @@ bool GuitarPracticeController::loadSong(const juce::String& songId)
         
         DBG("Downloading sheet music file to: " + cacheFile.getFullPathName());
         
+        // 오디오 URL 추출
+        juce::String audioUrl = response.data.getProperty("audio", "").toString();
+        
         // 악보 데이터 URL 엔드포인트 직접 구성 (선택 사항)
         juce::String scoreEndpoint = "/songs/" + songId + "/sheet";
         
         // 오디오 서비스의 downloadAudioFile 메서드 사용 - 악보 파일도 바이너리 파일이므로 이 메서드 활용
-        apiService->downloadAudioFile(sheetMusicUrl, cacheFile, [this, songId](bool success, juce::String filePath) {
+        apiService->downloadAudioFile(sheetMusicUrl, cacheFile, [this, songId, audioUrl](bool success, juce::String filePath) {
             if (!success)
             {
                 DBG("Failed to download sheet music file");
@@ -188,41 +258,62 @@ bool GuitarPracticeController::loadSong(const juce::String& songId)
                 parserPtr = std::make_unique<gp_parser::Parser>(filePath.toRawUTF8());
                 
                 try {
-                    // TabPlayer에 악보 데이터 설정
-                    // Parser로부터 TabFile 획득
-                    auto tabFile = parserPtr->getTabFile();
+                    // 파서에서 TabFile 가져오기
+                    const gp_parser::TabFile& tabFile = parserPtr->getTabFile();
                     
-                    // 벡터 요소 유효성 검사 (빈 트랙 검사)
-                    if (tabFile.tracks.empty()) {
-                        DBG("Warning: Loaded TabFile has no tracks");
+                    // TabPlayer에 TabFile 설정
+                    player.setTabFile(tabFile);
+                    
+                    // 오디오 파일 URL이 있는 경우 다운로드 시작
+                    if (audioUrl.isNotEmpty())
+                    {
+                        DBG("Found audio URL: " + audioUrl);
                         
-                        // 빈 트랙이 있는 경우 기본 TabFile 생성
-                        tracks.clear();
-                        measureHeaders.clear();
-                        channels.clear();
-                        // 디폴트 값으로 빈 TabFile 생성
-                        player.setTabFile(gp_parser::TabFile(major, minor, title, subtitle, artist, album,
-                                                        lyricsAuthor, musicAuthor, copyright, tab, instructions,
-                                                        comments, lyric, tempoValue, globalKeySignature, channels,
-                                                        measures, trackCount, measureHeaders, tracks));
-                    } 
-                    else {
-                        DBG("TabFile loaded successfully with " + juce::String(tabFile.tracks.size()) + " tracks");
+                        // 오디오 캐시 디렉토리 생성
+                        juce::File audioCacheDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                                                   .getChildFile("MapleClientDesktop/cache/audio");
+                        if (!audioCacheDir.exists())
+                            audioCacheDir.createDirectory();
                         
-                        // 첫 번째 트랙에 마디가 있는지 확인
-                        if (tabFile.tracks[0].measures.empty()) {
-                            DBG("Warning: First track has no measures");
-                        }
-                        else {
-                            DBG("First track has " + juce::String(tabFile.tracks[0].measures.size()) + " measures");
-                        }
+                        // 오디오 파일명 생성 - WAV 확장자 사용 (서버에서 WAV 파일을 제공)
+                        juce::String audioFileName = songId + "_audio.wav";
+                        juce::File audioFile = audioCacheDir.getChildFile(audioFileName);
                         
-                        // TabPlayer에 TabFile 설정
-                        player.setTabFile(tabFile);
+                        // 오디오 파일 다운로드
+                        apiService->downloadAudioFile(audioUrl, audioFile, [this, songId](bool audioSuccess, juce::String audioFilePath) {
+                            if (audioSuccess)
+                            {
+                                DBG("Audio file downloaded to: " + audioFilePath);
+                                
+                                // 음원 파일 로드
+                                juce::File downloadedAudioFile(audioFilePath);
+                                if (loadAudioFile(downloadedAudioFile))
+                                {
+                                    DBG("Audio file loaded successfully");
+                                }
+                                else
+                                {
+                                    DBG("Failed to load audio file: " + audioFilePath);
+                                }
+                                
+                                // 악보 로드 성공 이벤트 발생
+                                publishSongLoadedEvent(songId);
+                            }
+                            else
+                            {
+                                DBG("Failed to download audio file, but continuing with score only");
+                                // 오디오 다운로드 실패해도 악보만으로도 계속 진행
+                                publishSongLoadedEvent(songId);
+                            }
+                        });
+                    }
+                    else
+                    {
+                        DBG("No audio URL found, proceeding with score only");
+                        publishSongLoadedEvent(songId);
                     }
                     
                     DBG("Song loaded successfully: " + songId);
-                    publishSongLoadedEvent(songId);
                 }
                 catch (const std::exception& e) {
                     DBG("Error in parser.getTabFile() or player.setTabFile(): " + juce::String(e.what()));
@@ -654,4 +745,256 @@ void GuitarPracticeController::publishSongLoadFailedEvent(const juce::String& so
     EventBus::getInstance().publishOnMainThread(event);
     
     DBG("GuitarPracticeController: Published SongLoadFailedEvent for song: " + songId + ", error: " + errorMessage);
+}
+
+// 새로 추가된 오디오 파일 관련 메서드
+bool GuitarPracticeController::loadAudioFile(const juce::File& audioFile)
+{
+    DBG("GuitarPracticeController::loadAudioFile - loading file: " + audioFile.getFullPathName());
+    
+    // 파일이 존재하는지 확인
+    if (!audioFile.existsAsFile())
+    {
+        DBG("GuitarPracticeController::loadAudioFile - file does not exist: " + audioFile.getFullPathName());
+        return false;
+    }
+    
+    // 파일 크기 확인
+    auto fileSize = audioFile.getSize();
+    if (fileSize <= 0)
+    {
+        DBG("GuitarPracticeController::loadAudioFile - file exists but has zero size: " + audioFile.getFullPathName());
+        return false;
+    }
+    
+    DBG("GuitarPracticeController::loadAudioFile - file size: " + juce::String(fileSize) + " bytes");
+    
+    // 지원되는 포맷 확인 (미리 로깅)
+    juce::StringArray formats;
+    for (int i = 0; i < formatManager.getNumKnownFormats(); ++i)
+    {
+        auto* format = formatManager.getKnownFormat(i);
+        formats.add(format->getFormatName());
+    }
+    DBG("GuitarPracticeController::loadAudioFile - Supported formats: " + formats.joinIntoString(", "));
+    
+    // 파일 포맷이 WAV인지 확인
+    juce::String extension = audioFile.getFileExtension().toLowerCase();
+    DBG("GuitarPracticeController::loadAudioFile - File extension: " + extension);
+    
+    // WAV 파일이 아니라면 경고 표시 (항상 WAV 파일이어야 함)
+    if (extension != ".wav")
+    {
+        DBG("GuitarPracticeController::loadAudioFile - Warning: File is not a WAV file. Only WAV files are fully supported.");
+    }
+    
+    // 기존 소스 제거
+    transportSource.stop();
+    transportSource.setSource(nullptr);
+    readerSource.reset();
+    
+    // AudioFormatManager가 제대로 초기화되었는지 확인
+    if (formatManager.getNumKnownFormats() == 0)
+    {
+        DBG("GuitarPracticeController::loadAudioFile - Warning: No registered formats! Registering now...");
+        formatManager.registerBasicFormats();
+        
+        // WAV 포맷이 등록되었는지 다시 확인
+        bool wavFormatFound = false;
+        for (int i = 0; i < formatManager.getNumKnownFormats(); ++i)
+        {
+            auto* format = formatManager.getKnownFormat(i);
+            if (format->getFormatName().containsIgnoreCase("wav") || 
+                format->getFormatName().containsIgnoreCase("wave"))
+            {
+                wavFormatFound = true;
+                break;
+            }
+        }
+        
+        if (!wavFormatFound)
+        {
+            DBG("GuitarPracticeController::loadAudioFile - ERROR: WAV format not registered!");
+        }
+    }
+    
+    // 오디오 파일 읽기
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(audioFile));
+    
+    if (reader != nullptr)
+    {
+        // 샘플 레이트 및 채널 정보를 미리 저장 (reader release 전에)
+        const double readerSampleRate = reader->sampleRate;
+        const int numChannels = reader->numChannels;
+        const juce::int64 lengthInSamples = reader->lengthInSamples;
+        const int bitsPerSample = reader->bitsPerSample;
+        
+        DBG("GuitarPracticeController::loadAudioFile - reader created successfully");
+        DBG("  Sample rate: " + juce::String(readerSampleRate));
+        DBG("  Num channels: " + juce::String(numChannels));
+        DBG("  Length in samples: " + juce::String(lengthInSamples));
+        DBG("  Total length in seconds: " + juce::String(lengthInSamples / readerSampleRate));
+        DBG("  Bit depth: " + juce::String(bitsPerSample));
+        
+        // reader에서 AudioFormatReaderSource 생성
+        readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader.release(), true);
+        
+        // transportSource에 설정 (저장해둔 샘플 레이트 사용)
+        transportSource.setSource(readerSource.get(), 0, nullptr, readerSampleRate);
+        
+        // 현재 오디오 디바이스의 샘플 레이트와 버퍼 크기 가져오기
+        auto currentDevice = deviceManager.getCurrentAudioDevice();
+        if (currentDevice != nullptr)
+        {
+            double sampleRate = currentDevice->getCurrentSampleRate();
+            int samplesPerBlock = currentDevice->getCurrentBufferSizeSamples();
+            
+            // prepareToPlay 호출하여 초기화
+            transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+            
+            DBG(juce::String("GuitarPracticeController::loadAudioFile - transportSource prepared with ") +
+                "sampleRate = " + juce::String(sampleRate) + ", samplesPerBlock = " + juce::String(samplesPerBlock));
+        }
+        else
+        {
+            DBG("GuitarPracticeController::loadAudioFile - WARNING: No current audio device!");
+            
+            // 기본값으로 초기화
+            transportSource.prepareToPlay(512, 44100.0);
+            DBG("GuitarPracticeController::loadAudioFile - Using default values: sampleRate = 44100, samplesPerBlock = 512");
+        }
+        
+        // 현재 파일 저장
+        currentAudioFile = audioFile;
+        
+        // 정상 로드 확인
+        if (readerSource != nullptr)
+        {
+            DBG("GuitarPracticeController::loadAudioFile - readerSource is valid");
+            warnedAboutNoSource = false; // 새 소스가 로드되면 경고 초기화
+        }
+        
+        DBG("GuitarPracticeController::loadAudioFile - file loaded successfully");
+        return true;
+    }
+    else
+    {
+        DBG("GuitarPracticeController::loadAudioFile - FAILED to create reader for: " + audioFile.getFullPathName());
+        
+        // 파일 타입 확인
+        DBG("  File type: " + extension);
+        
+        // 파일 형식에 대한 문제 진단
+        if (extension == ".wav")
+        {
+            DBG("  This is a WAV file but still failed to load. Possible reasons:");
+            DBG("  - Corrupted WAV file");
+            DBG("  - Unsupported bit depth or encoding");
+            DBG("  - Unsupported channel configuration");
+            
+            // 추가 디버깅을 위해 파일의 첫 부분 체크
+            juce::FileInputStream fileStream(audioFile);
+            if (fileStream.openedOk())
+            {
+                // WAV 헤더 체크 (간단한 검증)
+                char header[12];
+                fileStream.read(header, 12);
+                
+                // RIFF/WAVE 헤더 검사
+                bool hasValidHeader = std::memcmp(header, "RIFF", 4) == 0 && 
+                                     std::memcmp(header + 8, "WAVE", 4) == 0;
+                
+                DBG("  WAV header valid: " + juce::String(hasValidHeader ? "Yes" : "No"));
+            }
+        }
+        else
+        {
+            DBG("  This is not a WAV file. The app is configured to use WAV files only.");
+        }
+        
+        return false;
+    }
+}
+
+void GuitarPracticeController::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
+{
+    transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
+}
+
+void GuitarPracticeController::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
+{
+    // 로그 출력 빈도 조정 (100 = 약 1초)
+    static int callbackCounter = 0;
+    bool shouldLog = (++callbackCounter >= 100);
+    if (shouldLog)
+        callbackCounter = 0;
+    
+    if (readerSource != nullptr)
+    {
+        // TransportSource가 재생 중인지 확인
+        bool isPlaying = transportSource.isPlaying();
+        
+        if (shouldLog)
+            DBG("GuitarPracticeController::getNextAudioBlock - transportSource.isPlaying() = " + 
+                juce::String(isPlaying ? "true" : "false"));
+        
+        // 재생 중인 경우에만 오디오 블록 가져오기
+        if (isPlaying)
+        {
+            // 오디오 데이터 출력
+            transportSource.getNextAudioBlock(bufferToFill);
+            
+            // 버퍼에 실제 오디오 데이터가 있는지 확인
+            if (shouldLog)
+            {
+                bool hasAudioData = false;
+                float maxLevel = 0.0f;
+                
+                for (int ch = 0; ch < bufferToFill.buffer->getNumChannels(); ++ch)
+                {
+                    const float* channelData = bufferToFill.buffer->getReadPointer(ch, bufferToFill.startSample);
+                    
+                    for (int i = 0; i < bufferToFill.numSamples; ++i)
+                    {
+                        maxLevel = juce::jmax(maxLevel, std::abs(channelData[i]));
+                        if (std::abs(channelData[i]) > 0.0001f)
+                            hasAudioData = true;
+                    }
+                }
+                
+                DBG("GuitarPracticeController::getNextAudioBlock - has audio data = " + 
+                    juce::String(hasAudioData ? "true" : "false") +
+                    ", max level = " + juce::String(maxLevel));
+            }
+        }
+        else
+        {
+            // 재생 중이 아니면 무음 출력
+            bufferToFill.clearActiveBufferRegion();
+            
+            if (shouldLog)
+                DBG("GuitarPracticeController::getNextAudioBlock - transportSource not playing, clearing buffer");
+        }
+    }
+    else
+    {
+        // 소스가 없으면 무음 출력
+        bufferToFill.clearActiveBufferRegion();
+        
+        // 소스가 없다는 로그는 처음 한 번만 출력
+        if (!warnedAboutNoSource)
+        {
+            warnedAboutNoSource = true;
+            DBG("GuitarPracticeController::getNextAudioBlock - No valid audio source");
+        }
+        else if (shouldLog)
+        {
+            DBG("GuitarPracticeController::getNextAudioBlock - Still no valid audio source");
+        }
+    }
+}
+
+void GuitarPracticeController::releaseResources()
+{
+    transportSource.releaseResources();
 }

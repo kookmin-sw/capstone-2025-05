@@ -110,7 +110,7 @@ void ContentController::downloadSongAudio(const Song& song, std::function<void(b
     
     // 캐시 파일 경로 생성 - 서버에서 제공된 파일명을 캐시 디렉토리에 저장하도록 함
     juce::File cacheDir = getAudioCacheDirectory();
-    juce::File tempFile = cacheDir.getChildFile(song.getId() + "_temp.tmp");
+    juce::File tempFile = cacheDir.getChildFile(song.getId() + "_audio.wav");
     
     // API 서비스를 통해 오디오 파일 다운로드
     // 서버에서 제공하는 파일명을 사용할 수 있도록 함
@@ -213,8 +213,7 @@ Song ContentController::getSongById(const juce::String& songId) const
 juce::File ContentController::getAudioCacheDirectory() const
 {
     juce::File cacheDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                        .getChildFile("MapleClient")
-                        .getChildFile("AudioCache");
+                        .getChildFile("MapleClientDesktop/cache/audio");
                         
     if (!cacheDir.exists())
         cacheDir.createDirectory();
@@ -225,8 +224,7 @@ juce::File ContentController::getAudioCacheDirectory() const
 juce::File ContentController::getImageCacheDirectory() const
 {
     juce::File cacheDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                        .getChildFile("MapleClient")
-                        .getChildFile("ImageCache");
+                        .getChildFile("MapleClientDesktop/cache/images");
                         
     if (!cacheDir.exists())
         cacheDir.createDirectory();
@@ -237,8 +235,7 @@ juce::File ContentController::getImageCacheDirectory() const
 juce::File ContentController::getScoreCacheDirectory() const
 {
     juce::File cacheDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                        .getChildFile("MapleClient")
-                        .getChildFile("ScoreCache");
+                        .getChildFile("MapleClientDesktop/cache/sheet_music");
                         
     if (!cacheDir.exists())
         cacheDir.createDirectory();

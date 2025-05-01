@@ -332,9 +332,11 @@ void SongsAPIService::downloadImage(const juce::String& imageUrl, std::function<
 void SongsAPIService::downloadAudioFile(const juce::String& audioUrl, const juce::File& destinationFile,
                                       std::function<void(bool success, juce::String filePath)> callback)
 {
-    // 오디오 파일은 다른 Accept 헤더를 사용해야 할 수 있음 (application/json 대신 audio/*)
+    DBG("SongsAPIService::downloadAudioFile - start for URL: " + audioUrl);
+    
+    // 오디오 파일은 WAV 파일을 명시적으로 요청하기 위한 헤더 설정
     juce::String originalHeaders = defaultHeaders;
-    juce::String audioHeaders = "Accept: audio/*\r\n";
+    juce::String audioHeaders = "Accept: audio/wav\r\n";
     
     // 임시로 헤더 변경
     setDefaultHeaders(audioHeaders);
@@ -343,6 +345,18 @@ void SongsAPIService::downloadAudioFile(const juce::String& audioUrl, const juce
     downloadFile(audioUrl, destinationFile, [this, originalHeaders, callback](bool success, juce::String filePath) {
         // 헤더 복원
         setDefaultHeaders(originalHeaders);
+        
+        // 다운로드 결과 로깅
+        if (success)
+        {
+            juce::File file(filePath);
+            DBG("SongsAPIService::downloadAudioFile - downloaded successfully: " + filePath + 
+                ", size: " + juce::String(file.getSize()) + " bytes, extension: " + file.getFileExtension());
+        }
+        else
+        {
+            DBG("SongsAPIService::downloadAudioFile - download failed");
+        }
         
         // 콜백 호출
         if (callback)
@@ -400,6 +414,31 @@ juce::File SongsAPIService::getCacheDirectory()
     // 앱의 로컬 데이터 디렉토리 내에 캐시 폴더 생성
     juce::File cacheDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
                           .getChildFile("MapleClientDesktop/cache");
+                          
+    // 메인 캐시 디렉토리 생성
+    if (!cacheDir.exists())
+        cacheDir.createDirectory();
+    
+    // 하위 캐시 디렉토리들도 생성
+    juce::File audioCacheDir = cacheDir.getChildFile("audio");
+    juce::File imagesCacheDir = cacheDir.getChildFile("images");
+    juce::File sheetMusicCacheDir = cacheDir.getChildFile("sheet_music");
+    
+    if (!audioCacheDir.exists())
+        audioCacheDir.createDirectory();
+        
+    if (!imagesCacheDir.exists())
+        imagesCacheDir.createDirectory();
+        
+    if (!sheetMusicCacheDir.exists())
+        sheetMusicCacheDir.createDirectory();
+    
+    DBG("SongsAPIService::getCacheDirectory - cache directories initialized");
+    DBG("  Main cache: " + cacheDir.getFullPathName());
+    DBG("  Audio cache: " + audioCacheDir.getFullPathName());
+    DBG("  Images cache: " + imagesCacheDir.getFullPathName());
+    DBG("  Sheet music cache: " + sheetMusicCacheDir.getFullPathName());
+    
     return cacheDir;
 }
 

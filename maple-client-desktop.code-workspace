@@ -13,23 +13,17 @@
             "${workspaceFolder}/external/asio-sdk/host"
         ],
         "files.associations": {
-            // C++ STL headers without extensions
             "memory": "cpp",
-            "vector": "cpp", 
+            "vector": "cpp",
             "algorithm": "cpp",
             "string": "cpp",
             "utility": "cpp",
-            
-            // Platform-specific files
-            "*.mm": "cpp",       // Objective-C++ files
-            
-            // Audio plugin formats
+            "*.mm": "cpp",
             "*.vst3": "binary",
             "*.component": "binary",
             "*.au": "binary",
-            
-            // JUCE specific
-            "JuceHeader.h": "cpp"
+            "JuceHeader.h": "cpp",
+            "functional": "cpp"
         },
         // Enhanced IntelliSense settings
         "C_Cpp.intelliSenseEngineFallback": "enabled",
