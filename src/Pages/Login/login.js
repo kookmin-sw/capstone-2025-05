@@ -8,6 +8,7 @@ import Box from '../../Components/Box/Box.js';
 import Input from '../../Components/Input/input.js';
 import Button from '../../Components/Button/Button.js';
 import Footer from '../../Components/MapleFooter';
+import { useAuth } from '../../Context/AuthContext';
 import swal from 'sweetalert';
 
 export default function Login() {
@@ -15,6 +16,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   // const { login, logout } = useAuth();
+  const { login, logout } = useAuth();
 
   const handleEmail = (e) => setEmail(e.target.value);
   const handlePassword = (e) => setPassword(e.target.value);
@@ -55,10 +57,11 @@ export default function Login() {
 
       if (uid) {
         // login(uid); //sessionstorage에 세팅 + context uid 세팅
+        login(uid); //sessionstorage에 세팅 + context uid 세팅
         swal('', '로그인성공🫡', 'success');
         navigate('/main');
       } else {
-        alert('로그인 실패: 사용자 정보를 가져올 수 없습니다.');
+        swal('', '로그인 실패: 사용자 정보를 가져올 수 없습니다😥', 'error');
       }
     } catch (error) {
       console.error('로그인 에러:', error);
@@ -118,7 +121,7 @@ export default function Login() {
                 />
               </div>
               <div className="mt-8 w-full flex justify-center">
-                <Button width="80%" height="52px" >
+                <Button width="80%" height="52px" onClick={handleLogin}>
                   로그인
                 </Button>
               </div>

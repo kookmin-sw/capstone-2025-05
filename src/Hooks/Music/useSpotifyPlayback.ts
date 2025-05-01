@@ -1,6 +1,7 @@
 // hooks/useSpotifyPlayback.ts
 import { useCallback } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export const useSpotifyPlayback = ({
   token,
@@ -13,7 +14,18 @@ export const useSpotifyPlayback = ({
   const sendPlaybackCommand = useCallback(
     async ({ action, body }: any) => {
       if (!isReady || !deviceId) {
-        onError?.('🎧 Spotify Player가 아직 준비되지 않았어요!');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Spotify 플레이어가 준비되지 않았어요 🎧',
+          text: 'Spotify 인증을 먼저 해주세요!',
+          confirmButtonText: 'Spotify 인증하기',
+          allowOutsideClick: false,
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = authUrl;
+          }
+        });
+
         return;
       }
 

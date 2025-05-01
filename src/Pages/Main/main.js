@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import axios from 'axios';
-import Header from '../../Components/MapleHeader';
 import First from '../../Assets/Main/banner1.svg';
 import Second from '../../Assets/Main/banner2.svg';
 import Third from '../../Assets/Main/banner3.svg';
@@ -19,7 +18,7 @@ export default function Main() {
   const [trend, setTrend] = useState([]);
 
   const handleMove = () => {
-    navigate('/'); // 등록된 음원 페이지로 이동
+    navigate('/ranking?song_name=Drowning'); // 랭킹 테스트 - 수정하기
   };
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export default function Main() {
 
   return (
     <div className="flex flex-col h-screen">
-      <Header />
       <div className="flex flex-grow items-center justify-center mt-12 relative">
         <Swiper
           ref={swiperRef}
@@ -172,7 +170,7 @@ export default function Main() {
           ))}
         </div>
       </div>
-      <Footer />
+      <Footer email={'maple@gmail.com'} />
     </div>
   );
 }

@@ -80,7 +80,6 @@ export default function Signup() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <div className="flex flex-col items-center justify-center flex-grow relative">
         <div className="absolute top-[10%] z-10">
           <img src={Logo} alt="logo" className="w-52 h-auto" />

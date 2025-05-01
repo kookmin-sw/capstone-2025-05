@@ -1,17 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
-const putLike = ({ postid }) => {
-  return api.put(`/post/posts/${postid}/like`);
+const postLike = ({ post_id, uid }) => {
+  return api.post(`/posts/${post_id}/like?uid=${uid}`);
 };
 
 export const useLikePutMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: putLike,
+    mutationFn: postLike,
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['putt/like', variables.postid]); // 캐시된 데이터 갱신
+      queryClient.invalidateQueries(['post/like', variables.post_id]); // 캐시된 데이터 갱신
     },
   });
 };

@@ -100,7 +100,6 @@ const LinkCard = ({ preview }) => (
 export default function Beginner() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <div className="flex flex-col mt-16 ml-20 space-y-16">
         <div>
           <h2 className="text-2xl font-bold mb-4">기본 코드 잡는법</h2>
