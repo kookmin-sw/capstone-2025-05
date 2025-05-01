@@ -33,6 +33,14 @@ public:
     {
         playbackListener = listener;
     }
+    
+    // 악보의 실제 필요한 크기를 반환
+    juce::Rectangle<int> getScoreContentBounds() const
+    {
+        // scoreContent의 실제 경계를 반환
+        return {0, 0, static_cast<int>(scoreContent.getWidth()), 
+                      static_cast<int>(scoreContent.getHeight())};
+    }
 
 private:
     void timerCallback() override; // 재생 위치 업데이트를 위해 주기적 호출

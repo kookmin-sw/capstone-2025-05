@@ -277,9 +277,26 @@ void GuitarPracticeComponent::resized()
     // 악보 표시 영역 - 높이를 줄여서 하단에 새 컴포넌트를 위한 공간 확보
     if (scoreComponent)
     {
-        auto scoreHeight = bounds.getHeight() * 0.4f; // 높이의 40%만 악보에 할당
+        // ScoreComponent의 실제 필요한 크기 계산
+        juce::Rectangle<int> contentBounds = scoreComponent->getScoreContentBounds();
+        int contentHeight = contentBounds.getHeight();
+        
+        // 콘텐츠 높이가 0이면 기본값 설정
+        if (contentHeight <= 0) {
+            contentHeight = 200; // 기본 높이
+        }
+        
+        // 최대 높이 제한 (화면의 70%를 넘지 않도록)
+        int maxHeight = bounds.getHeight() * 0.7;
+        int scoreHeight = juce::jmin(contentHeight, static_cast<int>(maxHeight));
+        
+        // 최소 높이 보장
+        scoreHeight = juce::jmax(200, scoreHeight);
+        
         auto scoreArea = bounds.removeFromTop(scoreHeight).reduced(15, 10);
         DBG("Setting ScoreComponent bounds: " + juce::String(scoreArea.getWidth()) + "x" + juce::String(scoreArea.getHeight()));
+        DBG("Score content size: " + juce::String(contentBounds.getWidth()) + "x" + juce::String(contentBounds.getHeight()));
+        
         scoreComponent->setBounds(scoreArea);
         scoreComponent->toFront(false);
     }
@@ -419,6 +436,12 @@ void GuitarPracticeComponent::loadSong(const juce::String& songId)
         if (scoreComponent != nullptr) {
             try {
                 scoreComponent->updateScore();
+                
+                // 악보가 로드된 후 레이아웃 다시 계산 (악보 크기가 변경되었을 수 있음)
+                resized();
+                
+                // 포커스 설정
+                scoreComponent->grabKeyboardFocus();
             }
             catch (const std::exception& e) {
                 DBG("Error updating score component: " + juce::String(e.what()));

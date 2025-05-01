@@ -71,25 +71,13 @@ void ScoreComponent::ScoreContentComponent::paint(juce::Graphics& g)
 
     float currentY = owner.yOffset;
 
-    // 모든 트랙 렌더링
-    for (size_t trackIdx = 0; trackIdx < tabFile.tracks.size(); ++trackIdx)
+    // 트랙이 하나만 있다고 가정하고 첫 번째 트랙만 렌더링
+    if (!tabFile.tracks.empty())
     {
-        const auto& track = tabFile.tracks[trackIdx];
+        const auto& track = tabFile.tracks[0]; // 첫 번째 트랙만 사용
         
-        // 트랙 헤더 배경
-        g.setColour(MapleTheme::getCardColour());
-        g.fillRoundedRectangle(owner.xOffset - 10, currentY - 15, 220, 30, 5.0f);
+        // 트랙 제목 표시 제거 (트랙 헤더 정보 출력 안함)
         
-        // 트랙 테두리
-        g.setColour(MapleTheme::getAccentColour().withAlpha(0.3f));
-        g.drawRoundedRectangle(owner.xOffset - 10, currentY - 15, 220, 30, 5.0f, 1.0f);
-        
-        // 트랙 제목에 스타일 적용
-        g.setColour(MapleTheme::getTextColour());
-        g.setFont(juce::Font(18.0f).boldened());
-        g.drawText(track.name, owner.xOffset, currentY, 200, 20, juce::Justification::left);
-        currentY += 30.0f;
-
         // 기타 현 그리기 - 현 별로 다른 색상 사용하여 가독성 개선
         float trackWidth = owner.xOffset;
         for (int string = 1; string <= 6; ++string)
@@ -109,6 +97,19 @@ void ScoreComponent::ScoreContentComponent::paint(juce::Graphics& g)
 
         // 마디를 구분하는 사각형 표시 추가
         float x = owner.xOffset;
+        
+        // 모든 마디의 비트 수 중 최대값 찾기 (일정한 마디 길이를 위해)
+        size_t maxBeatsPerMeasure = 0;
+        for (const auto& measure : track.measures) {
+            maxBeatsPerMeasure = juce::jmax(maxBeatsPerMeasure, measure.beats.size());
+        }
+        
+        // 최소 비트 수 보장 (너무 작은 경우 기본값 사용)
+        maxBeatsPerMeasure = juce::jmax(maxBeatsPerMeasure, size_t(4));
+        
+        // 마디 당 너비 계산
+        float measureWidth = maxBeatsPerMeasure * owner.noteSpacing;
+        
         for (size_t measureIdx = 0; measureIdx < track.measures.size(); ++measureIdx)
         {
             const auto& measure = track.measures[measureIdx];
@@ -125,10 +126,10 @@ void ScoreComponent::ScoreContentComponent::paint(juce::Graphics& g)
             g.setColour(MapleTheme::getSubTextColour());
             g.drawLine(x, currentY - 10, x, currentY + 5 * owner.stringSpacing + 10, 1.5f);
             
-            // 마디 배경 - 짝수/홀수 마디 구분
+            // 마디 배경 - 짝수/홀수 마디 구분 (고정 크기)
             juce::Rectangle<float> measureRect(
                 x, currentY - 10,
-                measure.beats.size() * owner.noteSpacing, 5 * owner.stringSpacing + 20
+                measureWidth, 5 * owner.stringSpacing + 20
             );
             
             if (measureIdx % 2 == 0)
@@ -141,7 +142,37 @@ void ScoreComponent::ScoreContentComponent::paint(juce::Graphics& g)
             // 비트 렌더링
             for (size_t beatIdx = 0; beatIdx < measure.beats.size(); ++beatIdx)
             {
+                float beatX = x + beatIdx * owner.noteSpacing;
                 const auto& beat = measure.beats[beatIdx];
+                
+                bool beatHasNotes = false;
+                
+                // 쉼표 여부 확인을 위해 모든 voice 검사
+                bool allVoicesEmpty = true;
+                
+                for (const auto& voice : beat.voices)
+                {
+                    if (!voice.empty) {
+                        allVoicesEmpty = false;
+                        beatHasNotes = true;
+                    }
+                }
+                
+                // 쉼표 표시 - 모든 voice가 empty인 경우
+                if (allVoicesEmpty) {
+                    // 쉼표 심볼 그리기
+                    g.setColour(MapleTheme::getSubTextColour());
+                    
+                    // 'R' 문자로 쉼표 표시
+                    g.setFont(juce::Font(14.0f).boldened());
+                    float restY = currentY + 2 * owner.stringSpacing; // 3번 현과 4번 현 사이에 위치
+                    g.drawText("R", 
+                              beatX - 10, restY - 10, 
+                              20, 20, 
+                              juce::Justification::centred);
+                }
+                
+                // 노트 그리기
                 for (const auto& voice : beat.voices)
                 {
                     if (voice.empty) continue;
@@ -151,18 +182,20 @@ void ScoreComponent::ScoreContentComponent::paint(juce::Graphics& g)
                         
                         // 노트 표시 개선 - 동그란 배경 추가
                         g.setColour(MapleTheme::getAccentColour().withAlpha(0.2f));
-                        g.fillEllipse(x - 10, y - 10, 20, 20);
+                        g.fillEllipse(beatX - 10, y - 10, 20, 20);
                         
                         g.setColour(MapleTheme::getTextColour());
                         g.setFont(juce::Font(14.0f).boldened());
                         g.drawText(juce::String(note.value), 
-                                  x - 10, y - 10, 
+                                  beatX - 10, y - 10, 
                                   20, 20, 
                                   juce::Justification::centred);
                     }
                 }
-                x += owner.noteSpacing;
             }
+            
+            // 항상 일정한 크기로 마디 업데이트
+            x += measureWidth;
             trackWidth = x;
             
             // 마디 끝 세로선
@@ -172,53 +205,21 @@ void ScoreComponent::ScoreContentComponent::paint(juce::Graphics& g)
 
         // 현재 재생 위치 커서 렌더링
         int currentTrack = tabPlayer.getCurrentTrack();
-        if (trackIdx == static_cast<size_t>(currentTrack) && 
-            currentTrack >= 0 && 
-            currentTrack < static_cast<int>(tabFile.tracks.size()))
+        int currentMeasure = tabPlayer.getCurrentMeasure();
+        int currentBeat = tabPlayer.getCurrentBeat();
+        
+        if (currentTrack == 0 && currentMeasure < static_cast<int>(track.measures.size()))
         {
-            int currentMeasure = tabPlayer.getCurrentMeasure();
-            int currentBeat = tabPlayer.getCurrentBeat();
-            
-            // 마디와 비트 인덱스가 유효한 범위인지 확인
-            if (currentMeasure >= 0 && 
-                currentMeasure < static_cast<int>(track.measures.size()) && 
-                currentBeat >= 0)
+            if (currentBeat >= 0)
             {
-                float cursorX = owner.xOffset;
-
-                // 현재 마디와 비트까지의 x좌표 계산
-                int beatSum = 0;
-                for (int m = 0; m < currentMeasure && m < static_cast<int>(track.measures.size()); ++m)
-                    beatSum += track.measures[m].beats.size();
-                
-                // 현재 비트가 마디의 비트 수를 초과하지 않도록 함
-                int safeCurrentBeat = juce::jmin(currentBeat, static_cast<int>(track.measures[currentMeasure].beats.size()) - 1);
-                beatSum += safeCurrentBeat;
-
-                cursorX += beatSum * owner.noteSpacing;
-
-                // 커서가 화면 내에 있도록 Viewport 조정 (tabPlayer가 재생 중일 때만)
-                if (tabPlayer.isPlaying())
-                {
-                    auto viewArea = owner.viewport.getViewArea();
-                    if (cursorX < viewArea.getX() || cursorX > viewArea.getX() + viewArea.getWidth())
-                    {
-                        owner.viewport.setViewPosition(cursorX - viewArea.getWidth() / 4, viewArea.getY());
-                    }
-                }
-
-                // 커서 렌더링 개선 - 반투명 배경과 컬러 사용
-                g.setColour(MapleTheme::getHighlightColour().withAlpha(0.3f));
-                juce::Rectangle<float> cursorRect(cursorX - 5, currentY - 20, 10, 5 * owner.stringSpacing + 30);
-                g.fillRect(cursorRect);
+                // 일정한 마디 길이를 기준으로 커서 위치 계산
+                float cursorX = owner.xOffset + (currentMeasure * measureWidth) + 
+                               (currentBeat * owner.noteSpacing);
                 
                 g.setColour(MapleTheme::getHighlightColour());
                 g.drawLine(cursorX, currentY - 20, cursorX, currentY + 5 * owner.stringSpacing + 10, 2.0f);
             }
         }
-
-        // 다음 트랙으로 이동
-        currentY += 6 * owner.stringSpacing + 50.0f;
     }
 }
 
@@ -227,21 +228,39 @@ void ScoreComponent::resized()
     // 뷰포트가 전체 영역을 차지하도록 설정
     viewport.setBounds(getLocalBounds());
 
-    if (!tabPlayer.getTabFile()) return;
+    if (!tabPlayer.getTabFile()) {
+        // 탭 파일이 없을 때도 최소 크기 설정
+        scoreContent.setBounds(0, 0, 300, 200);
+        return;
+    }
 
     const auto& tabFile = *tabPlayer.getTabFile();
     float totalWidth = xOffset;
     float totalHeight = yOffset;
 
-    for (const auto& track : tabFile.tracks)
+    // 트랙이 하나만 있다고 가정
+    if (!tabFile.tracks.empty())
     {
-        totalHeight += 30.0f;
-        float trackWidth = xOffset;
-        for (const auto& measure : track.measures)
-            trackWidth += measure.beats.size() * noteSpacing;
+        const auto& track = tabFile.tracks[0];
+        
+        // 모든 마디의 비트 수 중 최대값 찾기 (일정한 마디 길이를 위해)
+        size_t maxBeatsPerMeasure = 0;
+        for (const auto& measure : track.measures) {
+            maxBeatsPerMeasure = juce::jmax(maxBeatsPerMeasure, measure.beats.size());
+        }
+        
+        // 최소 비트 수 보장 (너무 작은 경우 기본값 사용)
+        maxBeatsPerMeasure = juce::jmax(maxBeatsPerMeasure, size_t(4));
+        
+        // 전체 너비 계산 - 일정한 마디 길이 사용
+        float trackWidth = xOffset + (track.measures.size() * maxBeatsPerMeasure * noteSpacing);
         totalWidth = juce::jmax(totalWidth, trackWidth);
-        totalHeight += 6 * stringSpacing + 50.0f;
+        totalHeight += 6 * stringSpacing + 20.0f; // 트랙 제목 공간 제외
     }
+    
+    // 최소 크기 보장
+    totalWidth = juce::jmax(300.0f, totalWidth);
+    totalHeight = juce::jmax(200.0f, totalHeight);
 
     // 콘텐츠 크기 설정
     scoreContent.setBounds(0, 0, totalWidth, totalHeight);
@@ -384,20 +403,25 @@ bool ScoreComponent::keyPressed(const juce::KeyPress& key)
         return true;
     }
     
-    // 왼쪽/오른쪽 화살표 키로 비트 단위 이동
-    else if (key == juce::KeyPress::leftKey || key == juce::KeyPress::rightKey)
+    // 재생 중엔 키보드 내비게이션 비활성화
+    if (tabPlayer.isPlaying())
+        return false;
+    
+    if (!tabPlayer.getTabFile())
+        return false;
+    
+    // 좌우 화살표 키로 비트 간 이동
+    if (key == juce::KeyPress::leftKey || key == juce::KeyPress::rightKey)
     {
-        if (!tabPlayer.getTabFile()) return false;
-        
         int track = tabPlayer.getCurrentTrack();
         int measure = tabPlayer.getCurrentMeasure();
         int beat = tabPlayer.getCurrentBeat();
         
-        const auto& tabFile = *tabPlayer.getTabFile();
-        if (track < 0 || track >= static_cast<int>(tabFile.tracks.size()))
+        if (track < 0 || tabPlayer.getTabFile() == nullptr || 
+            track >= static_cast<int>(tabPlayer.getTabFile()->tracks.size()))
             return false;
-            
-        const auto& trackData = tabFile.tracks[track];
+        
+        const auto& trackData = tabPlayer.getTabFile()->tracks[track];
         
         // 왼쪽 화살표: 이전 비트로 이동
         if (key == juce::KeyPress::leftKey)
@@ -441,13 +465,21 @@ bool ScoreComponent::keyPressed(const juce::KeyPress& key)
         
         // 커서가 보이도록 뷰포트 조정
         float cursorX = xOffset;
-        int beatSum = 0;
         
-        for (int m = 0; m < measure; ++m)
-            beatSum += trackData.measures[m].beats.size();
+        // 모든 마디의 비트 수 중 최대값 찾기 (일정한 마디 길이를 위해)
+        size_t maxBeatsPerMeasure = 0;
+        for (const auto& m : trackData.measures) {
+            maxBeatsPerMeasure = juce::jmax(maxBeatsPerMeasure, m.beats.size());
+        }
         
-        beatSum += beat;
-        cursorX += beatSum * noteSpacing;
+        // 최소 비트 수 보장
+        maxBeatsPerMeasure = juce::jmax(maxBeatsPerMeasure, size_t(4));
+        
+        // 마디당 너비 계산
+        float measureWidth = maxBeatsPerMeasure * noteSpacing;
+        
+        // 커서 위치 계산 - 고정된 마디 크기 적용
+        cursorX += (measure * measureWidth) + (beat * noteSpacing);
         
         viewport.setViewPosition(cursorX - viewport.getWidth() / 4, viewport.getViewPosition().getY());
         
@@ -529,8 +561,17 @@ void ScoreComponent::stopPlayback()
 
 void ScoreComponent::updateScore()
 {
+    // 우선 내용 다시 그리기
     scoreContent.repaint();
+    
+    // 크기 계산 및 업데이트
     resized(); // 콘텐츠 크기 업데이트
+    
+    // 뷰포트 업데이트
+    viewport.setViewedComponent(&scoreContent, false);
+    
+    // 전체 컴포넌트 다시 그리기
+    repaint();
 }
 
 void ScoreComponent::timerCallback()
@@ -564,15 +605,22 @@ void ScoreComponent::timerCallback()
         if (currentTrack >= 0 && currentTrack < static_cast<int>(tabFile.tracks.size()) &&
             currentMeasure >= 0 && currentMeasure < static_cast<int>(tabFile.tracks[currentTrack].measures.size()))
         {
-            float cursorX = xOffset;
-            int beatSum = 0;
-            
             const auto& track = tabFile.tracks[currentTrack];
-            for (int m = 0; m < currentMeasure; ++m)
-                beatSum += track.measures[m].beats.size();
             
-            beatSum += currentBeat;
-            cursorX += beatSum * noteSpacing;
+            // 모든 마디의 비트 수 중 최대값 찾기 (일정한 마디 길이를 위해)
+            size_t maxBeatsPerMeasure = 0;
+            for (const auto& measure : track.measures) {
+                maxBeatsPerMeasure = juce::jmax(maxBeatsPerMeasure, measure.beats.size());
+            }
+            
+            // 최소 비트 수 보장
+            maxBeatsPerMeasure = juce::jmax(maxBeatsPerMeasure, size_t(4));
+            
+            // 마디당 너비 계산
+            float measureWidth = maxBeatsPerMeasure * noteSpacing;
+            
+            // 커서 위치 계산 - 고정된 마디 크기 적용
+            float cursorX = xOffset + (currentMeasure * measureWidth) + (currentBeat * noteSpacing);
             
             // 현재 뷰포트 영역
             auto viewArea = viewport.getViewArea();
