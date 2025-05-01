@@ -1,7 +1,7 @@
 import React from 'react';
 import heart from '../../../Assets/Images/heart.png';
 import fill_heart from '../../../Assets/Images/fill_heart.png';
-import bookmark from '../../../Assets/MyPage/bookmark.svg';
+import bookmark from '../../../Assets/bookmark.svg';
 import fill_bookmark from '../../../Assets/MyPage/filledBookmark.svg';
 import Button from '../../Button/Button';
 import swal from 'sweetalert';
@@ -120,7 +120,7 @@ export default function PostActionBar({
   };
   return (
     <div className="flex sm:w-[80%] lg:w-[60%] md:w-[70%] justify-between mt-4">
-      <div className="flex">
+      <div className="flex items-center">
         <button className="mr-2 w-10 h-[40px]" onClick={handleHeartBttn}>
           <img
             src={liked ? fill_heart : heart}
@@ -128,10 +128,10 @@ export default function PostActionBar({
           />
           <span>{clickLiked ? likeNum + 1 : likeNum}</span>
         </button>
-        <button className="w-10" onClick={handleScrap}>
+        <button className="w-[45px]" onClick={handleScrap}>
           <img
             src={isScrap ? fill_bookmark : bookmark}
-            className="duration-300 ease-in-out hover:scale-[110%]"
+            className=" duration-300 ease-in-out hover:scale-[110%]"
           />
         </button>
       </div>
