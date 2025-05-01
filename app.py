@@ -7,7 +7,7 @@ from routers.recent_prepare_router import router as recent_prepared_router
 from routers.ranking_router import router as ranking_router
 from routers.mainsearch_router import router as mainsearch_router
 from routers.soundSourceAnalysis_router import router as soundSourceAnalysis_router
-from routers.users_router import as users_router
+from routers.users_router import router as users_router
 
 # API 경로와 문서 설정
 app = FastAPI(
