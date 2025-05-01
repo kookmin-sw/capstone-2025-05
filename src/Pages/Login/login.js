@@ -56,10 +56,9 @@ export default function Login() {
 
       if (uid) {
         login(uid); //sessionstorage에 세팅 + context uid 세팅
-        swal('', '로그인성공🫡', 'success');
         navigate('/main');
       } else {
-        swal('', '로그인 실패: 사용자 정보를 가져올 수 없습니다😥', 'error');
+        alert('로그인 실패');
       }
     } catch (error) {
       console.error('로그인 에러:', error);
