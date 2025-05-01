@@ -92,34 +92,37 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="flex z-10 mt-16">
+      <div className="flex flex-col items-center justify-center h-full pt-[20px]">
+        <div className="flex z-10 translate-y-10">
           <img src={Logo} alt="logo" className="w-52 h-auto" />
         </div>
 
         <div className="flex justify-center w-full">
-          <Box width="35%" height="50vh">
+          <Box width="600px" height="480px">
             <div className="flex flex-col items-center justify-center w-full h-full">
-              <div className="flex flex-col items-center gap-y-4 w-full">
+              <span className="text-center text-lg font-semibold mb-8">
+                이메일과 비밀번호를 입력해 주세요
+              </span>
+              <div className="flex flex-col items-center justify center gap-y-4">
                 <Input
-                  width="80%"
-                  height="52px"
+                  width="448px"
+                  height="60px"
                   type="text"
                   placeholder="이메일을 입력해 주세요"
                   value={email}
                   onChange={handleEmail}
                 />
                 <Input
-                  width="80%"
-                  height="52px"
+                  width="448px"
+                  height="60px"
                   type="password"
                   placeholder="비밀번호를 입력해 주세요"
                   value={password}
                   onChange={handlePassword}
                 />
               </div>
-              <div className="mt-8 w-full flex justify-center">
-                <Button width="80%" height="52px" onClick={handleLogin}>
+              <div className="flex justify-center mt-12 font-bold">
+                <Button width="448px" height="60px" onClick={handleLogin}>
                   로그인
                 </Button>
               </div>
@@ -127,7 +130,7 @@ export default function Login() {
           </Box>
         </div>
 
-        <div className="flex items-center w-[35%] mt-10 mb-8">
+        <div className="flex items-center w-[52%] mt-10 mb-8">
           <div className="flex-grow border-t-2 border-[#AFAFAF]"></div>
           <span className="px-4 text-gray-500 text-sm">또는</span>
           <div className="flex-grow border-t-2 border-[#AFAFAF]"></div>
@@ -136,34 +139,34 @@ export default function Login() {
         <div className="flex flex-col items-center mb-2 w-full">
           <div className="flex justify-center w-full">
             <button
-              className=" w-[35%] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[20px] font-bold bg-[white]"
+              className=" w-[600px] h-[60px] pl-5 pr-5 rounded-[10px] text-black text-[20px] font-bold bg-[white]"
               onClick={handleGoogleLogin}
             >
               <div className="flex justify-center items-center">
                 <img src={Google} alt="google logo" />
-                <span className="ml-2 text-center">구글로 시작하기</span>
+                <span className="ml-8 text-center">구글로 시작하기</span>
               </div>
             </button>
           </div>
-          <div className="flex flex-col items-center mt-2 w-full">
+          <div className="flex flex-col items-center mt-4 w-full">
             <button
-              className=" w-[35%] h-[60px] pl-5 pr-5 rounded-[10px] text-white text-[20px] font-bold bg-[#12D760]"
+              className=" w-[600px] h-[60px] pl-5 pr-5 rounded-[10px] text-white text-[20px] font-bold bg-[#12D760]"
               onClick={handleSpoityLogin}
             >
               <div className="flex justify-center items-center">
                 <img src={Spotify} alt="spotify logo" className="w-12 h-12" />
-                <span className="ml-1 text-center">스포티파이 인증</span>
+                <span className="ml-8 text-center">스포티파이 인증하기</span>
               </div>
             </button>
-            <p className="mt-4 text-sm text-gray-500">
+            <span className="mt-4 text-sm text-gray-500">
               * 스포티파이 인증을 완료해야 곡 스트리밍 서비스를 이용하실 수
               있습니다.
-            </p>
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col items-center mt-2">
+      <div className="flex flex-col items-center mt-8 mb-8">
         <div className="flex">
           <button
             className="text-[#AFAFAF] text-sm underline hover:text-gray-500"
@@ -175,7 +178,7 @@ export default function Login() {
           </button>
         </div>
       </div>
-      <Footer className="absolute bottom-0 w-full" />
+      <Footer />
     </div>
   );
 }
