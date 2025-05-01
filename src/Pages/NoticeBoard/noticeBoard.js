@@ -16,11 +16,10 @@ export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
   const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
   const { mutate: increaseView } = useViewPutMutation();
-
-  console.log(increaseView, '조회수');
-
+  const { data: autoCompleteSuggestions } = useAutoCompleteQuery(searchKeyword);
   const { data: postInfo } = usePostInfoQuery();
-  console.log(postInfo, 'postinfo');
+
+  console.log(postInfo, '게시물데이터 hooks');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [startPage, setStartPage] = useState(1);
@@ -33,8 +32,6 @@ export default function NoticeBoard() {
   );
 
   const navigate = useNavigate();
-
-  const { data: autoCompleteSuggestions } = useAutoCompleteQuery(searchKeyword);
 
   // 필터링된 결과
   const filteredData = useMemo(() => {
@@ -171,12 +168,10 @@ export default function NoticeBoard() {
             ))}
           </tbody>
         </table>
-
+        {/* 검색창 */}
         <div id="searchBar" className="flex justify-center w-[80%] mt-6">
-          <div className="relative w-[300px]">
+          <div className="relative w-[25%]">
             <SearchBox
-              width={'300px'}
-              height={'40px'}
               value={searchKeyword}
               onChange={(e) => {
                 setSearchKeyword(e.target.value);

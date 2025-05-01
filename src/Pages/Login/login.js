@@ -42,7 +42,7 @@ export default function Login() {
     const trimmedPassword = password.trim();
 
     if (!trimmedEmail || !trimmedPassword) {
-      alert('이메일과 비밀번호를 모두 입력해주세요.');
+      swal('', '이메일과 비밀번호를 모두 입력해주세요', 'warning');
       return;
     }
 
@@ -59,20 +59,18 @@ export default function Login() {
         swal('', '로그인성공🫡', 'success');
         navigate('/main');
       } else {
-        swal('', '로그인 실패: 사용자 정보를 가져올 수 없습니다😥', 'error');
+        swal('', '로그인 실패: 사용자 정보를 가져올 수 없습니다😥', 'info');
       }
     } catch (error) {
       console.error('로그인 에러:', error);
       if (error.response) {
-        console.error('서버 응답 상태:', error.response.status);
-        console.error('서버 응답 데이터:', error.response.data);
         if (error.response.status === 422) {
-          alert('입력값이 유효하지 않습니다.');
+          swal('', '입력값이 유효하지 않습니다😥', 'error');
         } else {
-          alert('서버 오류가 발생했습니다.');
+          swal('', '서버 오류가 발생했습니다😥', 'error');
         }
       } else {
-        alert('네트워크 오류가 발생했습니다.');
+        swal('', '네트워크 오류가 발생했습니다😥', 'error');
       }
     }
   };
