@@ -3,7 +3,6 @@ import { BrowserRouter } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { SpotifyPlayerProvider } from './Context/SpotifyContext';
 import MapleHeader from './Components/MapleHeader';
-
 import { AuthProvider } from './Context/AuthContext'; // 추가
 import AppRoutes from './Routes/AppRoutes';
 
@@ -55,6 +54,29 @@ function App() {
 
   return (
     <div className="App">
+      <SpotifyPlayerProvider token={token} authUrl={authUrl}>
+        <BrowserRouter>
+          <MapleHeader />
+          <Routes>
+            <Route path="/test" element={<TestPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/main" element={<Main />} />
+            <Route path="/notice" element={<NoticeBoard />} />
+            <Route path="/noticeDetail/:id" element={<NoticeDetail />} />
+            <Route path="/write" element={<WritePage />} />
+            <Route path="/ranking" element={<Ranking />} />
+            <Route path="/mypage" element={<MyPage />} />
+            <Route path="/playedmusic" element={<PlayedMusic />} />
+            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/setting" element={<Setting />} />
+            <Route path="/myactivity" element={<MyActivity />} />
+            <Route path="/searchpage" element={<SearchPage />} />
+            <Route path="/print" element={<PrintPage />} />
+          </Routes>
+        </BrowserRouter>
+      </SpotifyPlayerProvider>
       <AuthProvider>
         <SpotifyPlayerProvider token={token} authUrl={authUrl}>
           <BrowserRouter>

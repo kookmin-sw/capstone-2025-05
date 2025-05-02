@@ -15,6 +15,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // const { login, logout } = useAuth();
   const { login, logout } = useAuth();
 
   const handleEmail = (e) => setEmail(e.target.value);
@@ -55,6 +56,7 @@ export default function Login() {
       const uid = res.data.uid;
 
       if (uid) {
+        // login(uid); //sessionstorage에 세팅 + context uid 세팅
         login(uid); //sessionstorage에 세팅 + context uid 세팅
         swal('', '로그인성공🫡', 'success');
         navigate('/main');
