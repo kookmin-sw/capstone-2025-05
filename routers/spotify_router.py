@@ -36,23 +36,43 @@ def get_spotify_token():
 def get_new_releases():
     token = get_spotify_token()
     url = "https://api.spotify.com/v1/browse/new-releases"
-
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     try:
-        response = requests.get(url, headers=headers, timeout = 10)
-        print(f"Spotify API Response: {response.status_code}, {response.text}")
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
 
-        new_releases = [
-            {
-                "title": album["name"],
-                "artist": ", ".join([artist["name"] for artist in album["artists"]]),
-                "album_cover": album.get("images", [{}])[0].get("url", "")
-            }
-            for album in data.get("albums", {}).get("items", [])
-        ]
-        return {"new_releases": new_releases}
+        albums = data.get("albums", {}).get("items", [])
+        result = []
+
+        for album in albums:
+            album_id = album.get("id")
+            album_title = album.get("name")
+            album_cover = album.get("images", [{}])[0].get("url", "")
+            artists = ", ".join([artist["name"] for artist in album.get("artists", [])])
+            
+            tracks_url = f"https://api.spotify.com/v1/albums/{album_id}/tracks"
+            track_response = requests.get(tracks_url, headers=headers, timeout=10)
+            track_response.raise_for_status()
+            tracks_data = track_response.json().get("items", [])
+
+            if tracks_data:
+                track = tracks_data[0]
+                track_name = track.get("name", "")
+                preview_url = track.get("preview_url")  
+                spotify_url = track.get("external_urls", {}).get("spotify", "")
+
+                result.append({
+                    "album_title": album_title,
+                    "track_title": track_name,
+                    "artist": artists,
+                    "album_cover": album_cover,
+                    "preview_url": preview_url,      
+                    "spotify_url": spotify_url         
+                })
+
+        return {"new_releases": result}
+
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Spotify 신곡 데이터 요청 실패: {str(e)}")
