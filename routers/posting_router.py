@@ -8,7 +8,7 @@ from templates import templates
 from typing import List
 from starlette.middleware.cors import CORSMiddleware
 import datetime
-from manager.post_model import Post, Comment
+from model import Post, Comment
 from fastapi.responses import JSONResponse
 import socket
 import time
@@ -77,7 +77,7 @@ async def root(request: Request):
                     datadict[key] = str(value)
             # image_url과 audio_url도 포함되도록 그대로 추가
             postsdictlist.append({
-                "id": datadict.get("uid"),
+                "id": datadict.get("id"),
                 "제목": datadict.get("제목"),
                 "내용" : datadict.get("내용"),
                 "작성자": datadict.get("작성자"),
@@ -137,7 +137,7 @@ async def read_post(request: Request, post_id: int):
     alldocs = posts_ref.stream()
     for doc in alldocs:
         datadict = doc.to_dict()
-        if datadict.get("uid") == post_id:
+        if datadict.get("id") == post_id:
             for key, value in datadict.items():
                 if isinstance(value, datetime.datetime):
                     datadict[key] = value.strftime("%Y년 %m월 %d일 %H시 %M분")
@@ -219,7 +219,7 @@ async def create_post(
 
     post_data = {
         "id": lastdbid + 1,
-        "uid": int(string_number),
+        "uid": str(uid),
         "내용": content,
         "댓글갯수": 0,
         "created_at": now,
