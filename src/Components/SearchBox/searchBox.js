@@ -5,10 +5,13 @@ export default function SearchBox(props) {
   return (
     <div
       className="relative w-full"
-      style={{ width: props.width, height: props.height }}
+      style={{
+        width: props.width,
+        height: props.height,
+      }}
     >
       <input
-        className="w-full border border-[#A57865] rounded-full pr-12 pl-4 py-2 outline-none"
+        className={`w-full border border-[#A57865] rounded-full pr-12 pl-4 py-2 outline-none ${props.tailwind}`}
         style={{ height: '100%' }}
         onClick={props.onClick}
         onChange={props.onChange}

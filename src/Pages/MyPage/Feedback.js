@@ -153,6 +153,7 @@ export default function Feedback() {
         });
         console.log('specific record Data:', response.data.artist);
 
+
         if (response.data?.record) {
           setRecord(response.data.record);
           setFeedbackData(feedback.text);

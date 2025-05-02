@@ -8,6 +8,22 @@ export const SpotifyPlayerProvider = ({ token, children }) => {
   const [player, setPlayer] = useState(null);
   const [deviceId, setDeviceId] = useState(null);
   const [isReady, setIsReady] = useState(false);
+  const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
+  const redirectUri = process.env.REACT_APP_SPOTIFY_REDIRECT_URI;
+  const scopes = [
+    'streaming',
+    'user-read-email',
+    'user-read-private',
+    'user-read-playback-state',
+    'user-modify-playback-state',
+  ];
+
+  const authUrl =
+    'https://accounts.spotify.com/authorize' +
+    '?response_type=token' +
+    `&client_id=${clientId}` +
+    `&scope=${encodeURIComponent(scopes.join(' '))}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
   useEffect(() => {
     if (!token) return;
@@ -45,7 +61,9 @@ export const SpotifyPlayerProvider = ({ token, children }) => {
   }, [token]);
 
   return (
-    <SpotifyPlayerContext.Provider value={{ player, deviceId, isReady }}>
+    <SpotifyPlayerContext.Provider
+      value={{ player, deviceId, isReady, authUrl }}
+    >
       {children}
     </SpotifyPlayerContext.Provider>
   );

@@ -1,5 +1,4 @@
 import React from 'react';
-import Header from '../../Components/MapleHeader';
 import Footer from '../../Components/MapleFooter';
 
 // 주제별로 링크 분리
