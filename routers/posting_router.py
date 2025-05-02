@@ -8,7 +8,7 @@ from templates import templates
 from typing import List
 from starlette.middleware.cors import CORSMiddleware
 import datetime
-from model import Post, Comment
+from manager.post_model import Post, Comment
 from fastapi.responses import JSONResponse
 import socket
 import time

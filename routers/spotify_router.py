@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-spotify_router = APIRouter(prefix="/spotify", tags=["Spotify"])
+router = APIRouter()
 
 def get_spotify_token():
     auth_url = "https://accounts.spotify.com/api/token"
@@ -32,7 +32,7 @@ def get_spotify_token():
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail="Spotify API 토큰 요청 실패 : {str(e)}")
 
-@spotify_router.get("/new-releases")
+@router.get("/new-releases", tags=["Spotify"])
 def get_new_releases():
     token = get_spotify_token()
     url = "https://api.spotify.com/v1/browse/new-releases"
