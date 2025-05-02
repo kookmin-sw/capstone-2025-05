@@ -24,7 +24,12 @@ async def get_user_info(uid: str):
 
         storage_bucket = storage.bucket()
         blobs = list(storage_bucket.list_blobs(prefix=f"{uid}/profile/"))
-        profile_image_url = blobs[0].public_url if blobs else None
+        if blobs:
+                profile_blob = blobs[0]
+                url = profile_blob.generate_signed_url(datetime.timedelta(minutes=60))
+                profile_image_url = url
+        else:
+            profile_image_url = None
 
         return {
             "uid": uid,
