@@ -59,5 +59,5 @@ private:
     ContentController* contentController = nullptr;
 
     // 리스너 리스트
-    juce::ListenerList<SongSelectedListener> songListeners;
+    juce::ThreadSafeListenerList<SongSelectedListener> songListeners;
 };

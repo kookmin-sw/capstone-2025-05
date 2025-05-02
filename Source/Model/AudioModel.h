@@ -44,8 +44,8 @@ private:
     float volume = 1.0f;
     double currentPositionInSeconds = 0.0;
     
-    juce::ListenerList<Listener> listeners;
-    juce::ListenerList<IAudioModelListener> modelListeners;
+    juce::ThreadSafeListenerList<Listener> listeners;
+    juce::ThreadSafeListenerList<IAudioModelListener> modelListeners;
     
     void notifyInputLevelChanged() {
         // 기존 리스너에게 알림
