@@ -9,13 +9,15 @@ from routers.mainsearch_router import router as mainsearch_router
 from routers.soundSourceAnalysis_router import router as soundSourceAnalysis_router
 from routers.users_router import router as users_router
 
+app = FastAPI()
+"""
 # API 경로와 문서 설정
 app = FastAPI(
     docs_url="/api/docs", 
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
 )
-
+"""
 # 각 라우터에 /api 접두사 추가
 app.include_router(posting_router, prefix="/api")
 app.include_router(spotify_router, prefix="/api")

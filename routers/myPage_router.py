@@ -223,24 +223,27 @@ async def get_all_records(uid: str):
             upload_count = int(path_parts[3])
 
             score_data = get_score_data(uid, song_name, upload_count)
+            artist = get_artist_info(uid, song_name)
 
             if score_data:
                 if song_name not in records:
                     records[song_name] = []
 
-                date = score_data.get("date")
-                date = extract_date(date)
+                if not any(record["upload_count"] == upload_count and record.get("audio_url") == blob.public_url 
+                           for record in records[song_name]):
+                    date = score_data.get("date")
+                    if hasattr(date, "strftime"):
+                        date = date.strftime("%Y-%m-%d")
 
-                artist_info = get_artist_info(uid, song_name)
-
-                records[song_name].append({
-                    "upload_count": upload_count,
-                    "pitch": score_data.get("pitch"),
-                    "onset": score_data.get("onset"),
-                    "technique": score_data.get("technique"),
-                    "date": date,
-                    "artist": artist_info
-                })
+                    records[song_name].append({
+                        "upload_count": upload_count,
+                        "pitch": score_data.get("pitch"),
+                        "onset": score_data.get("onset"),
+                        "technique": score_data.get("technique"),
+                        "date": date,
+                        "audio_url": blob.public_url,
+                        "artist": artist
+                    })
 
         return records
 
@@ -249,66 +252,70 @@ async def get_all_records(uid: str):
         raise HTTPException(status_code=500, detail="연습 기록 조회에 실패했습니다.")
     
 @router.get("/records/specific", tags=["My Page"])
-async def get_specific_record(uid: str, song_name: str, count: int):
+async def get_specific_record(uid: str, song_name: str, upload_count: int):
+    """특정 연습 기록 조회"""
     try:
         storage_bucket = storage.bucket()
 
-        records = []
+        album_blob = storage_bucket.blob(f"album_covers/{song_name}.jpg")
+        cover_url = (
+            album_blob.generate_signed_url(datetime.timedelta(minutes=60))
+            if album_blob.exists()
+            else None
+        )
 
-        if count == 0:
-            # 모든 업로드 기록 반환
-            blobs = list(storage_bucket.list_blobs(prefix=f"{uid}/record/{song_name}/"))
+        artist = get_artist_info(uid, song_name)
 
-            for blob in blobs:
-                parts = blob.name.split("/")
-                if len(parts) < 5 or not blob.name.endswith(('.mp3', '.wav')):
-                    continue
+        if upload_count == 0:
+            blob_path = f"{uid}/record/{song_name}/"
+            blobs = list(storage_bucket.list_blobs(prefix=blob_path))
+            upload_counts = set(
+                blob.name.split("/")[3] for blob in blobs if blob.name.endswith(('.mp3', '.wav'))
+            )
 
-                upload_count = int(parts[3])
-                score_data = get_score_data(uid, song_name, upload_count)
-
+            records = []
+            for count in upload_counts:
+                score_data = get_score_data(uid, song_name, int(count))
                 if score_data:
-                    date = extract_date(score_data.get("date"))
-                    artist_info = get_artist_info(uid, song_name)
-
                     records.append({
-                        "upload_count": upload_count,
+                        "upload_count": int(count),
                         "pitch": score_data.get("pitch"),
                         "onset": score_data.get("onset"),
                         "technique": score_data.get("technique"),
-                        "date": date,
-                        "artist": artist_info
+                        "date": extract_date(score_data.get("date")),
+                        "artist": artist
                     })
+
+            if not records:
+                raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
+
+            return {
+                "album_cover_url": cover_url,
+                "records": records
+            }
 
         else:
-            # 단일 업로드 기록 반환
-            blob_prefix = f"{uid}/record/{song_name}/{count}/"
-            blobs = list(storage_bucket.list_blobs(prefix=blob_prefix))
+            score_data = get_score_data(uid, song_name, upload_count)
+            if not score_data:
+                raise HTTPException(status_code=404, detail="해당 연습 기록이 없습니다.")
 
-            for blob in blobs:
-                if not blob.name.endswith(('.mp3', '.wav')):
-                    continue
+            record_data = {
+                "upload_count": upload_count,
+                "pitch": score_data.get("pitch"),
+                "onset": score_data.get("onset"),
+                "technique": score_data.get("technique"),
+                "date": extract_date(score_data.get("date")),
+                "artist": artist
+            }
 
-                score_data = get_score_data(uid, song_name, count)
-                if score_data:
-                    date = extract_date(score_data.get("date"))
-                    artist_info = get_artist_info(uid, song_name)
-
-                    records.append({
-                        "upload_count": count,
-                        "pitch": score_data.get("pitch"),
-                        "onset": score_data.get("onset"),
-                        "technique": score_data.get("technique"),
-                        "date": date,
-                        "artist": artist_info
-                    })
-
-        return {
-            "records": records
-        }
+            return {
+                "album_cover_url": cover_url,
+                "record": record_data
+            }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"특정 곡 기록 조회 실패: {str(e)}")
+        print(f"특정 연습 기록 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="특정 연습 기록 조회에 실패했습니다.")
 
 @router.get("/records/audio", tags=["My Page"])
 async def get_record_audio(uid: str, song_name: str, upload_count: int):
@@ -429,39 +436,43 @@ async def get_my_rank(uid: str, song_name: str):
 @router.get("/recent-4-record", tags=["My Page"])
 async def get_recent_album_covers(uid: str):
     try:
-        storage_bucket = storage.bucket()
-        blobs = list(storage_bucket.list_blobs(prefix=f"{uid}/record/"))
+        user_collection = firestore_db.collection(f"{uid}_score")
+        all_docs = user_collection.stream()
 
-        latest_records = []
+        uploads = []
+        for doc in all_docs:
+            song_name = doc.id
+            count_subcol = user_collection.document(song_name).collections()
+            for subcol in count_subcol:
+                for doc2 in subcol.stream():
+                    if doc2.id == "score":
+                        data = doc2.to_dict()
+                        date = extract_date(data.get("date"))
+                        uploads.append({
+                            "song_name": song_name,
+                            "date": date
+                        })
 
-        for blob in blobs:
-            parts = blob.name.split("/")
-            if len(parts) < 5 or not blob.name.endswith(('.mp3', '.wav')):
-                continue
+        sorted_uploads = sorted(uploads, key=lambda x: x["date"], reverse=True)[:4]
 
-            song_name = parts[2]
-            upload_count = int(parts[3])
-            score_data = get_score_data(uid, song_name, upload_count)
+        album_covers = []
+        for upload in sorted_uploads:
+            song_name = upload["song_name"]
+            blob = storage.bucket().blob(f"album_covers/{song_name}.jpg")
+            url = blob.generate_signed_url(datetime.timedelta(minutes=60)) if blob.exists() else None
+            artist = get_artist_info(uid, song_name)
 
-            if score_data:
-                date = extract_date(score_data.get("date"))
-                latest_records.append({
-                    "song_name": song_name,
-                    "upload_count": upload_count,
-                    "date": date
-                })
+            album_covers.append({
+                "song_name": song_name,
+                "cover_url": url,
+                "artist": artist
+            })
 
-        latest_records.sort(key=lambda x: x["date"], reverse=True)
-        latest_records = latest_records[:4]
-
-        for record in latest_records:
-            artist = get_artist_info(uid, record["song_name"])
-            record["artist"] = artist
-
-        return latest_records
+        return {"recent_uploads": album_covers}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"최근 4개 기록 조회 실패: {str(e)}")
+        print("앨범 커버 조회 실패")
+        raise HTTPException(status_code=500, detail=f"앨범 커버 조회 실패: {str(e)}")
     
 @router.post("/update_highest_score", tags=["My Page"])
 async def update_highest_score(uid: str, song_name: str):
