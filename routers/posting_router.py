@@ -471,58 +471,73 @@ async def like_post(post_id: int, uid: str, request: Request):
 
 
 @router.delete("/posts/{post_id}/like", tags=["Post"])
-async def unlike_post(post_id: int, request: Request):
-    user = request.headers.get("uid")
-    if not user:
-        raise HTTPException(status_code=400, detail="User UID is required")
+async def unlike_post(post_id: int, uid: str):
 
+    db = firestore.client()
+
+    if not uid:
+        raise HTTPException(status_code=400, detail="User UID is required")
     string_number = str(post_id).zfill(8)
-    like_doc_ref = db.collection("my_activity").document(user).collection("like").document(string_number)
-    post_doc_ref = posts_ref.document(string_number)
 
-    if not like_doc.get().exists:
-        raise HTTPException(status_code=404, detail="좋아요하지 않은 게시글입니다.")
-
-    post_doc = post_doc_ref.get()
-    if not post_doc.exists:
-        raise HTTPException(status_code=404, detail="게시글이 존재하지 않습니다.")
-
-    post_doc_ref.update({"좋아요수": firestore.Increment(-1)})
-    like_doc_ref.delete()
-    return {"result_msg": "좋아요가 취소되었습니다.", "post_id": post_id}
-
-@router.post("/posts/{post_id}/scrap", tags=["Post"])
-async def scrap_post(post_id: str, request: Request):
-    user = request.headers.get("uid")
-    if not user:
-        raise HTTPException(status_code=400, detail="User UID is required")
-
-    post_ref = posts_ref.document(post_id)
+    post_ref = db.collection("post").document(string_number)
     post = post_ref.get()
     if not post.exists:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    scrap_doc = db.collection("my_activity").document(user).collection("scrap").document(string_number)
+    like_doc = db.collection("my_activity").document(uid).collection("like").document(string_number)
+    if not like_doc.get().exists:
+        raise HTTPException(status_code=400, detail="좋아요하지 않은 게시글입니다.")
+
+    current_likes = post.to_dict().get("좋아요수", 0)
+    if current_likes > 0:
+        post_ref.update({"좋아요수": firestore.Increment(-1)})
+
+    like_doc.delete()
+
+    return {"message": "좋아요가 취소되었습니다.", "post_id": post_id}
+
+
+@router.post("/posts/{post_id}/scrap", tags=["Post"])
+async def scrap_post(post_id: str, uid: str):
+    db = firestore.client()
+
+    if not uid:
+        raise HTTPException(status_code=400, detail="User UID is required")
+
+    post_ref = db.collection("post").document(post_id)
+    post = post_ref.get()
+    if not post.exists:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    scrap_doc = db.collection("my_activity").document(uid).collection("scrap").document(post_id)
     if scrap_doc.get().exists:
         raise HTTPException(status_code=400, detail="이미 스크랩한 게시글입니다.")
-    scrap_doc_ref.set({
-        "user_id": user,
+        
+    post_ref.update({"조회수": firestore.Increment(1)})
+
+    scrap_doc.set({
+        "user_id": uid,
         "post_id": post_id,
         "scrap_date": datetime.datetime.utcnow()
     })
 
-
     return {"message": "스크랩이 추가되었습니다.", "post_id": post_id}
 
 @router.delete("/posts/{post_id}/scrap", tags=["Post"])
-async def remove_scrap(post_id: str, request: Request):
-    user = request.headers.get("uid")
-    if not user:
+async def remove_scrap(post_id: str, uid: str):
+    db = firestore.client()
+
+    if not uid:
         raise HTTPException(status_code=400, detail="User UID is required")
 
-    scrap_doc = db.collection("my_activity").document(user).collection("scrap").document(string_number)
+    scrap_doc = db.collection("my_activity").document(uid).collection("scrap").document(post_id)
     if not scrap_doc.get().exists:
         raise HTTPException(status_code=404, detail="스크랩하지 않은 게시글입니다.")
+
+    post_ref = db.collection("post").document(post_id)
+    post = post_ref.get()
+    if post.exists:
+        post_ref.update({"조회수": firestore.Increment(-1)})
 
     scrap_doc.delete()
     return {"message": "스크랩이 취소되었습니다.", "post_id": post_id}
