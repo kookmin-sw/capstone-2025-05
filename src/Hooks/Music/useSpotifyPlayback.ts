@@ -12,7 +12,7 @@ export const useSpotifyPlayback = ({
   onTokenExpired,
 }: any) => {
   const sendPlaybackCommand = useCallback(
-    async ({ action, body }: any) => {
+    async ({ action, body, authUrl }: any) => {
       if (!isReady || !deviceId) {
         Swal.fire({
           icon: 'warning',
