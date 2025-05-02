@@ -11,7 +11,7 @@ export const useViewPutMutation = () => {
   return useMutation({
     mutationFn: updateViews,
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries('increaseViews'); // 캐시된 데이터 갱신
+      queryClient.invalidateQueries('increaseViews', variables.post_id); // 캐시된 데이터 갱신
     },
   });
 };

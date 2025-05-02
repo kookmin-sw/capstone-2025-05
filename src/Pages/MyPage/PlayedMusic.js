@@ -91,7 +91,7 @@ export default function PlayedMusic() {
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
-              <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
+              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img
                   src={Information}
                   alt="내 정보 아이콘"
@@ -101,7 +101,7 @@ export default function PlayedMusic() {
                   내 정보
                 </Link>
               </li>
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
+              <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
                 <Link to="/playedmusic">연주한 곡</Link>
               </li>
@@ -168,7 +168,7 @@ export default function PlayedMusic() {
                     <tr>
                       <th className="py-4 text-sm">날짜</th>
                       <th className="py-4 text-sm">곡명</th>
-                      <th className="py-4 text-sm">템포</th>
+                      <th className="py-4 text-sm">테크닉</th>
                       <th className="py-4 text-sm">박자</th>
                       <th className="py-4 text-sm">음정</th>
                     </tr>

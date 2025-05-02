@@ -13,19 +13,21 @@ import {
   ReferenceArea,
 } from 'recharts';
 
-export default function PerformanceChart({
+export default function BeatChart({
   data,
   measureTimes = [],
   largeDiffSections = [],
 }) {
   const allValues = data.flatMap((d) => [d.original, d.played]);
-  const minY = Math.max(0, Math.min(...allValues) - 50);
-  const maxY = Math.max(...allValues) + 50;
+  const minY = Math.max(0, Math.min(...allValues) - 0.5);
+  const maxY = Math.max(...allValues) + 0.5;
 
   const ticks = [];
-  for (let y = minY; y <= maxY; y += 20) ticks.push(y);
+  for (let y = minY; y <= maxY; y += 0.5) {
+    ticks.push(parseFloat(y.toFixed(1)));
+  }
 
-  const FillBetweenLines = ({ height, width, xAxisMap, yAxisMap }) => {
+  const FillBetweenLines = ({ xAxisMap, yAxisMap }) => {
     const yScale = yAxisMap[0].scale;
     const xScale = xAxisMap[0].scale;
     const areas = [];
@@ -45,12 +47,7 @@ export default function PerformanceChart({
       areas.push(
         <polygon
           key={i}
-          points={`
-            ${x1},${yScale(top1)}
-            ${x2},${yScale(top2)}
-            ${x2},${yScale(bottom2)}
-            ${x1},${yScale(bottom1)}
-          `}
+          points={` ${x1},${yScale(top1)} ${x2},${yScale(top2)} ${x2},${yScale(bottom2)} ${x1},${yScale(bottom1)} `}
           fill="rgba(255, 99, 132, 0.3)"
         />,
       );
@@ -68,16 +65,25 @@ export default function PerformanceChart({
             <XAxis
               dataKey="second"
               tickFormatter={(value) => value.toFixed(1)}
+              label={{
+                value: 'Time (s)',
+                position: 'insideBottomRight',
+                offset: -10,
+              }}
             />
             <YAxis
               domain={[minY, maxY]}
               ticks={ticks}
-              tickFormatter={(value) => `${value}`}
+              tickFormatter={(value) => `${value}s`}
+              label={{
+                value: 'Beat Timing (s)',
+                angle: -90,
+                position: 'insideLeft',
+              }}
             />
             <Tooltip />
             <Legend />
 
-            {/* 🔹 마디 경계선 표시 */}
             {measureTimes.map((time, index) => (
               <ReferenceLine
                 key={`measure-${index}`}
@@ -99,7 +105,7 @@ export default function PerformanceChart({
                 x1={section.startTime}
                 x2={section.endTime}
                 strokeOpacity={0}
-                fill="rgba(255, 165, 0, 0.3)" // 연한 주황
+                fill="rgba(255, 165, 0, 0.3)"
               />
             ))}
 
@@ -112,14 +118,14 @@ export default function PerformanceChart({
               dataKey="original"
               stroke="green"
               dot={false}
-              name="Original Pitch"
+              name="Original Beat"
             />
             <Line
               type="linear"
               dataKey="played"
               stroke="blue"
               dot={false}
-              name="User Pitch"
+              name="User Beat"
             />
           </ComposedChart>
         </ResponsiveContainer>

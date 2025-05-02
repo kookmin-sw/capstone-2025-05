@@ -34,6 +34,7 @@ export default function Playbox({
     const isSameTrack = playerTarget?.playurl === playurl;
 
     sendPlaybackCommand({
+      authUrl,
       action: 'play',
       body: isSameTrack
         ? {} //같은 트랙이면 이어서 재생
@@ -46,6 +47,7 @@ export default function Playbox({
   const handlePause = () => {
     setPlay(false);
     sendPlaybackCommand({
+      authUrl,
       action: 'pause',
       body: {},
     });
