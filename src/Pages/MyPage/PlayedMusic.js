@@ -6,82 +6,48 @@ import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Cover_1 from '../../Assets/Main/album/iveCover.svg';
+import { useRecordQuery } from '../../Hooks/MyPage/PlayedMusic/useRecordQuery.js';
+import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
+import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
+import swal from 'sweetalert';
 
 export default function PlayedMusic() {
   const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState({ nickname: '', email: '' });
-  const [recentRecords, setRecentRecords] = useState([]);
   const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
-  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
-  console.log(uid);
-
+  // api연결
+  const { data: recordData } = useRecordQuery(uid);
+  const {
+    data: recentRecords,
+    isLoading: recentLoading,
+    isError: recentError,
+  } = useRecentRecordsQuery(uid);
+  const { data: userInfo } = useUserQuery(uid);
+  console.log(recentRecords, '최근 연주한곡');
+  console.log(recordData, '기록');
+  console.log(userInfo);
   useEffect(() => {
-    const fetchRecords = async () => {
+    // record데이터가 호출되면 아래 코드 실행
+    console.log('기록응답');
+    if (recordData) {
       try {
-        const response = await axios.get(`${BACKEND_URL}/records/all`, {
-          params: { uid },
-        });
-        console.log('기록 응답:', response.data);
-    
         const allRecords = [];
-    
-        for (const [songName, recordsArray] of Object.entries(response.data)) {
-          recordsArray.forEach(record => {
+
+        for (const [songName, recordsArray] of Object.entries(recordData)) {
+          recordsArray.forEach((record) => {
             allRecords.push({
               ...record,
               song: songName,
             });
           });
         }
-    
+
         setRecords(allRecords || []);
       } catch (error) {
-        console.error('연습 기록 가져오기 실패:', error);
-      } finally {
-        setLoading(false);
+        swal('', `연습 기록 가져오기 실패:${error}`, 'error');
       }
-    };
-
-    const fetchUserInfo = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-          params: { uid },
-        });
-        console.log("유저 정보 응답 전체:", response.data);
-        const { nickname, email} = response.data || {};
-        setUserInfo({ nickname, email});
-      } catch (error) {
-        console.error("유저 정보 가져오기 실패:", error);
-      }
-    };
-
-    const fetchRecentRecords = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/recent-4-record`, {
-          params: { uid },
-        });
-        console.log('최근 기록 응답:', response.data);
-        if (response.data.recent_uploads) {
-          setRecentRecords(response.data.recent_uploads);
-        } else {
-          console.log('최근 연주한 곡이 없습니다.');
-        }
-      } catch (error) {
-        console.error('최근 연주한 곡 가져오기 실패:', error);
-      }
-    };
-
-    if (uid) {
-      fetchRecords();
-      fetchRecentRecords();
-      fetchUserInfo();
-    } else {
-      setLoading(false);
-      console.warn('uid가 없습니다. 로그인 상태를 확인하세요.');
     }
-  }, [BACKEND_URL, uid]);
+  }, [recordData]);
 
   return (
     <div className="min-h-screen">
@@ -112,14 +78,14 @@ export default function PlayedMusic() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">{userInfo.nickname || "사용자"}</p>
+            <p className="font-semibold">{userInfo?.nickname || '사용자'}</p>
           </div>
         </div>
 
         <div className="w-[100%] overflow-y-auto p-10">
           <h2 className="text-xl font-bold ml-8 mb-6">최근 연주한 곡</h2>
           <div className="flex flex-wrap gap-10 ml-2 justify-start">
-            {recentRecords.length > 0 ? (
+            {recentRecords && recentRecords?.length > 0 ? (
               recentRecords.map((song, index) => (
                 <Box
                   key={song.song_id || index}

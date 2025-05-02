@@ -8,6 +8,7 @@ import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Profile from '../../Assets/MyPage/profile.svg';
+import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
 
 export default function Admin() {
   const [nickname, setNickname] = useState('');
@@ -17,35 +18,19 @@ export default function Admin() {
   const [errors, setErrors] = useState({ nickname: '', email: '' });
   const [profilePic, setProfilePic] = useState(Profile);
   const navigate = useNavigate();
-  const uid = localStorage.getItem("uid") || "cLZMFP4802a7dwMo0j4qmcxpnY63";
+  const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
-  const fetchUserInfo = async () => {
-    try {
-      const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-        params: { uid }
-      });
+  const { data: userInfo } = useUserQuery(uid);
 
-      const userInfo = response.data;
-      if (!userInfo) {
-        console.error('No user information found:', response.data);
-        return;
-      }
+  if (userInfo) {
+    setNickname(userInfo.nickname || '');
+    setEmail(userInfo.email || '');
+    setSkillLevel(userInfo.level || '');
+    setGenre(userInfo.interest_genre?.[0] || '');
+    setProfilePic(userInfo.profile_image || Profile);
+  }
 
-      setNickname(userInfo.nickname || '');
-      setEmail(userInfo.email || '');
-      setSkillLevel(userInfo.level || '');
-      setGenre(userInfo.interest_genre?.[0] || '');
-      setProfilePic(userInfo.profile_image_url || Profile);
-      console.log('Fetched user info:', userInfo);
-    } catch (error) {
-      console.error('Error fetching user info:', error.response || error);
-    }
-  };
-
-  useEffect(() => {
-    fetchUserInfo();
-  }, [BACKEND_URL, uid]);
 
   const handleNicknameChange = (e) => setNickname(e.target.value);
 
@@ -53,23 +38,19 @@ export default function Admin() {
     const trimmedNickname = nickname.trim();
 
     if (!trimmedNickname) {
-      setErrors(prev => ({ ...prev, nickname: '*닉네임을 입력해주세요' }));
+      setErrors((prev) => ({ ...prev, nickname: '*닉네임을 입력해주세요' }));
       return;
     }
 
     try {
       const res = await axios.put(`${BACKEND_URL}/edit-user/nickname`, null, {
-        params: { uid, nickname: trimmedNickname }
+        params: { uid, nickname: trimmedNickname },
       });
       console.log('Nickname updated:', res.data);
-      await fetchUserInfo();
 
-      Swal.fire({
-        icon: 'success',
-        title: '수정 완료',
-        text: '닉네임이 성공적으로 수정되었습니다!',
-        confirmButtonColor: '#A57865',
-      });
+      setIsModalOpen(true);
+      window.location.reload();
+
     } catch (error) {
       console.error('Error updating nickname:', error.response || error);
     }
@@ -78,9 +59,13 @@ export default function Admin() {
   const handleGenreChange = async (e) => {
     const genreValue = e.target.value;
     try {
-      const res = await axios.put(`${BACKEND_URL}/edit-user/interest-genre`, [genreValue], {
-        params: { uid }
-      });
+      const res = await axios.put(
+        `${BACKEND_URL}/edit-user/interest-genre`,
+        [genreValue],
+        {
+          params: { uid },
+        },
+      );
       console.log('Genre updated:', res.data);
       setGenre(genreValue);
     } catch (error) {
@@ -92,7 +77,7 @@ export default function Admin() {
     const skillLevelValue = Number(e.target.value);
     try {
       const res = await axios.put(`${BACKEND_URL}/edit-user/level`, null, {
-        params: { uid, level: skillLevelValue }
+        params: { uid, level: skillLevelValue },
       });
       console.log('Skill level updated:', res.data);
       setSkillLevel(skillLevelValue);
@@ -105,65 +90,64 @@ export default function Admin() {
     const file = e.target.files[0];
     if (file) {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
+      formData.append('uid', uid);
 
-      if (!file.type.startsWith("image/")) {
-        Swal.fire('오류', '이미지 파일만 업로드할 수 있습니다.', 'error');
+      // 파일 크기 및 형식 체크
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드할 수 있습니다.');
         return;
       }
-
       if (file.size > 5000000) {
-        Swal.fire('오류', '파일 크기가 너무 큽니다. 5MB 이하로 업로드해 주세요.', 'error');
+        // 예: 5MB 제한
+        alert('파일 크기가 너무 큽니다. 5MB 이하로 업로드해 주세요.');
+
         return;
       }
 
       try {
-        const response = await axios.post(`${BACKEND_URL}/change-profile-image?uid=${uid}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
-
-        const imageUrlFromServer = response.data.profile_image_url;
-        setProfilePic(imageUrlFromServer);
-        await fetchUserInfo();
-        console.log("Uploaded Image URL (from server):", imageUrlFromServer);
+        const response = await axios.post(
+          `${BACKEND_URL}/change-profile-image`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        );
+        setProfilePic(URL.createObjectURL(file)); // 미리보기
+        console.log('Uploaded Image URL:', URL.createObjectURL(file));
       } catch (error) {
-        console.error("Error uploading profile picture:", error.response || error);
-        Swal.fire('오류', error.response?.data?.message || '이미지 업로드에 실패했습니다.', 'error');
+        console.error(
+          'Error uploading profile picture:',
+          error.response || error,
+        );
+        if (error.response && error.response.data) {
+          alert(
+            `Error: ${error.response.data.message || '이미지 업로드에 실패했습니다.'}`,
+          );
+        } else {
+          alert('알 수 없는 오류가 발생했습니다.');
+        }
+
       }
     }
   };
 
   const handleDeleteAccount = async () => {
-    const result = await Swal.fire({
-      title: '정말 탈퇴하시겠습니까?',
-      text: '계정은 삭제되며 복구할 수 없습니다.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#aaa',
-      confirmButtonText: '네, 탈퇴할게요',
-      cancelButtonText: '취소'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const res = await axios.delete(`${BACKEND_URL}/delete-user/${uid}`);
-        if (res.data.success) {
-          Swal.fire({
-            icon: 'success',
-            title: '탈퇴 완료',
-            text: '계정이 성공적으로 삭제되었습니다.',
-            confirmButtonColor: '#A57865',
-          });
-          localStorage.removeItem("uid");
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
-        }
-      } catch (error) {
-        console.error('Error deleting account:', error.response || error);
-        Swal.fire('오류', '탈퇴하는 데 실패했습니다.', 'error');
+    try {
+      const res = await axios.delete(`${BACKEND_URL}/delete-user/${uid}`);
+      if (res.data.success) {
+        setIsAccountDeleted(true);
+        setTimeout(() => {
+          localStorage.removeItem('uid');
+          navigate('/login');
+        }, 2000);
       }
+    } catch (error) {
+      console.error('Error deleting account:', error.response || error);
+      alert('탈퇴하는 데 실패했습니다.');
+
     }
   };
 
@@ -174,9 +158,15 @@ export default function Admin() {
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
-                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
-                <Link to="/mypage" className="text-white">내 정보</Link>
+              <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
+                <img
+                  src={Information}
+                  alt="내 정보 아이콘"
+                  className="w-4 h-4"
+                />
+                <Link to="/mypage" className="text-white">
+                  내 정보
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
@@ -203,7 +193,9 @@ export default function Admin() {
                 src={profilePic}
                 alt="프로필"
                 className="w-40 h-40 rounded-full cursor-pointer"
-                onClick={() => document.getElementById('profilePicInput').click()}
+                onClick={() =>
+                  document.getElementById('profilePicInput').click()
+                }
               />
               <input
                 type="file"
@@ -216,7 +208,9 @@ export default function Admin() {
 
             <div className="space-y-8">
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">닉네임</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  닉네임
+                </label>
                 <Input
                   type="text"
                   value={nickname}
@@ -225,11 +219,15 @@ export default function Admin() {
                   placeholder="닉네임"
                   className="h-14 text-lg"
                 />
-                {errors.nickname && <p className="text-red-500 text-sm mt-1">{errors.nickname}</p>}
+                {errors.nickname && (
+                  <p className="text-red-500 text-sm mt-1">{errors.nickname}</p>
+                )}
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">이메일</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  이메일
+                </label>
                 <Input
                   type="text"
                   value={email}
@@ -238,11 +236,15 @@ export default function Admin() {
                   placeholder="이메일"
                   className="h-14 text-lg"
                 />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">스킬 레벨</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  스킬 레벨
+                </label>
                 <Dropdown
                   name="skillLevel"
                   value={skillLevel}
@@ -253,7 +255,9 @@ export default function Admin() {
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">선호 장르</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  선호 장르
+                </label>
                 <Dropdown
                   name="genre"
                   value={genre}
@@ -281,6 +285,30 @@ export default function Admin() {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <p className="text-lg font-bold">수정이 완료되었습니다</p>
+            <button
+              className="mt-4 bg-[#A57865] text-white px-4 py-2 rounded-lg hover:bg-opacity-80"
+              onClick={() => setIsModalOpen(false)}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isAccountDeleted && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <p className="text-lg font-bold text-red-500">
+              계정이 성공적으로 삭제되었습니다.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
