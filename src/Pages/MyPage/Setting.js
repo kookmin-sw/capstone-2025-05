@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import Dropdown from '../../Components/Dropdown/dropdown.js';
 import Input from '../../Components/Input/input.js';
 import Music from '../../Assets/MyPage/Vector.svg';
@@ -14,10 +15,8 @@ export default function Admin() {
   const [email, setEmail] = useState('');
   const [skillLevel, setSkillLevel] = useState('');
   const [genre, setGenre] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [errors, setErrors] = useState({ nickname: '', email: '' });
   const [profilePic, setProfilePic] = useState(Profile);
-  const [isAccountDeleted, setIsAccountDeleted] = useState(false);
   const navigate = useNavigate();
   const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
@@ -31,6 +30,7 @@ export default function Admin() {
     setGenre(userInfo.interest_genre?.[0] || '');
     setProfilePic(userInfo.profile_image || Profile);
   }
+
 
   const handleNicknameChange = (e) => setNickname(e.target.value);
 
@@ -47,8 +47,10 @@ export default function Admin() {
         params: { uid, nickname: trimmedNickname },
       });
       console.log('Nickname updated:', res.data);
+
       setIsModalOpen(true);
       window.location.reload();
+
     } catch (error) {
       console.error('Error updating nickname:', error.response || error);
     }
@@ -65,7 +67,7 @@ export default function Admin() {
         },
       );
       console.log('Genre updated:', res.data);
-      setGenre(genreValue); // ★ 추가: state 업데이트
+      setGenre(genreValue);
     } catch (error) {
       console.error('Error updating genre:', error.response || error);
     }
@@ -78,7 +80,7 @@ export default function Admin() {
         params: { uid, level: skillLevelValue },
       });
       console.log('Skill level updated:', res.data);
-      setSkillLevel(skillLevelValue); // ★ 추가
+      setSkillLevel(skillLevelValue);
     } catch (error) {
       console.error('Error updating skill level:', error.response || error);
     }
@@ -99,6 +101,7 @@ export default function Admin() {
       if (file.size > 5000000) {
         // 예: 5MB 제한
         alert('파일 크기가 너무 큽니다. 5MB 이하로 업로드해 주세요.');
+
         return;
       }
 
@@ -126,6 +129,7 @@ export default function Admin() {
         } else {
           alert('알 수 없는 오류가 발생했습니다.');
         }
+
       }
     }
   };
@@ -143,13 +147,13 @@ export default function Admin() {
     } catch (error) {
       console.error('Error deleting account:', error.response || error);
       alert('탈퇴하는 데 실패했습니다.');
+
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex flex-1">
-        {/* Sidebar */}
         <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
@@ -168,7 +172,7 @@ export default function Admin() {
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
                 <Link to="/playedmusic">연주한 곡</Link>
               </li>
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
+              <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
                 <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
                 <Link to="/setting">관리</Link>
               </li>
@@ -179,13 +183,13 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 flex items-center justify-center bg-[#F5F1EC] py-10">
           <div className="bg-white p-14 rounded-2xl shadow-lg w-full max-w-4xl">
             <h2 className="text-3xl font-bold mb-10 text-center">내 프로필</h2>
 
             <div className="flex justify-center mb-10">
               <img
+                key={profilePic}
                 src={profilePic}
                 alt="프로필"
                 className="w-40 h-40 rounded-full cursor-pointer"

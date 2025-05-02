@@ -7,6 +7,8 @@ import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
+import BeatChart from '../../Components/Chart/beatChart.js';
+import TechniqueChart from '../../Components/Chart/techniqueChart.js';
 import playdata from '../../Data/compare.json';
 import feedback from '../../Data/feedback_8583d5bf.json';
 import fakedata from '../../Data/chartdata.json';
@@ -111,7 +113,6 @@ export default function Feedback() {
         second: parseFloat((i * 0.5).toFixed(2)),
         original: item.reference_technique || 'None',
         played: item.user_technique || 'None',
-        pitch_difference: 0,
         technique_match: item.user_technique === item.reference_technique,
       }));
     }
@@ -150,7 +151,8 @@ export default function Feedback() {
             upload_count: uploadCount,
           },
         });
-        console.log('specific record Data:', response.data);
+        console.log('specific record Data:', response.data.artist);
+
 
         if (response.data?.record) {
           setRecord(response.data.record);
@@ -158,13 +160,14 @@ export default function Feedback() {
           setSpecificSong({
             title: songName,
             artist: response.data.record.artist || '',
-            cover_url: response.data.song_cover_url || '',
+            cover_url: response.data.album_cover_url || '',
           });
         } else if (
           response.data?.pitch !== undefined &&
           response.data?.onset !== undefined &&
           response.data?.technique !== undefined
         ) {
+          console.log('specific record Data:', response.data); 
           setRecord({
             pitch: response.data.pitch,
             onset: response.data.onset,
@@ -229,7 +232,7 @@ export default function Feedback() {
         <div>
           <h2 className="text-md font-bold">MAPLE</h2>
           <ul className="mt-4 space-y-2">
-            <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
+            <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
               <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
               <Link to="/mypage" className="text-white">
                 내 정보
@@ -378,9 +381,14 @@ export default function Feedback() {
                   />
                 ))}
               </div>
-              <PerformanceChart
-                data={getChartDataByType(graphs[currentGraphIndex].key)}
-              />
+
+              {graphs[currentGraphIndex].key === 'technique' ? (
+                <TechniqueChart data={getChartDataByType('technique')} />
+              ) : graphs[currentGraphIndex].key === 'onset' ? (
+                <BeatChart data={getChartDataByType('onset')} />
+              ) : (
+                <PerformanceChart data={getChartDataByType('pitch')} />
+              )}
             </>
           ) : (
             <p>로딩 중...</p>
