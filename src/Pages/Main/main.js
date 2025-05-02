@@ -11,7 +11,7 @@ import Right from '../../Assets/Main/arrowRight.svg';
 import Box from '../../Components/Box/Box';
 import Footer from '../../Components/MapleFooter';
 import 'swiper/css';
-import { useNewReleases } from '../../Hooks/Main/getNewReleases';
+import { useNewReleases } from '../../Hooks/Main/get/getNewReleases';
 import swal from 'sweetalert';
 
 export default function Main() {

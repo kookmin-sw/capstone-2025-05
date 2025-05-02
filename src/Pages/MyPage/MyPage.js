@@ -14,68 +14,15 @@ import Cover2 from '../../Assets/Main/album/gdCover.svg';
 import Cover3 from '../../Assets/Main/album/iveCover.svg';
 import Cover4 from '../../Assets/Main/album/riizeCover.svg'
 import { Link } from 'react-router-dom';
+import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
+import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
 
 export default function MyPage() {
-  const [records, setRecords] = useState([]);
-  const [userInfo, setUserInfo] = useState({ nickname: '', email: '', profile_image_url: '' });
-  const [loading, setLoading] = useState(true);
-  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
   const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
+  const { data: userInfo } = useUserQuery(uid);
+  const { data: records, isLoading } = useRecentRecordsQuery(uid);
+  console.log(records);
 
-  const recommendedSongs = [
-    {
-      cover: Cover1,
-      title: '오늘만 I LOVE YOU',
-      artist: 'BOYNEXTDOOR',
-    },
-    {
-      cover: Cover2,
-      title: 'HOME SWEET HOME',
-      artist: 'G-Dragon',
-    },
-    {
-      cover: Cover3,
-      title: 'REBEL HEART',
-      artist: 'IVE',
-    },
-    {
-      cover: Cover4,
-      title: 'COMBO',
-      artist: 'RIZE',
-    },
-  ];
-
-  useEffect(() => {
-    const fetchRecentRecords = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/recent-4-record`, {
-          params: { uid },
-        });
-        console.log('최근 기록 응답:', response.data);
-        setRecords(response.data.recent_uploads || []);
-      } catch (error) {
-        console.error('연습 기록 가져오기 실패:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchUserInfo = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-          params: { uid },
-        });
-        console.log("유저 정보 응답 전체:", response.data);
-        const { nickname, email, profile_image_url } = response.data || {};
-        setUserInfo({ nickname, email, profile_image_url });
-      } catch (error) {
-        console.error('유저 정보 가져오기 실패:', error);
-      }
-    };
-
-    fetchRecentRecords();
-    fetchUserInfo();
-  }, [BACKEND_URL, uid]);
 
   return (
     <div className="min-h-screen">
@@ -100,7 +47,7 @@ export default function MyPage() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">{userInfo.nickname || '사용자'}</p>
+            <p className="font-semibold">{'사용자' || userInfo?.nickname}</p>
           </div>
         </div>
 
@@ -122,15 +69,17 @@ export default function MyPage() {
                   <div className="p-8 text-white w-full h-full">
                     <img src={userInfo.profile_image_url || Profile} alt="프로필" className="w-40 h-40 rounded-full mx-auto cursor-pointer" />
                     <h3 className="text-center text-xl font-bold mt-6">
-                      {userInfo.nickname || '홍길동'}
+                      {userInfo?.nickname || '홍길동'}
                     </h3>
                     <div className="mt-16 ml-4">
                       <p className="text-xl">닉네임</p>
-                      <p className="font-semibold text-xl">{userInfo.nickname}</p>
+                      <p className="font-semibold text-xl">
+                        {userInfo?.nickname}
+                      </p>
                     </div>
                     <div className="mt-16 ml-4">
                       <p className="text-xl">이메일</p>
-                      <p className="font-semibold text-xl">{userInfo.email}</p>
+                      <p className="font-semibold text-xl">{userInfo?.email}</p>
                     </div>
                   </div>
                 </Box>
@@ -144,12 +93,19 @@ export default function MyPage() {
             <Box width="43%" height="105%">
               <div className="flex items-center ml-4 mt-5">
                 <span className="font-bold text-[20px]">최근 연주한 곡</span>
-                <Link to="/playedmusic" className="ml-2 text-lg text-gray-500 hover:text-gray-700">&gt;</Link>
+
+                <Link
+                  to="/playedmusic"
+                  className="ml-2 mt-1text-lg text-gray-500 hover:text-gray-700"
+                >
+                  &gt;
+                </Link>
               </div>
               <ul className="mt-8 space-y-5 ml-8">
-                {loading ? (
+                {isLoading ? (
                   <li>Loading...</li>
                 ) : (
+                  records &&
                   records.map((song, index) => (
                     <li key={index} className="flex items-center justify-between pb-2 mb-2">
                       <img src={song.cover_url} alt="Album" className="w-16 h-16 mr-8 mt-7" />
@@ -203,9 +159,12 @@ export default function MyPage() {
                   <Link to="/myactivity" className="text-black text-[16px] font-semibold hover:underline">내가 쓴 글</Link>
                 </div>
                 <div className="rounded-lg p-5 flex items-center gap-8">
-                  <img src={Profile} alt="프로필" className="w-12 h-12" />
-                  <Link to="/setting" className="text-black text-[16px] font-semibold hover:underline">
-                    {userInfo.nickname || '길동1234'}
+                  <img src={Profile} alt="프로필" className="w-12 h-12 " />
+                  <Link
+                    to="/setting"
+                    className="text-black text-[16px] font-semibold hover:underline"
+                  >
+                    {userInfo?.nickname || '길동1234'}
                   </Link>
                 </div>
               </div>

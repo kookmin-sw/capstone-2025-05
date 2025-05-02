@@ -96,7 +96,7 @@ export default function WritePage() {
             <textarea
               className="w-full h-48 px-4 py-3 border border-[#A57865] rounded-xl shadow-sm resize-none focus:ring-2 focus:ring-[#a57865] focus:outline-none bg-[#fdfaf6] placeholder:text-[#b28c74]"
               value={content}
-              maxLength={300}
+              maxLength={500}
               onChange={(e) => setContent(e.target.value)}
               placeholder="10자 이상 입력해주세요"
               required="true"
@@ -104,10 +104,10 @@ export default function WritePage() {
             <div className="text-right text-lg text-[#a57865] mt-1">
               {content.length < 10 ? (
                 <span className="text-red-500">
-                  내용을 10자 이상 입력해주세요 ({content.length}/300)
+                  내용을 10자 이상 입력해주세요 ({content.length}/500)
                 </span>
               ) : (
-                <span>{content.length}/300</span>
+                <span>{content.length}/500</span>
               )}
             </div>
           </div>
