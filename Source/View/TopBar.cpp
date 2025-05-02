@@ -10,6 +10,11 @@ TopBar::TopBar(GuitarPracticeComponent &parent)
     // 뒤로가기 버튼 초기화
     backButton.setButtonText(juce::String::fromUTF8("← 뒤로가기"));
     backButton.onClick = [this]() {
+        // 재생 중인 음원 종료
+        if (parentComponent.getController() && parentComponent.getController()->isPlaying()) {
+            parentComponent.getController()->stopPlayback();
+        }
+        
         // MainComponent의 showMainScreen 메서드를 호출해 메인 화면으로 돌아감
         MainComponent* mainComp = dynamic_cast<MainComponent*>(parentComponent.getParentComponent());
         if (mainComp != nullptr) {

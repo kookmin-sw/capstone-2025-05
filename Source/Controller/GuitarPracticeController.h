@@ -56,6 +56,9 @@ public:
     // 현재 로드된 곡 ID 반환
     juce::String getCurrentSongId() const { return currentSongId; }
     
+    // 재생 상태 확인
+    bool isPlaying() const { return audioModel.isPlaying(); }
+    
 private:
     // 분석 스레드 결과 처리 메서드
     void handleAnalysisThreadComplete();

@@ -91,6 +91,9 @@ public:
     // 오디오 디바이스 매니저 접근자
     juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
     
+    // 컨트롤러 접근자
+    GuitarPracticeController* getController() const { return controller.get(); }
+    
 private:
     // 이벤트 핸들러 메서드
     void handleAnalysisCompleteEvent(const AnalysisCompleteEvent& event);
