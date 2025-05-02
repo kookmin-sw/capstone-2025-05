@@ -21,31 +21,32 @@ export default function Admin() {
   const uid = localStorage.getItem("uid") || "cLZMFP4802a7dwMo0j4qmcxpnY63";
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-          params: { uid }
-        });
-    
-        const userInfo = response.data; // 수정한 부분
-    
-        if (!userInfo) {
-          console.error('No user information found:', response.data);
-          return;
-        }
-    
-        setNickname(userInfo.nickname || '');
-        setEmail(userInfo.email || '');
-        setSkillLevel(userInfo.level || '');
-        setGenre(userInfo.interest_genre?.[0] || '');
-        setProfilePic(userInfo.profile_image || Profile);
-        console.log('Fetched user info:', userInfo);
-    
-      } catch (error) {
-        console.error('Error fetching user info:', error.response || error);
+  const fetchUserInfo = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
+        params: { uid }
+      });
+
+      const userInfo = response.data;
+
+      if (!userInfo) {
+        console.error('No user information found:', response.data);
+        return;
       }
-    };
+
+      setNickname(userInfo.nickname || '');
+      setEmail(userInfo.email || '');
+      setSkillLevel(userInfo.level || '');
+      setGenre(userInfo.interest_genre?.[0] || '');
+      setProfilePic(userInfo.profile_image_url || Profile);
+      console.log('Fetched user info:', userInfo);
+      console.log("서버에 저장된 프로필 URL:", userInfo.profile_image_url);
+    } catch (error) {
+      console.error('Error fetching user info:', error.response || error);
+    }
+  };
+
+  useEffect(() => {
     fetchUserInfo();
   }, [BACKEND_URL, uid]);
 
@@ -65,7 +66,7 @@ export default function Admin() {
       });
       console.log('Nickname updated:', res.data);
       setIsModalOpen(true);
-      window.location.reload();    
+      await fetchUserInfo();
     } catch (error) {
       console.error('Error updating nickname:', error.response || error);
     }
@@ -78,12 +79,12 @@ export default function Admin() {
         params: { uid }
       });
       console.log('Genre updated:', res.data);
-      setGenre(genreValue); // ★ 추가: state 업데이트
+      setGenre(genreValue);
     } catch (error) {
       console.error('Error updating genre:', error.response || error);
     }
   };
-  
+
   const handleSkillChange = async (e) => {
     const skillLevelValue = Number(e.target.value);
     try {
@@ -91,38 +92,40 @@ export default function Admin() {
         params: { uid, level: skillLevelValue }
       });
       console.log('Skill level updated:', res.data);
-      setSkillLevel(skillLevelValue); // ★ 추가
+      setSkillLevel(skillLevelValue);
     } catch (error) {
       console.error('Error updating skill level:', error.response || error);
     }
   };
-  
 
   const handleProfilePicChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("uid", uid);
-  
-      // 파일 크기 및 형식 체크
+
       if (!file.type.startsWith("image/")) {
         alert("이미지 파일만 업로드할 수 있습니다.");
         return;
       }
-      if (file.size > 5000000) { // 예: 5MB 제한
+
+      if (file.size > 5000000) {
         alert("파일 크기가 너무 큽니다. 5MB 이하로 업로드해 주세요.");
         return;
       }
-  
+
       try {
-        const response = await axios.post(`${BACKEND_URL}/change-profile-image`, formData, {
+        const response = await axios.post(`${BACKEND_URL}/change-profile-image?uid=${uid}`, formData, {
           headers: {
             "Content-Type": "multipart/form-data"
           }
         });
-        setProfilePic(URL.createObjectURL(file)); // 미리보기
-        console.log("Uploaded Image URL:", URL.createObjectURL(file));
+
+        // 서버에서 받은 이미지 URL로 업데이트
+        const imageUrlFromServer = response.data.profile_image_url;
+        setProfilePic(imageUrlFromServer);
+        await fetchUserInfo();
+        console.log("Uploaded Image URL (from server):", imageUrlFromServer);
       } catch (error) {
         console.error("Error uploading profile picture:", error.response || error);
         if (error.response && error.response.data) {
@@ -158,7 +161,7 @@ export default function Admin() {
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
-              <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
+              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
                 <Link to="/mypage" className="text-white">내 정보</Link>
               </li>
@@ -166,14 +169,14 @@ export default function Admin() {
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
                 <Link to="/playedmusic">연주한 곡</Link>
               </li>
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
+              <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
                 <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
                 <Link to="/setting">관리</Link>
               </li>
             </ul>
           </div>
           <div>
-             <p className="font-semibold">{nickname || '사용자'}</p>
+            <p className="font-semibold">{nickname || '사용자'}</p>
           </div>
         </div>
 
@@ -184,6 +187,7 @@ export default function Admin() {
 
             <div className="flex justify-center mb-10">
               <img
+                key={profilePic}
                 src={profilePic}
                 alt="프로필"
                 className="w-40 h-40 rounded-full cursor-pointer"
