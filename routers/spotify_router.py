@@ -9,8 +9,8 @@ router = APIRouter()
 
 def get_spotify_token():
     auth_url = "https://accounts.spotify.com/api/token"
-    client_id = os.getenv("NEXT_PUBLIC_SPOTIFY_CLIENT_ID")
-    client_secret = os.getenv("NEXT_PUBLIC_SPOTIFY_CLIENT_SECRET")
+    client_id = os.getenv("REACT_APP_SPOTIFY_CLIENT_ID")
+    client_secret = os.getenv("REACT_APP_SPOTIFY_CLIENT_SECRET")
 
     if not client_id or not client_secret:
         raise HTTPException(status_code=500, detail="Spotify API 인증 정보가 누락되었습니다.")
