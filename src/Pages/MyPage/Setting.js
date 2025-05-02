@@ -17,13 +17,13 @@ export default function Admin() {
   const [errors, setErrors] = useState({ nickname: '', email: '' });
   const [profilePic, setProfilePic] = useState(Profile);
   const navigate = useNavigate();
-  const uid = localStorage.getItem("uid") || "cLZMFP4802a7dwMo0j4qmcxpnY63";
+  const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   const fetchUserInfo = async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-        params: { uid }
+        params: { uid },
       });
 
       const userInfo = response.data;
@@ -53,13 +53,13 @@ export default function Admin() {
     const trimmedNickname = nickname.trim();
 
     if (!trimmedNickname) {
-      setErrors(prev => ({ ...prev, nickname: '*닉네임을 입력해주세요' }));
+      setErrors((prev) => ({ ...prev, nickname: '*닉네임을 입력해주세요' }));
       return;
     }
 
     try {
       const res = await axios.put(`${BACKEND_URL}/edit-user/nickname`, null, {
-        params: { uid, nickname: trimmedNickname }
+        params: { uid, nickname: trimmedNickname },
       });
       console.log('Nickname updated:', res.data);
       await fetchUserInfo();
@@ -78,9 +78,13 @@ export default function Admin() {
   const handleGenreChange = async (e) => {
     const genreValue = e.target.value;
     try {
-      const res = await axios.put(`${BACKEND_URL}/edit-user/interest-genre`, [genreValue], {
-        params: { uid }
-      });
+      const res = await axios.put(
+        `${BACKEND_URL}/edit-user/interest-genre`,
+        [genreValue],
+        {
+          params: { uid },
+        },
+      );
       console.log('Genre updated:', res.data);
       setGenre(genreValue);
     } catch (error) {
@@ -92,7 +96,7 @@ export default function Admin() {
     const skillLevelValue = Number(e.target.value);
     try {
       const res = await axios.put(`${BACKEND_URL}/edit-user/level`, null, {
-        params: { uid, level: skillLevelValue }
+        params: { uid, level: skillLevelValue },
       });
       console.log('Skill level updated:', res.data);
       setSkillLevel(skillLevelValue);
@@ -105,30 +109,45 @@ export default function Admin() {
     const file = e.target.files[0];
     if (file) {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
 
-      if (!file.type.startsWith("image/")) {
+      if (!file.type.startsWith('image/')) {
         Swal.fire('오류', '이미지 파일만 업로드할 수 있습니다.', 'error');
         return;
       }
 
       if (file.size > 5000000) {
-        Swal.fire('오류', '파일 크기가 너무 큽니다. 5MB 이하로 업로드해 주세요.', 'error');
+        Swal.fire(
+          '오류',
+          '파일 크기가 너무 큽니다. 5MB 이하로 업로드해 주세요.',
+          'error',
+        );
         return;
       }
 
       try {
-        const response = await axios.post(`${BACKEND_URL}/change-profile-image?uid=${uid}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        const response = await axios.post(
+          `${BACKEND_URL}/change-profile-image?uid=${uid}`,
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          },
+        );
 
         const imageUrlFromServer = response.data.profile_image_url;
         setProfilePic(imageUrlFromServer);
         await fetchUserInfo();
-        console.log("Uploaded Image URL (from server):", imageUrlFromServer);
+        console.log('Uploaded Image URL (from server):', imageUrlFromServer);
       } catch (error) {
-        console.error("Error uploading profile picture:", error.response || error);
-        Swal.fire('오류', error.response?.data?.message || '이미지 업로드에 실패했습니다.', 'error');
+        console.error(
+          'Error uploading profile picture:',
+          error.response || error,
+        );
+        Swal.fire(
+          '오류',
+          error.response?.data?.message || '이미지 업로드에 실패했습니다.',
+          'error',
+        );
       }
     }
   };
@@ -142,7 +161,7 @@ export default function Admin() {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#aaa',
       confirmButtonText: '네, 탈퇴할게요',
-      cancelButtonText: '취소'
+      cancelButtonText: '취소',
     });
 
     if (result.isConfirmed) {
@@ -155,7 +174,7 @@ export default function Admin() {
             text: '계정이 성공적으로 삭제되었습니다.',
             confirmButtonColor: '#A57865',
           });
-          localStorage.removeItem("uid");
+          localStorage.removeItem('uid');
           setTimeout(() => {
             navigate('/login');
           }, 2000);
@@ -175,8 +194,14 @@ export default function Admin() {
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
-                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
-                <Link to="/mypage" className="text-white">내 정보</Link>
+                <img
+                  src={Information}
+                  alt="내 정보 아이콘"
+                  className="w-4 h-4"
+                />
+                <Link to="/mypage" className="text-white">
+                  내 정보
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
@@ -203,7 +228,9 @@ export default function Admin() {
                 src={profilePic}
                 alt="프로필"
                 className="w-40 h-40 rounded-full cursor-pointer"
-                onClick={() => document.getElementById('profilePicInput').click()}
+                onClick={() =>
+                  document.getElementById('profilePicInput').click()
+                }
               />
               <input
                 type="file"
@@ -216,7 +243,9 @@ export default function Admin() {
 
             <div className="space-y-8">
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">닉네임</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  닉네임
+                </label>
                 <Input
                   type="text"
                   value={nickname}
@@ -225,11 +254,15 @@ export default function Admin() {
                   placeholder="닉네임"
                   className="h-14 text-lg"
                 />
-                {errors.nickname && <p className="text-red-500 text-sm mt-1">{errors.nickname}</p>}
+                {errors.nickname && (
+                  <p className="text-red-500 text-sm mt-1">{errors.nickname}</p>
+                )}
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">이메일</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  이메일
+                </label>
                 <Input
                   type="text"
                   value={email}
@@ -238,11 +271,15 @@ export default function Admin() {
                   placeholder="이메일"
                   className="h-14 text-lg"
                 />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">스킬 레벨</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  스킬 레벨
+                </label>
                 <Dropdown
                   name="skillLevel"
                   value={skillLevel}
@@ -253,7 +290,9 @@ export default function Admin() {
               </div>
 
               <div>
-                <label className="text-gray-700 font-semibold mb-2 block text-lg">선호 장르</label>
+                <label className="text-gray-700 font-semibold mb-2 block text-lg">
+                  선호 장르
+                </label>
                 <Dropdown
                   name="genre"
                   value={genre}
