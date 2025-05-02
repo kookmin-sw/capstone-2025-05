@@ -17,6 +17,9 @@ public:
 private:
     GuitarPracticeComponent &parentComponent;
     
+    // 뒤로가기 버튼
+    juce::TextButton backButton;
+    
     // 오디오 설정 버튼
     juce::TextButton audioSettingsButton;
 
