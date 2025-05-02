@@ -79,7 +79,12 @@ async def root(request: Request):
             postsdictlist.append({
                 "id": datadict.get("uid"),
                 "제목": datadict.get("제목"),
+                "내용" : datadict.get("내용"),
                 "작성자": datadict.get("작성자"),
+                "uid" : datadict.get("uid"),
+                "조회수": datadict.get("조회수"),
+                "좋아요수" : datadict.get("좋아요수"),
+                "댓글수": datadict.get("댓글수"),
                 "created_at": datadict.get("created_at"),
                 "image_url": datadict.get("image_url", ""),
                 "audio_url": datadict.get("audio_url", "")
@@ -138,6 +143,10 @@ async def read_post(request: Request, post_id: int):
                     datadict[key] = value.strftime("%Y년 %m월 %d일 %H시 %M분")
             postkeyvaluedict.append({
                 "uid": datadict.get("uid"),
+                "id": datadict.get("id"),
+                "좋아요수": datadict.get("좋아요수"),
+                "조회수": datadict.get("조회수"),
+                "댓글수": datadict.get("댓글수"),
                 "제목": datadict.get("제목"),
                 "내용": datadict.get("내용"),
                 "작성자": datadict.get("작성자"),
