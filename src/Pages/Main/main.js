@@ -31,7 +31,7 @@ export default function Main() {
   console.log('topmusic', topMusic);
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col min-h-screen">
       <div className="flex flex-grow items-center justify-center mt-12 relative">
         <Swiper
           ref={swiperRef}
@@ -78,19 +78,31 @@ export default function Main() {
         <img
           src={Left}
           alt="Previous"
-          className="absolute left-[36px] top-[50%] -translate-y-1/2 w-6 h-6 cursor-pointer z-10"
+          className="absolute left-[36px] top-[50%] lg:left-[180px] -translate-y-1/2 w-6 h-6 cursor-pointer hover:scale-[110%] transition duration-300 ease-in-out z-10"
           onClick={() => swiperRef.current?.swiper.slidePrev()}
         />
         <img
           src={Right}
           alt="Next"
-          className="absolute right-[36px] top-[50%] -translate-y-1/2 w-6 h-6 cursor-pointer z-10"
+          className="absolute right-[36px] lg:right-[180px] top-[50%] -translate-y-1/2 w-6 h-6 cursor-pointer hover:scale-[110%] transition duration-300 ease-in-out z-10"
           onClick={() => swiperRef.current?.swiper.slideNext()}
         />
       </div>
 
       <div className="w-full mt-12">
-        <span className="text-xl font-bold text-[24px] ml-16">인기곡 추천</span>
+        <div
+          className="flex items-center cursor-pointer transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%]"
+          onClick={() =>
+            navigate('/musics', {
+              state: { musics: topMusic, musicType: 'top' },
+            })
+          }
+        >
+          <span className="text-xl font-bold text-[24px] ml-16 mr-10">
+            인기곡 추천
+          </span>
+          <img src={Right} alt="arrow" className="cursor-pointer" />
+        </div>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
           {topMusic &&
             topMusic
@@ -114,15 +126,19 @@ export default function Main() {
       </div>
 
       <div className="w-full mt-16 mb-16">
-        <span className="text-xl font-bold text-[24px] ml-16">
-          최근 등록된 곡
-        </span>
-        <img
-          src={Right}
-          alt="arrow"
-          className="absolute left-[220px] -mt-[22px] cursor-pointer"
-          onClick={handleMove}
-        />
+        <div
+          className="flex items-center cursor-pointer transition duration-300 ease-in-out transform hover:translate-x-[15px] hover:scale-[105%]"
+          onClick={() =>
+            navigate('/musics', {
+              state: { musics: TrendMusic, musicType: 'trend' },
+            })
+          }
+        >
+          <span className="text-xl font-bold text-[24px] ml-16 mr-6">
+            최근 등록된 곡
+          </span>
+          <img src={Right} alt="arrow" />
+        </div>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
           {TrendMusic &&
             TrendMusic.slice(0, 4).map((album, index) => (
