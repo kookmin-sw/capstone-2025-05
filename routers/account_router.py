@@ -25,7 +25,7 @@ class UserEmailSignUp(BaseModel):
 
 @router.get("/google-login", tags=["Account"])
 async def google_login():
-    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'https://maple.ne.kr/google-auth-callback') 
+    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'https://maple.ne.kr/api/google-auth-callback') 
     google_auth_url = (
         f"{GOOGLE_OAUTH2_URL}?response_type=code&"
         f"client_id={os.getenv('GOOGLE_CLIENT_ID')}&"
@@ -37,7 +37,7 @@ async def google_login():
 @router.get("/google-auth-callback", tags=["Account"])
 async def google_auth_callback(code: str):
     try:
-        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://maple.ne.kr/google-auth-callback")
+        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://maple.ne.kr/api/google-auth-callback")
 
         response = requests.post(
             GOOGLE_TOKEN_URL,
