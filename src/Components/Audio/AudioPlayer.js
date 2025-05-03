@@ -10,7 +10,7 @@ export default function AudioPlayer({ userAudio, referenceAudio }) {
   const closeModal = () => setIsModalOpen(false);
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-2 ">
+    <div className="flex flex-col w-full items-center justify-center space-y-2 ">
       <div className="w-full">
         <h3>
           <strong>사용자 연주</strong>
@@ -33,13 +33,9 @@ export default function AudioPlayer({ userAudio, referenceAudio }) {
           className="w-full"
         ></audio>
       </div>
-      <button
-        onClick={openModal}
-        className="bg-green-500 text-white px-4 py-2 rounded"
-      >
+      <Button onClick={openModal} overwrite={'w-full h-12 mt-[15px]'}>
         동시 재생 및 비교
-      </button>
-      <Button onClick={openModal}>동시 재생 및 비교</Button>
+      </Button>
       {/* Button에 px-4 py-2 적용 */}
       <AudioModal isOpen={isModalOpen} onClose={closeModal}>
         <CompareWaveform

@@ -61,8 +61,8 @@ export default function AppRoutes() {
           <Route path="/" element={<Main />} />
           <Route path="*" element={<Login />} />
           <Route path="/audiotest" element={<AudioTest />} />
-          <Route path="*" element={<Main />} />
           <Route path="/musics" element={<MusicPage />} />
+          <Route path="/feedback" element={<Feedback />} />
         </>
       )}
     </Routes>
