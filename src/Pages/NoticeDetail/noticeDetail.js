@@ -52,6 +52,8 @@ export default function NoticeDetail() {
     }
   };
 
+  console.log('post아이디', post.id);
+
   //신고하기 게시글 모달 창을 위한 상태 관리
   const [isWriteReportOpen, setIsWriteReportOpen] = useState(false);
 
@@ -78,7 +80,7 @@ export default function NoticeDetail() {
   //좋아요,신고하기 버튼 체크 여부
   const [liked, setLiked] = useState(false);
   const [clickLiked, setClickLiked] = useState(false);
-  const [likeNum, setLikeNum] = useState(post.likes);
+  const [likeNum, setLikeNum] = useState(parseInt(post.likes));
   const [isScrap, setIsScrap] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -91,7 +93,7 @@ export default function NoticeDetail() {
   }, [commentsInfo]);
 
   useEffect(() => {
-    if (localStorage.getItem('heart', post.id)) {
+    if (localStorage.getItem('heart', post.id, uid)) {
       setLiked(true);
     } else {
       setLiked(false);

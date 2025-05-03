@@ -11,6 +11,13 @@
 body {
   background-color: #f0ede6;
 }
+.custom-confirm-button {
+  background-color: #a57865 !important;
+  color: white !important;
+  border: none !important;
+  padding: 8px 16px;
+  border-radius: 6px;
+}
 
 .App {
   margin: 0 auto;

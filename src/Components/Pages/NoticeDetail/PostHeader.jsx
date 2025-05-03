@@ -5,6 +5,7 @@ import Button from '../../Button/Button';
 import ReportModal from '../../Modal/ReportModal';
 import swal from 'sweetalert';
 import PostMetaTable from './PostMetaTable';
+import { useAuth } from '../../../Context/AuthContext';
 
 export default function PostHeader({
   post,
@@ -22,6 +23,7 @@ export default function PostHeader({
   editedContent,
   setEditedContent,
 }) {
+  const { uid } = useAuth();
   const handlePostReport = (reason) => {
     postReportMutate(
       {
@@ -42,7 +44,7 @@ export default function PostHeader({
 
   const deletePost = () => {
     deletePostMutate(
-      { post_id: post.id },
+      { post_id: post.id, uid },
       {
         onSuccess: () => {
           swal('🫡', '게시물 삭제 완료', 'success');

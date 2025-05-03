@@ -2,7 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
 const postLike = ({ post_id, uid }) => {
-  return api.post(`/posts/${post_id}/like?uid=${uid}`);
+  const numericPostId = parseInt(post_id);
+  console.log(numericPostId, 'post_id, 숫자');
+  return api.post(`/posts/${numericPostId}/like`, null, {
+    params: { uid },
+  });
 };
 
 export const useLikePutMutation = () => {

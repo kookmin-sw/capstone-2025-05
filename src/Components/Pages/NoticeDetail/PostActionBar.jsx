@@ -45,11 +45,11 @@ export default function PostActionBar({
           onError: (error) => console.log('좋아요 실패ㅠㅠ', error),
         },
       );
-      localStorage.setItem('heart', post.id);
+      localStorage.setItem('heart', uid, post.id);
       setClickLiked(true);
     } else {
       deletelikeMutate(
-        { post_id: post.id },
+        { post_id: post.id, uid },
         {
           onSuccess: () => {
             console.log('좋아요 취소 성공');
@@ -57,7 +57,7 @@ export default function PostActionBar({
           onError: (error) => console.log('좋아요 취소 실패ㅠㅠ', error),
         },
       );
-      localStorage.removeItem('heart', post.id);
+      localStorage.removeItem('heart', uid, post.id);
       setClickLiked(false);
     }
   };
@@ -67,7 +67,7 @@ export default function PostActionBar({
     if (!isScrap) {
       //북마크 클릭
       scrapPostMutate(
-        { post_id: post.id },
+        { post_id: post.id, uid },
         {
           onSuccess: () => {
             console.log('북마크 성공');
@@ -77,7 +77,7 @@ export default function PostActionBar({
       );
     } else {
       deleteScrapMutate(
-        { post_id: post.id },
+        { post_id: post.id, uid },
         {
           onSuccess: () => {
             console.log('북마크 취소 성공');
@@ -90,13 +90,10 @@ export default function PostActionBar({
 
   //저장 기능
   const handleSave = () => {
-    const id = post.id;
-    const writer = post.writer;
-    const write_time = post.write_time;
-    const view = post.view;
+    const post_id = post.id;
 
     mutate(
-      { id, editedTitle, writer, write_time, view, editedContent },
+      { post_id, editedTitle, editedContent },
       {
         onSuccess: () => {
           post.title = editedTitle;

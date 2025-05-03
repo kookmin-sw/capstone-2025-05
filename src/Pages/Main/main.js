@@ -11,35 +11,24 @@ import Right from '../../Assets/Main/arrowRight.svg';
 import Box from '../../Components/Box/Box';
 import Footer from '../../Components/MapleFooter';
 import 'swiper/css';
-import { useNewReleases } from '../../Hooks/Main/get/getNewReleases';
 import swal from 'sweetalert';
+import { useNewReleases } from '../../Hooks/Main/getNewReleases';
+import { useKoreaTopTracks } from '../../Hooks/Main/getTopPlaylists';
+import Playbox from '../../Components/Playbox/Playbox';
 
 export default function Main() {
   const navigate = useNavigate();
   const swiperRef = useRef(null);
   const [trend, setTrend] = useState([]);
-  const [top, setTop] = useState([]);
-  const { data: TrendMusic } = useNewReleases(); //items
+  const { data: TrendMusic } = useNewReleases();
+  const { data: topMusic, isLoading } = useKoreaTopTracks();
+  const [playerTarget, setPlayerTarget] = useState();
+  console.log('trendMusic', TrendMusic);
 
   const handleMove = () => {
     navigate('/ranking?song_name=Drowning'); // 랭킹 테스트 - 수정하기
   };
-
-  useEffect(() => {
-    try {
-      // 여기서 인기곡은 top에 세팅, 최신곡은 trend에 세팅
-      const mapped = TrendMusic.map((item) => ({
-        cover: item.images[0]?.url,
-        title: item.name,
-        artist: item.artists.map((a) => a.name).join(', '),
-      }));
-
-      setTrend(mapped);
-      setTop(mapped);
-    } catch (error) {
-      swal('', `API error:${error}`, 'error');
-    }
-  }, [TrendMusic]);
+  console.log('topmusic', topMusic);
 
   return (
     <div className="flex flex-col h-screen">
@@ -103,30 +92,24 @@ export default function Main() {
       <div className="w-full mt-12">
         <span className="text-xl font-bold text-[24px] ml-16">인기곡 추천</span>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {trend.slice(0, 4).map((album, index) => (
-            <Box key={index} width="248px" height="304px">
-              <div className="flex justify-center items-center mt-4">
-                <img
-                  src={album.cover}
-                  alt="Album Cover"
-                  className="w-[220px] h-[220px] object-cover"
+          {topMusic &&
+            topMusic
+              .slice(0, 4)
+              .map((album, index) => (
+                <Playbox
+                  img={album.cover}
+                  title={album.title}
+                  artist={album.artist}
+                  playurl={album.uri}
+                  playerTarget={playerTarget}
+                  setPlayerTarget={setPlayerTarget}
+                  isSelected={
+                    playerTarget && album.title == playerTarget.title
+                      ? true
+                      : false
+                  }
                 />
-              </div>
-              <div className="flex items-center justify-between px-4 mt-2">
-                <div className="flex flex-col w-[168px]">
-                  <span className="text-lg font-semibold truncate">
-                    {album.title}
-                  </span>
-                  <span className="text-lg mt-[-4px] truncate">
-                    {album.artist}
-                  </span>
-                </div>
-                <button className="w-10 h-10 rounded-full bg-[#A57865] flex items-center justify-center shadow-none hover:bg-white hover:shadow-xl transition-colors group">
-                  <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-b-[8px] border-t-transparent border-b-transparent group-hover:border-l-[#A57865] transition-colors"></div>
-                </button>
-              </div>
-            </Box>
-          ))}
+              ))}
         </div>
       </div>
 
@@ -141,30 +124,22 @@ export default function Main() {
           onClick={handleMove}
         />
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {top.slice(4, 8).map((album, index) => (
-            <Box key={index} width="248px" height="304px">
-              <div className="flex justify-center items-center mt-4">
-                <img
-                  src={album.cover}
-                  alt="Album Cover"
-                  className="w-[220px] h-[220px] rounded-[10px] object-cover"
-                />
-              </div>
-              <div className="flex items-center justify-between px-4 mt-2">
-                <div className="flex flex-col w-[168px]">
-                  <span className="text-lg font-semibold truncate">
-                    {album.title}
-                  </span>
-                  <span className="text-lg mt-[-4px] truncate">
-                    {album.artist}
-                  </span>
-                </div>
-                <button className="w-10 h-10 rounded-full bg-[#A57865] flex items-center justify-center shadow-none hover:bg-white hover:shadow-xl transition-colors group">
-                  <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-b-[8px] border-t-transparent border-b-transparent group-hover:border-l-[#A57865] transition-colors"></div>
-                </button>
-              </div>
-            </Box>
-          ))}
+          {TrendMusic &&
+            TrendMusic.slice(0, 4).map((album, index) => (
+              <Playbox
+                img={album.cover}
+                title={album.title}
+                artist={album.artist}
+                playurl={album.uri}
+                playerTarget={playerTarget}
+                setPlayerTarget={setPlayerTarget}
+                isSelected={
+                  playerTarget && album.title == playerTarget.title
+                    ? true
+                    : false
+                }
+              />
+            ))}
         </div>
       </div>
       <Footer email={'maple@gmail.com'} />
