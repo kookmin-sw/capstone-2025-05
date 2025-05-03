@@ -34,14 +34,12 @@ async def get_rank(song_name: str):
 
         bucket = storage.bucket()
 
-        for entry in rankings[:3]:  # 상위 3명만 프로필
+        for entry in rankings[:3]:
             uid = entry["uid"]
 
-            # ✅ profile 폴더 안에 있는 파일들 리스트업
             blobs = list(bucket.list_blobs(prefix=f"{uid}/profile/"))
 
             if blobs:
-                # 첫 번째 파일을 사용
                 profile_blob = blobs[0]
                 url = profile_blob.generate_signed_url(datetime.timedelta(minutes=60))
                 entry["profile_url"] = url
