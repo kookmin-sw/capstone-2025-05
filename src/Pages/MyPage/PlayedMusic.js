@@ -10,10 +10,11 @@ import { useRecordQuery } from '../../Hooks/MyPage/PlayedMusic/useRecordQuery.js
 import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
 import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
 import swal from 'sweetalert';
+import { useAuth } from '../../Context/AuthContext.js';
 
 export default function PlayedMusic() {
   const [records, setRecords] = useState([]);
-  const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
+  const {uid} = useAuth(); 
 
   // api연결
   const { data: recordData } = useRecordQuery(uid);

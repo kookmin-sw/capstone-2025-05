@@ -16,9 +16,10 @@ import Cover4 from '../../Assets/Main/album/riizeCover.svg';
 import { Link } from 'react-router-dom';
 import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
 import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
+import { useAuth } from '../../Context/AuthContext.js';
 
 export default function MyPage() {
-  const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
+  const {uid} = useAuth(); 
   const { data: userInfo } = useUserQuery(uid);
   const { data: records, isLoading } = useRecentRecordsQuery(uid);
   console.log(records);
