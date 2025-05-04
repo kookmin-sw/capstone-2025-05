@@ -14,6 +14,7 @@ import feedback from '../../Data/feedback_8583d5bf.json';
 import fakedata from '../../Data/chartdata.json';
 import ReactMarkdown from 'react-markdown';
 import useAuth from '../../Context/AuthContext.js';
+import AudioPlayer from '../../Components/Audio/AudioPlayer.js';
 
 export default function Feedback() {
   const [record, setRecord] = useState(null);
@@ -153,7 +154,6 @@ export default function Feedback() {
         });
         console.log('specific record Data:', response.data.artist);
 
-
         if (response.data?.record) {
           setRecord(response.data.record);
           setFeedbackData(feedback.text);
@@ -167,7 +167,7 @@ export default function Feedback() {
           response.data?.onset !== undefined &&
           response.data?.technique !== undefined
         ) {
-          console.log('specific record Data:', response.data); 
+          console.log('specific record Data:', response.data);
           setRecord({
             pitch: response.data.pitch,
             onset: response.data.onset,
@@ -283,31 +283,10 @@ export default function Feedback() {
                 </p>
               </div>
 
-              <div className="w-full mt-4 space-y-2">
-                <span className="font-semibold text-sm">사용자 연주</span>
-                <audio controls className="w-full">
-                  <source
-                    src={processed.audio_urls.user_audio}
-                    type="audio/mpeg"
-                  />
-                  브라우저가 오디오를 지원하지 않습니다.
-                </audio>
-              </div>
-
-              <div className="w-full mt-4 space-y-2">
-                <span className="font-semibold text-sm">원본 연주</span>
-                <audio controls className="w-full">
-                  <source
-                    src={processed.audio_urls.reference_audio}
-                    type="audio/mpeg"
-                  />
-                  브라우저가 오디오를 지원하지 않습니다.
-                </audio>
-              </div>
-
-              <Button width="100%" height="40px" onClick={handleCompareClick}>
-                동시 재생 및 비교
-              </Button>
+              <AudioPlayer
+                userAudio={'/Audio/homecoming.wav'}
+                referenceAudio={'/Audio/homecoming-error-1.wav'}
+              />
             </div>
           </Box>
 

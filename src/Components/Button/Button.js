@@ -8,12 +8,13 @@ export default function Button({
   cursor = 'pointer',
   onClick,
   disabled = false,
+  overwrite,
 }) {
   return (
     <div
       className={`text-white rounded-[10px] flex justify-center items-center ${
         disabled ? 'cursor-not-allowed' : ''
-      }`}
+      } ${overwrite}`}
       style={{
         width,
         height,
