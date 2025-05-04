@@ -114,7 +114,6 @@ async def save_analysis_result(
     uid: str,
     result_id: str,
     song_id: str,
-    score: float,
     analysis_type: Optional[str] = Form(None),
     status: Optional[str] = Form(None),
     progress: Optional[int] = Form(0),
@@ -142,6 +141,7 @@ async def save_analysis_result(
             pitch_score = int(compare_data["comparison"]["scores"]["pitch_match_percentage"])
             rhythm_score = int(compare_data["comparison"]["scores"]["rhythm_match_percentage"])
             technique_score = int(compare_data["comparison"]["scores"]["technique_match_percentage"])
+            overall_score = int(compare_data["comparison"]["scores"])["overall_score"]
         except (KeyError, ValueError, TypeError) as e:
             raise HTTPException(status_code=400, detail=f"점수 추출 오류: {str(e)}")
 
@@ -166,7 +166,7 @@ async def save_analysis_result(
             "progress": progress,
             "analysis_json_path": analysis_blob_path,
             "compare_json_path": compare_blob_path,
-            "score": score,
+            "score": overall_score,
             "created_at": created_at or datetime.utcnow().isoformat(),
             "completed_at": completed_at,
             "duration_sec": duration_sec,
@@ -193,7 +193,7 @@ async def save_analysis_result(
             "pitch": pitch_score,
             "technique": technique_score,
             "onset": rhythm_score,
-            "accuracy": score
+            "accuracy": overall_score
         })
 
         return {"message": "분석 결과 저장 성공!!!!!!", "task_id": task_id}
