@@ -9,6 +9,10 @@ import Bookmark from '../../Assets/MyPage/filledBookmark.svg';
 import Heart from '../../Assets/MyPage/filledHeart.svg';
 import Write from '../../Assets/MyPage/wirte.svg';
 import { useAuth } from '../../Context/AuthContext.js';
+import { useMyscrapQuery } from '../../Hooks/MyPage/PlayedMusic/MyActivity/myScrapQuery.js';
+import { useMylikeQuery } from '../../Hooks/MyPage/PlayedMusic/MyActivity/myLikesQuery.js';
+import { useMypostQuery } from '../../Hooks/MyPage/PlayedMusic/MyActivity/myPostsQuery.js';
+import api from '../../Utils/api.js';
 
 export default function MyActivity() {
   const [bookmarks, setBookmarks] = useState([]);
@@ -16,58 +20,95 @@ export default function MyActivity() {
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const {uid} = useAuth(); 
-  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
+  const { uid } = useAuth();
+  const { data: bookmarkItems } = useMyscrapQuery(uid);
+  const { data: likeItems } = useMylikeQuery(uid);
+  const { data: mypostItems } = useMypostQuery(uid);
+
+  const getPostById = async (post_id) => {
+    console.log(post_id, 'post_id');
+    const res = await api.get(`/posts/${post_id}`);
+    return res.data.keyvaluedict[0];
+  };
+
+  const renderList = (data) => {
+    return data.map((item, idx) => (
+      <Link
+        to={`/noticeDetail/${item.id}`}
+        state={{
+          id: item.id,
+          title: item.title,
+          uid: item.uid,
+          writer: item.작성자,
+          write_time: item.created_at,
+          view: item.조회수,
+          content: item.content,
+          likes: item.좋아요수,
+          audio_url: item.audio_url,
+          image_url: item.image_url,
+        }}
+      >
+        <div key={idx} className="p-2 border rounded bg-gray-50 shadow-sm">
+          <p className="font-semibold truncate">{item.title}</p>
+          <p className="text-sm text-gray-600 truncate">{item.content}</p>
+        </div>
+      </Link>
+    ));
+  };
+
+  const parseData = (data) =>
+    data.map((item) => ({
+      id: item.id,
+      title: item.제목 || '제목 없음',
+      content: item.내용 || '내용 없음',
+      uid: item.uid,
+      좋아요수: item.좋아요수,
+      조회수: item.조회수,
+      댓글수: item.댓글수,
+      작성자: item.작성자,
+      created_at: item.created_at,
+      image_url: item.image_url,
+      audio_url: item.audio_url,
+    }));
 
   useEffect(() => {
-    if (!uid) return;
-
-    const fetchData = async () => {
+    const fetchAllPosts = async () => {
       setLoading(true);
+      setError(null);
+
       try {
-        console.log("백엔드 URL:", BACKEND_URL);
-    
-        const [bookmarkRes, likeRes, myPostRes] = await Promise.all([
-          axios.get(`${BACKEND_URL}/my-scraps`, { params: { uid } }),
-          axios.get(`${BACKEND_URL}/my-likes`, { params: { uid } }),
-          axios.get(`${BACKEND_URL}/my-posts`, { params: { uid } }),
-        ]);
+        if (bookmarkItems?.length) {
+          const bookmarkPosts = await Promise.all(
+            bookmarkItems.map((item) => getPostById(item.post_id)),
+          );
+          setBookmarks(parseData(bookmarkPosts));
+        }
 
-    
-        console.log("북마크 응답 데이터:", bookmarkRes.data);
-        console.log("좋아요 응답 데이터:", likeRes.data);
-        console.log("내 글 응답 데이터:", myPostRes.data);
-    
-        const parseData = (data) =>
-          Array.isArray(data) ? data.map(item => ({
-            title: item.title || "제목 없음",
-            content: item.content || "내용 없음"
-          })) : [];
-    
+        if (likeItems?.length) {
+          const likePosts = await Promise.all(
+            likeItems.map((item) => getPostById(item.post_id)),
+          );
+          setLikes(parseData(likePosts));
+        }
 
-        setBookmarks(parseData(bookmarkRes.data.my_scraps));
-        setLikes(parseData(likeRes.data.my_likes));
-        setMyPosts(parseData(myPostRes.data.my_posts));
-        setError(null);
+        if (mypostItems?.length) {
+          const myPostList = await Promise.all(
+            mypostItems.map((item) => getPostById(item.post_id)),
+          );
+          setMyPosts(parseData(myPostList));
+        }
       } catch (err) {
-        console.error('데이터 가져오는 중 오류:', err);
-        setError('데이터를 가져오는 데 실패했습니다.');
+        console.log(err);
+        setError('게시글을 불러오는 중 문제가 발생했습니다.');
       } finally {
         setLoading(false);
       }
     };
-    
 
-    fetchData();
-  }, [uid, BACKEND_URL]);
-
-  const renderList = (data) =>
-    data.map((item, idx) => (
-      <div key={idx} className="p-2 border rounded bg-gray-50 shadow-sm">
-        <p className="font-semibold truncate">{item.title}</p>
-        <p className="text-sm text-gray-600 truncate">{item.content}</p>
-      </div>
-    ));
+    if (uid && (bookmarkItems || likeItems || mypostItems)) {
+      fetchAllPosts();
+    }
+  }, [bookmarkItems, likeItems, mypostItems]);
 
   return (
     <div className="flex flex-col h-screen">

@@ -19,7 +19,7 @@ import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentR
 import { useAuth } from '../../Context/AuthContext.js';
 
 export default function MyPage() {
-  const {uid} = useAuth(); 
+  const { uid } = useAuth();
   const { data: userInfo } = useUserQuery(uid);
   const { data: records, isLoading } = useRecentRecordsQuery(uid);
   console.log(records);
@@ -139,8 +139,7 @@ export default function MyPage() {
               <ul className="mt-8 space-y-5 ml-8">
                 {isLoading ? (
                   <li>Loading...</li>
-                ) : (
-                  records &&
+                ) : records && records.length > 0 ? (
                   records.map((song, index) => (
                     <li
                       key={index}
@@ -161,6 +160,11 @@ export default function MyPage() {
                       </div>
                     </li>
                   ))
+                ) : (
+                  <h1 className="font-bold text-xl text-gray-600 mt-7 truncate">
+                    {' '}
+                    최근 연주한 곡이 없습니다...
+                  </h1>
                 )}
               </ul>
             </Box>
@@ -186,13 +190,13 @@ export default function MyPage() {
                     <img
                       src={song.cover}
                       alt="Album"
-                      className="w-16 h-16 mr-8 mt-7 "
+                      className="w-16 h-16 mr-8 mt-7 shrink-0"
                     />
-                    <div className="flex flex-col justify-center flex-grow">
+                    <div className="flex flex-col justify-center flex-grow min-w-0">
                       <p className="font-semibold text-[20px] mt-7 truncate">
                         {song.title}
                       </p>
-                      <p className="text-[15px] text-gray-600 mt-0">
+                      <p className="text-[15px] text-gray-600 mt-0 truncate">
                         {song.artist}
                       </p>
                     </div>
