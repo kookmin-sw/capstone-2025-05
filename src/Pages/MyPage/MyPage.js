@@ -9,47 +9,42 @@ import Bookmark from '../../Assets/MyPage/filledBookmark.svg';
 import Heart from '../../Assets/MyPage/filledHeart.svg';
 import Write from '../../Assets/MyPage/wirte.svg';
 import ImprovementChart from '../../Components/Chart/ImprovementChart.js';
+import Cover1 from '../../Assets/Main/album/bndCover.svg';
+import Cover2 from '../../Assets/Main/album/gdCover.svg';
+import Cover3 from '../../Assets/Main/album/iveCover.svg';
+import Cover4 from '../../Assets/Main/album/riizeCover.svg';
 import { Link } from 'react-router-dom';
+import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
+import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
 
 export default function MyPage() {
-  const [records, setRecords] = useState([]);
-  const [userInfo, setUserInfo] = useState({ nickname: '', email: '' });
-  const [loading, setLoading] = useState(true);
-  const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
   const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
+  const { data: userInfo } = useUserQuery(uid);
+  const { data: records, isLoading } = useRecentRecordsQuery(uid);
+  console.log(records);
 
-  useEffect(() => {
-    const fetchRecentRecords = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/recent-4-record`, {
-          params: { uid },
-        });
-        console.log('최근 기록 응답:', response.data);
-        setRecords(response.data.recent_uploads || []);
-      } catch (error) {
-        console.error('연습 기록 가져오기 실패:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchUserInfo = async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-          params: { uid },
-        });
-
-        console.log("유저 정보 응답 전체:", response.data);
-        const { nickname, email} = response.data || {};
-        setUserInfo({ nickname, email});
-      } catch (error) {
-        console.error('유저 정보 가져오기 실패:', error);
-      }
-    };
-
-    fetchRecentRecords();
-    fetchUserInfo();
-  }, [BACKEND_URL, uid]);
+  const recommendedSongs = [
+    {
+      cover: Cover1,
+      title: '오늘만 I LOVE YOU',
+      artist: 'BOYNEXTDOOR',
+    },
+    {
+      cover: Cover2,
+      title: 'HOME SWEET HOME',
+      artist: 'G-Dragon',
+    },
+    {
+      cover: Cover3,
+      title: 'REVEL HEART',
+      artist: 'IVE',
+    },
+    {
+      cover: Cover4,
+      title: 'COMBO',
+      artist: 'RIZE',
+    },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -80,7 +75,7 @@ export default function MyPage() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">{userInfo.nickname || '사용자'}</p>
+            <p className="font-semibold">{'사용자' || userInfo?.nickname}</p>
           </div>
         </div>
 
@@ -88,37 +83,37 @@ export default function MyPage() {
         <div className="w-[88%] overflow-y-auto p-16 ml-5">
           {/* 실력 향상 그래프 + 프로필 */}
           <div className="flex gap-16 h-[50vh]">
-            <Box width="70%" height="100%">
-              <div className="ml-4 mt-5">
+            <Box width="73%" height="100%">
+              <div className="ml-5 mt-7">
                 <span className="font-bold text-[20px] block">
                   실력 향상 그래프
                 </span>
               </div>
-              <div className="flex justify-center h-[85%]">
+              <div className="flex justify-center h-[100%]">
                 <ImprovementChart alt="실력 향상 그래프" />
               </div>
             </Box>
             <div className="w-[25%] flex justify-center">
               <Link to="/setting" className="w-full h-full">
                 <Box width="100%" height="100%" backgroundColor="#463936">
-                  <div className="p-8 text-white w-full h-full">
+                  <div className="flex flex-col p-8 text-white w-full h-full overflow-y-auto">
                     <img
-                      src={Profile}
+                      src={userInfo?.profile_image_url || Profile}
                       alt="프로필"
                       className="w-40 h-40 rounded-full mx-auto cursor-pointer"
                     />
                     <h3 className="text-center text-xl font-bold mt-6">
-                      {userInfo.nickname || '홍길동'}
+                      {userInfo?.nickname || '홍길동'}
                     </h3>
                     <div className="mt-16 ml-4">
                       <p className="text-xl">닉네임</p>
                       <p className="font-semibold text-xl">
-                        {userInfo.nickname}
+                        {userInfo?.nickname}
                       </p>
                     </div>
                     <div className="mt-16 ml-4">
                       <p className="text-xl">이메일</p>
-                      <p className="font-semibold text-xl">{userInfo.email}</p>
+                      <p className="font-semibold text-xl">{userInfo?.email}</p>
                     </div>
                   </div>
                 </Box>
@@ -126,18 +121,25 @@ export default function MyPage() {
             </div>
           </div>
 
-          {/* 최근 연주한 곡 + 나의 활동 */}
+          {/* 최근 연주한 곡 + 새 박스 + 나의 활동 */}
           <div className="flex gap-16 h-[50vh] mt-16">
-            <Box width="70%" height="105%">
+            {/* 최근 연주한 곡 */}
+            <Box width="43%" height="105%">
               <div className="flex items-center ml-4 mt-5">
                 <span className="font-bold text-[20px]">최근 연주한 곡</span>
 
-                <Link to="/playedmusic" className="ml-2 mt-1text-lg text-gray-500 hover:text-gray-700">&gt;</Link>
+                <Link
+                  to="/playedmusic"
+                  className="ml-2 mt-1text-lg text-gray-500 hover:text-gray-700"
+                >
+                  &gt;
+                </Link>
               </div>
               <ul className="mt-8 space-y-5 ml-8">
-                {loading ? (
+                {isLoading ? (
                   <li>Loading...</li>
                 ) : (
+                  records &&
                   records.map((song, index) => (
                     <li
                       key={index}
@@ -153,7 +155,7 @@ export default function MyPage() {
                           {song.song_name}
                         </p>
                         <p className="text-[15px] text-gray-600 mt-0">
-                          Artist Name
+                          {song.artist || '아티스트 미정'}
                         </p>
                       </div>
                     </li>
@@ -162,7 +164,48 @@ export default function MyPage() {
               </ul>
             </Box>
 
-            <Box width="25%" height="105%">
+            {/* 선호장르추천곡 */}
+            <Box
+              width="25%"
+              height="105%"
+              overwrite={'flex flex-col overflow-y-auto'}
+            >
+              <div className=" ml-4 mt-5">
+                <span className="font-bold text-[20px]">선호 장르 추천곡</span>
+                <p className="font-semibold text-gray-600 mt-7 truncate">
+                  어쿠스틱 팝(Acoustic Pop)
+                </p>
+              </div>
+              <ul className=" items-center mt-8 ml-8 space-y-5 ">
+                {recommendedSongs.map((song, index) => (
+                  <li
+                    key={index}
+                    className="flex items-center justify-between pb-2 mb-2 "
+                  >
+                    <img
+                      src={song.cover}
+                      alt="Album"
+                      className="w-16 h-16 mr-8 mt-7 "
+                    />
+                    <div className="flex flex-col justify-center flex-grow">
+                      <p className="font-semibold text-[20px] mt-7 truncate">
+                        {song.title}
+                      </p>
+                      <p className="text-[15px] text-gray-600 mt-0">
+                        {song.artist}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Box>
+
+            {/* 나의 활동 */}
+            <Box
+              width="25%"
+              height="105%"
+              overwrite={'flex flex-col overflow-y-auto'}
+            >
               <div className="ml-4 mt-5">
                 <span className="font-bold text-[20px]">나의 활동</span>
                 <Link
@@ -206,7 +249,7 @@ export default function MyPage() {
                     to="/setting"
                     className="text-black text-[16px] font-semibold hover:underline"
                   >
-                    {userInfo.nickname || '길동1234'}
+                    {userInfo?.nickname || '길동1234'}
                   </Link>
                 </div>
               </div>

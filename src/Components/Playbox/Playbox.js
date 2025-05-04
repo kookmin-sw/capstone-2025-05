@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Box from '../Box/Box';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { useSpotifyPlayer } from '../../Context/SpotifyContext';
 import PlayButton from '../Button/PlayButton';
 import PauseButton from '../Button/PauseButton';
 import { useSpotifyPlayback } from '../../Hooks/Music/useSpotifyPlayback';
 import PlayerBar from '../PlayerBar/PlayerBar';
+import swal from 'sweetalert';
 
 export default function Playbox({
   img,
@@ -24,7 +25,21 @@ export default function Playbox({
     deviceId,
     isReady,
     authUrl,
-    onError: (msg) => alert(msg),
+    onError: (msg) => {
+      swal({
+        text:
+          msg +
+          '\n이 곡은 spotify정책으로 인해 이용불가합니다\n다른 곡을 재생시켜주세요',
+        icon: 'warning',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
+      handlePause();
+    },
     onTokenExpired: () => console.log('로그인 필요'),
   });
 
@@ -34,6 +49,7 @@ export default function Playbox({
     const isSameTrack = playerTarget?.playurl === playurl;
 
     sendPlaybackCommand({
+      authUrl,
       action: 'play',
       body: isSameTrack
         ? {} //같은 트랙이면 이어서 재생
@@ -46,6 +62,7 @@ export default function Playbox({
   const handlePause = () => {
     setPlay(false);
     sendPlaybackCommand({
+      authUrl,
       action: 'pause',
       body: {},
     });

@@ -9821,6 +9821,11 @@ sweetalert@^2.1.2:
     es6-object-assign "^1.1.0"
     promise-polyfill "^6.0.2"
 
+sweetalert2@^11.20.0:
+  version "11.20.0"
+  resolved "https://registry.npmjs.org/sweetalert2/-/sweetalert2-11.20.0.tgz"
+  integrity sha512-MuiRY4UcWvdOBg12WUWWdUAFH+njnx7Ot/ibzPRa9Tk2TXfZqGYK4Nlq5c/u9P1EKCgRkkNsMZuoB8SCvSrwgQ==
+
 swiper@^11.2.5:
   version "11.2.6"
   resolved "https://registry.npmjs.org/swiper/-/swiper-11.2.6.tgz"

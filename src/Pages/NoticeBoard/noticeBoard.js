@@ -16,8 +16,9 @@ export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
   const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
   const { mutate: increaseView } = useViewPutMutation();
-
   const { data: postInfo } = usePostInfoQuery();
+
+  console.log(postInfo, '게시물데이터 hooks');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [startPage, setStartPage] = useState(1);
@@ -29,9 +30,9 @@ export default function NoticeBoard() {
     postInfo ? Math.ceil(postInfo.length / contentsPerPage) : 1,
   );
 
-  const navigate = useNavigate();
-
   const { data: autoCompleteSuggestions } = useAutoCompleteQuery(searchKeyword);
+
+  const navigate = useNavigate();
 
   // 필터링된 결과
   const filteredData = useMemo(() => {
@@ -90,11 +91,11 @@ export default function NoticeBoard() {
     <>
       <div className="flex flex-col items-center h-[100svh]">
         <table id="table" className="w-[80%] h-[80%] m-auto">
-          <thead className="text-xs text-black uppercase border-b border-[#d4c2b5]">
-            <div className="my-6">
+          <thead className="text-xs text-black uppercase border-b border-[#d4c2b5] h-[20%]">
+            <div className="py-6">
               <th
                 scope="col"
-                className="text-2xl font-bold h-[30px] w-auto whitespace-nowrap"
+                className="text-2xl font-bold h-[10%] w-auto whitespace-nowrap"
               >
                 <div className="flex items-center">
                   <img
@@ -107,7 +108,7 @@ export default function NoticeBoard() {
                 </div>
               </th>
             </div>
-            <tr id="header" className="border-y-[2px] border-[#A57865] h-[6%]">
+            <tr id="header" className="border-y-[2px] border-[#A57865] h-[50%]">
               <th
                 scope="col"
                 id="number"
@@ -118,60 +119,63 @@ export default function NoticeBoard() {
               <th
                 scope="col"
                 id="title"
-                className="font-bold w-[50%] text-xl text-center"
+                className="font-bold w-[50%] text-xl text-lg"
               >
                 제목
               </th>
-              <th scope="col" className="w-[10%] font-bold text-center">
+              <th scope="col" className="w-[10%] font-bold text-lg">
                 글쓴이
               </th>
-              <th scope="col" className="w-[10%] font-bold text-center">
+              <th scope="col" className="w-[10%] font-bold text-lg">
                 작성시간
               </th>
-              <th scope="col" className="w-[10%] font-bold text-center">
+              <th scope="col" className="w-[10%] font-bold text-lg">
                 조회수
               </th>
             </tr>
           </thead>
           <tbody>
-            {currentData.map((post, index) => (
-              <tr
-                key={post.index}
-                className="border-b border-[#e1d4c7] hover:bg-[#fdfaf6] transition duration-200 text-center"
-              >
-                <td className="text-center">{post.id}</td>
-                <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
-                  <Link
-                    to={`/noticeDetail/${post.id}`}
-                    state={{
-                      //추후에 백엔드 필드명으로 변경
-                      id: post.id,
-                      title: post.title,
-                      uid: post.uid,
-                      writer: post.작성자,
-                      write_time: formatDate(post.date),
-                      view: post.조회수,
-                      content: post.내용,
-                      likes: post.좋아요수,
-                    }}
-                    onClick={() => handleClick(post.id)}
-                  >
-                    {post.title}
-                  </Link>
-                </td>
-                <td className="text-center">{post.작성자}</td>
-                <td className="text-center">{formatDate(post.date)}</td>
-                <td className="text-center">{post.조회수}</td>
-              </tr>
-            ))}
+            {[...currentData]
+              .sort((a, b) => a.id - b.id)
+              .map((post) => (
+                <tr
+                  key={post.id}
+                  className="border-b border-[#e1d4c7] hover:bg-[#fdfaf6] transition duration-200 text-center"
+                >
+                  <td className="text-center">{post.id}</td>
+                  <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
+                    <Link
+                      to={`/noticeDetail/${post.id}`}
+                      state={{
+                        id: post.id,
+                        title: post.제목,
+                        uid: post.uid,
+                        writer: post.작성자,
+                        write_time: post.created_at,
+                        view: post.조회수,
+                        content: post.내용,
+                        likes: post.좋아요수,
+                        audio_url: post.audio_url,
+                        image_url: post.image_url,
+                      }}
+                      onClick={() => handleClick(post.id)}
+                    >
+                      {post.제목}
+                    </Link>
+                  </td>
+                  <td className="text-center">{post.작성자}</td>
+                  <td className="text-center">
+                    {formatDate(Date(post.created_at))}
+                  </td>
+                  <td className="text-center">{post.조회수}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
-
+        {/* 검색창 */}
         <div id="searchBar" className="flex justify-center w-[80%] mt-6">
-          <div className="relative w-[300px]">
+          <div className="relative w-[25%]">
             <SearchBox
-              width={'300px'}
-              height={'40px'}
               value={searchKeyword}
               onChange={(e) => {
                 setSearchKeyword(e.target.value);
@@ -194,12 +198,12 @@ export default function NoticeBoard() {
             />
           </div>
         </div>
-        <div className="fixed bottom-10 right-10">
+        <div className="fixed bottom-10 right-20">
           <button
             onClick={() => navigate('/write')}
             className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#d5b6a2] to-[#A57865] text-white font-semibold rounded-full shadow-md hover:scale-105 transition-transform duration-300"
           >
-            <img src={guitaricon} alt="글쓰기버튼" className="h-[30px]" />{' '}
+            <img src={guitaricon} alt="글쓰기버튼" className="h-[50px]" />{' '}
             글쓰기
           </button>
         </div>
