@@ -24,14 +24,90 @@ async def get_all_results(uid: str):
             output.append({"result_id": result_id, "task_id": task_doc.id})
     return {"uid": uid, "results": output}
 
+from fastapi.responses import Response
+from fastapi import Request
+
 @router.get("/result-one", tags=["Analysis"])
-async def get_one_result(uid: str, result_id: str):
+async def get_one_result(request: Request, uid: str, result_id: str):
     result_ref = firestore_db.collection("analysis_results").document(uid).collection(result_id)
-    docs = result_ref.stream()
-    data = [{**doc.to_dict(), "task_id": doc.id} for doc in docs]
-    if not data:
-        raise HTTPException(status_code=404, detail="Result가 존재하지 않습니다.")
-    return data[0]
+    task_docs = list(result_ref.list_documents())
+
+    if not task_docs:
+        raise HTTPException(status_code=404, detail="해당 result_id에 task가 존재하지 않습니다.")
+
+    task_doc_ref = task_docs[0]
+    task_snapshot = task_doc_ref.get()
+    if not task_snapshot.exists:
+        raise HTTPException(status_code=404, detail="task 문서를 찾을 수 없습니다.")
+
+    data = task_snapshot.to_dict()
+
+    compare_path = data.get("compare_json_path")
+    analysis_path = data.get("analysis_json_path")
+
+    if not compare_path or not analysis_path:
+        raise HTTPException(status_code=404, detail="compare 또는 analysis JSON 경로가 없습니다.")
+
+    base_url = str(request.base_url).rstrip("/")
+
+    return {
+        "task_id": task_doc_ref.id,
+        "song_id": data.get("song_id"),
+        "score": data.get("score"),
+        "analysis_type": data.get("analysis_type"),
+        "status": data.get("status"),
+        "progress": data.get("progress"),
+        "created_at": data.get("created_at"),
+        "completed_at": data.get("completed_at"),
+        "duration_sec": data.get("duration_sec"),
+        "error_message": data.get("error_message"),
+        "compare_json_download_url": f"{base_url}/api/download-compare-json?uid={uid}&result_id={result_id}",
+        "analysis_json_download_url": f"{base_url}/api/download-analysis-json?uid={uid}&result_id={result_id}",
+    }
+
+@router.get("/download-compare-json", tags=["Analysis"])
+async def download_compare_json(uid: str, result_id: str):
+    result_ref = firestore_db.collection("analysis_results").document(uid).collection(result_id)
+    task_docs = list(result_ref.list_documents())
+    if not task_docs:
+        raise HTTPException(status_code=404, detail="해당 result_id에 task가 없습니다.")
+    
+    task_doc_ref = task_docs[0]
+    data = task_doc_ref.get().to_dict()
+    compare_path = data.get("compare_json_path")
+    if not compare_path:
+        raise HTTPException(status_code=404, detail="compare_json_path가 없습니다.")
+    
+    blob = storage_bucket.blob(compare_path)
+    file_bytes = blob.download_as_bytes()
+
+    return Response(
+        content=file_bytes,
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=compare.json"}
+    )
+
+@router.get("/download-analysis-json", tags=["Analysis"])
+async def download_analysis_json(uid: str, result_id: str):
+    result_ref = firestore_db.collection("analysis_results").document(uid).collection(result_id)
+    task_docs = list(result_ref.list_documents())
+    if not task_docs:
+        raise HTTPException(status_code=404, detail="해당 result_id에 task가 없습니다.")
+    
+    task_doc_ref = task_docs[0]
+    data = task_doc_ref.get().to_dict()
+    analysis_path = data.get("analysis_json_path")
+    if not analysis_path:
+        raise HTTPException(status_code=404, detail="analysis_json_path가 없습니다.")
+    
+    blob = storage_bucket.blob(analysis_path)
+    file_bytes = blob.download_as_bytes()
+
+    return Response(
+        content=file_bytes,
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=analysis.json"}
+    )
 
 @router.post("/save-results", tags=["Analysis"])
 async def save_analysis_result(
