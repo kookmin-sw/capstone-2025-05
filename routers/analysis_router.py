@@ -40,7 +40,7 @@ async def get_one_result(uid: str, result_id: str):
 #todo: 분석 결과 업로드
     
 @router.post("/results-feedback", tags=["Analysis"])
-async def upload_feedback(uid: str = Form(...), result_id: str = Form(...), file: UploadFile = File(...)):
+async def upload_feedback(uid: str, result_id: str, file: UploadFile = File(...)):
     task_ref = firestore_db.collection("analysis_results").document(uid).collection(result_id)
     task_docs = list(task_ref.stream())
     if not task_docs:
@@ -52,10 +52,10 @@ async def upload_feedback(uid: str = Form(...), result_id: str = Form(...), file
     blob.upload_from_file(file.file, content_type="text/plain")
 
     task_ref.document(task_id).update({"feedback_path": path})
-    return {"feedback_path": path}
+    return {"피드백 파일 업로드 성공, feedback_path": path}
 
 @router.post("/record-save", tags=["Analysis"])
-async def upload_record(uid: str = Form(...), result_id: str = Form(...), song_id: str = Form(...), file: UploadFile = File(...)):
+async def upload_record(uid: str, result_id: str, song_id: str, file: UploadFile = File(...)):
     task_ref = firestore_db.collection("analysis_results").document(uid).collection(result_id)
     task_docs = list(task_ref.stream())
     if not task_docs:
