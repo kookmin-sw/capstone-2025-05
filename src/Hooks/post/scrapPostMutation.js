@@ -2,9 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
 const postScrap = ({ post_id, uid }) => {
-  return api.post(`/posts/${post_id}/scrap`, null, {
-    params: { uid },
-  });
+  return api.post(`/posts/${post_id}/scrap?uid=${uid}`);
 };
 
 export const useScrapPostMutation = () => {

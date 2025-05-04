@@ -80,7 +80,7 @@ export default function NoticeDetail() {
   //좋아요,신고하기 버튼 체크 여부
   const [liked, setLiked] = useState(false);
   const [clickLiked, setClickLiked] = useState(false);
-  const [likeNum, setLikeNum] = useState(parseInt(post.likes));
+  const [likeNum, setLikeNum] = useState(parseInt(post?.likes));
   const [isScrap, setIsScrap] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -93,12 +93,12 @@ export default function NoticeDetail() {
   }, [commentsInfo]);
 
   useEffect(() => {
-    if (localStorage.getItem('heart', post.id, uid)) {
-      setLiked(true);
-    } else {
-      setLiked(false);
-    }
-  }, [liked]);
+    const key = `heart_${uid}_${post.id}`;
+    const stored = localStorage.getItem(key);
+    setLiked(stored === 'true');
+  }, [post.id, uid]);
+  console.log(commentsInfo, '댓글정보');
+  console.log(post, '게시글정보');
 
   return (
     <div>
@@ -145,6 +145,7 @@ export default function NoticeDetail() {
           isEditing={isEditing}
           clickLiked={clickLiked}
           likeNum={likeNum}
+          setLikeNum={setLikeNum}
         />
       </section>
 

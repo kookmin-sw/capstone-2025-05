@@ -13,7 +13,7 @@ export default function PostMetaTable({ post }) {
               <a
                 href={post.image_url}
                 download
-                className="text-blue-600 hover:underline ml-2"
+                className="text-[#a57865] hover:underline ml-2"
               >
                 이미지 다운로드
               </a>
@@ -29,7 +29,7 @@ export default function PostMetaTable({ post }) {
               <a
                 href={post.audio_url}
                 download
-                className="text-blue-600 hover:underline"
+                className="text-[#a57865] hover:underline ml-2"
               >
                 오디오 다운로드
               </a>
