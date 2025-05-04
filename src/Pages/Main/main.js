@@ -2,16 +2,13 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import axios from 'axios';
 import First from '../../Assets/Main/banner1.svg';
 import Second from '../../Assets/Main/banner2.svg';
 import Third from '../../Assets/Main/banner3.svg';
 import Left from '../../Assets/Main/arrowLeft.svg';
 import Right from '../../Assets/Main/arrowRight.svg';
-import Box from '../../Components/Box/Box';
 import Footer from '../../Components/MapleFooter';
 import 'swiper/css';
-import swal from 'sweetalert';
 import { useNewReleases } from '../../Hooks/Main/getNewReleases';
 import { useKoreaTopTracks } from '../../Hooks/Main/getTopPlaylists';
 import Playbox from '../../Components/Playbox/Playbox';
@@ -19,20 +16,15 @@ import Playbox from '../../Components/Playbox/Playbox';
 export default function Main() {
   const navigate = useNavigate();
   const swiperRef = useRef(null);
-  const [trend, setTrend] = useState([]);
   const { data: TrendMusic } = useNewReleases();
   const { data: topMusic, isLoading } = useKoreaTopTracks();
   const [playerTarget, setPlayerTarget] = useState();
   console.log('trendMusic', TrendMusic);
-
-  const handleMove = () => {
-    navigate('/ranking?song_name=Drowning'); // 랭킹 테스트 - 수정하기
-  };
   console.log('topmusic', topMusic);
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex flex-grow items-center justify-center mt-12 relative">
+      <div className="flex items-center justify-center mt-12">
         <Swiper
           ref={swiperRef}
           modules={[Navigation, Pagination, Autoplay]}
@@ -41,7 +33,7 @@ export default function Main() {
           navigation
           pagination={{ clickable: true }}
           autoplay={{ delay: 3000, disableOnInteraction: false }}
-          className="w-[1100px] h-[340px] rounded-[10px] relative"
+          className="w-[1200px] h-[360px] rounded-[10px]"
         >
           {[
             {
@@ -78,13 +70,13 @@ export default function Main() {
         <img
           src={Left}
           alt="Previous"
-          className="absolute left-[36px] top-[50%] lg:left-[180px] -translate-y-1/2 w-6 h-6 cursor-pointer hover:scale-[110%] transition duration-300 ease-in-out z-10"
+          className="absolute left-[calc(50%-700px)] w-8 h-8 cursor-pointer z-10"
           onClick={() => swiperRef.current?.swiper.slidePrev()}
         />
         <img
           src={Right}
           alt="Next"
-          className="absolute right-[36px] lg:right-[180px] top-[50%] -translate-y-1/2 w-6 h-6 cursor-pointer hover:scale-[110%] transition duration-300 ease-in-out z-10"
+          className="absolute right-[calc(50%-700px)] w-8 h-8 cursor-pointer z-10"
           onClick={() => swiperRef.current?.swiper.slideNext()}
         />
       </div>
@@ -98,7 +90,7 @@ export default function Main() {
             })
           }
         >
-          <span className="text-xl font-bold text-[24px] ml-16 mr-10">
+          <span className="text-xl font-bold text-[24px] ml-[calc(50%-700px)] mr-4">
             인기곡 추천
           </span>
           <img src={Right} alt="arrow" className="cursor-pointer" />
@@ -134,7 +126,7 @@ export default function Main() {
             })
           }
         >
-          <span className="text-xl font-bold text-[24px] ml-16 mr-6">
+          <span className="text-xl font-bold text-[24px] ml-[calc(50%-700px)] mr-4">
             최근 등록된 곡
           </span>
           <img src={Right} alt="arrow" />
