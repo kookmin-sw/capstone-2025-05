@@ -8,6 +8,7 @@ import Music from '../../Assets/MyPage/Vector.svg';
 import Bookmark from '../../Assets/MyPage/filledBookmark.svg';
 import Heart from '../../Assets/MyPage/filledHeart.svg';
 import Write from '../../Assets/MyPage/wirte.svg';
+import { useAuth } from '../../Context/AuthContext.js';
 
 export default function MyActivity() {
   const [bookmarks, setBookmarks] = useState([]);
@@ -15,7 +16,7 @@ export default function MyActivity() {
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
+  const {uid} = useAuth(); 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   useEffect(() => {

@@ -8,6 +8,7 @@ import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
 import Profile from '../../Assets/MyPage/profile.svg';
+import { useAuth } from '../../Context/AuthContext.js';
 
 export default function Admin() {
   const [nickname, setNickname] = useState('');
@@ -17,7 +18,7 @@ export default function Admin() {
   const [errors, setErrors] = useState({ nickname: '', email: '' });
   const [profilePic, setProfilePic] = useState(Profile);
   const navigate = useNavigate();
-  const uid = localStorage.getItem('uid') || 'cLZMFP4802a7dwMo0j4qmcxpnY63';
+  const {uid} = useAuth(); 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   const fetchUserInfo = async () => {

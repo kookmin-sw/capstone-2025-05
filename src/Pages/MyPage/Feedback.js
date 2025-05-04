@@ -13,7 +13,7 @@ import playdata from '../../Data/compare.json';
 import feedback from '../../Data/feedback_8583d5bf.json';
 import fakedata from '../../Data/chartdata.json';
 import ReactMarkdown from 'react-markdown';
-import useAuth from '../../Context/AuthContext.js';
+import { useAuth } from '../../Context/AuthContext.js';
 import AudioPlayer from '../../Components/Audio/AudioPlayer.js';
 
 export default function Feedback() {
@@ -29,8 +29,7 @@ export default function Feedback() {
     cover_url: '',
   });
 
-  const uid = 'cLZMFP4802a7dwMo0j4qmcxpnY63';
-  // const {uid} = useAuth();  --> 이 코드로 변경!!
+  const {uid} = useAuth(); 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
   const songName = 'Drowning';
   const uploadCount = 1;
