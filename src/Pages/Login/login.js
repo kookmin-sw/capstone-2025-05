@@ -43,7 +43,16 @@ export default function Login() {
     const trimmedPassword = password.trim();
 
     if (!trimmedEmail || !trimmedPassword) {
-      swal('', '이메일과 비밀번호를 모두 입력해주세요', 'warning');
+      swal({
+        text: '이메일과 비밀번호를 모두 입력해주세요',
+        icon: 'warning',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
       return;
     }
 
@@ -60,18 +69,54 @@ export default function Login() {
         login(uid); //sessionstorage에 세팅 + context uid 세팅
         navigate('/main');
       } else {
-        swal('', '로그인 실패: 사용자 정보를 가져올 수 없습니다😥', 'info');
+        swal({
+          text: '로그인 실패: 사용자 정보를 가져올 수 없습니다😥',
+          icon: 'info',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
       }
     } catch (error) {
       console.error('로그인 에러:', error);
       if (error.response) {
         if (error.response.status === 422) {
-          swal('', '입력값이 유효하지 않습니다😥', 'error');
+          swal({
+            text: '입력값이 유효하지 않습니다😥',
+            icon: 'error',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         } else {
-          swal('', '서버 오류가 발생했습니다😥', 'error');
+          swal({
+            text: '서버 오류가 발생했습니다😥',
+            icon: 'error',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         }
       } else {
-        swal('', '네트워크 오류가 발생했습니다😥', 'error');
+        swal({
+          text: '네트워크 오류가 발생했습니다😥',
+          icon: 'error',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
       }
     }
   };

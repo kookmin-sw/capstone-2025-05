@@ -12,7 +12,7 @@ import ImprovementChart from '../../Components/Chart/ImprovementChart.js';
 import Cover1 from '../../Assets/Main/album/bndCover.svg';
 import Cover2 from '../../Assets/Main/album/gdCover.svg';
 import Cover3 from '../../Assets/Main/album/iveCover.svg';
-import Cover4 from '../../Assets/Main/album/riizeCover.svg'
+import Cover4 from '../../Assets/Main/album/riizeCover.svg';
 import { Link } from 'react-router-dom';
 import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
 import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
@@ -23,6 +23,28 @@ export default function MyPage() {
   const { data: records, isLoading } = useRecentRecordsQuery(uid);
   console.log(records);
 
+  const recommendedSongs = [
+    {
+      cover: Cover1,
+      title: '오늘만 I LOVE YOU',
+      artist: 'BOYNEXTDOOR',
+    },
+    {
+      cover: Cover2,
+      title: 'HOME SWEET HOME',
+      artist: 'G-Dragon',
+    },
+    {
+      cover: Cover3,
+      title: 'REVEL HEART',
+      artist: 'IVE',
+    },
+    {
+      cover: Cover4,
+      title: 'COMBO',
+      artist: 'RIZE',
+    },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -33,8 +55,14 @@ export default function MyPage() {
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
-                <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
-                <Link to="/mypage" className="text-white">내 정보</Link>
+                <img
+                  src={Information}
+                  alt="내 정보 아이콘"
+                  className="w-4 h-4"
+                />
+                <Link to="/mypage" className="text-white">
+                  내 정보
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
@@ -57,7 +85,9 @@ export default function MyPage() {
           <div className="flex gap-16 h-[50vh]">
             <Box width="73%" height="100%">
               <div className="ml-5 mt-7">
-                <span className="font-bold text-[20px] block">실력 향상 그래프</span>
+                <span className="font-bold text-[20px] block">
+                  실력 향상 그래프
+                </span>
               </div>
               <div className="flex justify-center h-[100%]">
                 <ImprovementChart alt="실력 향상 그래프" />
@@ -66,8 +96,12 @@ export default function MyPage() {
             <div className="w-[25%] flex justify-center">
               <Link to="/setting" className="w-full h-full">
                 <Box width="100%" height="100%" backgroundColor="#463936">
-                  <div className="p-8 text-white w-full h-full">
-                    <img src={userInfo.profile_image_url || Profile} alt="프로필" className="w-40 h-40 rounded-full mx-auto cursor-pointer" />
+                  <div className="flex flex-col p-8 text-white w-full h-full overflow-y-auto">
+                    <img
+                      src={userInfo?.profile_image_url || Profile}
+                      alt="프로필"
+                      className="w-40 h-40 rounded-full mx-auto cursor-pointer"
+                    />
                     <h3 className="text-center text-xl font-bold mt-6">
                       {userInfo?.nickname || '홍길동'}
                     </h3>
@@ -107,11 +141,22 @@ export default function MyPage() {
                 ) : (
                   records &&
                   records.map((song, index) => (
-                    <li key={index} className="flex items-center justify-between pb-2 mb-2">
-                      <img src={song.cover_url} alt="Album" className="w-16 h-16 mr-8 mt-7" />
+                    <li
+                      key={index}
+                      className="flex items-center justify-between pb-2 mb-2"
+                    >
+                      <img
+                        src={song.cover_url}
+                        alt="Album"
+                        className="w-16 h-16 mr-8 mt-7"
+                      />
                       <div className="flex flex-col justify-center flex-grow">
-                        <p className="font-semibold text-[20px] mt-7 truncate">{song.song_name}</p>
-                        <p className="text-[15px] text-gray-600 mt-0">{song.artist || '아티스트 미정'}</p>
+                        <p className="font-semibold text-[20px] mt-7 truncate">
+                          {song.song_name}
+                        </p>
+                        <p className="text-[15px] text-gray-600 mt-0">
+                          {song.artist || '아티스트 미정'}
+                        </p>
                       </div>
                     </li>
                   ))
@@ -120,43 +165,83 @@ export default function MyPage() {
             </Box>
 
             {/* 선호장르추천곡 */}
-            <Box width="25%" height="105%">
-              <div className="ml-4 mt-5">
+            <Box
+              width="25%"
+              height="105%"
+              overwrite={'flex flex-col overflow-y-auto'}
+            >
+              <div className=" ml-4 mt-5">
                 <span className="font-bold text-[20px]">선호 장르 추천곡</span>
-                <p className="font-semibold text-gray-600 mt-7 truncate">어쿠스틱 팝(Acoustic Pop)</p>
+                <p className="font-semibold text-gray-600 mt-7 truncate">
+                  어쿠스틱 팝(Acoustic Pop)
+                </p>
               </div>
-              <ul className="mt-8 space-y-5 ml-8">
-              {recommendedSongs.map((song, index) => (
-                <li key={index} className="flex items-center justify-between pb-2 mb-2">
-                  <img src={song.cover} alt="Album" className="w-16 h-16 mr-8 mt-7" />
-                  <div className="flex flex-col justify-center flex-grow">
-                   <p className="font-semibold text-[20px] mt-7 truncate">{song.title}</p>
-                   <p className="text-[15px] text-gray-600 mt-0">{song.artist}</p>
-                  </div>
-                </li>
-               ))}
+              <ul className=" items-center mt-8 ml-8 space-y-5 ">
+                {recommendedSongs.map((song, index) => (
+                  <li
+                    key={index}
+                    className="flex items-center justify-between pb-2 mb-2 "
+                  >
+                    <img
+                      src={song.cover}
+                      alt="Album"
+                      className="w-16 h-16 mr-8 mt-7 "
+                    />
+                    <div className="flex flex-col justify-center flex-grow">
+                      <p className="font-semibold text-[20px] mt-7 truncate">
+                        {song.title}
+                      </p>
+                      <p className="text-[15px] text-gray-600 mt-0">
+                        {song.artist}
+                      </p>
+                    </div>
+                  </li>
+                ))}
               </ul>
-              
             </Box>
 
             {/* 나의 활동 */}
-            <Box width="25%" height="105%">
+            <Box
+              width="25%"
+              height="105%"
+              overwrite={'flex flex-col overflow-y-auto'}
+            >
               <div className="ml-4 mt-5">
                 <span className="font-bold text-[20px]">나의 활동</span>
-                <Link to="/myactivity" className="ml-2 text-lg text-gray-500 hover:text-gray-700">&gt;</Link>
+                <Link
+                  to="/myactivity"
+                  className="ml-2 text-lg text-gray-500 hover:text-gray-700"
+                >
+                  &gt;
+                </Link>
               </div>
               <div className="ml-5 mt-10 space-y-4 flex-grow">
                 <div className="rounded-lg p-7 flex items-center gap-8">
                   <img src={Bookmark} alt="북마크" className="w-10 h-10" />
-                  <Link to="/myactivity" className="text-black text-[16px] font-semibold hover:underline">북마크</Link>
+                  <Link
+                    to="/myactivity"
+                    className="text-black text-[16px] font-semibold hover:underline"
+                  >
+                    북마크
+                  </Link>
                 </div>
                 <div className="rounded-lg p-7 flex items-center gap-8">
                   <img src={Heart} alt="좋아요" className="w-10 h-10" />
-                  <Link to="/myactivity" className="text-black text-[16px] font-semibold hover:underline">좋아요</Link>
+                  <Link
+                    to="/myactivity"
+                    className="text-black text-[16px] font-semibold hover:underline"
+                  >
+                    좋아요
+                  </Link>
                 </div>
                 <div className="rounded-lg p-7 flex items-center gap-8">
                   <img src={Write} alt="내가 쓴 글" className="w-10 h-10" />
-                  <Link to="/myactivity" className="text-black text-[16px] font-semibold hover:underline">내가 쓴 글</Link>
+                  <Link
+                    to="/myactivity"
+                    className="text-black text-[16px] font-semibold hover:underline"
+                  >
+                    내가 쓴 글
+                  </Link>
                 </div>
                 <div className="rounded-lg p-5 flex items-center gap-8">
                   <img src={Profile} alt="프로필" className="w-12 h-12 " />

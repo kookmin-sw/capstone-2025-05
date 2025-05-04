@@ -135,38 +135,41 @@ export default function NoticeBoard() {
             </tr>
           </thead>
           <tbody>
-            {currentData.map((post, index) => (
-              <tr
-                key={post.index}
-                className="border-b border-[#e1d4c7] hover:bg-[#fdfaf6] transition duration-200 text-center"
-              >
-                <td className="text-center">{post.id}</td>
-                <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
-                  <Link
-                    to={`/noticeDetail/${post.id}`}
-                    state={{
-                      //추후에 백엔드 필드명으로 변경
-                      id: post.id,
-                      title: post.title,
-                      uid: post.uid,
-                      writer: post.작성자,
-                      write_time: formatDate(post.date),
-                      view: post.조회수,
-                      content: post.내용,
-                      likes: post.좋아요수,
-                      audio_url: post.audio_url,
-                      image_url: post.image_url,
-                    }}
-                    onClick={() => handleClick(post.id)}
-                  >
-                    {post.title}
-                  </Link>
-                </td>
-                <td className="text-center">{post.작성자}</td>
-                <td className="text-center">{formatDate(post.date)}</td>
-                <td className="text-center">{post.조회수}</td>
-              </tr>
-            ))}
+            {[...currentData]
+              .sort((a, b) => a.id - b.id)
+              .map((post) => (
+                <tr
+                  key={post.id}
+                  className="border-b border-[#e1d4c7] hover:bg-[#fdfaf6] transition duration-200 text-center"
+                >
+                  <td className="text-center">{post.id}</td>
+                  <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
+                    <Link
+                      to={`/noticeDetail/${post.id}`}
+                      state={{
+                        id: post.id,
+                        title: post.제목,
+                        uid: post.uid,
+                        writer: post.작성자,
+                        write_time: post.created_at,
+                        view: post.조회수,
+                        content: post.내용,
+                        likes: post.좋아요수,
+                        audio_url: post.audio_url,
+                        image_url: post.image_url,
+                      }}
+                      onClick={() => handleClick(post.id)}
+                    >
+                      {post.제목}
+                    </Link>
+                  </td>
+                  <td className="text-center">{post.작성자}</td>
+                  <td className="text-center">
+                    {formatDate(Date(post.created_at))}
+                  </td>
+                  <td className="text-center">{post.조회수}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
         {/* 검색창 */}

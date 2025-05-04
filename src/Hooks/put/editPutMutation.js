@@ -2,21 +2,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../Utils/api';
 
 /*게시글 수정하기 */
-const updatePost = ({
-  id,
-  editedTitle,
-  writer,
-  write_time,
-  view,
-  editedContent,
-}) => {
-  return api.put(`/posts/${id}`, {
-    id,
-    제목: editedTitle,
-    작성자: writer,
-    작성일시: write_time,
-    조회수: view,
-    내용: editedContent,
+const updatePost = ({ post_id, editedTitle, editedContent }) => {
+  const formData = new FormData();
+  formData.append('title', editedTitle);
+  formData.append('content', editedContent);
+
+  return api.put(`/posts/${post_id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
   });
 };
 

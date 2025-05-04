@@ -9,6 +9,7 @@ const postWrite = ({ post }) => {
   formData.append('content', post.content);
   formData.append('author', post.author);
   formData.append('title', post.title);
+  formData.append('password', '비밀번호없음');
 
   // 선택적으로 이미지/오디오가 있다면 추가
   if (post.image) {
