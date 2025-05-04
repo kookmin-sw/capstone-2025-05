@@ -22,6 +22,7 @@ import SearchPage from '../Pages/SearchPage/searchPage';
 import PrintPage from '../Pages/PrintPage/PrintPage';
 import AudioTest from '../Pages/TestPage/audioTestPage';
 import Beginner from '../Pages/Beginner/beginner';
+import MusicPage from '../Pages/Main/MusicPage';
 
 export default function AppRoutes() {
   const { uid } = useAuth();
@@ -47,6 +48,7 @@ export default function AppRoutes() {
           <Route path="/audiotest" element={<AudioTest />} />
           <Route path="/beginner" element={<Beginner />} />
           <Route path="*" element={<Main />} />
+          <Route path="/musics" element={<MusicPage />} />
         </>
       ) : (
         // 로그인 안 한 경우
@@ -60,6 +62,7 @@ export default function AppRoutes() {
           <Route path="*" element={<Login />} />
           <Route path="/audiotest" element={<AudioTest />} />
           <Route path="*" element={<Main />} />
+          <Route path="/musics" element={<MusicPage />} />
         </>
       )}
     </Routes>
