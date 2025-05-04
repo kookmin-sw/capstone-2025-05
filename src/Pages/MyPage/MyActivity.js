@@ -48,7 +48,10 @@ export default function MyActivity() {
           image_url: item.image_url,
         }}
       >
-        <div key={idx} className="p-2 border rounded bg-gray-50 shadow-sm">
+        <div
+          key={idx}
+          className="p-2 border rounded bg-gray-50 shadow-sm hover:bg-white cursor transition-colors duration-200"
+        >
           <p className="font-semibold truncate">{item.title}</p>
           <p className="text-sm text-gray-600 truncate">{item.content}</p>
         </div>
