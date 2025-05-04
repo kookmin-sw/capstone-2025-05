@@ -33,7 +33,7 @@ async def get_one_result(uid: str, result_id: str):
         raise HTTPException(status_code=404, detail="Result가 존재하지 않습니다.")
     return data[0]
 
-@router.post("/results-save", tags=["Analysis"])
+@router.post("/save-results", tags=["Analysis"])
 async def save_analysis_result(
     uid: str,
     result_id: str,
@@ -131,7 +131,7 @@ async def save_analysis_result(
         if os.path.exists(compare_path):
             os.remove(compare_path)
     
-@router.post("/results-feedback", tags=["Analysis"])
+@router.post("/save-feedback", tags=["Analysis"])
 async def upload_feedback(uid: str, result_id: str, file: UploadFile = File(...)):
     task_ref = firestore_db.collection("analysis_results").document(uid).collection(result_id)
     task_docs = list(task_ref.stream())
@@ -146,7 +146,7 @@ async def upload_feedback(uid: str, result_id: str, file: UploadFile = File(...)
     task_ref.document(task_id).update({"feedback_path": path})
     return {"피드백 파일 업로드 성공, feedback_path": path}
 
-@router.post("/record-save", tags=["Analysis"])
+@router.post("/save-record", tags=["Analysis"])
 async def upload_record(uid: str, result_id: str, song_id: str, file: UploadFile = File(...)):
     task_ref = firestore_db.collection("analysis_results").document(uid).collection(result_id)
     task_docs = list(task_ref.stream())
@@ -166,7 +166,7 @@ async def upload_record(uid: str, result_id: str, song_id: str, file: UploadFile
     task_ref.document(task_id).update({"record_path": path})
     return {"record_path": path}
 
-@router.delete("/results-delete", tags=["Analysis"])
+@router.delete("/delete-results", tags=["Analysis"])
 async def delete_result(uid: str, result_id: str):
     result_ref = firestore_db.collection("analysis_results").document(uid).collection(result_id)
     task_docs = list(result_ref.stream())
