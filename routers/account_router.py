@@ -28,7 +28,7 @@ async def google_login():
     redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'https://maple.ne.kr/api/google-auth-callback') 
     google_auth_url = (
         f"{GOOGLE_OAUTH2_URL}?response_type=code&"
-        f"client_id={os.getenv('CLIENT_ID')}&"
+        f"client_id={os.getenv('GOOGLE_CLIENT_ID')}&"
         f"redirect_uri={redirect_uri}&" 
         f"scope=openid profile email"
     )
@@ -43,9 +43,9 @@ async def google_auth_callback(code: str):
             GOOGLE_TOKEN_URL,
             data={
                 "code": code,
-                "client_id": os.getenv("CLIENT_ID"),
-                "client_secret": os.getenv("CLIENT_SECRET"),
-                "redirect_uri": redirect_uri,
+                "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+                "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+                "redirect_uri": redirect_uri,  
                 "grant_type": "authorization_code",
             },
         )
