@@ -20,8 +20,16 @@ async def get_user_info(uid: str):
         user_data = user_ref.get()
 
         if not user_data:
-            print("사용자 정보 존재 X")
             raise HTTPException(status_code=404, detail="해당 사용자 정보가 존재하지 않습니다.")
+
+        storage_bucket = storage.bucket()
+        blobs = list(storage_bucket.list_blobs(prefix=f"{uid}/profile/"))
+        if blobs:
+                profile_blob = blobs[0]
+                url = profile_blob.generate_signed_url(datetime.timedelta(minutes=60))
+                profile_image_url = url
+        else:
+            profile_image_url = None
 
         return {
             "uid": uid,
@@ -29,13 +37,12 @@ async def get_user_info(uid: str):
             "nickname": user_data.get("nickname"),
             "interest_genre": user_data.get("interest_genre"),
             "level": user_data.get("level"),
+            "profile_image_url": profile_image_url
         }
 
     except auth.UserNotFoundError:
-        print("등록되지 않은 사용자")
         raise HTTPException(status_code=404, detail="등록되지 않은 사용자입니다.")
     except Exception as e:
-        print("사용자 정보 조회 실패")
         raise HTTPException(status_code=500, detail=f"사용자 정보 조회 실패: {str(e)}")
 
 @router.put("/edit-user/nickname", tags=["My Page"])
@@ -189,6 +196,20 @@ def extract_date(date):
         return date.split('T')[0]
     return date
 
+def get_artist_info(uid: str, song_name: str):
+    try:
+        artist_ref = firestore_db.collection(f"{uid}_score").document(song_name).collection("artist")
+        docs = artist_ref.get()
+
+        if not docs:
+            return None
+        
+        return docs[0].id
+
+    except Exception as e:
+        print(f"아티스트 정보 조회 실패: {str(e)}")
+        return None
+
 @router.get("/records/all", tags=["My Page"])
 async def get_all_records(uid: str):
     try:
@@ -207,24 +228,26 @@ async def get_all_records(uid: str):
             upload_count = int(path_parts[3])
 
             score_data = get_score_data(uid, song_name, upload_count)
+            artist = get_artist_info(uid, song_name)
 
             if score_data:
                 if song_name not in records:
                     records[song_name] = []
 
-                if not any(record["upload_count"] == upload_count and record["audio_url"] == blob.public_url 
+                if not any(record["upload_count"] == upload_count and record.get("audio_url") == blob.public_url 
                            for record in records[song_name]):
                     date = score_data.get("date")
-
-                    hasattr(date, "strftime")
-                    date = date.strftime("%Y-%m-%d") 
+                    if hasattr(date, "strftime"):
+                        date = date.strftime("%Y-%m-%d")
 
                     records[song_name].append({
                         "upload_count": upload_count,
                         "pitch": score_data.get("pitch"),
                         "onset": score_data.get("onset"),
                         "technique": score_data.get("technique"),
-                        "date": date
+                        "date": date,
+                        "audio_url": blob.public_url,
+                        "artist": artist
                     })
 
         return records
@@ -232,10 +255,13 @@ async def get_all_records(uid: str):
     except Exception as e:
         print(f"연습 기록 조회 실패: {str(e)}")
         raise HTTPException(status_code=500, detail="연습 기록 조회에 실패했습니다.")
-
+    
 @router.get("/records/specific", tags=["My Page"])
 async def get_specific_record(uid: str, song_name: str, upload_count: int):
+    """특정 연습 기록 조회"""
     try:
+        storage_bucket = storage.bucket()
+
         album_blob = storage_bucket.blob(f"album_covers/{song_name}.jpg")
         cover_url = (
             album_blob.generate_signed_url(datetime.timedelta(minutes=60))
@@ -243,10 +269,14 @@ async def get_specific_record(uid: str, song_name: str, upload_count: int):
             else None
         )
 
-        if upload_count == 0:  # 모든 연습 내역 조회
+        artist = get_artist_info(uid, song_name)
+
+        if upload_count == 0:
             blob_path = f"{uid}/record/{song_name}/"
             blobs = list(storage_bucket.list_blobs(prefix=blob_path))
-            upload_counts = set(blob.name.split("/")[3] for blob in blobs if blob.name.endswith(('.mp3', '.wav')))
+            upload_counts = set(
+                blob.name.split("/")[3] for blob in blobs if blob.name.endswith(('.mp3', '.wav'))
+            )
 
             records = []
             for count in upload_counts:
@@ -257,7 +287,8 @@ async def get_specific_record(uid: str, song_name: str, upload_count: int):
                         "pitch": score_data.get("pitch"),
                         "onset": score_data.get("onset"),
                         "technique": score_data.get("technique"),
-                        "date": extract_date(score_data.get("date"))
+                        "date": extract_date(score_data.get("date")),
+                        "artist": artist
                     })
 
             if not records:
@@ -278,7 +309,8 @@ async def get_specific_record(uid: str, song_name: str, upload_count: int):
                 "pitch": score_data.get("pitch"),
                 "onset": score_data.get("onset"),
                 "technique": score_data.get("technique"),
-                "date": extract_date(score_data.get("date"))
+                "date": extract_date(score_data.get("date")),
+                "artist": artist
             }
 
             return {
@@ -349,7 +381,43 @@ async def get_my_scraps(uid: str):
 @router.get("/my-likes", tags=["My Page"])
 async def get_my_likes(uid: str):
     return {"my_likes": get_posts_by_activity(uid, "like")}
+"""
+@router.post("/upload-song-rank", tags=["My Page"])
+async def upload_song_rank(uid: str, song_name: str):
+    try:
+        rank_ref = db.reference(f"rank/{song_name}")
+        rank_data = rank_ref.get()
 
+        if not rank_data:
+            raise HTTPException(status_code=404, detail="랭크 데이터가 없습니다.")
+
+        all_scores = []
+        user_score = None
+
+        for entry in rank_data.values():
+            if isinstance(entry, dict) and "score" in entry:
+                all_scores.append(entry)
+                if entry.get("uid") == uid:
+                    user_score = entry
+
+        if not user_score:
+            raise HTTPException(status_code=404, detail="해당 uid의 점수를 찾을 수 없습니다.")
+
+        sorted_scores = sorted(all_scores, key=lambda x: x["score"], reverse=True)
+
+        ranking = next((i + 1 for i, e in enumerate(sorted_scores) if e.get("uid") == uid), None)
+
+        if ranking is None:
+            raise HTTPException(status_code=500, detail="랭킹 계산 실패")
+
+        doc_ref = firestore_db.client().collection(f"{uid}_score").document(song_name)
+        doc_ref.set({"rank": ranking}, merge=True)
+
+        return {"message": "Firestore에 랭킹 저장 성공", "rank": ranking}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"랭킹 저장 실패: {str(e)}")
+"""
 @router.get("/my-specific-song-rank", tags=["My Page"])
 async def get_my_rank(uid: str, song_name: str):
     try:
@@ -357,14 +425,12 @@ async def get_my_rank(uid: str, song_name: str):
         doc = doc_ref.get()
 
         if not doc.exists:
-            print("해당 곡의 랭킹 정보가 없음")
             raise HTTPException(status_code=404, detail="해당 곡의 랭킹 정보가 없습니다.")
 
         data = doc.to_dict()
         rank = data.get("rank")
 
         if rank is None:
-            print("연습 기록을 안 올려서 랭킹 정보가 없음")
             raise HTTPException(status_code=404, detail="랭킹 정보가 존재하지 않습니다.")
 
         return {"rank": rank}
@@ -399,9 +465,12 @@ async def get_recent_album_covers(uid: str):
             song_name = upload["song_name"]
             blob = storage.bucket().blob(f"album_covers/{song_name}.jpg")
             url = blob.generate_signed_url(datetime.timedelta(minutes=60)) if blob.exists() else None
+            artist = get_artist_info(uid, song_name)
+
             album_covers.append({
                 "song_name": song_name,
-                "cover_url": url
+                "cover_url": url,
+                "artist": artist
             })
 
         return {"recent_uploads": album_covers}
