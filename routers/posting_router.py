@@ -58,8 +58,8 @@ async def get_user_profile_image(uid: str) -> str:
     prefix = f"{uid}/profile/"
 
     blob = list(bucket.list_blobs(prefix=prefix))
-    if blobs:
-        return blobs[0].generate_signed_url(version="v4", expiration=datetime.timedelta(minutes=15), method="GET")
+    if blob:
+        return blob[0].generate_signed_url(version="v4", expiration=datetime.timedelta(minutes=15), method="GET")
 
         return ""
 @router.get("/", response_class=JSONResponse, tags=["Post"])
@@ -200,13 +200,23 @@ async def create_post(
     image: Optional[UploadFile] = File(default=None), 
     audio: Optional[UploadFile] = File(default=None)):
     db = firestore.client()
-
     now = datetime.datetime.now()
-    alldbidlist = [doc.to_dict().get("id") for doc in posts_ref.stream()]
-    alldbidlist = [id for id in alldbidlist if id is not None]
-    lastdbid = max(alldbidlist) if alldbidlist else 0
-    string_number = str(lastdbid + 1).zfill(8)
+    alldbidlist = sorted([doc.to_dict().get("id") for doc in posts_ref.stream() if doc.to_dict().get("id") is not None])
 
+    # 삭제된 게시글 ID 추적 (예시: Firestore에서 삭제된 게시글을 is_deleted 필드로 구분)
+    deleted_ids = sorted([doc.id for doc in posts_ref.where("is_deleted", "==", True).stream()])
+
+    new_id = 1
+    if deleted_ids:
+        new_id = deleted_ids.pop(0)  # 삭제된 ID가 있다면 그것을 사용
+    else:
+        # 모든 ID 리스트에서 빈 자리를 찾아서 새로운 ID를 설정
+        for existing_id in alldbidlist:
+            if existing_id != new_id:
+                break
+            new_id += 1
+        
+    string_number = str(new_id).zfill(8)
     image_url = None
     if image:
         image_path = f"post/image/{string_number}_{image.filename}"
@@ -218,8 +228,8 @@ async def create_post(
         audio_url = await upload_file_to_firebase(audio, audio_path)
 
     post_data = {
-        "id": lastdbid + 1,
-        "uid": int(string_number),
+        "id": new_id,
+        "uid": str(uid),
         "내용": content,
         "댓글갯수": 0,
         "created_at": now,
@@ -281,7 +291,7 @@ async def modify_post(
     return {'result_msg': f"{postid} updated..."}
 
 @router.delete("/posts/{post_id}", tags=["Post"])
-async def delete_post(post_id: int):
+async def delete_post(post_id: int, uid:str = Query(...)):
     global posts_ref, comments_ref
     print("delete_post >>>")
     db = firestore.client()
@@ -294,27 +304,88 @@ async def delete_post(post_id: int):
     alldocs = comments_ref.stream()
     for doc in alldocs:
         docdict = doc.to_dict()
-        if docdict["postid"] == post_id:
+        if docdict.get("postid") == post_id:
             comments_ref.document(doc.id).delete()
     db.collection("my_activity").document(uid).collection("post").document(string_number).delete()
+
+    for pid in range(post_id + 1, 100000):
+        current_id = str(pid).zfill(8)
+        next_post = posts_ref.document(current_id).get()
+        if not next_post.exists:
+            break
+        post_data = next_post.to_dict()
+        new_id = str(pid-1).zfill(8)
+        post_data["id"] = pid-1
+        posts_ref.document(new_id).set(post_data)
+        posts_ref.document(current_id).delete()
+
+        for doc in comments_ref.stream():
+            comment = doc.to_dict()
+            if comment.get("postid") == pid:
+                comments_ref.document(doc.id).update({"postid": pid-1})
+        user_id = post_data.get("uid")
+        if user_id:
+            activity_ref = db.collection("my_activity").document(user_id).collection("post")
+            activity_ref.document(new_id).set(activity_ref.document(current_id).get().to_dict())
+            activity_ref.document(current_id).delete()
     return {'result_msg' : f"Post {post_id} and its comments deleted."}
 
 @router.delete("/posts/admin/{post_id}", tags=["Post"])
-async def delete_post(post_id: int, uid:str = Query(...)):
-    string_number = str(post_id).zfill(8)
+async def delete_post_admin(post_id: int, uid:str = Query(...)):
 
     if uid != ADMIN_UID:
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
+    db=firestore.client()
+    string_number = str(post_id)
+    dbkey = string_number.zfill(8)
 
-    post_ref = posts_ref.document(string_number)
+    post_ref = posts_ref.document(dbkey)
     if not post_ref.get().exists:
         raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
     
+    post_data = post_ref.get().to_dict()
+    user_id = post_data.get("uid")
     post_ref.delete()
 
-    firestore.client().collection("my_activity").document(uid).collection("post").document(string_number).delete()
 
-    return {"result_msg": f"{post_id}번 게시글이 삭제됐습니다."}
+    if user_id:
+        db.collection("my_activity").document(user_id).collection("post").document(dbkey).delete()
+
+    # 댓글 삭제
+    for doc in comments_ref.stream():
+        comment = doc.to_dict()
+        if comment.get("postid") == post_id:
+            comments_ref.document(doc.id).delete()
+
+    # ID 당기기
+    for pid in range(post_id + 1, 100000):
+        current_id = str(pid).zfill(8)
+        next_post = posts_ref.document(current_id).get()
+        if not next_post.exists:
+            break
+
+        post_data = next_post.to_dict()
+        new_id = str(pid - 1).zfill(8)
+        post_data["id"] = pid-1
+        posts_ref.document(new_id).set(post_data)
+        posts_ref.document(current_id).delete()
+
+        # 댓글들의 postid 업데이트
+        for doc in comments_ref.stream():
+            comment = doc.to_dict()
+            if comment.get("postid") == pid:
+                comments_ref.document(doc.id).update({"postid": pid - 1})
+
+        # my_activity 문서 이동
+        uid_of_post = post_data.get("uid")
+        if uid_of_post:
+            activity_ref = db.collection("my_activity").document(uid_of_post).collection("post")
+            activity_data = activity_ref.document(current_id).get().to_dict()
+            if activity_data:
+                activity_ref.document(new_id).set(activity_data)
+                activity_ref.document(current_id).delete()
+
+    return {"result_msg": f"{post_id}번 게시글이 삭제되었고 이후 게시글들이 정리되었습니다."}
 @router.delete("/comments/admin/{comment_id}", tags=["Comment"])
 async def delete_comment(comment_id: str, uid:str = Query(...)):
     if uid != ADMIN_UID:
