@@ -6,6 +6,7 @@ import Box from '../../Components/Box/Box.js';
 import Input from '../../Components/Input/input.js';
 import Button from '../../Components/Button/Button.js';
 import Footer from '../../Components/MapleFooter';
+import swal from 'sweetalert';
 
 export default function Signup() {
   const navigate = useNavigate();

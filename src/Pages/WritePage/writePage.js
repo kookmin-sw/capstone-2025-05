@@ -5,6 +5,7 @@ import guitaricon from '../../Assets/electric-guitar.svg';
 import { useAuth } from '../../Context/AuthContext';
 import FileDropBox from '../../Components/Box/FileDropBox';
 import { useNavigate } from 'react-router-dom';
+import swal from 'sweetalert';
 
 export default function WritePage() {
   const [title, setTitle] = useState('');
