@@ -26,9 +26,11 @@ import json
 
 import firebase_admin
 from firebase_admin import firestore, db, storage
-from firebase_admin import credentials
+from firebase_admin import credentials, initialize_app
 import json
 from google.cloud.firestore_v1 import FieldFilter
+from google.cloud import storage
+from datetime import timedelta
 from dotenv import load_dotenv
 from manager.firebase_manager import firestore_db
 
@@ -178,13 +180,12 @@ async def read_post(request: Request, post_id: int):
 
 async def upload_file_to_firebase(file:UploadFile, path: str) -> Optional[str]:
     try:
-        global storage_bucket
-        blob = storage_bucket.blob(path)
+        from firebase_admin import storage
+        bucket = storage.bucket()
+        blob = bucket.blob(path)
         file.file.seek(0)
         blob.upload_from_file(file.file, content_type=file.content_type)
         blob.make_public()
-        print(f"Uploading to: {path}")
-        print(f"Content-Type: {file.content_type}")
         return blob.public_url
     except Exception as e:
         print(f"[Firebase Storage Upload Error] {e}")
@@ -219,12 +220,14 @@ async def create_post(
     string_number = str(new_id).zfill(8)
     image_url = None
     if image:
-        image_path = f"post/image/{string_number}_{image.filename}"
+        print(f"image_url: {image_url}")
+        image_path = f"post/image/{uid}/{string_number}_{image.filename}"
         image_url = await upload_file_to_firebase(image, image_path)
 
     audio_url = None
     if audio:
-        audio_path = f"post/audio/{string_number}_{audio.filename}"
+        print(f"audio_url : {audio_url}")
+        audio_path = f"post/audio/{uid}/{string_number}_{audio.filename}"
         audio_url = await upload_file_to_firebase(audio, audio_path)
 
     post_data = {
@@ -251,7 +254,38 @@ async def create_post(
     })
 
     return {"result_msg": "게시글이 성공적으로 등록되었습니다.", "post_id": string_number}
+from urllib.parse import unquote, urlparse, parse_qs
 
+async def extract_storage_path_from_url(url:str) -> str:
+    try:
+        parsed_url = urlparse(url)
+
+        # 형식 1: https://firebasestorage.googleapis.com/v0/b/BUCKET/o/ENCODED_PATH?alt=media...
+        if "firebasestorage.googleapis.com" in parsed_url.netloc:
+            if "/o/" in parsed_url.path:
+                encoded_path = parsed_url.path.split("/o/")[1]
+                return unquote(encoded_path)
+
+        # 형식 2: https://storage.googleapis.com/BUCKET/post/image/...
+        if "storage.googleapis.com" in parsed_url.netloc:
+            parts = parsed_url.path.split("/", 2)  # ['', bucket, actual path]
+            if len(parts) >= 3:
+                return unquote(parts[2])
+
+        raise ValueError("Unsupported Firebase Storage URL format")
+
+    except Exception as e:
+        print(f"[extract_storage_path_from_url ERROR]: {e}")
+        return ""
+async def delete_file_from_firebase(path: str):
+    from firebase_admin import storage
+    bucket = storage.bucket()
+    blob = bucket.blob(path)
+    try:
+        blob.delete()
+        print(f"[Storage] Deleted: {path}")
+    except Exception as e:
+        print(f"[Storage] Delete failed: {path} -> {e}")
 @router.put("/posts/{post_id}", tags=["Post"])
 async def modify_post(
     post_id: int,
@@ -265,6 +299,13 @@ async def modify_post(
     string_number = postid.zfill(8)
     updated_at = datetime.datetime.utcnow()
 
+    post_doc = posts_ref.document(string_number).get()
+    if not post_doc.exists:
+        raise HTTPException(status_code=404, detail="해당 게시글을 찾을 수 없습니다.")
+
+    post_data = post_doc.to_dict()
+    uid = post_data.get("uid")
+
     update_data = {}
     if title is not None:
         update_data["제목"] = title
@@ -272,23 +313,48 @@ async def modify_post(
         update_data["내용"] = content
     update_data["created_at"] = updated_at
     if image:
-        image_path = f"post/image/{string_number}_{image.filename}"
+        old_image_url = post_data.get("image_url")
+        if old_image_url:
+            path = await extract_storage_path_from_url(old_image_url)
+            await delete_file_from_firebase(path)
+
+        image_path = f"post/image/{uid}/{string_number}_{image.filename}"
         image_url = await upload_file_to_firebase(image, image_path)
         update_data["image_url"] = image_url
     if audio:
-        audio_path = f"post/audio/{string_number}_{audio.filename}"
+        old_audio_url = post_data.get("audio_url")
+        if old_audio_url:
+            path = await extract_storage_path_from_url(old_audio_url)
+            await delete_file_from_firebase(path)
+        audio_path = f"post/audio/{uid}/{string_number}_{audio.filename}"
         audio_url = await upload_file_to_firebase(audio, audio_path)
         update_data["audio_url"] = audio_url
     posts_ref.document(string_number).update(update_data)
 
     post_doc = posts_ref.document(string_number).get()
     if post_doc.exists:
+        post_data = post_doc.to_dict()
+        uid = post_data.get("uid")
         db.collection("my_activity").document(uid).collection("post").document(string_number).update({
             "제목": title,
             "created_at": updated_at.isoformat()
         })
 
     return {'result_msg': f"{postid} updated..."}
+async def delete_all_user_files_from_firebase(uid: str):
+    from firebase_admin import storage
+
+    bucket = storage.bucket()
+    prefix = f"post/{uid}/"
+    blobs = bucket.list_blobs(prefix=prefix)
+
+    try:
+        for blob in blobs:
+            print(f"[Storage] Deleting: {blob.name}")
+            blob.delete()
+        print(f"[Storage] All files under 'post/{uid}/' deleted.")
+    except Exception as e:
+        print(f"[Storage] Failed to delete all user files under {prefix} -> {e}")
 
 @router.delete("/posts/{post_id}", tags=["Post"])
 async def delete_post(post_id: int, uid:str = Query(...)):
@@ -299,7 +365,23 @@ async def delete_post(post_id: int, uid:str = Query(...)):
     string_number = str(post_id)
     dbkey = string_number.zfill(8)
 
-    posts_ref.document(dbkey).delete()
+    post_ref = posts_ref.document(dbkey)
+    if not post_ref.get().exists:
+        raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+    
+    post_data = post_ref.get().to_dict()
+    if post_data.get("uid") != uid:
+        raise HTTPException(status_code=403, detail="본인의 게시글만 삭제할 수 있습니다.")
+
+    image_url = post_data.get("image_url")
+    audio_url = post_data.get("audio_url")
+    if image_url:
+        await delete_file_from_firebase(image_url)
+    if audio_url:
+        await delete_file_from_firebase(audio_url)
+    post_ref.delete()
+    if image_url or audio_url:
+        await delete_all_user_files_from_firebase(uid)
 
     alldocs = comments_ref.stream()
     for doc in alldocs:
@@ -340,13 +422,22 @@ async def delete_post_admin(post_id: int, uid:str = Query(...)):
     dbkey = string_number.zfill(8)
 
     post_ref = posts_ref.document(dbkey)
+    post_doc = post_ref.get()
     if not post_ref.get().exists:
         raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
     
     post_data = post_ref.get().to_dict()
     user_id = post_data.get("uid")
+    
+    image_url = post_data.get("image_url")
+    audio_url = post_data.get("audio_url")
+    if image_url:
+        await delete_file_from_firebase(image_url)
+    if audio_url:
+        await delete_file_from_firebase(audio_url)
     post_ref.delete()
-
+    if image_url or audio_url:
+        await delete_all_user_files_from_firebase(user_id)
 
     if user_id:
         db.collection("my_activity").document(user_id).collection("post").document(dbkey).delete()
@@ -574,8 +665,8 @@ async def scrap_post(post_id: str, uid: str):
 
     if not uid:
         raise HTTPException(status_code=400, detail="User UID is required")
-
-    post_ref = db.collection("post").document(post_id)
+    string_number = post_id.zfill(8)
+    post_ref = db.collection("post").document(string_number)
     post = post_ref.get()
     if not post.exists:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -593,6 +684,7 @@ async def scrap_post(post_id: str, uid: str):
     })
 
     return {"message": "스크랩이 추가되었습니다.", "post_id": post_id}
+
 
 @router.delete("/posts/{post_id}/scrap", tags=["Post"])
 async def remove_scrap(post_id: str, uid: str):
