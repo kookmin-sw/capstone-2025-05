@@ -12,7 +12,6 @@ export const useRecentRecordsQuery = (uid) => {
     queryKey: ['recentRecord', uid],
     queryFn: () => fetchRecentRecords(uid),
     select: (result) => result.data.recent_uploads,
-    staleTime: 0,
-    cacheTime: 0,
+    staleTime: 300000,
   });
 };

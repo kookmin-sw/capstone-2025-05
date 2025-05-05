@@ -12,7 +12,6 @@ export const useRecordQuery = (uid) => {
     queryKey: ['AllRecord', uid],
     queryFn: () => fetchRecords(uid),
     select: (result) => result.data,
-    staleTime: 0,
-    cacheTime: 0,
+    staleTime: 300000,
   });
 };
