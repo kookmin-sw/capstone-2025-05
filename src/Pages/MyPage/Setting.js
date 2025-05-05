@@ -19,6 +19,7 @@ export default function Admin() {
   const [profilePic, setProfilePic] = useState(Profile);
   const navigate = useNavigate();
   const { uid, logout } = useAuth();
+
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   const fetchUserInfo = async () => {
