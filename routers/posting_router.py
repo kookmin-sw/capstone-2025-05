@@ -34,7 +34,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 from manager.firebase_manager import firestore_db
 
-storage_bucket = storage.bucket()
+#storage_bucket = storage.bucket()
 posts_ref = firestore_db.collection("post")
 comments_ref=firestore_db.collection("comment")
 reports_ref = firestore_db.collection("reports")
