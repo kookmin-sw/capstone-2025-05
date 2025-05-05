@@ -67,6 +67,10 @@ jobs:
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/maple-api:buildcache,mode=max
           build-args: |
             REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}
-            REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main
-            REACT_APP_API_URL=https://maple.ne.kr/api
+            REACT_APP_SPOTIFY_CLIENT_SECRET=${{ secrets.REACT_APP_SPOTIFY_CLIENT_SECRET }}
+            REACT_APP_SPOTIFY_REDIRECT_URI=${{ secrets.REACT_APP_SPOTIFY_REDIRECT_URI }}
+            REACT_APP_API_DATABASE_URL=${{ secrets.REACT_APP_API_DATABASE_URL }}
+            REACT_APP_CLIENT_ID=${{ secrets.REACT_APP_CLIENT_ID }}
+            REACT_APP_REDIRECT_URI=${{ secrets.REACT_APP_REDIRECT_URI }}
+            REACT_APP_SCOPE=${{ secrets.REACT_APP_SCOPE }}
             PUBLIC_URL=/
