@@ -39,23 +39,50 @@ export default function CommentSection({
   //댓글 삭제
   const handleDeleteSelectedComments = () => {
     if (selectedComments.length === 0) {
-      swal('', '삭제할 댓글을 선택해주세요!', 'error');
+      swal({
+        text: '삭제할 댓글을 선택해주세요!😥',
+        icon: 'error',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
 
       return;
     }
     if (!isAdmin) {
-      swal(
-        '',
-        '관리자 또는 본인이 쓴 댓글일 경우에만 삭제가능합니다!',
-        'error',
-      );
+      swal({
+        text: '관리자 또는 본인이 쓴 댓글일 경우에만 삭제가능합니다!😥',
+        icon: 'error',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
       return;
     }
     swal({
       title: '⚠️ 정말 삭제할까요?',
       text: `선택한 댓글 ${selectedComments.length}개를 삭제하시겠습니까?`,
       icon: 'warning',
-      buttons: ['취소', '삭제하기'],
+      buttons: {
+        cancel: {
+          text: '취소',
+          visible: true,
+          className: '',
+          closeModal: true,
+        },
+        confirm: {
+          text: '삭제하기',
+          visible: true,
+          className: 'custom-confirm-button', // 클래스 지정
+          closeModal: true,
+        },
+      },
       dangerMode: true,
     }).then((willDelete) => {
       if (willDelete) {
@@ -71,10 +98,28 @@ export default function CommentSection({
                 setIsShow(false);
 
                 handleCancelSelect(); // 선택모드 해제
-                swal('', '선택한 댓글이 삭제되었습니다🫡', 'success');
+                swal({
+                  text: '선택한 댓글이 삭제되었습니다🫡',
+                  icon: 'success',
+                  buttons: {
+                    confirm: {
+                      text: '확인',
+                      className: 'custom-confirm-button',
+                    },
+                  },
+                });
               },
               onError: () => {
-                swal('', '댓글 삭제 실패 😥', 'error');
+                swal({
+                  text: '댓글 삭제 실패 😥',
+                  icon: 'error',
+                  buttons: {
+                    confirm: {
+                      text: '확인',
+                      className: 'custom-confirm-button',
+                    },
+                  },
+                });
               },
             },
           );

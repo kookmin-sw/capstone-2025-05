@@ -15,7 +15,6 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const { login, logout } = useAuth();
   const { login, logout } = useAuth();
 
   const handleEmail = (e) => setEmail(e.target.value);
@@ -37,6 +36,8 @@ export default function Login() {
     `&client_id=${clientId}` +
     `&scope=${encodeURIComponent(scopes.join(' '))}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+  console.log(BACKEND_URL);
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
@@ -95,7 +96,7 @@ export default function Login() {
           });
         } else {
           swal({
-            text: '서버 오류가 발생했습니다😥',
+            text: '존재하지 않는 계정입니다',
             icon: 'error',
             buttons: {
               confirm: {
@@ -120,10 +121,10 @@ export default function Login() {
     }
   };
 
-  const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-  const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
+  const GOOGLE_CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
+  const GOOGLE_REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
   const SCOPE = process.env.REACT_APP_SCOPE;
-  const googleLink = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
+  const googleLink = `https://accounts.google.com/o/oauth2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
 
   const handleGoogleLogin = () => {
     window.location.href = googleLink;

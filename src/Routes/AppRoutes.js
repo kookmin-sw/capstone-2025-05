@@ -26,12 +26,15 @@ import MusicPage from '../Pages/Main/MusicPage';
 import OauthRedirectHandler from '../Pages/Google/OauthRedirectHandler';
 
 export default function AppRoutes() {
-  const { uid } = useAuth();
+  const { uid, initialized } = useAuth();
   const location = useLocation();
+  if (!initialized) return null;
   return (
     <Routes>
+      {/* ✅ 항상 접근 가능해야 하는 라우트 */}
+      <Route path="/oauth-success" element={<OauthRedirectHandler />} />
+
       {uid ? (
-        // 로그인한 경우
         <>
           <Route path="/main" element={<Main />} />
           <Route path="/notice" element={<NoticeBoard />} />
@@ -40,8 +43,6 @@ export default function AppRoutes() {
             path="/write"
             element={<WritePage key={location.pathname + location.key} />}
           />
-          <Route path="/oauth-success" element={<OauthRedirectHandler />} />
-
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/playedmusic" element={<PlayedMusic />} />
@@ -53,23 +54,20 @@ export default function AppRoutes() {
           <Route path="/test" element={<TestPage />} />
           <Route path="/audiotest" element={<AudioTest />} />
           <Route path="/beginner" element={<Beginner />} />
-          <Route path="*" element={<Main />} />
           <Route path="/musics" element={<MusicPage />} />
+          <Route path="*" element={<Main />} />
         </>
       ) : (
-        // 로그인 안 한 경우
         <>
           <Route path="/main" element={<Main />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/google-auth-callback" element={<GoogleCallback />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/" element={<Main />} />
-          <Route path="*" element={<Login />} />
           <Route path="/audiotest" element={<AudioTest />} />
           <Route path="/musics" element={<MusicPage />} />
           <Route path="/feedback" element={<Feedback />} />
-          <Route path="/oauth-success" element={<OauthRedirectHandler />} />
+          <Route path="*" element={<Login />} />
         </>
       )}
     </Routes>

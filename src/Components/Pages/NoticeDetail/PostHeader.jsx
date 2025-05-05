@@ -33,10 +33,28 @@ export default function PostHeader({
       {
         onSuccess: () => {
           setIsWriteReportOpen(false);
-          swal('', '신고가 접수되었습니다🫡', 'success');
+          swal({
+            text: '신고가 접수되었습니다🫡',
+            icon: 'success',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         },
         onError: () => {
-          swal('❌', '신고 처리 중 오류가 발생했습니다', 'error');
+          swal({
+            text: '신고 처리 중 오류가 발생했습니다',
+            icon: 'error',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         },
       },
     );
@@ -47,11 +65,28 @@ export default function PostHeader({
       { post_id: post.id, uid },
       {
         onSuccess: () => {
-          swal('🫡', '게시물 삭제 완료', 'success');
+          swal({
+            text: '게시물 삭제 완료',
+            icon: 'success',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         },
         onError: (error) => {
-          console.error('게시물 삭제 중 오류 발생:', error);
-          swal('', '게시물 삭제에 실패했습니다.😥', 'error');
+          swal({
+            text: `게시물 삭제 중 오류 발생:${error}`,
+            icon: 'error',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         },
       },
     );

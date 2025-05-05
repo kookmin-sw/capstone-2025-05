@@ -62,6 +62,7 @@ export default function MyPage() {
             </ul>
           </div>
           <div>
+
             <p className="font-semibold truncate">
               {userInfo?.nickname || '사용자'}
             </p>
@@ -112,6 +113,7 @@ export default function MyPage() {
             </div>
           </div>
 
+
           <div className="flex gap-16 h-[50vh] mt-16">
             <Box
               width="43%"
@@ -159,6 +161,7 @@ export default function MyPage() {
               </ul>
             </Box>
 
+
             <Box
               width="25%"
               height="105%"
@@ -170,6 +173,7 @@ export default function MyPage() {
                   어쿠스틱 팝(Acoustic Pop)
                 </p>
               </div>
+
               <ul className="items-center mt-4 ml-8 space-y-5">
                 {recommendedSongs.map((song, index) => (
                   <li

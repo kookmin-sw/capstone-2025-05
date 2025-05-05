@@ -18,7 +18,8 @@ export default function Admin() {
   const [errors, setErrors] = useState({ nickname: '', email: '' });
   const [profilePic, setProfilePic] = useState(Profile);
   const navigate = useNavigate();
-  const { uid } = useAuth();
+  const { uid, logout } = useAuth();
+
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
   const fetchUserInfo = async () => {
@@ -140,15 +141,12 @@ export default function Admin() {
         await fetchUserInfo();
         console.log('Uploaded Image URL (from server):', imageUrlFromServer);
       } catch (error) {
-        console.error(
-          'Error uploading profile picture:',
-          error.response || error,
-        );
-        Swal.fire(
-          '오류',
-          error.response?.data?.message || '이미지 업로드에 실패했습니다.',
-          'error',
-        );
+        Swal.fire({
+          title: '오류',
+          text:
+            error.response?.data?.message || '이미지 업로드에 실패했습니다.',
+          confirmButtonColor: '#A57865',
+        });
       }
     }
   };
@@ -168,21 +166,30 @@ export default function Admin() {
     if (result.isConfirmed) {
       try {
         const res = await axios.delete(`${BACKEND_URL}/delete-user/${uid}`);
-        if (res.data.success) {
+        console.log(res, '탈퇴');
+
+        if (res.status === 200) {
+          console.log(res.status);
           Swal.fire({
             icon: 'success',
             title: '탈퇴 완료',
             text: '계정이 성공적으로 삭제되었습니다.',
             confirmButtonColor: '#A57865',
           });
+          logout(uid);
           localStorage.removeItem('uid');
           setTimeout(() => {
             navigate('/login');
           }, 2000);
         }
       } catch (error) {
-        console.error('Error deleting account:', error.response || error);
-        Swal.fire('오류', '탈퇴하는 데 실패했습니다.', 'error');
+        console.log('탈퇴 에러');
+        Swal.fire({
+          icon: 'error',
+          title: '탈퇴 완료',
+          text: '계정이 성공적으로 삭제되었습니다.',
+          confirmButtonColor: '#A57865',
+        });
       }
     }
   };

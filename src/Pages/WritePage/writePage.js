@@ -28,7 +28,16 @@ export default function WritePage() {
       audioFile,
     };
     if (content.length < 10) {
-      alert('내용을 10자 이상 입력해주세요');
+      swal({
+        text: '내용을 10자 이상 입력해주세요😥',
+        icon: 'error',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
       return;
     }
 
@@ -36,11 +45,28 @@ export default function WritePage() {
       { post },
       {
         onSuccess: () => {
-          alert('✅게시물 등록 완료');
+          swal({
+            text: '내용을 10자 이상 입력해주세요😥',
+            icon: 'error',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         },
         onError: (error) => {
-          console.error('게시물 등록 중 오류 발생:', error);
-          alert('❎게시물 등록에 실패했습니다.');
+          swal({
+            text: '게시물 등록에 실패했습니다.😥',
+            icon: 'error',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         },
       },
     );

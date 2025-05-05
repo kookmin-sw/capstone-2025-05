@@ -98,18 +98,45 @@ export default function PostActionBar({
           post.title = editedTitle;
           post.content = editedContent;
           setIsEditing(false);
-          swal('', '게시물 수정 완료 🫡', 'success');
+          swal({
+            text: '게시물 수정 완료 🫡',
+            icon: 'success',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         },
         onError: (error) => {
           if (error.status == '500') {
             post.title = editedTitle;
             post.content = editedContent;
             setIsEditing(false);
-            swal('', '게시물 수정 완료 🫡', 'success');
+            swal({
+              text: '게시물 수정 완료 🫡',
+              icon: 'success',
+              buttons: {
+                confirm: {
+                  text: '확인',
+                  className: 'custom-confirm-button',
+                },
+              },
+            });
+
             return;
           }
-          console.error('게시물 수정 중 오류 발생:', error);
-          swal('', '게시물 수정에 실패했습니다.😥', 'error');
+          swal({
+            text: '게시물 수정에 실패했습니다.😥',
+            icon: 'error',
+            buttons: {
+              confirm: {
+                text: '확인',
+                className: 'custom-confirm-button',
+              },
+            },
+          });
         },
       },
     );

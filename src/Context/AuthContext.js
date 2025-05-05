@@ -3,11 +3,13 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [uid, setUid] = useState(null);
+  const [uid, setUid] = useState(() => sessionStorage.getItem('uid') || null);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     const storedUid = sessionStorage.getItem('uid');
     if (storedUid) setUid(storedUid);
+    setInitialized(true);
   }, []);
 
   const login = (newUid) => {
@@ -21,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ uid, login, logout }}>
+    <AuthContext.Provider value={{ uid, login, logout, initialized }}>
       {children}
     </AuthContext.Provider>
   );

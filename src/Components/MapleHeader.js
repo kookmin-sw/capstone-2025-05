@@ -16,7 +16,7 @@ const MapleHeader = () => {
   const goPage = (menu) => {
     console.log(menu);
     if (menu === '분석하기') {
-      navigate('/main');
+      navigate('/feedback');
     } else if (menu === '초보방') {
       navigate('/beginner');
     } else if (menu === '자유게시판') {

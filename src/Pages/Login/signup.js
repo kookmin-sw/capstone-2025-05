@@ -21,18 +21,45 @@ export default function Signup() {
     const trimmedPassword = password.trim();
 
     if (!trimmedEmail || !trimmedPassword) {
-      alert('이메일과 비밀번호를 모두 입력해주세요.');
+      swal({
+        text: '이메일과 비밀번호를 모두 입력해주세요.😥',
+        icon: 'error',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      alert('유효한 이메일 주소를 입력해주세요.');
+      swal({
+        text: '유효한 이메일 주소를 입력해주세요.😥',
+        icon: 'error',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
       return;
     }
 
     if (trimmedPassword.length < 6) {
-      alert('비밀번호는 6자 이상이어야 합니다.');
+      swal({
+        text: '비밀번호는 6자 이상이어야 합니다.😥',
+        icon: 'error',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
       return;
     }
 
@@ -50,19 +77,53 @@ export default function Signup() {
         console.log('회원가입 성공');
         navigate('/profile');
       } else {
-        alert('회원가입 실패: 사용자 정보를 가져올 수 없습니다.');
+        swal({
+          text: '회원가입 실패: 사용자 정보를 가져올 수 없습니다.😥',
+          icon: 'error',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
       }
     } catch (error) {
       console.error('회원가입 에러:', error);
       const detail = error.response?.data?.detail;
       if (detail === '이미 등록된 이메일입니다.') {
-        alert('이미 가입된 이메일 주소입니다.');
+        swal({
+          text: '이미 가입된 이메일 주소입니다😥',
+          icon: 'error',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
       } else if (error.response?.status === 422) {
-        alert('입력값이 유효하지 않습니다.');
+        swal({
+          text: '입력값이 유효하지 않습니다.😥',
+          icon: 'error',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
       } else {
-        alert(
-          `회원가입 중 오류가 발생했습니다: ${detail || '알 수 없는 오류입니다.'}`,
-        );
+        swal({
+          text: `회원가입 중 오류가 발생했습니다: ${detail || '알 수 없는 오류입니다.'}`,
+          icon: 'error',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
       }
     }
   };

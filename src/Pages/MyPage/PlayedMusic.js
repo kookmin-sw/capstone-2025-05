@@ -44,7 +44,16 @@ export default function PlayedMusic() {
 
         setRecords(allRecords || []);
       } catch (error) {
-        swal('', `연습 기록 가져오기 실패:${error}`, 'error');
+        swal({
+          text: `연습 기록 가져오기 실패:${error}`,
+          icon: 'error',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
       }
     }
   }, [recordData]);
