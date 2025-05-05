@@ -19,46 +19,45 @@ export default function PostActionBar({
   editedContent,
   setEditedContent,
   postLikeMutate,
-  setClickLiked,
   deletelikeMutate,
   scrapPostMutate,
   deleteScrapMutate,
   mutate,
   setIsEditing,
   isEditing,
-  clickLiked,
   likeNum,
+  setLikeNum,
 }) {
   const navigate = useNavigate();
   //좋아요 버튼 클릭 이벤트
   const handleHeartBttn = () => {
-    setLiked(!liked);
-    //여기에는 좋아요 + 1기능을 하는 mutate를 집어넣어주면 됨
-    if (!liked) {
-      //하트를 새로 누른경우
+    const key = `heart_${uid}_${post.id}`;
+    const newValue = !liked;
+    setLiked(newValue);
+    localStorage.setItem(key, String(newValue));
+
+    if (newValue) {
       postLikeMutate(
         { post_id: post.id, uid },
         {
           onSuccess: () => {
             console.log('좋아요 성공');
+            setLikeNum(likeNum + 1);
           },
           onError: (error) => console.log('좋아요 실패ㅠㅠ', error),
         },
       );
-      localStorage.setItem('heart', uid, post.id);
-      setClickLiked(true);
     } else {
       deletelikeMutate(
         { post_id: post.id, uid },
         {
           onSuccess: () => {
             console.log('좋아요 취소 성공');
+            setLikeNum(likeNum - 1);
           },
           onError: (error) => console.log('좋아요 취소 실패ㅠㅠ', error),
         },
       );
-      localStorage.removeItem('heart', uid, post.id);
-      setClickLiked(false);
     }
   };
   //북바크
@@ -123,7 +122,7 @@ export default function PostActionBar({
             src={liked ? fill_heart : heart}
             className="duration-300 ease-in-out hover:scale-[110%]"
           />
-          <span>{clickLiked ? likeNum + 1 : likeNum}</span>
+          <span>{likeNum}</span>
         </button>
         <button className="w-[45px]" onClick={handleScrap}>
           <img

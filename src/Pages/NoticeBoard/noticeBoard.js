@@ -36,10 +36,13 @@ export default function NoticeBoard() {
 
   // 필터링된 결과
   const filteredData = useMemo(() => {
-    if (!searchKeyword.trim()) return postInfo || [];
-    return postInfo?.filter((post) =>
-      post.title?.toLowerCase().includes(searchKeyword.toLowerCase()),
-    );
+    let data = postInfo || [];
+    if (searchKeyword.trim()) {
+      data = data.filter((post) =>
+        post.title?.toLowerCase().includes(searchKeyword.toLowerCase()),
+      );
+    }
+    return data.sort((a, b) => parseInt(a.id) - parseInt(b.id));
   }, [searchKeyword, postInfo]);
 
   console.log(filteredData, '필터링데이터');
@@ -87,6 +90,8 @@ export default function NoticeBoard() {
 
     setCurrentData(pageData);
   }, [filteredData, currentPage]);
+
+  console.log(currentData, '게시보드');
   return (
     <>
       <div className="flex flex-col items-center h-[100svh]">
@@ -135,41 +140,39 @@ export default function NoticeBoard() {
             </tr>
           </thead>
           <tbody>
-            {[...currentData]
-              .sort((a, b) => a.id - b.id)
-              .map((post) => (
-                <tr
-                  key={post.id}
-                  className="border-b border-[#e1d4c7] hover:bg-[#fdfaf6] transition duration-200 text-center"
-                >
-                  <td className="text-center">{post.id}</td>
-                  <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
-                    <Link
-                      to={`/noticeDetail/${post.id}`}
-                      state={{
-                        id: post.id,
-                        title: post.제목,
-                        uid: post.uid,
-                        writer: post.작성자,
-                        write_time: post.created_at,
-                        view: post.조회수,
-                        content: post.내용,
-                        likes: post.좋아요수,
-                        audio_url: post.audio_url,
-                        image_url: post.image_url,
-                      }}
-                      onClick={() => handleClick(post.id)}
-                    >
-                      {post.제목}
-                    </Link>
-                  </td>
-                  <td className="text-center">{post.작성자}</td>
-                  <td className="text-center">
-                    {formatDate(Date(post.created_at))}
-                  </td>
-                  <td className="text-center">{post.조회수}</td>
-                </tr>
-              ))}
+            {currentData.map((post) => (
+              <tr
+                key={post.id}
+                className="border-b border-[#e1d4c7] hover:bg-[#fdfaf6] transition duration-200 text-center"
+              >
+                <td className="text-center">{post.id}</td>
+                <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
+                  <Link
+                    to={`/noticeDetail/${post.id}`}
+                    state={{
+                      id: post.id,
+                      title: post.제목,
+                      uid: post.uid,
+                      writer: post.작성자,
+                      write_time: post.created_at,
+                      view: post.조회수,
+                      content: post.내용,
+                      likes: post.좋아요수,
+                      audio_url: post.audio_url,
+                      image_url: post.image_url,
+                    }}
+                    onClick={() => handleClick(post.id)}
+                  >
+                    {post.제목}
+                  </Link>
+                </td>
+                <td className="text-center">{post.작성자}</td>
+                <td className="text-center">
+                  {formatDate(Date(post.created_at))}
+                </td>
+                <td className="text-center">{post.조회수}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
         {/* 검색창 */}

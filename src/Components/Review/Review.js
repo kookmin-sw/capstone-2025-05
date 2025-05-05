@@ -16,11 +16,11 @@ export default function Review({
   isUser,
 }) {
   const [isCommentReportOpen, setIsCommentReportOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // ✨ 수정 모드 여부
-  const [editedContent, setEditedContent] = useState(''); // ✨ 수정할 내용
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
 
   const { mutate: reportComment } = useReportCommentMutation();
-  const { mutate: editComment } = useEditCommentMutation(); // ✨ 수정용 mutation
+  const { mutate: editComment } = useEditCommentMutation();
 
   // "2025년 04월 25일 06시 41분" → ISO 포맷으로 바꿔주는 함수
   const parseDateString = (dateString) => {
@@ -40,7 +40,7 @@ export default function Review({
 
   const handleReport = (reason) => {
     reportComment(
-      { commentId: comments.id, reason },
+      { comment_id: comments.id, reason },
       {
         onSuccess: () => {
           swal('✅', '댓글 신고가 접수되었습니다.', 'success');
