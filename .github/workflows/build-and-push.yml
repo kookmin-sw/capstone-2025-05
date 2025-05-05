@@ -32,6 +32,11 @@ jobs:
           echo "REACT_APP_API_URL=https://maple.ne.kr/api" > .env
           echo "REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}" >> .env
           echo "REACT_APP_SPOTIFY_REDIRECT_URI=${{ secrets.REACT_APP_SPOTIFY_REDIRECT_URI }}" >> .env
+          echo "REACT_APP_SPOTIFY_CLIENT_SECRET=${{ secrets.REACT_APP_SPOTIFY_CLIENT_SECRET }}" >> .env
+          echo "REACT_APP_API_DATABASE_URL=${{ secrets.REACT_APP_API_DATABASE_URL }}" >> .env
+          echo "REACT_APP_CLIENT_ID=${{ secrets.REACT_APP_CLIENT_ID }}" >> .env
+          echo "REACT_APP_REDIRECT_URI=${{ secrets.REACT_APP_REDIRECT_URI }}" >> .env
+          echo "REACT_APP_SCOPE=${{ secrets.REACT_APP_SCOPE }}" >> .env
           echo "PUBLIC_URL=/" >> .env
       - name: Build React app
         env:
@@ -39,6 +44,7 @@ jobs:
           REACT_APP_SPOTIFY_CLIENT_ID: ${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}
           REACT_APP_SPOTIFY_REDIRECT_URI: ${{ secrets.REACT_APP_SPOTIFY_REDIRECT_URI }}
           REACT_APP_API_URL: https://maple.ne.kr/api
+          
           PUBLIC_URL: /
         run: yarn build
       - name: Log in to Docker Hub
