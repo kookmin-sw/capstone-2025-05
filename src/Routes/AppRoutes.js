@@ -23,6 +23,7 @@ import PrintPage from '../Pages/PrintPage/PrintPage';
 import AudioTest from '../Pages/TestPage/audioTestPage';
 import Beginner from '../Pages/Beginner/beginner';
 import MusicPage from '../Pages/Main/MusicPage';
+import OauthRedirectHandler from '../Pages/Google/OauthRedirectHandler';
 
 export default function AppRoutes() {
   const { uid } = useAuth();
@@ -39,6 +40,8 @@ export default function AppRoutes() {
             path="/write"
             element={<WritePage key={location.pathname + location.key} />}
           />
+          <Route path="/oauth-success" element={<OauthRedirectHandler />} />
+
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/playedmusic" element={<PlayedMusic />} />
@@ -66,6 +69,7 @@ export default function AppRoutes() {
           <Route path="/audiotest" element={<AudioTest />} />
           <Route path="/musics" element={<MusicPage />} />
           <Route path="/feedback" element={<Feedback />} />
+          <Route path="/oauth-success" element={<OauthRedirectHandler />} />
         </>
       )}
     </Routes>

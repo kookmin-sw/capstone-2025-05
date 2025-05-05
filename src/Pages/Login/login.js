@@ -65,8 +65,7 @@ export default function Login() {
       const uid = res.data.uid;
 
       if (uid) {
-        // login(uid); //sessionstorage에 세팅 + context uid 세팅
-        login(uid); //sessionstorage에 세팅 + context uid 세팅
+        login(uid);
         navigate('/main');
       } else {
         swal({
