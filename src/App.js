@@ -10,7 +10,7 @@ function App() {
   const [token, setToken] = useState(null);
   const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
   const redirectUri = process.env.REACT_APP_SPOTIFY_REDIRECT_URI;
-
+  console.log('spotify', redirectUri);
   const scopes = [
     'streaming',
     'user-read-email',
