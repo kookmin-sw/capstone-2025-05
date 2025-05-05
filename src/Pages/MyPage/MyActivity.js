@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 import Box from '../../Components/Box/Box.js';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
