@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Box from '../../Components/Box/Box.js';
-import Button from '../../Components/Button/Button.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
@@ -29,7 +28,7 @@ export default function Feedback() {
     cover_url: '',
   });
 
-  const {uid} = useAuth(); 
+  const { uid } = useAuth();
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
   const songName = 'Drowning';
   const uploadCount = 1;

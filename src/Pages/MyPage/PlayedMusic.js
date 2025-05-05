@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import Box from '../../Components/Box/Box.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
@@ -14,7 +13,7 @@ import { useAuth } from '../../Context/AuthContext.js';
 
 export default function PlayedMusic() {
   const [records, setRecords] = useState([]);
-  const {uid} = useAuth(); 
+  const { uid } = useAuth();
 
   // api연결
   const { data: recordData } = useRecordQuery(uid);
