@@ -58,11 +58,12 @@ const MapleHeader = () => {
             navigate(`/searchpage?keyword=${encodeURIComponent(searchValue)}`);
           }}
         >
-          <div className="searchBox mr-4">
+          <div className="mr-4">
             <SearchBox
               width="250px"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
+              onClick={() => setSearchValue('')}
             />
           </div>
         </form>

@@ -4,7 +4,7 @@ import PagePrevButton from '../../Components/PagePrevButton.js/PagePrevButton';
 import PageNextButton from '../../Components/PageNextButton/PageNextButton';
 import SearchBox from '../../Components/SearchBox/searchBox';
 import MapleFooter from '../../Components/MapleFooter';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePostInfoQuery } from '../../Hooks/get/usePostInfoQuery';
 import { useViewPutMutation } from '../../Hooks/put/viewPutMutation';
 import { useAutoCompleteQuery } from '../../Hooks/get/autoComplete/autoCompleteQuery';
@@ -18,9 +18,13 @@ export default function NoticeBoard() {
   const { mutate: increaseView } = useViewPutMutation();
   const { data: postInfo } = usePostInfoQuery();
 
-  console.log(postInfo, '게시물데이터 hooks');
+  const [currentPage, setCurrentPage] = useState(() => {
+    // 히스토리 복원 시 유지되도록
+    return sessionStorage.getItem('lastPage')
+      ? parseInt(sessionStorage.getItem('lastPage'))
+      : 1;
+  });
 
-  const [currentPage, setCurrentPage] = useState(1);
   const [startPage, setStartPage] = useState(1);
   const [currentData, setCurrentData] = useState([]);
   const [pageNumbers, setPageNumbers] = useState([]);
@@ -45,10 +49,6 @@ export default function NoticeBoard() {
     return data.sort((a, b) => parseInt(a.id) - parseInt(b.id));
   }, [searchKeyword, postInfo]);
 
-  console.log(filteredData, '필터링데이터');
-  console.log(searchKeyword, '← 검색어');
-  console.log(autoCompleteSuggestions, '← 자동완성 결과');
-
   const handleClick = (post_id) => {
     increaseView({ post_id: post_id });
   };
@@ -60,6 +60,11 @@ export default function NoticeBoard() {
     if (isNaN(parsed.getTime())) return '-'; // invalid date
     return parsed.toISOString().slice(0, 10).replace(/-/g, '.');
   }
+
+  // 현재 페이지가 바뀔때마다 session storage에 저장
+  useEffect(() => {
+    sessionStorage.setItem('lastPage', currentPage);
+  }, [currentPage]);
 
   // 현재 페이지 기준으로 시작 페이지 계산
   useEffect(() => {
@@ -79,8 +84,18 @@ export default function NoticeBoard() {
   useEffect(() => {
     const length = filteredData?.length || 0;
     const pageCount = Math.ceil(length / contentsPerPage);
+
     setTotalPage(pageCount || 1);
-  }, [filteredData]);
+
+    //현재 페이지가 범위를 벗어나면 보정
+    if (currentPage > pageCount) {
+      //총페이지가 3, 현재 페이지가 3일때 다음을 누르면 마지막 페이지 유지
+      setCurrentPage(pageCount || 1);
+    } else if (currentPage < 1) {
+      //1페이진데 이전을 누를경우 1페이지로 setting
+      setCurrentPage(1);
+    }
+  }, [filteredData, currentPage]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * contentsPerPage;
@@ -90,8 +105,6 @@ export default function NoticeBoard() {
 
     setCurrentData(pageData);
   }, [filteredData, currentPage]);
-
-  console.log(currentData, '게시보드');
   return (
     <>
       <div className="flex flex-col items-center h-[100svh]">
@@ -143,31 +156,39 @@ export default function NoticeBoard() {
             {currentData.map((post) => (
               <tr
                 key={post.id}
-                className="border-b border-[#e1d4c7] hover:bg-[#fdfaf6] transition duration-200 text-center"
+                className="border-b border-[#e1d4c7] truncate hover:bg-[#fdfaf6] transition duration-200 text-center"
               >
-                <td className="text-center">{post.id}</td>
-                <td className="text-center hover:text-[#A57865] hover:cursor-pointer hover:underline">
-                  <Link
-                    to={`/noticeDetail/${post.id}`}
-                    state={{
-                      id: post.id,
-                      title: post.제목,
-                      uid: post.uid,
-                      writer: post.작성자,
-                      write_time: post.created_at,
-                      view: post.조회수,
-                      content: post.내용,
-                      likes: post.좋아요수,
-                      audio_url: post.audio_url,
-                      image_url: post.image_url,
+                <td className="text-center max-w-[200px] truncate">
+                  {post.id}
+                </td>
+                <td className="text-center hover:text-[#A57865] max-w-[100px] truncate hover:cursor-pointer hover:underline ">
+                  <a
+                    className="block"
+                    onClick={() => {
+                      handleClick(post.id);
+                      navigate(`/noticeDetail/${post.id}`, {
+                        state: {
+                          id: post.id,
+                          title: post.제목,
+                          uid: post.uid,
+                          writer: post.작성자,
+                          write_time: post.created_at,
+                          view: post.조회수,
+                          content: post.내용,
+                          likes: post.좋아요수,
+                          audio_url: post.audio_url,
+                          image_url: post.image_url,
+                        },
+                      });
                     }}
-                    onClick={() => handleClick(post.id)}
                   >
                     {post.제목}
-                  </Link>
+                  </a>
                 </td>
-                <td className="text-center">{post.작성자}</td>
-                <td className="text-center">
+                <td className="text-center max-w-[200px] truncate">
+                  {post.작성자}
+                </td>
+                <td className="text-center max-w-[120px] truncate">
                   {formatDate(Date(post.created_at))}
                 </td>
                 <td className="text-center">{post.조회수}</td>
@@ -187,7 +208,6 @@ export default function NoticeBoard() {
               onSearch={(keyword) => {
                 setSearchKeyword(keyword);
                 setShowSuggestions(false);
-                // 여기에 필터 적용 로직 또는 navigate 등 추가
               }}
             />
             <AutoCompleteDropdown
@@ -216,7 +236,7 @@ export default function NoticeBoard() {
             <PagePrevButton
               width={'50px'}
               height={'50px'}
-              onClick={() => setCurrentPage(startPage - 10)}
+              onClick={() => setCurrentPage(startPage - pagesPerBlock)}
             />
           )}
           {pageNumbers.map((page) => (
@@ -232,7 +252,7 @@ export default function NoticeBoard() {
             <PageNextButton
               width={'50px'}
               height={'50px'}
-              onClick={() => setCurrentPage(startPage + 10)}
+              onClick={() => setCurrentPage(startPage + pagesPerBlock)}
             />
           )}
         </div>

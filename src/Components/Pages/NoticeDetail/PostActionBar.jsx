@@ -101,6 +101,13 @@ export default function PostActionBar({
           swal('', '게시물 수정 완료 🫡', 'success');
         },
         onError: (error) => {
+          if (error.status == '500') {
+            post.title = editedTitle;
+            post.content = editedContent;
+            setIsEditing(false);
+            swal('', '게시물 수정 완료 🫡', 'success');
+            return;
+          }
           console.error('게시물 수정 중 오류 발생:', error);
           swal('', '게시물 수정에 실패했습니다.😥', 'error');
         },
@@ -166,7 +173,10 @@ export default function PostActionBar({
                 width="60px"
                 height="40px"
                 backgroundColor="white"
-                onClick={() => navigate('/notice')}
+                onClick={() => {
+                  sessionStorage.removeItem('lastPage');
+                  navigate('/notice');
+                }}
               >
                 <span className="text-[#A57865] !important">목록</span>
               </Button>

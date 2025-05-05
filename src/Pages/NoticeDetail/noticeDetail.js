@@ -37,7 +37,6 @@ export default function NoticeDetail() {
   const { mutate: deleteComment } = useDeleteCommentMutation(); //댓글 삭제
   /***************/
 
-  const navigate = useNavigate();
   const filterComments = (isShow) => {
     setIsLoading(true); // 로딩 시작
     if (comments) {
