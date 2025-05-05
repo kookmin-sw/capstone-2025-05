@@ -27,6 +27,9 @@ function App() {
     `&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
   useEffect(() => {
+    console.log(window.location.href, '윈도우 주소');
+  }, [window.location.href]);
+  useEffect(() => {
     // 최초 실행 시
     const hash = window.location.hash;
     const params = new URLSearchParams(hash.replace('#', ''));

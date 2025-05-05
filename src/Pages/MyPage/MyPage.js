@@ -22,7 +22,6 @@ export default function MyPage() {
   const { uid } = useAuth();
   const { data: userInfo } = useUserQuery(uid);
   const { data: records, isLoading } = useRecentRecordsQuery(uid);
-  console.log(records);
 
   const recommendedSongs = [
     {
@@ -76,7 +75,7 @@ export default function MyPage() {
             </ul>
           </div>
           <div>
-            <p className="font-semibold">{'사용자' || userInfo?.nickname}</p>
+            <p className="font-semibold">{userInfo?.nickname || '사용자'}</p>
           </div>
         </div>
 
@@ -122,16 +121,19 @@ export default function MyPage() {
             </div>
           </div>
 
-          {/* 최근 연주한 곡 + 새 박스 + 나의 활동 */}
+          {/* 최근 연주한 곡 + 추천곡 + 나의 활동 */}
           <div className="flex gap-16 h-[50vh] mt-16">
-            {/* 최근 연주한 곡 */}
-            <Box width="43%" height="105%">
+            {/* 최근 연주한 곡 - 반응형 적용 */}
+            <Box
+              width="43%"
+              height="105%"
+              overwrite="flex flex-col overflow-y-auto"
+            >
               <div className="flex items-center ml-4 mt-5">
                 <span className="font-bold text-[20px]">최근 연주한 곡</span>
-
                 <Link
                   to="/playedmusic"
-                  className="ml-2 mt-1text-lg text-gray-500 hover:text-gray-700"
+                  className="ml-2 text-lg text-gray-500 hover:text-gray-700"
                 >
                   &gt;
                 </Link>
@@ -162,30 +164,29 @@ export default function MyPage() {
                   ))
                 ) : (
                   <h1 className="font-bold text-xl text-gray-600 mt-7 truncate">
-                    {' '}
                     최근 연주한 곡이 없습니다...
                   </h1>
                 )}
               </ul>
             </Box>
 
-            {/* 선호장르추천곡 */}
+            {/* 선호 장르 추천곡 */}
             <Box
               width="25%"
               height="105%"
-              overwrite={'flex flex-col overflow-y-auto'}
+              overwrite="flex flex-col overflow-y-auto"
             >
-              <div className=" ml-4 mt-5">
+              <div className="ml-4 mt-5">
                 <span className="font-bold text-[20px]">선호 장르 추천곡</span>
                 <p className="font-semibold text-gray-600 mt-7 truncate">
                   어쿠스틱 팝(Acoustic Pop)
                 </p>
               </div>
-              <ul className=" items-center mt-8 ml-8 space-y-5 ">
+              <ul className="items-center mt-8 ml-8 space-y-5">
                 {recommendedSongs.map((song, index) => (
                   <li
                     key={index}
-                    className="flex items-center justify-between pb-2 mb-2 "
+                    className="flex items-center justify-between pb-2 mb-2"
                   >
                     <img
                       src={song.cover}
@@ -209,7 +210,7 @@ export default function MyPage() {
             <Box
               width="25%"
               height="105%"
-              overwrite={'flex flex-col overflow-y-auto'}
+              overwrite="flex flex-col overflow-y-auto"
             >
               <div className="ml-4 mt-5">
                 <span className="font-bold text-[20px]">나의 활동</span>
@@ -249,7 +250,7 @@ export default function MyPage() {
                   </Link>
                 </div>
                 <div className="rounded-lg p-5 flex items-center gap-8">
-                  <img src={Profile} alt="프로필" className="w-12 h-12 " />
+                  <img src={Profile} alt="프로필" className="w-12 h-12" />
                   <Link
                     to="/setting"
                     className="text-black text-[16px] font-semibold hover:underline"

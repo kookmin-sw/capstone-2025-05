@@ -76,7 +76,12 @@ export default function Playbox({
   return (
     <Box width="220px" height="288px">
       <div className="flex justify-center items-center mt-4">
-        <Link to="/feedback">
+        <Link
+          to="/ranking"
+          state={{
+            song_name: title,
+          }}
+        >
           <img
             src={img}
             alt="Album Cover"

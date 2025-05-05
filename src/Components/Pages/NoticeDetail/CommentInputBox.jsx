@@ -26,11 +26,11 @@ export default function CommentInputBox({
 
     postCommentMutate(commentData, {
       onSuccess: () => {
-        swal('', '댓글이 추가되었습니다.🫡', 'success');
+        console.log('댓글 추가 성공');
+
         setReviewComment('');
       },
       onError: (error) => {
-        console.error('댓글 작성 중 오류 발생:', error);
         swal('', '댓글 추가 실패😥', error);
       },
     });

@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import Header from '../../Components/MapleHeader';
 import Podium from '../../Assets/Ranking/podium.svg';
 import Crown from '../../Assets/Ranking/crown.svg';
 import Box from '../../Components/Box/Box';
 import Footer from '../../Components/MapleFooter';
+import swal from 'sweetalert';
 
 export default function Ranking() {
   const [rankData, setRankData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchParams] = useSearchParams();
-  const songName = searchParams.get('song_name');
+  const location = useLocation();
+  const songName = location.state.song_name;
 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
@@ -20,6 +22,8 @@ export default function Ranking() {
         const res = await axios.get(`${BACKEND_URL}/rank`, {
           params: { song_name: songName },
         });
+        // 데이터 연결 확인했으므로 로딩끝
+        if (res) setIsLoading(false);
 
         const normalized = res.data.map((item) => ({
           ...item,
@@ -30,21 +34,34 @@ export default function Ranking() {
         setRankData(normalized);
       } catch (error) {
         console.error('랭킹 불러오기 실패:', error);
-        alert('랭킹 정보를 불러오는 데 실패했습니다.');
+        swal({
+          text: '랭킹 정보를 불러오는 데 실패했습니다.😥',
+          icon: 'error',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
       }
     };
 
     if (songName) {
       fetchRankData();
     }
-  }, [songName, BACKEND_URL]);
+  }, [songName]);
 
   const top3 = rankData.slice(0, 3);
 
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex flex-col items-center flex-grow relative mt-6">
-        {rankData.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center mt-20 text-xl font-semibold text-gray-500">
+            로딩중입니다...
+          </div>
+        ) : rankData.length === 0 ? (
           <div className="text-center mt-20 text-xl font-semibold text-gray-500">
             해당 곡의 랭킹이 없습니다
           </div>
