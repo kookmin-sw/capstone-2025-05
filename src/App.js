@@ -5,7 +5,6 @@ import { SpotifyPlayerProvider } from './Context/SpotifyContext';
 import MapleHeader from './Components/MapleHeader';
 import { AuthProvider } from './Context/AuthContext'; // 추가
 import AppRoutes from './Routes/AppRoutes';
-import { SpotifyAuthProvider } from './Context/SpotifyAuthContext';
 
 function App() {
   const [token, setToken] = useState(null);

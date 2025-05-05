@@ -14,7 +14,7 @@ import AutoCompleteDropdown from '../../Components/Dropdown/AutoCompleteDropdown
 
 export default function NoticeBoard() {
   const contentsPerPage = 10; // 한 페이지에 표시될 데이터 수
-  const pagesPerBlock = 10; // 한 블록에 표시될 페이지 수
+  const pagesPerBlock = 5; // 한 블록에 표시될 페이지 수
   const { mutate: increaseView } = useViewPutMutation();
   const { data: postInfo } = usePostInfoQuery();
 
