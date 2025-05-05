@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 
 // 페이지 컴포넌트 불러오기
@@ -26,7 +26,7 @@ import MusicPage from '../Pages/Main/MusicPage';
 
 export default function AppRoutes() {
   const { uid } = useAuth();
-
+  const location = useLocation();
   return (
     <Routes>
       {uid ? (
@@ -35,7 +35,10 @@ export default function AppRoutes() {
           <Route path="/main" element={<Main />} />
           <Route path="/notice" element={<NoticeBoard />} />
           <Route path="/noticeDetail/:id" element={<NoticeDetail />} />
-          <Route path="/write" element={<WritePage />} />
+          <Route
+            path="/write"
+            element={<WritePage key={location.pathname + location.key} />}
+          />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/playedmusic" element={<PlayedMusic />} />

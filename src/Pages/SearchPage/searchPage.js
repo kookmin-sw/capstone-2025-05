@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router-dom';
 import { useSearchPlaylistsQuery } from '../../Hooks/get/useSearchPlaylistsQuery';
 import Playbox from '../../Components/Playbox/Playbox';
-import MapleHeader from '../../Components/MapleHeader';
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
