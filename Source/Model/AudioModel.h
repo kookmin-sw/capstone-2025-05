@@ -25,32 +25,61 @@ public:
     class Listener {
     public:
         virtual ~Listener() = default;
+        
         virtual void inputLevelChanged(float newLevel) {}
-        virtual void playStateChanged(bool isPlaying) {}
+        virtual void playbackStateChanged(bool isPlaying) {}
         virtual void volumeChanged(float newVolume) {}
+        virtual void playbackPositionChanged(double positionInSeconds) {}
     };
     
-    // 기존 Observer 패턴 메서드들 - 레거시 지원
-    void addListener(Listener* listener) { listeners.add(listener); }
-    void removeListener(Listener* listener) { listeners.remove(listener); }
+    // Legacy Listener 관리
+    void addListener(Listener* l) { 
+        const juce::ScopedLock lock(listenerMutex); 
+        legacyListeners.add(l); 
+    }
     
-    // 새로운 Observer 패턴 메서드들 - 인터페이스 기반
-    void addListener(IAudioModelListener* listener) { modelListeners.add(listener); }
-    void removeListener(IAudioModelListener* listener) { modelListeners.remove(listener); }
-
+    void removeListener(Listener* l) { 
+        const juce::ScopedLock lock(listenerMutex); 
+        legacyListeners.remove(l); 
+    }
+    
+    // 새로운 리스너 인터페이스 관리
+    void addListener(IAudioModelListener* l) { 
+        const juce::ScopedLock lock(listenerMutex); 
+        listeners.add(l); 
+    }
+    
+    void removeListener(IAudioModelListener* l) { 
+        const juce::ScopedLock lock(listenerMutex); 
+        listeners.remove(l); 
+    }
+    
 private:
-    // 스레드 안전을 위해 atomic 타입 사용
-    std::atomic<float> currentInputLevel{0.0f};
-    std::atomic<bool> playing{false};
-    std::atomic<float> volume{1.0f};
-    std::atomic<double> currentPositionInSeconds{0.0};
+    // Audio state
+    std::atomic<float> currentInputLevel { 0.0f };
+    std::atomic<bool> playing { false };
+    std::atomic<float> volume { 1.0f };
+    std::atomic<double> currentPositionInSeconds { 0.0 };
     
-    juce::ThreadSafeListenerList<Listener> listeners;
-    juce::ThreadSafeListenerList<IAudioModelListener> modelListeners;
+    // 리스너 관리
+    juce::CriticalSection listenerMutex;
+    juce::ListenerList<Listener> legacyListeners;
+    juce::ListenerList<IAudioModelListener> listeners;
     
-    // 비동기 알림 메서드 - AudioModel.cpp에서 구현
+    // 상태 변경 알림 메서드
     void notifyInputLevelChanged();
     void notifyPlayStateChanged();
     void notifyVolumeChanged();
     void notifyPositionChanged();
+    
+    // 안전한 리스너 호출 도우미 메서드
+    template<typename ListenerType, typename Callback>
+    void safelyCallListeners(juce::ListenerList<ListenerType>& listenerList, Callback&& callback)
+    {
+        // 리스너 목록 복사본을 만들어 작업
+        const juce::ScopedLock lock(listenerMutex);
+        
+        // 복사 대신 직접 Iterator를 사용하여 리스너 호출
+        listenerList.call(std::forward<Callback>(callback));
+    }
 };

@@ -2,7 +2,7 @@
 
 void AudioModel::setCurrentInputLevel(float level)
 {
-    if (currentInputLevel != level)
+    if (currentInputLevel.load() != level)
     {
         currentInputLevel = level;
         notifyInputLevelChanged();
@@ -11,7 +11,7 @@ void AudioModel::setCurrentInputLevel(float level)
 
 void AudioModel::setPlaying(bool isPlaying)
 {
-    if (playing != isPlaying)
+    if (playing.load() != isPlaying)
     {
         playing = isPlaying;
         notifyPlayStateChanged();
@@ -20,7 +20,7 @@ void AudioModel::setPlaying(bool isPlaying)
 
 void AudioModel::setVolume(float newVolume)
 {
-    if (volume != newVolume)
+    if (volume.load() != newVolume)
     {
         volume = newVolume;
         notifyVolumeChanged();
@@ -29,7 +29,7 @@ void AudioModel::setVolume(float newVolume)
 
 void AudioModel::setCurrentPosition(double positionInSeconds)
 {
-    if (currentPositionInSeconds != positionInSeconds)
+    if (currentPositionInSeconds.load() != positionInSeconds)
     {
         currentPositionInSeconds = positionInSeconds;
         notifyPositionChanged();
@@ -40,57 +40,60 @@ void AudioModel::setCurrentPosition(double positionInSeconds)
 
 void AudioModel::notifyPlayStateChanged()
 {
-    // 상태값 캡처
-    bool currentState = playing;
+    // 현재 상태 캡처
+    bool isNowPlaying = playing.load();
     
-    // 메인 스레드에서 모든 리스너에 비동기 알림
-    juce::MessageManager::callAsync([this, currentState]() {
-        // 기존 리스너에게 알림
-        listeners.call([currentState](Listener& l) { l.playStateChanged(currentState); });
-        
-        // 새 인터페이스 리스너에게 알림
-        modelListeners.call([currentState](IAudioModelListener& l) { l.onPlayStateChanged(currentState); });
+    // 메인 리스너 호출
+    safelyCallListeners(legacyListeners, [isNowPlaying](Listener& l) {
+        l.playbackStateChanged(isNowPlaying);
     });
-}
-
-void AudioModel::notifyVolumeChanged()
-{
-    // 상태값 캡처
-    float currentVolume = volume;
     
-    // 메인 스레드에서 모든 리스너에 비동기 알림
-    juce::MessageManager::callAsync([this, currentVolume]() {
-        // 기존 리스너에게 알림
-        listeners.call([currentVolume](Listener& l) { l.volumeChanged(currentVolume); });
-        
-        // 새 인터페이스 리스너에게 알림
-        modelListeners.call([currentVolume](IAudioModelListener& l) { l.onVolumeChanged(currentVolume); });
-    });
-}
-
-void AudioModel::notifyPositionChanged()
-{
-    // 상태값 캡처
-    double currentPosition = currentPositionInSeconds;
-    
-    // 메인 스레드에서 모든 리스너에 비동기 알림
-    juce::MessageManager::callAsync([this, currentPosition]() {
-        // 새 인터페이스 리스너에게만 알림 (기존 리스너는 이 기능 지원 안함)
-        modelListeners.call([currentPosition](IAudioModelListener& l) { l.onPositionChanged(currentPosition); });
+    // 새 리스너 인터페이스 호출
+    safelyCallListeners(listeners, [isNowPlaying](IAudioModelListener& l) {
+        l.onPlayStateChanged(isNowPlaying);
     });
 }
 
 void AudioModel::notifyInputLevelChanged()
 {
-    // 상태값 캡처
-    float currentLevel = currentInputLevel;
+    // 현재 값 캡처
+    float currentLevel = currentInputLevel.load();
     
-    // 메인 스레드에서 모든 리스너에 비동기 알림
-    juce::MessageManager::callAsync([this, currentLevel]() {
-        // 기존 리스너에게 알림
-        listeners.call([currentLevel](Listener& l) { l.inputLevelChanged(currentLevel); });
-        
-        // 새 인터페이스 리스너에게 알림
-        modelListeners.call([currentLevel](IAudioModelListener& l) { l.onInputLevelChanged(currentLevel); });
+    // 비동기 호출: juce::MessageManager::callAsync를 사용하여
+    // 메인 스레드에서 리스너 알림이 발생하도록 함
+    safelyCallListeners(legacyListeners, [currentLevel](Listener& l) {
+        l.inputLevelChanged(currentLevel);
+    });
+    
+    safelyCallListeners(listeners, [currentLevel](IAudioModelListener& l) {
+        l.onInputLevelChanged(currentLevel);
+    });
+}
+
+void AudioModel::notifyVolumeChanged()
+{
+    // 현재 값 캡처
+    float currentVol = volume.load();
+    
+    safelyCallListeners(legacyListeners, [currentVol](Listener& l) {
+        l.volumeChanged(currentVol);
+    });
+    
+    safelyCallListeners(listeners, [currentVol](IAudioModelListener& l) {
+        l.onVolumeChanged(currentVol);
+    });
+}
+
+void AudioModel::notifyPositionChanged()
+{
+    // 현재 값 캡처
+    double position = currentPositionInSeconds.load();
+    
+    safelyCallListeners(legacyListeners, [position](Listener& l) {
+        l.playbackPositionChanged(position);
+    });
+    
+    safelyCallListeners(listeners, [position](IAudioModelListener& l) {
+        l.onPositionChanged(position);
     });
 }
