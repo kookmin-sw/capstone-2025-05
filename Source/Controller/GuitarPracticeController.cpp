@@ -94,93 +94,113 @@ void GuitarPracticeController::startPlayback()
 {
     DBG("GuitarPracticeController::startPlayback - starting playback");
     
-    // 플레이어 재생
-    player.startPlaying();
-    
-    // 오디오 파일 재생 (reader가 있는 경우에만)
-    if (readerSource != nullptr)
-    {
-        DBG("GuitarPracticeController::startPlayback - Starting transportSource");
-        
-        // 재생 위치를 처음으로 설정
-        transportSource.setPosition(0.0);
-        
-        // 명시적으로 start() 호출
-        transportSource.start();
-        
-        // 실제로 재생되었는지 확인
-        if (transportSource.isPlaying())
-            DBG("GuitarPracticeController::startPlayback - transportSource started");
-        else
-            DBG("GuitarPracticeController::startPlayback - transportSource start failed");
-    }
-    else
-    {
-        DBG("GuitarPracticeController::startPlayback - No audio file to play");
-    }
-    
-    // 모델 상태 업데이트
+    // 1. 먼저 상태를 업데이트하여 UI가 빠르게 반응하도록 함
+    // 메인 스레드에서 실행
     audioModel.setPlaying(true);
     
-    DBG("GuitarPracticeController::startPlayback - Current playback state:");
-    DBG("  player.isPlaying() = " + juce::String(player.isPlaying() ? "true" : "false"));
-    DBG("  transportSource.isPlaying() = " + juce::String(transportSource.isPlaying() ? "true" : "false"));
-    DBG("  audioModel.isPlaying() = " + juce::String(audioModel.isPlaying() ? "true" : "false"));
+    // 1.5 TabPlayer 즉시 시작 (UI 응답성을 위해 메인 스레드에서 실행)
+    player.startPlaying();
+    
+    // 2. 무거운 오디오 처리는 백그라운드에서 처리
+    juce::Thread::launch([this]() {
+        try {
+            // 오디오 파일 재생 (reader가 있는 경우에만)
+            if (readerSource != nullptr)
+            {
+                DBG("GuitarPracticeController::startPlayback - Background thread: Starting transportSource");
+                
+                // 재생 위치를 처음으로 설정
+                transportSource.setPosition(0.0);
+                
+                // 명시적으로 start() 호출
+                transportSource.start();
+                
+                // 실제로 재생되었는지 확인
+                if (transportSource.isPlaying())
+                    DBG("GuitarPracticeController::startPlayback - Background thread: transportSource started");
+                else
+                    DBG("GuitarPracticeController::startPlayback - Background thread: transportSource start failed");
+            }
+            else
+            {
+                DBG("GuitarPracticeController::startPlayback - Background thread: No audio file to play");
+            }
+            
+            // 디버깅을 위한 상태 로깅
+            DBG("GuitarPracticeController::startPlayback - Background thread: Current playback state:");
+            DBG("  player.isPlaying() = " + juce::String(player.isPlaying() ? "true" : "false"));
+            DBG("  transportSource.isPlaying() = " + juce::String(transportSource.isPlaying() ? "true" : "false"));
+            DBG("  audioModel.isPlaying() = " + juce::String(audioModel.isPlaying() ? "true" : "false"));
+        }
+        catch (const std::exception& e) {
+            DBG("GuitarPracticeController::startPlayback - Background thread exception: " + juce::String(e.what()));
+            
+            // 실패 시 롤백 작업이 필요하면 메인 스레드에서 해야 함
+            juce::MessageManager::callAsync([this]() {
+                if (player.isPlaying()) {
+                    player.stopPlaying();
+                }
+                audioModel.setPlaying(false);
+                DBG("GuitarPracticeController::startPlayback - Rolled back playback state due to error");
+            });
+        }
+    });
 }
 
 void GuitarPracticeController::stopPlayback()
 {
     DBG("GuitarPracticeController::stopPlayback - stopping playback");
     
-    // 플레이어 정지
-    player.stopPlaying();
+    // 디버깅을 위한 현재 상태 기록
+    bool wasPlaying = player.isPlaying() || transportSource.isPlaying();
     
-    // 오디오 파일 재생 정지
-    transportSource.stop();
-    
-    // 모델 상태 업데이트
+    // 1. 먼저 상태를 비동기적으로 업데이트하여 UI가 빠르게 반응하도록 함
+    // 이것은 UI에서 즉시 반영되어야 하므로 메인 스레드에서 실행
     audioModel.setPlaying(false);
     
-    DBG("GuitarPracticeController::stopPlayback - Current playback state:");
-    DBG("  player.isPlaying() = " + juce::String(player.isPlaying() ? "true" : "false"));
-    DBG("  transportSource.isPlaying() = " + juce::String(transportSource.isPlaying() ? "true" : "false"));
-    DBG("  audioModel.isPlaying() = " + juce::String(audioModel.isPlaying() ? "true" : "false"));
+    // 1.5 TabPlayer를 즉시 중지하여 소리가 즉시 중지되게 함
+    player.stopPlaying();
+    
+    // 2. 리소스 해제 작업은 백그라운드 스레드에서 수행 (무거운 작업)
+    // 이 작업이 메인 스레드를 차단하는 것을 방지
+    juce::Thread::launch([this, wasPlaying]() {
+        try {
+            // 오디오 파일 재생 정지 (TransportSource)
+            // 해제 시간이 오래 걸릴 수 있는 부분 - 백그라운드에서 처리
+            transportSource.stop();
+            
+            DBG("GuitarPracticeController::stopPlayback - Background thread: Transport stopped");
+        }
+        catch (const std::exception& e) {
+            DBG("GuitarPracticeController::stopPlayback - Exception: " + juce::String(e.what()));
+        }
+        
+        // 디버깅을 위한 상태 로깅
+        DBG("GuitarPracticeController::stopPlayback - Background thread: Playback stopped");
+        DBG("  Was playing before: " + juce::String(wasPlaying ? "true" : "false"));
+        DBG("  player.isPlaying() = " + juce::String(player.isPlaying() ? "true" : "false"));
+        DBG("  transportSource.isPlaying() = " + juce::String(transportSource.isPlaying() ? "true" : "false"));
+        DBG("  audioModel.isPlaying() = " + juce::String(audioModel.isPlaying() ? "true" : "false"));
+    });
 }
 
 void GuitarPracticeController::togglePlayback()
 {
-    // TabPlayer와 AudioModel의 상태 확인
-    bool playerIsPlaying = player.isPlaying();
-    bool transportIsPlaying = transportSource.isPlaying();
-    bool modelIsPlaying = audioModel.isPlaying();
+    // 현재 재생 상태 확인 (한 번만 확인)
+    bool isCurrentlyPlaying = audioModel.isPlaying();
     
-    DBG("GuitarPracticeController::togglePlayback - Current state:");
-    DBG("  TabPlayer playing: " + juce::String(playerIsPlaying ? "true" : "false"));
-    DBG("  TransportSource playing: " + juce::String(transportIsPlaying ? "true" : "false"));
-    DBG("  AudioModel playing: " + juce::String(modelIsPlaying ? "true" : "false"));
-    DBG("  readerSource valid: " + juce::String(readerSource != nullptr ? "true" : "false"));
+    DBG("GuitarPracticeController::togglePlayback - Current state: " + 
+        juce::String(isCurrentlyPlaying ? "playing -> stopping" : "stopped -> starting"));
     
-    // 토글 작업 수행
-    if (modelIsPlaying)
-    {
-        DBG("GuitarPracticeController::togglePlayback - Playing, stopping playback");
+    // 적절한 메서드 직접 호출 (불필요한 상태 확인 제거)
+    if (isCurrentlyPlaying)
         stopPlayback();
-    }
     else
-    {
-        DBG("GuitarPracticeController::togglePlayback - Stopped, starting playback");
         startPlayback();
-    }
     
-    // 로깅을 위해 상태 다시 확인
-    playerIsPlaying = player.isPlaying();
-    transportIsPlaying = transportSource.isPlaying();
-    modelIsPlaying = audioModel.isPlaying();
-    
-    DBG("GuitarPracticeController::togglePlayback - After change:");
-    DBG("  TabPlayer playing: " + juce::String(playerIsPlaying ? "true" : "false"));
-    DBG("  TransportSource playing: " + juce::String(transportIsPlaying ? "true" : "false"));
-    DBG("  AudioModel playing: " + juce::String(modelIsPlaying ? "true" : "false"));
+    // 토글 후 최종 상태 확인 (간소화된 로깅)
+    DBG("GuitarPracticeController::togglePlayback - New state: " + 
+        juce::String(audioModel.isPlaying() ? "playing" : "stopped"));
 }
 
 bool GuitarPracticeController::loadSong(const juce::String& songId)

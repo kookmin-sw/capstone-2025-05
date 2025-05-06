@@ -422,8 +422,13 @@ void GuitarPracticeComponent::resized()
 // 새로운 인터페이스 메서드 구현
 void GuitarPracticeComponent::onPlayStateChanged(bool isPlaying)
 {
-    // UI 업데이트
-    updatePlaybackState(isPlaying);
+    // UI 업데이트를 메인 스레드에서 처리
+    juce::MessageManager::callAsync([this, isPlaying]() {
+        // UI 업데이트
+        updatePlaybackState(isPlaying);
+        DBG("GuitarPracticeComponent::onPlayStateChanged - UI updated for play state: " + 
+            juce::String(isPlaying ? "playing" : "stopped"));
+    });
 }
 
 void GuitarPracticeComponent::onVolumeChanged(float newVolume)
@@ -478,7 +483,7 @@ void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
     // 재생 중일 때는 분석 버튼 비활성화
     analyzeButton.setEnabled(!isNowPlaying && lastRecording.existsAsFile());
     
-    // ScoreComponent 업데이트
+    // ScoreComponent 업데이트 - 가능한 빠르게 UI 반응
     if (scoreComponent != nullptr)
     {
         if (isNowPlaying)
@@ -503,17 +508,67 @@ void GuitarPracticeComponent::updatePositionDisplay(double positionInSeconds)
 
 void GuitarPracticeComponent::togglePlayback()
 {
-    // Controller에게 로직 위임
-    controller->togglePlayback();
-    
-    // ScoreComponent 상태와 동기화
-    if (scoreComponent != nullptr)
+    // 중복 호출 방지 (이미 토글링 중인 경우) - 빠른 연속 호출에 의한 문제 방지
+    static bool isToggling = false;
+    if (isToggling)
     {
-        if (audioModel.isPlaying())
-            scoreComponent->startPlayback();
-        else
-            scoreComponent->stopPlayback();
+        DBG("GuitarPracticeComponent: Already toggling...");
+        return;
     }
+    
+    // 현재 재생 상태 캡처
+    bool isPlaying = audioModel.isPlaying();
+    
+    // 1. 즉시 UI 업데이트 - 사용자에게 즉각적인 피드백 제공
+    updatePlaybackState(!isPlaying);
+    
+    // 2. 토글 처리 시작 플래그 설정
+    isToggling = true;
+    
+    // 3. 백그라운드 스레드에서 실제 재생/중지 작업 수행
+    juce::Thread::launch([this, isPlaying]()
+    {
+        // 실제 컨트롤러 호출 - 시간이 걸리는 작업
+        try 
+        {
+            // 현재 상태에 따라 반대 동작 수행
+            if (isPlaying)
+            {
+                controller->stopPlayback();
+                DBG("GuitarPracticeComponent: Background thread: Playback stopped");
+            }
+            else
+            {
+                controller->startPlayback();
+                DBG("GuitarPracticeComponent: Background thread: Playback started");
+            }
+            
+            // 4. UI 스레드에서 토글 완료 처리 (메인 스레드에서 안전하게 UI 갱신)
+            juce::MessageManager::callAsync([this]()
+            {
+                // 토글링 플래그 해제 - 다음 토글 허용
+                static_cast<void>(std::exchange(isToggling, false));
+                
+                // 부드러운 전환을 위해 모든 UI 상태가 일관되게 설정되었는지 확인
+                updateUI();
+                DBG("GuitarPracticeComponent: UI thread: Playback state updated");
+            });
+        }
+        catch (const std::exception& e)
+        {
+            // 예외 발생 시 UI 스레드에서 에러 처리 및 상태 복원
+            juce::MessageManager::callAsync([this, error = juce::String(e.what())]()
+            {
+                DBG("GuitarPracticeComponent: UI thread: Error during playback toggle: " + error);
+                
+                // 토글링 플래그 해제
+                static_cast<void>(std::exchange(isToggling, false));
+                
+                // 오디오 모델 상태 확인 후 UI 일관성 유지
+                updatePlaybackState(audioModel.isPlaying());
+            });
+        }
+    });
 }
 
 // UI에서 호출되는 메서드 - Controller에게 위임
