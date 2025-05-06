@@ -54,9 +54,8 @@
 
 ### 🖥 프론트엔드
 
-- React, Tailwind CSS
-- Spotify Web Playback SDK
-- Axios, React Query
+<img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB"/>
+<img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white"/>
 
 ### ⚙ 백엔드
 
