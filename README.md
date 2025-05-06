@@ -8,7 +8,7 @@
 
 ## 📌 목차
 
-1️⃣ [💡 프로젝트 소개](#-프로젝트-소개)  
+1️⃣ [✨ 프로젝트 소개](#-프로젝트-소개)  
 
 2️⃣ [🦾 주요 기능](#-주요-기능)  
 
@@ -34,6 +34,11 @@
   <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/Maple.png" width="100%" alt="MAPLE App"/>
 </div>
 
+## 🦾 주요 기능
+
+
+## 🎬 시연 영상
+
 > **MAPLE** (Music Analysis & Practice Learning Environment)은 기타 연주 학습자와 밴드 연습자들을 위한 AI 기반 실시간 연주 분석 및 피드백 시스템입니다.
 > 
 - ✏️ 사용자의 기타 연주를 실시간으로 분석하여 피치 정확도, 리듬 정확도, 연주 안정성 등 다양한 측면의 피드백을 시각적으로 제공하는 AI 기반 웹 플랫폼입니다.<br>
@@ -53,10 +58,7 @@
 | ![]() | **박지민** | Frontend | [@jiminpark](https://github.com/qkrwlalss) | jimin@maple.com |
 
 
-##🦾 주요 기능
 
-
-##🎬 시연 영상
 
 ## 🛠 기술 스택
 
