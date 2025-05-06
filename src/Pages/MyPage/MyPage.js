@@ -62,7 +62,6 @@ export default function MyPage() {
             </ul>
           </div>
           <div>
-
             <p className="font-semibold truncate">
               {userInfo?.nickname || '사용자'}
             </p>
@@ -113,7 +112,6 @@ export default function MyPage() {
             </div>
           </div>
 
-
           <div className="flex gap-16 h-[50vh] mt-16">
             <Box
               width="43%"
@@ -161,7 +159,6 @@ export default function MyPage() {
               </ul>
             </Box>
 
-
             <Box
               width="25%"
               height="105%"
@@ -203,15 +200,15 @@ export default function MyPage() {
               height="105%"
               overwrite="flex flex-col overflow-y-auto"
             >
-              <div className="ml-4 mt-5 flex items-center">
-                <span className="font-bold text-[20px]">나의 활동</span>
-                <Link
-                  to="/myactivity"
-                  className="ml-2 text-lg text-gray-500 hover:text-gray-700"
-                >
+              <Link
+                to="/myactivity"
+                className="ml-2 text-lg text-gray-500 hover:text-gray-700"
+              >
+                <div className="ml-4 mt-5 flex items-center">
+                  <span className="font-bold text-[20px]">나의 활동</span>
                   &gt;
-                </Link>
-              </div>
+                </div>
+              </Link>
               <div className="ml-5 mt-10 space-y-4 flex-grow">
                 {[
                   { icon: Bookmark, label: '북마크' },
