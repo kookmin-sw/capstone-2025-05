@@ -64,8 +64,6 @@ target_sources(MapleClientDesktop PRIVATE
     Source/View/ScoreComponent.h
     Source/View/MainActionComponent.cpp
     Source/View/MainActionComponent.h
-    Source/View/BottomComponent.cpp
-    Source/View/BottomComponent.h
     Source/View/TopBar.cpp
     Source/View/TopBar.h
     Source/View/CenterPanel.cpp
