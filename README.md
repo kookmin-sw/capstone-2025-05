@@ -1,70 +1,89 @@
-# Getting Started with Create React App
+# 🎸 <span style="color:#A57865"><strong>MAPLE</strong></span> - AI 기반 기타 연주 분석 플랫폼
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+<div align="center"> 
+  <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/main/public/assets/logo.svg" width="30%" alt="MAPLE Logo"/>
+</div>
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 📌 목차
 
-### `npm start`
+1️⃣ [💡 프로젝트 소개](#-프로젝트-소개)  
+2️⃣ [🦾 주요 기능](#-주요-기능)  
+3️⃣ [🎬 시연 영상](#-시연-영상)  
+4️⃣ [👨‍👨‍👦‍👦 팀원 소개](#-팀원-소개)  
+5️⃣ [🌐 시스템 구조](#-시스템-구조)  
+6️⃣ [🛠 기술 스택](#-기술-스택)  
+7️⃣ [🚀 실행 방법](#-실행-방법)  
+8️⃣ [📂 폴더 구조](#-폴더-구조)  
+9️⃣ [📎 참고 자료](#-참고-자료)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 💡 프로젝트 소개
 
-### `npm test`
+**MAPLE**은 사용자의 기타 연주를 실시간으로 분석하여 **피치 정확도**, **리듬 정확도**, **연주 안정성** 등 다양한 측면의 피드백을 시각적으로 제공하는 AI 기반 웹 플랫폼입니다.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+🎯 초보자부터 전문가까지, 자기 연주를 **정량적으로 분석하고 성장**할 수 있도록 돕습니다.  
+🎧 연주는 클라이언트에서 직접 녹음되며, 서버로 전송된 후 분석이 수행됩니다.
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🦾 주요 기능
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- 🎵 **실시간 기타 연주 녹음 및 분석**
+- 🎯 **피치·리듬 정확도 시각화**
+- 📈 **연주 히스토리 저장 및 조회**
+- 🔗 **Spotify 곡과의 비교 분석**
+- 📋 **피드백 요약 리포트 자동 생성**
+- 🌐 **웹 기반으로 어느 디바이스에서든 사용 가능**
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## 🎬 시연 영상
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+[![MAPLE Demo](https://your-thumbnail-image-link.com)](https://youtu.be/your-video-link)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 👨‍👨‍👦‍👦 팀원 소개
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+| 이름   | 역할                      | GitHub                                 | 연락처           |
+| ------ | ------------------------- | -------------------------------------- | ---------------- |
+| 김도경 | 프론트엔드 / Spotify 연동 | [@your-id](https://github.com/your-id) | your@mail.com    |
+| 이예시 | 백엔드 / AI 분석 서버     | [@example](https://github.com/example) | example@mail.com |
+| 박예시 | UI 디자인 / 리듬 분석     | [@another](https://github.com/another) | another@mail.com |
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🌐 시스템 구조
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+<div align="center"> 
+  <img src="https://your-image-url.com/system-architecture.png" width="80%" alt="System Architecture"/>
+</div>
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 🛠 기술 스택
 
-### Analyzing the Bundle Size
+### 🖥 프론트엔드
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- React, Tailwind CSS
+- Spotify Web Playback SDK
+- Axios, Zustand, React Query
 
-### Making a Progressive Web App
+### ⚙ 백엔드
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- FastAPI, Uvicorn
+- librosa, PyTorch
+- Firebase Authentication, Storage
 
-### Advanced Configuration
+### 🧠 AI / 분석
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- 음정 인식 모델 (FFT 기반 + ML 보정)
+- 리듬 분석 알고리즘 (Onset detection + Madmom)
+- JSON 기반 시각화 데이터 반환
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🚀 실행 방법
