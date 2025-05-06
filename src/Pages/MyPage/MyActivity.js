@@ -31,8 +31,6 @@ export default function MyActivity() {
     return res.data.keyvaluedict[0];
   };
 
-  console.log(bookmarkItems, '내가 북마크');
-
   const renderList = (data) => {
     return data.map((item, idx) => (
       <Link
@@ -112,104 +110,97 @@ export default function MyActivity() {
 
   return (
     <div className="flex min-h-screen">
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-[12%] h-full bg-[#463936] text-white p-4 flex flex-col justify-between">
-          <div>
-            <h2 className="text-md font-bold">MAPLE</h2>
-            <ul className="mt-4 space-y-2">
-              <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
-                <img
-                  src={Information}
-                  alt="내 정보 아이콘"
-                  className="w-4 h-4"
-                />
-                <Link to="/mypage" className="text-white truncate">
-                  내 정보
-                </Link>
-              </li>
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
-                <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
-                <Link to="/playedmusic" className="text-white truncate">
-                  연주한 곡
-                </Link>
-              </li>
-              <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
-                <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
-                <Link to="/setting" className="text-white truncate">
-                  관리
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="font-semibold truncate">
-              {userInfo?.nickname || '사용자'}
-            </p>
-          </div>
+      {/* Sidebar */}
+      <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
+        <div>
+          <h2 className="text-md font-bold">MAPLE</h2>
+          <ul className="mt-4 space-y-2">
+            <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
+              <img src={Information} alt="내 정보 아이콘" className="w-4 h-4" />
+              <Link to="/mypage" className="text-white truncate">
+                내 정보
+              </Link>
+            </li>
+            <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
+              <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
+              <Link to="/playedmusic" className="text-white truncate">
+                연주한 곡
+              </Link>
+            </li>
+            <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
+              <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
+              <Link to="/setting" className="text-white truncate">
+                관리
+              </Link>
+            </li>
+          </ul>
         </div>
+        <div>
+          <p className="font-semibold truncate">
+            {userInfo?.nickname || '사용자'}
+          </p>
+        </div>
+      </div>
 
-        {/* Main content */}
-        <div className="w-[88%] overflow-y-auto bg-[#F5F1EC] p-8">
-          <div className="flex gap-8 flex-wrap w-full h-full items-stretch">
-            {/* 북마크 */}
-            <div className="basis-[30%] min-w-[240px] max-w-[32%] h-[100%]">
-              <Box className="h-full flex flex-col">
-                <div className="p-4 flex items-center gap-4 border-b">
-                  <img src={Bookmark} alt="북마크" className="w-8 h-8" />
-                  <span className="font-bold text-[18px]">북마크</span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {loading ? (
-                    <p>로딩 중...</p>
-                  ) : bookmarks.length === 0 ? (
-                    <p className="text-gray-500">북마크한 게시글이 없습니다.</p>
-                  ) : (
-                    renderList(bookmarks)
-                  )}
-                </div>
-              </Box>
-            </div>
-
-            {/* 좋아요 */}
-            <div className="basis-[30%] min-w-[240px] max-w-[32%] h-[100%]">
-              <Box className="h-full flex flex-col">
-                <div className="p-4 flex items-center gap-4 border-b">
-                  <img src={Heart} alt="좋아요" className="w-8 h-8" />
-                  <span className="font-bold text-[18px]">좋아요</span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {loading ? (
-                    <p>로딩 중...</p>
-                  ) : likes.length === 0 ? (
-                    <p className="text-gray-500">좋아요한 게시글이 없습니다.</p>
-                  ) : (
-                    renderList(likes)
-                  )}
-                </div>
-              </Box>
-            </div>
-
-            {/* 내가 쓴 글 */}
-            <div className="basis-[30%] min-w-[240px] max-w-[32%] h-[100%]">
-              <Box className="h-full flex flex-col">
-                <div className="p-4 flex items-center gap-4 border-b">
-                  <img src={Write} alt="내 글" className="w-8 h-8" />
-                  <span className="font-bold text-[18px]">내가 쓴 글</span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {loading ? (
-                    <p>로딩 중...</p>
-                  ) : myPosts.length === 0 ? (
-                    <p className="text-gray-500">작성한 게시글이 없습니다.</p>
-                  ) : (
-                    renderList(myPosts)
-                  )}
-                </div>
-              </Box>
-            </div>
+      {/* Main Content */}
+      <div className="flex-grow bg-[#F5F1EC] p-8">
+        <div className="flex flex-wrap gap-6 items-stretch">
+          {/* 북마크 */}
+          <div className="flex-1 min-w-[250px] max-w-[32%]">
+            <Box className="h-full flex flex-col">
+              <div className="p-3 flex items-center gap-3 border-b">
+                <img src={Bookmark} alt="북마크" className="w-8 h-8" />
+                <span className="font-bold text-[18px]">북마크</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {loading ? (
+                  <p>로딩 중...</p>
+                ) : bookmarks.length === 0 ? (
+                  <p className="text-gray-500">북마크한 게시글이 없습니다.</p>
+                ) : (
+                  renderList(bookmarks)
+                )}
+              </div>
+            </Box>
           </div>
 
+          {/* 좋아요 */}
+          <div className="flex-1 min-w-[250px] max-w-[32%]">
+            <Box className="h-full flex flex-col">
+              <div className="p-3 flex items-center gap-3 border-b">
+                <img src={Heart} alt="좋아요" className="w-8 h-8" />
+                <span className="font-bold text-[18px]">좋아요</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {loading ? (
+                  <p>로딩 중...</p>
+                ) : likes.length === 0 ? (
+                  <p className="text-gray-500">좋아요한 게시글이 없습니다.</p>
+                ) : (
+                  renderList(likes)
+                )}
+              </div>
+            </Box>
+          </div>
+
+          {/* 내가 쓴 글 */}
+          <div className="flex-1 min-w-[250px] max-w-[32%]">
+            <Box className="h-full flex flex-col">
+              <div className="p-3 flex items-center gap-3 border-b">
+                <img src={Write} alt="내 글" className="w-8 h-8" />
+                <span className="font-bold text-[18px]">내가 쓴 글</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {loading ? (
+                  <p>로딩 중...</p>
+                ) : myPosts.length === 0 ? (
+                  <p className="text-gray-500">작성한 게시글이 없습니다.</p>
+                ) : (
+                  renderList(myPosts)
+                )}
+              </div>
+            </Box>
+          </div>
         </div>
       </div>
     </div>
