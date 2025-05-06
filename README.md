@@ -1,7 +1,7 @@
 # 🎸 <span style="color:#A57865"><strong>MAPLE</strong></span> - AI 기반 기타 연주 분석 플랫폼
 
 <div align="center"> 
-  <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/logo.svg" width="30%" alt="MAPLE Logo"/>
+  <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/logo.svg" width="100%" alt="MAPLE Logo"/>
 </div>
 
 
