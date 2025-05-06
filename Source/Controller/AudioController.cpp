@@ -5,8 +5,13 @@ AudioController::AudioController(AudioModel& model, juce::AudioDeviceManager& ma
     : audioModel(model), deviceManager(manager), guitarPracticeController(nullptr),
       microphoneMonitoringEnabled(false), microphoneGain(5.0f)
 {
-    // AmpliTube 프로세서 초기화
+    // AmpliTube 프로세서 초기화 - 기본적으로 비활성화 상태로 시작
     ampliTubeProcessor = std::make_unique<AmpliTubeProcessor>();
+    // 명시적 비활성화 설정 (초기 상태 보장)
+    if (ampliTubeProcessor)
+        ampliTubeProcessor->setProcessingEnabled(false);
+    
+    DBG("AudioController: Created with AmpliTube initially DISABLED");
     deviceManager.addAudioCallback(this);
 }
 
@@ -44,15 +49,24 @@ void AudioController::setMicrophoneGain(float gain)
 void AudioController::enableAmpliTubeEffect(bool shouldEnable)
 {
     if (ampliTubeProcessor) {
+        // 상태가 변경될 때만 로그 출력
+        if (ampliTubeProcessor->isProcessingEnabled() != shouldEnable) {
+            DBG("AudioController: AmpliTube effect state changing from " + 
+                juce::String(ampliTubeProcessor->isProcessingEnabled() ? "enabled" : "disabled") + 
+                " to " + juce::String(shouldEnable ? "enabled" : "disabled"));
+        }
+        
         // 처음 활성화될 때 초기화
         if (shouldEnable && !ampliTubeProcessor->isProcessingEnabled()) {
             // 아직 초기화되지 않았다면 초기화
             if (!ampliTubeProcessor->getEditorComponent()) {
+                DBG("AudioController: Initializing AmpliTube plugin");
                 bool initialized = ampliTubeProcessor->init();
                 if (!initialized) {
                     DBG("AudioController: Failed to initialize AmpliTube");
                     return;
                 }
+                DBG("AudioController: AmpliTube plugin initialized successfully");
             }
         }
         
@@ -205,6 +219,10 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
         // AmpliTube 이펙트 처리 (입력 버퍼를 처리하여 출력 버퍼에 추가)
         if (ampliTubeProcessor && ampliTubeProcessor->isProcessingEnabled())
         {
+            if (shouldLogMonitoring) {
+                DBG("AudioController: AmpliTube is ENABLED, processing audio with effects");
+            }
+            
             // 동적 메모리 할당은 힙 메모리를 사용합니다
             std::unique_ptr<float[]> tempBuffer1 = std::make_unique<float[]>(numSamples);
             std::unique_ptr<float[]> tempBuffer2 = std::make_unique<float[]>(numSamples);
@@ -221,7 +239,7 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                 if (tempOutputData[ch] != nullptr)
                     std::memset(tempOutputData[ch], 0, sizeof(float) * numSamples);
             
-            // 입력 채널 설정 - 채널 1번 (두번째 채널) 사용
+            // 입력 채널 설정 - 채널 1번 (두번째 채널) a사용
             const float* inputChannelToProcess[2] = { nullptr, nullptr };
             if (numInputChannels > 1)
                 inputChannelToProcess[0] = inputChannelData[1]; // 마이크 입력 (두번째 채널)
@@ -230,6 +248,10 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                 
             // 필요시 두번째 채널 설정 (모노 입력을 스테레오로 복제)
             inputChannelToProcess[1] = inputChannelToProcess[0];
+            
+            if (shouldLogMonitoring && inputChannelToProcess[0] != nullptr) {
+                DBG("AudioController: Input sample to AmpliTube[0]: " + juce::String(inputChannelToProcess[0][0]));
+            }
             
             // AmpliTube 프로세서로 오디오 처리
             ampliTubeProcessor->processBlock(inputChannelToProcess, 
@@ -255,10 +277,17 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
             
             if (shouldLogMonitoring) {
                 DBG("AudioController: Applied AmpliTube processing");
+                if (tempOutputData[0] != nullptr) {
+                    DBG("AudioController: First sample after AmpliTube processing: " + juce::String(tempOutputData[0][0]));
+                }
             }
         }
         else // AmpliTube 처리 없이 직접 모니터링
         {
+            if (shouldLogMonitoring) {
+                DBG("AudioController: AmpliTube is DISABLED, doing direct monitoring");
+            }
+            
             // 스테레오 출력 (2채널 이상)
             if (numOutputChannels >= 2)
             {

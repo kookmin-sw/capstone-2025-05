@@ -115,12 +115,13 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     ampliTubeViewButton.setToggleState(false, juce::dontSendNotification);
     addAndMakeVisible(ampliTubeViewButton);
     
-    // AmpliTube 활성화 버튼 초기화
+    // AmpliTube 활성화 버튼 초기화 (기본적으로 비활성화 상태로 시작)
     ampliTubeEnableButton.setButtonText("Enable AmpliTube");
     ampliTubeEnableButton.setToggleState(false, juce::dontSendNotification);
     ampliTubeEnableButton.onClick = [this]() { toggleAmpliTubeEffect(); };
     ampliTubeEnableButton.setColour(juce::ToggleButton::tickColourId, MapleTheme::getAccentColour());
     ampliTubeEnableButton.setColour(juce::ToggleButton::textColourId, MapleTheme::getHighlightColour());
+    addAndMakeVisible(ampliTubeEnableButton);
     
     // 오디오 포맷 매니저 초기화
     formatManager.registerBasicFormats();
@@ -392,6 +393,16 @@ void GuitarPracticeComponent::resized()
     auto ampliTubeToggleHeight = 30;
     auto ampliTubeToggleArea = ampliTubeEditorContainer->getLocalBounds().removeFromTop(ampliTubeToggleHeight);
     ampliTubeEnableButton.setBounds(ampliTubeToggleArea);
+    
+    // AmpliTube 뷰로 전환할 때마다 상태 확인
+    if (currentBottomView == BottomViewType::AmpliTubeEditor && audioController)
+    {
+        // 실제 상태 확인 및 UI 동기화
+        bool isEnabled = audioController->isAmpliTubeEffectEnabled();
+        ampliTubeEnableButton.setToggleState(isEnabled, juce::dontSendNotification);
+        ampliTubeEnableButton.setColour(juce::ToggleButton::textColourId, 
+                                       isEnabled ? juce::Colours::green : MapleTheme::getHighlightColour());
+    }
     
     // AmpliTube 에디터 배치 (활성화 버튼 아래)
     auto editorArea = ampliTubeEditorContainer->getLocalBounds();
@@ -855,9 +866,19 @@ void GuitarPracticeComponent::switchBottomView(BottomViewType viewType)
         updateBottomViewVisibility();
         updateViewButtonStates();
         
-        // AmpliTube 뷰로 전환시 에디터 업데이트
+        // AmpliTube 뷰로 전환시 상태 동기화 및 에디터 업데이트
         if (viewType == BottomViewType::AmpliTubeEditor && audioController)
         {
+            // 버튼 상태 실제 활성화 상태와 동기화
+            bool isEnabled = audioController->isAmpliTubeEffectEnabled();
+            ampliTubeEnableButton.setToggleState(isEnabled, juce::dontSendNotification);
+            ampliTubeEnableButton.setColour(juce::ToggleButton::textColourId, 
+                                         isEnabled ? juce::Colours::green : MapleTheme::getHighlightColour());
+            
+            DBG("GuitarPracticeComponent: Switched to AmpliTube view, effect is " + 
+                juce::String(isEnabled ? "enabled" : "disabled"));
+            
+            // 에디터 업데이트
             auto* editor = audioController->getAmpliTubeEditorComponent();
             if (editor && !ampliTubeEditorContainer->isParentOf(editor))
             {
@@ -963,14 +984,38 @@ void GuitarPracticeComponent::sliderValueChanged(juce::Slider* slider)
 // AmpliTube 이펙트 관련 메서드 구현
 void GuitarPracticeComponent::enableAmpliTubeEffect(bool shouldEnable)
 {
+    DBG("GuitarPracticeComponent: Request to " + juce::String(shouldEnable ? "enable" : "disable") + " AmpliTube effect");
+    
     if (audioController)
     {
-        audioController->enableAmpliTubeEffect(shouldEnable);
-        ampliTubeEnableButton.setToggleState(shouldEnable, juce::dontSendNotification);
-        
-        // 활성화 상태에 따라 텍스트 색상 변경
-        ampliTubeEnableButton.setColour(juce::ToggleButton::textColourId, 
-                                      shouldEnable ? juce::Colours::green : MapleTheme::getHighlightColour());
+        // 현재 상태와 요청 상태가 다를 때만 변경 (중복 호출 방지)
+        bool currentState = audioController->isAmpliTubeEffectEnabled();
+        if (currentState != shouldEnable)
+        {
+            // AudioController에 상태 변경 요청
+            audioController->enableAmpliTubeEffect(shouldEnable);
+            
+            // 상태 확인 및 로깅
+            bool newState = audioController->isAmpliTubeEffectEnabled();
+            DBG("GuitarPracticeComponent: AmpliTube effect is now " + 
+                juce::String(newState ? "enabled" : "disabled") + 
+                " (requested: " + juce::String(shouldEnable ? "enabled" : "disabled") + ")");
+            
+            // UI 상태 업데이트 - 실제 상태를 기준으로 함
+            ampliTubeEnableButton.setToggleState(newState, juce::dontSendNotification);
+            
+            // 활성화 상태에 따라 텍스트 색상 변경
+            ampliTubeEnableButton.setColour(juce::ToggleButton::textColourId, 
+                                          newState ? juce::Colours::green : MapleTheme::getHighlightColour());
+        }
+        else
+        {
+            DBG("GuitarPracticeComponent: AmpliTube effect is already " + juce::String(shouldEnable ? "enabled" : "disabled"));
+        }
+    }
+    else
+    {
+        DBG("GuitarPracticeComponent: Cannot change AmpliTube state - audioController is null");
     }
 }
 
@@ -983,6 +1028,12 @@ bool GuitarPracticeComponent::isAmpliTubeEffectEnabled() const
 
 void GuitarPracticeComponent::toggleAmpliTubeEffect()
 {
+    // 현재 상태 확인
     bool currentState = isAmpliTubeEffectEnabled();
+    DBG("GuitarPracticeComponent: Toggling AmpliTube effect from " + 
+        juce::String(currentState ? "enabled" : "disabled") + " to " + 
+        juce::String(!currentState ? "enabled" : "disabled"));
+    
+    // 현재 상태 반전
     enableAmpliTubeEffect(!currentState);
 }

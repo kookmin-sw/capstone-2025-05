@@ -40,9 +40,11 @@ bool AmpliTubeProcessor::init()
     // 플러그인 초기화
     plugin->prepareToPlay(currentSampleRate, currentBlockSize);
     
-    // 프로세싱 활성화
-    processingEnabled = true;
+    // 초기화는 완료했지만 프로세싱은 기본적으로 비활성화 상태로 유지
+    // 외부에서 명시적으로 setProcessingEnabled(true)를 호출해야 활성화됨
+    processingEnabled = false;
     
+    DBG("AmpliTubeProcessor: Initialized successfully, but processing is disabled by default");
     return true;
 }
 
@@ -62,7 +64,7 @@ void AmpliTubeProcessor::processBlock(const float* const* inputChannelData,
             else
                 std::memset(outputChannelData[channel], 0, sizeof(float) * numSamples);
         }
-        return;
+        return; // 여기서 함수를 종료하여 아래 코드가 실행되지 않도록 함
     }
     
     // 필요한 경우 임시 버퍼 크기 조정
