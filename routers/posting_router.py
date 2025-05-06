@@ -32,7 +32,7 @@ from google.cloud.firestore_v1 import FieldFilter
 from google.cloud import storage
 from datetime import timedelta
 from dotenv import load_dotenv
-from manager.firebase_manager import firestore_db
+from manager.firebase_manager import firestore_db, storage_bucket
 
 #storage_bucket = storage.bucket()
 posts_ref = firestore_db.collection("post")
@@ -742,24 +742,19 @@ def search_post(
     try:
         query_lower = query.lower()
 
- 
-        docs = (
-            posts_ref
-            .order_by("date", direction="DESCENDING")
-            .order_by("title", direction="ASCENDING") 
-            .stream()
-        )
+        docs = list(posts_ref.stream())
 
         results = []
         for doc in docs:
             data = doc.to_dict()
-            title = data.get("title", "").lower()
-        
-            if query_lower in title:
+            title = data.get("제목", "")
+            content = data.get("내용", "")
+
+            if query_lower in title.lower() or query_lower in content.lower():
                 results.append({
                     "id": doc.id,
-                    "title": data.get("title", ""),
-                    "content": data.get("내용", ""),
+                    "title": title,
+                    "content": content,
                     "created_at": data.get("date", ""),
                 })
 
@@ -767,23 +762,25 @@ def search_post(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"검색 실패: {str(e)}")
+
 @router.get("/autocomplete", tags=["Post"])
 def autocomplete(query: str = Query(..., description="자동완성 검색어 입력")):
     try:
         query_lower = query.lower()
-        docs = (
-            posts_ref
-            .order_by("title")  
-            .start_at([query_lower])
-            .end_at([query_lower + "\uf8ff"])
-            .stream()
-        )
 
-        suggestions = [doc.to_dict().get("title", "") for doc in docs]
+        docs = list(posts_ref.stream())
+        print(f"총 문서수: {len(docs)}")
+        print(f"Query: {query_lower}")
+        results = []
+        for doc in docs:
+            data = doc.to_dict()
+            title = data.get("제목", "")
+            if query_lower in title.lower():  # 부분 일치
+                results.append({"title": title})
 
-        return {"suggestions": suggestions}
+        return results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"자동완성 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"검색 실패: {str(e)}")
 
 @router.get("/comment/{post_id}", response_class=JSONResponse, tags=["Comment"])
 async def read_comment(request: Request, post_id: int):
