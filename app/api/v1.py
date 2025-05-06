@@ -1,12 +1,14 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Path, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Path, UploadFile, status, Query
 from fastapi.responses import JSONResponse
-from typing import Optional
+from typing import Optional, List
 import io
 import os
 from tempfile import NamedTemporaryFile
+from bson import ObjectId
 
-from app.schemas import AnalysisRequest, AnalysisType, TaskResponse, ProgressResponse
+from app.schemas import AnalysisRequest, AnalysisType, TaskResponse, ProgressResponse, AnalysisResultResponse, AnalysisListResponse
 from workers.tasks import analyze_audio, compare_audio
+from app.db import get_analysis_result, get_user_analysis_results, get_song_analysis_results
 
 router = APIRouter(prefix="/v1")
 
@@ -146,3 +148,77 @@ async def get_task_status(
         response.progress = task.info['progress']
     
     return response
+
+
+@router.get("/results/{task_id}", response_model=AnalysisResultResponse)
+async def get_result(
+    task_id: str = Path(..., description="The ID of the task to get results for")
+):
+    """
+    MongoDB에서 분석 결과를 가져옵니다.
+    
+    Parameters:
+    - task_id: 결과를 가져올 작업 ID
+    
+    Returns:
+    - 분석 결과 데이터
+    """
+    result = get_analysis_result(task_id)
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No result found for task ID: {task_id}"
+        )
+    
+    # MongoDB ObjectId를 str로 변환
+    result["_id"] = str(result["_id"])
+    
+    return result
+
+
+@router.get("/user/{user_id}/results", response_model=AnalysisListResponse)
+async def get_user_results(
+    user_id: str = Path(..., description="사용자 ID"),
+    limit: int = Query(10, ge=1, le=100, description="결과 수 제한")
+):
+    """
+    특정 사용자의 분석 결과를 가져옵니다.
+    
+    Parameters:
+    - user_id: 사용자 ID
+    - limit: 최대 결과 수 (기본값: 10)
+    
+    Returns:
+    - 사용자의 분석 결과 목록
+    """
+    results = get_user_analysis_results(user_id, limit)
+    
+    # MongoDB ObjectId를 str로 변환
+    for result in results:
+        result["_id"] = str(result["_id"])
+    
+    return {"results": results, "count": len(results)}
+
+
+@router.get("/song/{song_id}/results", response_model=AnalysisListResponse)
+async def get_song_results(
+    song_id: str = Path(..., description="곡 ID"),
+    limit: int = Query(10, ge=1, le=100, description="결과 수 제한")
+):
+    """
+    특정 곡의 분석 결과를 가져옵니다.
+    
+    Parameters:
+    - song_id: 곡 ID
+    - limit: 최대 결과 수 (기본값: 10)
+    
+    Returns:
+    - 곡의 분석 결과 목록
+    """
+    results = get_song_analysis_results(song_id, limit)
+    
+    # MongoDB ObjectId를 str로 변환
+    for result in results:
+        result["_id"] = str(result["_id"])
+    
+    return {"results": results, "count": len(results)}

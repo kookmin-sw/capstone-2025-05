@@ -12,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api import api_router
+# MongoDB 모듈 가져오기
+from app.db import client as mongo_client
 
 # Create FastAPI app
 app = FastAPI(
@@ -50,7 +52,20 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint for monitoring."""
-    return {"status": "healthy"}
+    # MongoDB 상태 확인
+    try:
+        # 서버 정보 요청을 통해 MongoDB 연결 확인
+        mongo_client.server_info()
+        mongo_status = "connected"
+    except Exception as e:
+        mongo_status = f"disconnected: {str(e)}"
+    
+    return {
+        "status": "healthy",
+        "services": {
+            "mongodb": mongo_status
+        }
+    }
 
 
 @app.exception_handler(Exception)
@@ -60,3 +75,21 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal server error", "error": str(exc)},
     )
+
+
+@app.on_event("startup")
+async def startup_db_client():
+    """애플리케이션 시작 시 MongoDB에 연결"""
+    try:
+        # MongoDB 연결 확인
+        mongo_client.server_info()
+        print("MongoDB 연결 성공")
+    except Exception as e:
+        print(f"MongoDB 연결 실패: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    """애플리케이션 종료 시 MongoDB 연결 종료"""
+    mongo_client.close()
+    print("MongoDB 연결 종료")

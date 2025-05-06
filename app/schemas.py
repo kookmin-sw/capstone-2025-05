@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 from pydantic import BaseModel, Field
 
@@ -75,3 +75,24 @@ class ComparisonResult(BaseModel):
     rhythm_absolute_match: Optional[float] = None
     rhythm_relative_match: Optional[float] = None
     expression_similarity: Optional[float] = None
+
+
+# MongoDB 스키마 추가
+class AnalysisResultResponse(BaseModel):
+    """MongoDB에서 가져온 분석 결과를 위한 응답 모델"""
+    _id: str
+    task_id: str
+    result: Dict[str, Any]
+    user_id: Optional[str] = None
+    song_id: Optional[str] = None
+    created_at: Optional[str] = None
+    
+    class Config:
+        """Pydantic 설정"""
+        orm_mode = True
+
+
+class AnalysisListResponse(BaseModel):
+    """분석 결과 목록을 위한 응답 모델"""
+    results: List[Dict[str, Any]]
+    count: int

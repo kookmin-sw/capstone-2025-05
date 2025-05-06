@@ -5,6 +5,7 @@ import scipy.signal  # SciPy 패치를 위해 추가
 from celery import Celery
 from celery.utils.log import get_task_logger
 import json
+from datetime import datetime
 
 # SciPy 호환성 패치 적용
 # 최신 버전의 SciPy에서는 scipy.signal.hann이 scipy.signal.windows.hann으로 이동했습니다
@@ -21,6 +22,8 @@ from workers.dsp import (
 )
 # 피드백 생성기 추가
 from workers.feedback import GrokFeedbackGenerator
+# MongoDB 저장 기능 추가
+from app.db import save_analysis_result, save_comparison_result, save_feedback
 
 # Initialize Celery app
 celery_app = Celery('maple_audio_analyzer')
@@ -122,7 +125,8 @@ def analyze_audio(self, audio_bytes, request_dict=None):
             "onsets": onsets,
             "number_of_notes": len(onsets),
             "duration": float(len(y) / sr),
-            "techniques": techniques
+            "techniques": techniques,
+            "created_at": datetime.utcnow().isoformat()
         }
         
         # 메타데이터 추가 (92%)
@@ -148,12 +152,21 @@ def analyze_audio(self, audio_bytes, request_dict=None):
                 if 'feedback' in feedback_result:
                     result['feedback'] = feedback_result['feedback']
                     result['feedback_metadata'] = feedback_result.get('metadata', {})
+                    
+                    # 피드백을 MongoDB에 저장
+                    feedback_result['created_at'] = datetime.utcnow().isoformat()
+                    save_feedback(self.request.id, feedback_result)
                 # 오류가 발생한 경우 오류 메시지 추가
                 elif 'error' in feedback_result:
                     result['feedback_error'] = feedback_result['error']
             except Exception as e:
                 logger.exception(f"Error generating feedback: {str(e)}")
                 result['feedback_error'] = f"피드백 생성 중 오류 발생: {str(e)}"
+        
+        # MongoDB에 결과 저장 (97%)
+        self.update_state(state='FINALIZING', meta={'progress': 97})
+        logger.info(f"Saving analysis results to MongoDB for task {self.request.id}")
+        save_analysis_result(self.request.id, result)
         
         # 완료 (99%)
         self.update_state(state='FINALIZING', meta={'progress': 99})
@@ -371,7 +384,8 @@ def compare_audio(self, user_audio_bytes, reference_audio_bytes=None, midi_bytes
                     "rhythm_match_percentage": rhythm_match,
                     "technique_match_percentage": technique_match,
                     "overall_score": overall_score
-                }
+                },
+                "created_at": datetime.utcnow().isoformat()
             }
             
             # MIDI 관련 상세 리듬 분석 추가
@@ -424,12 +438,24 @@ def compare_audio(self, user_audio_bytes, reference_audio_bytes=None, midi_bytes
                 if 'feedback' in feedback_result:
                     result['feedback'] = feedback_result['feedback']
                     result['feedback_metadata'] = feedback_result.get('metadata', {})
+                    
+                    # 피드백을 MongoDB에 저장
+                    feedback_result['created_at'] = datetime.utcnow().isoformat()
+                    save_feedback(self.request.id, feedback_result)
                 # 오류가 발생한 경우 오류 메시지 추가
                 elif 'error' in feedback_result:
                     result['feedback_error'] = feedback_result['error']
             except Exception as e:
                 logger.exception(f"Error generating feedback: {str(e)}")
                 result['feedback_error'] = f"피드백 생성 중 오류 발생: {str(e)}"
+        
+        # MongoDB에 결과 저장 (98%)
+        self.update_state(state='FINALIZING', meta={'progress': 98})
+        logger.info(f"Saving comparison results to MongoDB for task {self.request.id}")
+        if reference_audio_bytes is not None:
+            save_comparison_result(self.request.id, result)
+        else:
+            save_analysis_result(self.request.id, result)
         
         # 100% 진행
         self.update_state(state='FINALIZING', meta={'progress': 99})
