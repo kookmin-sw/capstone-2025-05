@@ -136,6 +136,7 @@ target_link_libraries(MapleClientDesktop PRIVATE
     juce::juce_audio_formats
     juce::juce_audio_processors
     juce::juce_audio_utils
+    juce::juce_dsp
 )
 
 # Windows 애플리케이션으로 빌드하도록 설정
