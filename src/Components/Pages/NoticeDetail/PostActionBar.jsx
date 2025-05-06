@@ -63,6 +63,8 @@ export default function PostActionBar({
   //북바크
   const handleScrap = () => {
     setIsScrap(!isScrap);
+    const key = `scrap_${uid}_${post.id}`;
+    localStorage.setItem(key, String(!isScrap));
     if (!isScrap) {
       //북마크 클릭
       scrapPostMutate(

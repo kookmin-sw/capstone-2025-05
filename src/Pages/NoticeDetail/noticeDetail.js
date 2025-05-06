@@ -50,9 +50,6 @@ export default function NoticeDetail() {
       }, 500);
     }
   };
-
-  console.log('post아이디', post.id);
-
   //신고하기 게시글 모달 창을 위한 상태 관리
   const [isWriteReportOpen, setIsWriteReportOpen] = useState(false);
 
@@ -92,12 +89,15 @@ export default function NoticeDetail() {
   }, [commentsInfo]);
 
   useEffect(() => {
-    const key = `heart_${uid}_${post.id}`;
-    const stored = localStorage.getItem(key);
-    setLiked(stored === 'true');
+    // 이전에 좋아요 했던 글인지 체크
+    const heartKey = `heart_${uid}_${post.id}`;
+    const heartStored = localStorage.getItem(heartKey);
+    setLiked(heartStored === 'true');
+    // 이전에 스크랩 했던 글인지 체크
+    const scrapKey = `scrap_${uid}_${post.id}`;
+    const scrapStored = localStorage.getItem(scrapKey);
+    setIsScrap(scrapStored === 'true');
   }, [post.id, uid]);
-  console.log(commentsInfo, '댓글정보');
-  console.log(post, '게시글정보');
 
   return (
     <div>
