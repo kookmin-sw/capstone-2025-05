@@ -4,7 +4,22 @@ from typing import Optional, List
 import io
 import os
 from tempfile import NamedTemporaryFile
-from bson import ObjectId
+
+# bson 모듈을 조건부로 임포트 (테스트 환경에서는 모의 객체 사용)
+try:
+    from bson import ObjectId
+    from bson.errors import InvalidId
+except (ImportError, ModuleNotFoundError):
+    # 테스트를 위한 가짜 ObjectId 클래스
+    class ObjectId:
+        def __init__(self, oid=None):
+            self.oid = oid
+        
+        def __str__(self):
+            return str(self.oid)
+    
+    class InvalidId(Exception):
+        pass
 
 from app.schemas import AnalysisRequest, AnalysisType, TaskResponse, ProgressResponse, AnalysisResultResponse
 from workers.tasks import analyze_audio, compare_audio

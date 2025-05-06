@@ -17,4 +17,4 @@ fastdtw==0.3.4
 h5py>=3.10.0  # Updated to be compatible with tensorflow>=2.16.1
 pytest==7.4.2
 httpx==0.25.0
-pymongo==4.6.1
+pymongo[srv]==4.6.1  # srv 확장 기능 추가 (MongoDB Atlas 연결 지원)
