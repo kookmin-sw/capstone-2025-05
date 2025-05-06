@@ -5,7 +5,6 @@ import { useAuth } from '../Context/AuthContext';
 // 페이지 컴포넌트 불러오기
 import TestPage from '../Pages/TestPage/testPage';
 import Login from '../Pages/Login/login';
-import GoogleCallback from '../Pages/Login/googleCallback';
 import Signup from '../Pages/Login/signup';
 import Profile from '../Pages/Login/profile';
 import Main from '../Pages/Main/main';
@@ -31,7 +30,6 @@ export default function AppRoutes() {
   if (!initialized) return null;
   return (
     <Routes>
-      {/* ✅ 항상 접근 가능해야 하는 라우트 */}
       <Route path="/oauth-success" element={<OauthRedirectHandler />} />
 
       {uid ? (

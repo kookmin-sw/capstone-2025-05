@@ -1,13 +1,14 @@
 import './App.css';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter as Router } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { SpotifyPlayerProvider } from './Context/SpotifyContext';
 import MapleHeader from './Components/MapleHeader';
-import { AuthProvider } from './Context/AuthContext'; // 추가
+import { AuthProvider, useAuth } from './Context/AuthContext'; // 추가
 import AppRoutes from './Routes/AppRoutes';
 
 function App() {
   const [token, setToken] = useState(null);
+  const { login } = useAuth();
   const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
   const redirectUri = process.env.REACT_APP_SPOTIFY_REDIRECT_URI;
   console.log('spotify', redirectUri);
@@ -25,10 +26,6 @@ function App() {
     `&client_id=${clientId}` +
     `&scope=${encodeURIComponent(scopes.join(' '))}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-  useEffect(() => {
-    console.log(window.location.href, '윈도우 주소');
-  }, [window.location.href]);
   useEffect(() => {
     // 최초 실행 시
     const hash = window.location.hash;
@@ -57,14 +54,12 @@ function App() {
 
   return (
     <div className="App">
-      <AuthProvider>
-        <SpotifyPlayerProvider token={token} authUrl={authUrl}>
-          <BrowserRouter>
-            <MapleHeader />
-            <AppRoutes />
-          </BrowserRouter>
-        </SpotifyPlayerProvider>
-      </AuthProvider>
+      <SpotifyPlayerProvider token={token} authUrl={authUrl}>
+        <Router>
+          <MapleHeader />
+          <AppRoutes />
+        </Router>
+      </SpotifyPlayerProvider>
     </div>
   );
 }
