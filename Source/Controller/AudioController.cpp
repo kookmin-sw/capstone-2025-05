@@ -102,8 +102,22 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
         // AudioSourceChannelInfo 객체는 outputBuffer의 참조를 가짐
         juce::AudioSourceChannelInfo bufferInfo(outputBuffer);
         
+        // 모니터링이 활성화된 경우 이 지점에서 버퍼 상태를 기록
+        if (microphoneMonitoringEnabled && shouldLog) {
+            DBG("AudioController: Before GPC - Monitoring enabled, checking if buffer has content");
+            float bufferLevelBefore = outputBuffer.getMagnitude(0, numSamples);
+            DBG("AudioController: Before GPC - Buffer level: " + juce::String(bufferLevelBefore));
+        }
+        
         // GuitarPracticeController에 오디오 처리 위임 (참조로 전달)
         guitarPracticeController->getNextAudioBlock(bufferInfo);
+        
+        // 모니터링이 활성화된 경우 GPC 처리 후 버퍼 상태 기록
+        if (microphoneMonitoringEnabled && shouldLog) {
+            DBG("AudioController: After GPC - Checking if GPC added audio to buffer");
+            float bufferLevelAfter = outputBuffer.getMagnitude(0, numSamples);
+            DBG("AudioController: After GPC - Buffer level: " + juce::String(bufferLevelAfter));
+        }
         
         // 디버깅 정보
         if (shouldLog)
@@ -134,6 +148,7 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
     {
         if (shouldLogMonitoring) {
             DBG("AudioController: Processing microphone monitoring using references");
+            DBG("AudioController: Output buffer before any monitoring code: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
         }
         
         float volume = audioModel.getVolume();
@@ -142,8 +157,12 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
         // 스테레오 출력 (2채널 이상)
         if (numOutputChannels >= 2)
         {
+            if (shouldLogMonitoring) {
+                DBG("AudioController: Processing STEREO output path");
+            }
+            
             // 입력 채널 데이터에 직접 접근 (복사 없음)
-            int inputChannel = 0; // 첫 번째 채널 사용
+            int inputChannel = 1; // 첫 번째 채널 사용
             
             if (inputChannelData[inputChannel] != nullptr)
             {
@@ -155,6 +174,16 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                 float rightGain = monitorGain * 0.98f;
                 auto* rightOut = outputBuffer.getWritePointer(1);
                 
+                if (shouldLogMonitoring) {
+                    // 처리 전 샘플 기록
+                    if (numSamples > 0) {
+                        float firstInputSample = std::abs(inputChannelData[inputChannel][0]);
+                        DBG("AudioController: First sample from input[0]: " + juce::String(firstInputSample));
+                        DBG("AudioController: Applied gain (left): " + juce::String(leftGain));
+                        DBG("AudioController: Current leftOut[0] before adding: " + juce::String(leftOut[0]));
+                    }
+                }
+                
                 // 하나의 루프에서 처리 (효율성 증가)
                 for (int i = 0; i < numSamples; ++i)
                 {
@@ -162,28 +191,45 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                     float leftSample = inputChannelData[inputChannel][i] * leftGain;
                     leftOut[i] += juce::jlimit(-1.0f, 1.0f, leftSample);
                     
-                    // 오른쪽 채널 - 지연된 신호 (스테레오 효과)
-                    float delayedSample = (i > 0) ? inputChannelData[inputChannel][i-1] : 0.0f;
-                    float rightSample = delayedSample * rightGain;
+                    // 오른쪽 채널
+                    float rightSample = inputChannelData[inputChannel][i] * rightGain;
                     rightOut[i] += juce::jlimit(-1.0f, 1.0f, rightSample);
                 }
                 
-                // 스테레오 입력이 있으면 두 번째 채널도 활용
-                if (numInputChannels >= 2 && inputChannelData[1] != nullptr)
-                {
-                    float secondInputGain = monitorGain * 0.5f;
-                    // 두 번째 입력 채널을 오른쪽 출력에 추가 (참조 사용)
-                    for (int i = 0; i < numSamples; ++i)
-                    {
-                        float inputSample = inputChannelData[1][i] * secondInputGain;
-                        rightOut[i] += juce::jlimit(-1.0f, 1.0f, inputSample);
+                if (shouldLogMonitoring) {
+                    // 처리 후 샘플 기록
+                    if (numSamples > 0) {
+                        DBG("AudioController: After processing, leftOut[0]: " + juce::String(leftOut[0]));
+                        DBG("AudioController: Buffer level after left channel: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
                     }
                 }
+                
+                // // 스테레오 입력이 있으면 두 번째 채널도 활용
+                // if (numInputChannels >= 2 && inputChannelData[1] != nullptr)
+                // {
+                //     float secondInputGain = monitorGain * 0.5f;
+                //     // 두 번째 입력 채널을 오른쪽 출력에 추가 (참조 사용)
+                //     for (int i = 0; i < numSamples; ++i)
+                //     {
+                //         float inputSample = inputChannelData[1][i] * secondInputGain;
+                //         rightOut[i] += juce::jlimit(-1.0f, 1.0f, inputSample);
+                //     }
+                    
+                //     if (shouldLogMonitoring) {
+                //         DBG("AudioController: Added second input channel");
+                //         DBG("AudioController: Buffer level after second channel: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
+                //     }
+                // }
             }
         }
         else // 모노 출력 (1채널)
         {
+            if (shouldLogMonitoring) {
+                DBG("AudioController: Processing MONO microphone monitoring - THIS PART IS NOW COMMENTED OUT");
+            }
+            
             // 단일 채널 출력 - 가장 효율적인 처리
+            /*
             for (int outChannel = 0; outChannel < numOutputChannels; ++outChannel)
             {
                 if (outputChannelData[outChannel] != nullptr)
@@ -203,6 +249,7 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                     }
                 }
             }
+            */
         }
         
         // 모니터링 출력 레벨 로깅
