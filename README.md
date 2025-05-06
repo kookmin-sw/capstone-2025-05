@@ -35,6 +35,7 @@
 </div>
 
 > **MAPLE** (Music Analysis & Practice Learning Environment)은 기타 연주 학습자와 밴드 연습자들을 위한 AI 기반 실시간 연주 분석 및 피드백 시스템입니다.
+> 
 -✏️사용자의 기타 연주를 실시간으로 분석하여 **피치 정확도**, **리듬 정확도**, **연주 안정성** 등 다양한 측면의 피드백을 시각적으로 제공하는 AI 기반 웹 플랫폼입니다.
 -🎵 **2024년, 록·밴드 음악 인기 급상승**: DAY6·실리카겔·Wave to Earth 등 인디 밴드와 대중 밴드 모두 빠르게 성장 중
 -📉 기존 학습 도구의 한계: 유튜브·악보·튜너 등은 실시간 피드백 부족
@@ -54,12 +55,14 @@
 
 ### 🖥 프론트엔드
 
-<p>
-  <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB"/>
-  <img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white"/>
-</p>
-<img src="https://img.shields.io/badge/Spotify-1ED760?style=for-the-badge&logo=spotify&logoColor=white"/>
-<img src="https://img.shields.io/badge/-React%20Query-FF4154?style=for-the-badge&logo=react%20query&logoColor=white"/>
+|역할|종류|
+|-|-|
+|**Programming Language**| ![Javascript](https://img.shields.io/badge/Javascript-F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=white)
+|**Library**| ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=white)![ReactQuery](https://img.shields.io/badge/-React%20Query-FF4154?style=for-the-badge&logo=react%20query&logoColor=white)
+|**Styling**| ![tailwindcss](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+|**API**| ![tailwindcss](https://img.shields.io/badge/Spotify-1ED760?style=for-the-badge&logo=spotify&logoColor=white)
+|**Package Manager**|![Yarn](https://img.shields.io/badge/Yarn-2C8EBB.svg?style=for-the-badge&logo=Yarn&logoColor=white)                             
+|**Web Server**|![Nginx](https://img.shields.io/badge/Nginx-009639.svg?style=for-the-badge&logo=Nginx&logoColor=white)
 
 ### ⚙ 백엔드
 
