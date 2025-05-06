@@ -616,9 +616,7 @@ void GuitarPracticeComponent::updateUI()
 
 void GuitarPracticeComponent::startRecording()
 {
-    // 재생 중이면 중지 (Controller에게 위임)
-    if (audioModel.isPlaying())
-        controller->togglePlayback();
+    controller->togglePlayback();
     
     // 임시 녹음 파일 경로 설정
     auto parentDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
@@ -631,6 +629,7 @@ void GuitarPracticeComponent::startRecording()
     recordButtonLookAndFeel->setRecording(true);
     recordButton.repaint();
     analyzeButton.setEnabled(false);
+    playButton.setEnabled(false); // 녹음 중 재생 버튼 비활성화
     
     // 썸네일 표시 모드 설정
     recordingThumbnail->setDisplayFullThumbnail(false);
@@ -641,6 +640,7 @@ void GuitarPracticeComponent::startRecording()
 
 void GuitarPracticeComponent::stopRecording()
 {
+    controller->togglePlayback();
     // 녹음 중지 (AudioRecorder 호출)
     audioRecorder->stop();
     
@@ -652,6 +652,7 @@ void GuitarPracticeComponent::stopRecording()
     recordButtonLookAndFeel->setRecording(false);
     recordButton.repaint();
     analyzeButton.setEnabled(true);
+    playButton.setEnabled(true); // 녹음 중지 시 재생 버튼 활성화
     
     // 타이머 중지
     stopTimer();
