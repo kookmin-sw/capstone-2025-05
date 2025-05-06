@@ -52,6 +52,12 @@
 | ![]() | **김도경** | Frontend | [@dokyoungkim](https://github.com/dgKim1) | dokyoung@maple.com |
 | ![]() | **박지민** | Frontend | [@jiminpark](https://github.com/qkrwlalss) | jimin@maple.com |
 
+
+##🦾 주요 기능
+
+
+##🎬 시연 영상
+
 ## 🛠 기술 스택
 
 ### 🖥 프론트엔드
@@ -86,3 +92,7 @@
 
 ## 🚀 실행 방법
 
+
+## 📂 폴더 구조
+
+## 📎 참고 자료
