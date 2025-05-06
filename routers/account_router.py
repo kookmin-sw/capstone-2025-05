@@ -79,7 +79,7 @@ async def google_auth_callback(code: str):
         decoded_token = auth.verify_id_token(firebase_id_token)
         uid = decoded_token["uid"]
 
-        return RedirectResponse(url=f"https://maple.ne.kr/oauth-success?uid={uid}")
+        return RedirectResponse(url=f"https://maple.ne.kr/#/oauth-success?uid={uid}")
 
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=400, detail=f"구글 계정 요청 오류: {str(e)}")
