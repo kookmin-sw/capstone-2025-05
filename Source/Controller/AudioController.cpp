@@ -99,6 +99,21 @@ juce::Component* AudioController::getAmpliTubeEditorComponent()
     return nullptr;
 }
 
+void AudioController::setAmpliTubeInputGain(float gain)
+{
+    if (ampliTubeProcessor) {
+        ampliTubeProcessor->setInputGain(gain);
+        DBG("AudioController: AmpliTube input gain set to " + juce::String(gain));
+    }
+}
+
+float AudioController::getAmpliTubeInputGain() const
+{
+    if (ampliTubeProcessor)
+        return ampliTubeProcessor->getInputGain();
+    return 0.5f; // 기본값
+}
+
 void AudioController::audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
                                                       int numInputChannels,
                                                       float* const* outputChannelData,
@@ -270,7 +285,9 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                     
                     for (int i = 0; i < numSamples; ++i)
                     {
-                        outPtr[i] += juce::jlimit(-1.0f, 1.0f, processedPtr[i] * monitorGain);
+                        // 볼륨은 이미 AmpliTube에서 처리되므로 추가 게인 없이 적용
+                        // 단, 출력 레벨 제어를 위해 기본 볼륨만 적용 (마이크 게인은 제외)
+                        outPtr[i] += juce::jlimit(-1.0f, 1.0f, processedPtr[i] * audioModel.getVolume());
                     }
                 }
             }
@@ -288,80 +305,54 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                 DBG("AudioController: AmpliTube is DISABLED, doing direct monitoring");
             }
             
-            // 스테레오 출력 (2채널 이상)
-            if (numOutputChannels >= 2)
-            {
+            // 입력 채널 데이터에 직접 접근 (복사 없음)
+            int inputChannel = 1; // 마이크 입력 (두번째 채널)
+            
+            // 유효성 검사: 채널이 범위를 벗어날 경우 첫 번째 사용 가능한 채널로 대체
+            if (inputChannel >= numInputChannels && numInputChannels > 0) {
+                inputChannel = 0;
                 if (shouldLogMonitoring) {
-                    DBG("AudioController: Processing STEREO output path");
-                }
-                
-                // 입력 채널 데이터에 직접 접근 (복사 없음)
-                int inputChannel = 1; // 첫 번째 채널 사용
-                
-                if (inputChannelData[inputChannel] != nullptr && inputChannel < numInputChannels)
-                {
-                    // 왼쪽 채널 처리 (출력 버퍼 0번)
-                    float leftGain = monitorGain;
-                    auto* leftOut = outputBuffer.getWritePointer(0);
-                    
-                    // 오른쪽 채널 처리 (출력 버퍼 1번)
-                    float rightGain = monitorGain * 0.98f;
-                    auto* rightOut = outputBuffer.getWritePointer(1);
-                    
-                    if (shouldLogMonitoring) {
-                        // 처리 전 샘플 기록
-                        if (numSamples > 0) {
-                            float firstInputSample = std::abs(inputChannelData[inputChannel][0]);
-                            DBG("AudioController: First sample from input[1]: " + juce::String(firstInputSample));
-                            DBG("AudioController: Applied gain (left): " + juce::String(leftGain));
-                            DBG("AudioController: Current leftOut[0] before adding: " + juce::String(leftOut[0]));
-                        }
-                    }
-                    
-                    // 하나의 루프에서 처리 (효율성 증가)
-                    for (int i = 0; i < numSamples; ++i)
-                    {
-                        // 왼쪽 채널 - 원본 신호
-                        float leftSample = inputChannelData[inputChannel][i] * leftGain;
-                        leftOut[i] += juce::jlimit(-1.0f, 1.0f, leftSample);
-                        
-                        // 오른쪽 채널
-                        float rightSample = inputChannelData[inputChannel][i] * rightGain;
-                        rightOut[i] += juce::jlimit(-1.0f, 1.0f, rightSample);
-                    }
-                    
-                    if (shouldLogMonitoring) {
-                        // 처리 후 샘플 기록
-                        if (numSamples > 0) {
-                            DBG("AudioController: After processing, leftOut[0]: " + juce::String(leftOut[0]));
-                            DBG("AudioController: Buffer level after left channel: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
-                        }
-                    }
+                    DBG("AudioController: Adjusting input channel from 1 to 0 due to channel count limitation");
                 }
             }
-            else // 모노 출력 (1채널)
+            
+            if (inputChannelData[inputChannel] != nullptr && inputChannel < numInputChannels)
             {
+                // 왼쪽 채널 처리 (출력 버퍼 0번)
+                float leftGain = monitorGain;
+                auto* leftOut = outputBuffer.getWritePointer(0);
+                
+                // 오른쪽 채널 처리 (출력 버퍼 1번)
+                float rightGain = monitorGain * 0.98f;
+                auto* rightOut = outputBuffer.getWritePointer(1);
+                
                 if (shouldLogMonitoring) {
-                    DBG("AudioController: Processing MONO output path");
+                    // 처리 전 샘플 기록
+                    if (numSamples > 0) {
+                        float firstInputSample = std::abs(inputChannelData[inputChannel][0]);
+                        DBG("AudioController: First sample from input[1]: " + juce::String(firstInputSample));
+                        DBG("AudioController: Applied gain (left): " + juce::String(leftGain));
+                        DBG("AudioController: Current leftOut[0] before adding: " + juce::String(leftOut[0]));
+                    }
                 }
                 
-                // 단일 채널 출력 처리
-                for (int outChannel = 0; outChannel < numOutputChannels; ++outChannel)
+                // 하나의 루프에서 처리 (효율성 증가)
+                for (int i = 0; i < numSamples; ++i)
                 {
-                    if (outputChannelData[outChannel] != nullptr)
-                    {
-                        int inChannel = outChannel % numInputChannels;
-                        
-                        if (inputChannelData[inChannel] != nullptr)
-                        {
-                            auto* outPtr = outputBuffer.getWritePointer(outChannel);
-                            const auto* inPtr = inputChannelData[inChannel];
-                            
-                            for (int i = 0; i < numSamples; ++i)
-                            {
-                                outPtr[i] += juce::jlimit(-1.0f, 1.0f, inPtr[i] * monitorGain);
-                            }
-                        }
+                    // 왼쪽 채널 - 원본 신호
+                    float leftSample = inputChannelData[inputChannel][i] * leftGain;
+                    leftOut[i] += juce::jlimit(-1.0f, 1.0f, leftSample);
+                    
+                    // 오른쪽 채널
+                    float rightSample = inputChannelData[inputChannel][i] * rightGain;
+                    rightOut[i] += juce::jlimit(-1.0f, 1.0f, rightSample);
+                }
+                
+                if (shouldLogMonitoring) {
+                    // 처리 후 샘플 기록
+                    if (numSamples > 0) {
+                        DBG("AudioController: After processing, leftOut[0]: " + juce::String(leftOut[0]));
+                        DBG("AudioController: Buffer level after left channel: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
                     }
                 }
             }

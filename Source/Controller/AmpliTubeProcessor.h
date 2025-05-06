@@ -24,6 +24,10 @@ public:
     void setProcessingEnabled(bool shouldBeEnabled);
     bool isProcessingEnabled() const { return processingEnabled; }
     
+    // 입력 게인 조절 기능 추가
+    void setInputGain(float gain) { inputGain = juce::jlimit(0.0f, 2.0f, gain); }
+    float getInputGain() const { return inputGain; }
+    
     // 샘플링 레이트 설정
     void prepareToPlay(double sampleRate, int samplesPerBlock);
     
@@ -36,6 +40,7 @@ private:
     double currentSampleRate = 44100.0;
     int currentBlockSize = 512;
     bool processingEnabled = false;
+    float inputGain = 0.5f; // 기본 입력 게인 값 (50%)
     
     // 플러그인 찾기 및 로드 메서드
     juce::AudioPluginInstance* findAndLoadPlugin();

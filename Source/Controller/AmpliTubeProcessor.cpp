@@ -74,7 +74,15 @@ void AmpliTubeProcessor::processBlock(const float* const* inputChannelData,
     // 입력 데이터를 버퍼에 복사
     for (int channel = 0; channel < numInputChannels && channel < tempBuffer.getNumChannels(); ++channel)
     {
-        std::memcpy(tempBuffer.getWritePointer(channel), inputChannelData[channel], sizeof(float) * numSamples);
+        // 게인 적용하여 복사
+        const float* input = inputChannelData[channel];
+        float* output = tempBuffer.getWritePointer(channel);
+        
+        // 게인 적용
+        for (int i = 0; i < numSamples; ++i)
+        {
+            output[i] = input[i] * inputGain;
+        }
     }
     
     // 추가 채널 초기화

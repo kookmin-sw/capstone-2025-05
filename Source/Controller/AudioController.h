@@ -37,6 +37,10 @@ public:
     bool isAmpliTubeEffectEnabled() const;
     juce::Component* getAmpliTubeEditorComponent();
     
+    // AmpliTube 게인 제어 메서드 추가
+    void setAmpliTubeInputGain(float gain);
+    float getAmpliTubeInputGain() const;
+    
 private:
     AudioModel& audioModel;
     juce::AudioDeviceManager& deviceManager;
