@@ -43,12 +43,12 @@
 ## 👨‍👨‍👦‍👦 팀원 소개
 | 사진 | 이름 | 역할 | GitHub | 이메일 |
 |------|------|------|--------|--------|
-| ![]() | **송혜원** | Backend(팀장) | [@songhyeone](https://github.com/songhyeone) | hyeone@song.com |
+| ![]() | **송혜원** | Backend(팀장) | [@songhyeone](https://github.com/20223096) | hyeone@song.com |
 | ![]() | **박재훈** | AI | [@jaehoonpark](https://github.com/lovelyoverflow) | jaehoon@maple.com |
-| ![]() | **신수민** | Backend | [@soominshin](https://github.com/soominshin) | soomin@maple.com |
-| ![]() | **이정윤** | Frontend | [@jungyoonlee](https://github.com/jungyoonlee) | jungyoon@maple.com |
-| ![]() | **김도경** | Frontend | [@dokyoungkim](https://github.com/dokyoungkim) | dokyoung@maple.com |
-| ![]() | **박지민** | Frontend | [@jiminpark](https://github.com/jiminpark) | jimin@maple.com |
+| ![]() | **신수민** | Backend | [@soominshin](https://github.com/syngrxm) | soomin@maple.com |
+| ![]() | **이정윤** | Frontend | [@jungyoonlee](https://github.com/lyun1015 ) | jungyoon@maple.com |
+| ![]() | **김도경** | Frontend | [@dokyoungkim](https://github.com/dgKim1) | dokyoung@maple.com |
+| ![]() | **박지민** | Frontend | [@jiminpark](https://github.com/qkrwlalss) | jimin@maple.com |
 
 ## 🛠 기술 스택
 
