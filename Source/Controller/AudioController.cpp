@@ -5,12 +5,15 @@ AudioController::AudioController(AudioModel& model, juce::AudioDeviceManager& ma
     : audioModel(model), deviceManager(manager), guitarPracticeController(nullptr),
       microphoneMonitoringEnabled(false), microphoneGain(5.0f)
 {
+    // AmpliTube 프로세서 초기화
+    ampliTubeProcessor = std::make_unique<AmpliTubeProcessor>();
     deviceManager.addAudioCallback(this);
 }
 
 AudioController::~AudioController()
 {
     deviceManager.removeAudioCallback(this);
+    ampliTubeProcessor = nullptr;
 }
 
 void AudioController::setGuitarPracticeController(GuitarPracticeController* controller)
@@ -35,6 +38,51 @@ void AudioController::setMicrophoneGain(float gain)
     // 유효한 범위 내에서 게인 설정 (0.1 ~ 10.0)
     microphoneGain = juce::jlimit(0.1f, 10.0f, gain);
     DBG("AudioController: Microphone gain set to " + juce::String(microphoneGain));
+}
+
+// AmpliTube 관련 메서드 구현
+void AudioController::enableAmpliTubeEffect(bool shouldEnable)
+{
+    if (ampliTubeProcessor) {
+        // 처음 활성화될 때 초기화
+        if (shouldEnable && !ampliTubeProcessor->isProcessingEnabled()) {
+            // 아직 초기화되지 않았다면 초기화
+            if (!ampliTubeProcessor->getEditorComponent()) {
+                bool initialized = ampliTubeProcessor->init();
+                if (!initialized) {
+                    DBG("AudioController: Failed to initialize AmpliTube");
+                    return;
+                }
+            }
+        }
+        
+        // 활성화/비활성화 상태 설정
+        ampliTubeProcessor->setProcessingEnabled(shouldEnable);
+        DBG("AudioController: AmpliTube effect " + juce::String(shouldEnable ? "enabled" : "disabled"));
+    }
+}
+
+bool AudioController::isAmpliTubeEffectEnabled() const
+{
+    if (ampliTubeProcessor)
+        return ampliTubeProcessor->isProcessingEnabled();
+    return false;
+}
+
+juce::Component* AudioController::getAmpliTubeEditorComponent()
+{
+    if (ampliTubeProcessor) {
+        // 아직 초기화되지 않았다면 초기화
+        if (!ampliTubeProcessor->getEditorComponent()) {
+            bool initialized = ampliTubeProcessor->init();
+            if (!initialized) {
+                DBG("AudioController: Failed to initialize AmpliTube editor");
+                return nullptr;
+            }
+        }
+        return ampliTubeProcessor->getEditorComponent();
+    }
+    return nullptr;
 }
 
 void AudioController::audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
@@ -154,138 +202,164 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
         float volume = audioModel.getVolume();
         float monitorGain = microphoneGain * volume;
         
-        // 스테레오 출력 (2채널 이상)
-        if (numOutputChannels >= 2)
+        // AmpliTube 이펙트 처리 (입력 버퍼를 처리하여 출력 버퍼에 추가)
+        if (ampliTubeProcessor && ampliTubeProcessor->isProcessingEnabled())
         {
-            if (shouldLogMonitoring) {
-                DBG("AudioController: Processing STEREO output path");
+            // 동적 메모리 할당은 힙 메모리를 사용합니다
+            std::unique_ptr<float[]> tempBuffer1 = std::make_unique<float[]>(numSamples);
+            std::unique_ptr<float[]> tempBuffer2 = std::make_unique<float[]>(numSamples);
+            
+            float* tempOutputData[2] = { nullptr, nullptr };
+            
+            if (numOutputChannels >= 1)
+                tempOutputData[0] = tempBuffer1.get();
+            if (numOutputChannels >= 2)
+                tempOutputData[1] = tempBuffer2.get();
+            
+            // 버퍼 초기화
+            for (int ch = 0; ch < juce::jmin(2, numOutputChannels); ++ch)
+                if (tempOutputData[ch] != nullptr)
+                    std::memset(tempOutputData[ch], 0, sizeof(float) * numSamples);
+            
+            // 입력 채널 설정 - 채널 1번 (두번째 채널) 사용
+            const float* inputChannelToProcess[2] = { nullptr, nullptr };
+            if (numInputChannels > 1)
+                inputChannelToProcess[0] = inputChannelData[1]; // 마이크 입력 (두번째 채널)
+            else if (numInputChannels > 0)
+                inputChannelToProcess[0] = inputChannelData[0]; // 대체 채널
+                
+            // 필요시 두번째 채널 설정 (모노 입력을 스테레오로 복제)
+            inputChannelToProcess[1] = inputChannelToProcess[0];
+            
+            // AmpliTube 프로세서로 오디오 처리
+            ampliTubeProcessor->processBlock(inputChannelToProcess, 
+                                            inputChannelToProcess[0] != nullptr ? 2 : 0, 
+                                            tempOutputData, 
+                                            juce::jmin(2, numOutputChannels),
+                                            numSamples);
+            
+            // 처리된 결과를 출력 버퍼에 추가 (볼륨 적용)
+            for (int ch = 0; ch < juce::jmin(2, numOutputChannels); ++ch)
+            {
+                if (tempOutputData[ch] != nullptr && outputChannelData[ch] != nullptr)
+                {
+                    auto* outPtr = outputBuffer.getWritePointer(ch);
+                    const auto* processedPtr = tempOutputData[ch];
+                    
+                    for (int i = 0; i < numSamples; ++i)
+                    {
+                        outPtr[i] += juce::jlimit(-1.0f, 1.0f, processedPtr[i] * monitorGain);
+                    }
+                }
             }
             
-            // 입력 채널 데이터에 직접 접근 (복사 없음)
-            int inputChannel = 1; // 첫 번째 채널 사용
-            
-            if (inputChannelData[inputChannel] != nullptr)
-            {
-                // 왼쪽 채널 처리 (출력 버퍼 0번)
-                float leftGain = monitorGain;
-                auto* leftOut = outputBuffer.getWritePointer(0);
-                
-                // 오른쪽 채널 처리 (출력 버퍼 1번)
-                float rightGain = monitorGain * 0.98f;
-                auto* rightOut = outputBuffer.getWritePointer(1);
-                
-                if (shouldLogMonitoring) {
-                    // 처리 전 샘플 기록
-                    if (numSamples > 0) {
-                        float firstInputSample = std::abs(inputChannelData[inputChannel][0]);
-                        DBG("AudioController: First sample from input[0]: " + juce::String(firstInputSample));
-                        DBG("AudioController: Applied gain (left): " + juce::String(leftGain));
-                        DBG("AudioController: Current leftOut[0] before adding: " + juce::String(leftOut[0]));
-                    }
-                }
-                
-                // 하나의 루프에서 처리 (효율성 증가)
-                for (int i = 0; i < numSamples; ++i)
-                {
-                    // 왼쪽 채널 - 원본 신호
-                    float leftSample = inputChannelData[inputChannel][i] * leftGain;
-                    leftOut[i] += juce::jlimit(-1.0f, 1.0f, leftSample);
-                    
-                    // 오른쪽 채널
-                    float rightSample = inputChannelData[inputChannel][i] * rightGain;
-                    rightOut[i] += juce::jlimit(-1.0f, 1.0f, rightSample);
-                }
-                
-                if (shouldLogMonitoring) {
-                    // 처리 후 샘플 기록
-                    if (numSamples > 0) {
-                        DBG("AudioController: After processing, leftOut[0]: " + juce::String(leftOut[0]));
-                        DBG("AudioController: Buffer level after left channel: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
-                    }
-                }
-                
-                // // 스테레오 입력이 있으면 두 번째 채널도 활용
-                // if (numInputChannels >= 2 && inputChannelData[1] != nullptr)
-                // {
-                //     float secondInputGain = monitorGain * 0.5f;
-                //     // 두 번째 입력 채널을 오른쪽 출력에 추가 (참조 사용)
-                //     for (int i = 0; i < numSamples; ++i)
-                //     {
-                //         float inputSample = inputChannelData[1][i] * secondInputGain;
-                //         rightOut[i] += juce::jlimit(-1.0f, 1.0f, inputSample);
-                //     }
-                    
-                //     if (shouldLogMonitoring) {
-                //         DBG("AudioController: Added second input channel");
-                //         DBG("AudioController: Buffer level after second channel: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
-                //     }
-                // }
+            if (shouldLogMonitoring) {
+                DBG("AudioController: Applied AmpliTube processing");
             }
         }
-        else // 모노 출력 (1채널)
+        else // AmpliTube 처리 없이 직접 모니터링
         {
-            if (shouldLogMonitoring) {
-                DBG("AudioController: Processing MONO microphone monitoring - THIS PART IS NOW COMMENTED OUT");
-            }
-            
-            // 단일 채널 출력 - 가장 효율적인 처리
-            /*
-            for (int outChannel = 0; outChannel < numOutputChannels; ++outChannel)
+            // 스테레오 출력 (2채널 이상)
+            if (numOutputChannels >= 2)
             {
-                if (outputChannelData[outChannel] != nullptr)
+                if (shouldLogMonitoring) {
+                    DBG("AudioController: Processing STEREO output path");
+                }
+                
+                // 입력 채널 데이터에 직접 접근 (복사 없음)
+                int inputChannel = 1; // 첫 번째 채널 사용
+                
+                if (inputChannelData[inputChannel] != nullptr && inputChannel < numInputChannels)
                 {
-                    int inChannel = outChannel % numInputChannels;
+                    // 왼쪽 채널 처리 (출력 버퍼 0번)
+                    float leftGain = monitorGain;
+                    auto* leftOut = outputBuffer.getWritePointer(0);
                     
-                    if (inputChannelData[inChannel] != nullptr)
+                    // 오른쪽 채널 처리 (출력 버퍼 1번)
+                    float rightGain = monitorGain * 0.98f;
+                    auto* rightOut = outputBuffer.getWritePointer(1);
+                    
+                    if (shouldLogMonitoring) {
+                        // 처리 전 샘플 기록
+                        if (numSamples > 0) {
+                            float firstInputSample = std::abs(inputChannelData[inputChannel][0]);
+                            DBG("AudioController: First sample from input[1]: " + juce::String(firstInputSample));
+                            DBG("AudioController: Applied gain (left): " + juce::String(leftGain));
+                            DBG("AudioController: Current leftOut[0] before adding: " + juce::String(leftOut[0]));
+                        }
+                    }
+                    
+                    // 하나의 루프에서 처리 (효율성 증가)
+                    for (int i = 0; i < numSamples; ++i)
                     {
-                        auto* outPtr = outputBuffer.getWritePointer(outChannel);
-                        const auto* inPtr = inputChannelData[inChannel];
+                        // 왼쪽 채널 - 원본 신호
+                        float leftSample = inputChannelData[inputChannel][i] * leftGain;
+                        leftOut[i] += juce::jlimit(-1.0f, 1.0f, leftSample);
                         
-                        // SIMD 최적화 가능한 벡터 연산 사용
-                        for (int i = 0; i < numSamples; ++i)
-                        {
-                            outPtr[i] += juce::jlimit(-1.0f, 1.0f, inPtr[i] * monitorGain);
+                        // 오른쪽 채널
+                        float rightSample = inputChannelData[inputChannel][i] * rightGain;
+                        rightOut[i] += juce::jlimit(-1.0f, 1.0f, rightSample);
+                    }
+                    
+                    if (shouldLogMonitoring) {
+                        // 처리 후 샘플 기록
+                        if (numSamples > 0) {
+                            DBG("AudioController: After processing, leftOut[0]: " + juce::String(leftOut[0]));
+                            DBG("AudioController: Buffer level after left channel: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
                         }
                     }
                 }
             }
-            */
+            else // 모노 출력 (1채널)
+            {
+                if (shouldLogMonitoring) {
+                    DBG("AudioController: Processing MONO output path");
+                }
+                
+                // 단일 채널 출력 처리
+                for (int outChannel = 0; outChannel < numOutputChannels; ++outChannel)
+                {
+                    if (outputChannelData[outChannel] != nullptr)
+                    {
+                        int inChannel = outChannel % numInputChannels;
+                        
+                        if (inputChannelData[inChannel] != nullptr)
+                        {
+                            auto* outPtr = outputBuffer.getWritePointer(outChannel);
+                            const auto* inPtr = inputChannelData[inChannel];
+                            
+                            for (int i = 0; i < numSamples; ++i)
+                            {
+                                outPtr[i] += juce::jlimit(-1.0f, 1.0f, inPtr[i] * monitorGain);
+                            }
+                        }
+                    }
+                }
+            }
         }
         
-        // 모니터링 출력 레벨 로깅
-        if (shouldLogMonitoring)
-        {
-            float outputLevel = outputBuffer.getMagnitude(0, numSamples);
-            DBG("AudioController: Final output level (after monitoring) = " + juce::String(outputLevel));
+        if (shouldLogMonitoring) {
+            DBG("AudioController: Final buffer level after all processing: " + juce::String(outputBuffer.getMagnitude(0, numSamples)));
         }
     }
 }
 
 void AudioController::audioDeviceAboutToStart(juce::AudioIODevice* device)
 {
-    audioModel.setCurrentInputLevel(0.0f);
+    double sampleRate = device->getCurrentSampleRate();
+    int bufferSize = device->getCurrentBufferSizeSamples();
     
-    // 오디오 디바이스 시작 시 GuitarPracticeController 준비
-    if (guitarPracticeController != nullptr)
+    DBG("AudioController: Device about to start - SampleRate=" + juce::String(sampleRate) + 
+        ", BufferSize=" + juce::String(bufferSize));
+    
+    // AmpliTube 프로세서 준비
+    if (ampliTubeProcessor)
     {
-        double sampleRate = device->getCurrentSampleRate();
-        int samplesPerBlock = device->getCurrentBufferSizeSamples();
-        
-        DBG("AudioController: Preparing to play with sampleRate = " + juce::String(sampleRate) + 
-            ", samplesPerBlock = " + juce::String(samplesPerBlock));
-            
-        guitarPracticeController->prepareToPlay(samplesPerBlock, sampleRate);
+        ampliTubeProcessor->prepareToPlay(sampleRate, bufferSize);
     }
 }
 
 void AudioController::audioDeviceStopped()
 {
-    audioModel.setCurrentInputLevel(0.0f);
-    
-    // 오디오 디바이스 중지 시 GuitarPracticeController 리소스 해제
-    if (guitarPracticeController != nullptr)
-    {
-        DBG("AudioController: Releasing resources");
-        guitarPracticeController->releaseResources();
-    }
+    DBG("AudioController: Device stopped");
 }

@@ -1,6 +1,7 @@
 #include "GuitarPracticeComponent.h"
 #include "MainComponent.h"
 #include "Controller/GuitarPracticeController.h"
+#include "Controller/AudioController.h"
 
 #include "TopBar.h"
 #include "CenterPanel.h"
@@ -108,6 +109,19 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     progressViewButton.setToggleState(false, juce::dontSendNotification);
     addAndMakeVisible(progressViewButton);
     
+    // AmpliTube 에디터 버튼 초기화
+    ampliTubeViewButton.setButtonText("AmpliTube");
+    ampliTubeViewButton.onClick = [this]() { switchBottomView(BottomViewType::AmpliTubeEditor); };
+    ampliTubeViewButton.setToggleState(false, juce::dontSendNotification);
+    addAndMakeVisible(ampliTubeViewButton);
+    
+    // AmpliTube 활성화 버튼 초기화
+    ampliTubeEnableButton.setButtonText("Enable AmpliTube");
+    ampliTubeEnableButton.setToggleState(false, juce::dontSendNotification);
+    ampliTubeEnableButton.onClick = [this]() { toggleAmpliTubeEffect(); };
+    ampliTubeEnableButton.setColour(juce::ToggleButton::tickColourId, MapleTheme::getAccentColour());
+    ampliTubeEnableButton.setColour(juce::ToggleButton::textColourId, MapleTheme::getHighlightColour());
+    
     // 오디오 포맷 매니저 초기화
     formatManager.registerBasicFormats();
     
@@ -173,9 +187,14 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     fingeringGuideComponent = std::make_unique<FingeringGuideComponent>();
     practiceProgressComponent = std::make_unique<PracticeProgressComponent>();
     
+    // AmpliTube 에디터 컨테이너 초기화
+    ampliTubeEditorContainer = std::make_unique<juce::Component>();
+    ampliTubeEditorContainer->addAndMakeVisible(ampliTubeEnableButton);
+    
     addAndMakeVisible(performanceAnalysisComponent.get());
     addChildComponent(fingeringGuideComponent.get());
     addChildComponent(practiceProgressComponent.get());
+    addChildComponent(ampliTubeEditorContainer.get());
 
     // 컴포넌트 추가
     addAndMakeVisible(topBar.get());
@@ -354,21 +373,39 @@ void GuitarPracticeComponent::resized()
     
     // 버튼 사이즈 및 위치 계산
     auto tabButtonWidth = 120;
-    auto totalTabsWidth = tabButtonWidth * 3 + spacing * 2;
+    auto totalTabsWidth = tabButtonWidth * 4 + spacing * 3; // 버튼 4개로 변경
     auto tabStartX = buttonBar.getCentreX() - totalTabsWidth / 2;
     
     analysisViewButton.setBounds(tabStartX, buttonBar.getY(), tabButtonWidth, buttonBarHeight);
     fingeringViewButton.setBounds(analysisViewButton.getRight() + spacing, buttonBar.getY(), tabButtonWidth, buttonBarHeight);
     progressViewButton.setBounds(fingeringViewButton.getRight() + spacing, buttonBar.getY(), tabButtonWidth, buttonBarHeight);
+    ampliTubeViewButton.setBounds(progressViewButton.getRight() + spacing, buttonBar.getY(), tabButtonWidth, buttonBarHeight);
     
     // 하단 뷰 컴포넌트 배치 (악보 아래 공간)
     auto bottomViewArea = bounds.reduced(15, 10);
     performanceAnalysisComponent->setBounds(bottomViewArea);
     fingeringGuideComponent->setBounds(bottomViewArea);
     practiceProgressComponent->setBounds(bottomViewArea);
+    ampliTubeEditorContainer->setBounds(bottomViewArea);
     
-    // 센터 패널은 더 이상 사용하지 않거나 필요한 경우에만 사용
-    // centerPanel->setBounds(bounds.reduced(10));
+    // AmpliTube 활성화 버튼 배치
+    auto ampliTubeToggleHeight = 30;
+    auto ampliTubeToggleArea = ampliTubeEditorContainer->getLocalBounds().removeFromTop(ampliTubeToggleHeight);
+    ampliTubeEnableButton.setBounds(ampliTubeToggleArea);
+    
+    // AmpliTube 에디터 배치 (활성화 버튼 아래)
+    auto editorArea = ampliTubeEditorContainer->getLocalBounds();
+    editorArea.removeFromTop(ampliTubeToggleHeight);
+    
+    // AmpliTube 에디터가 있으면 배치
+    if (auto* editor = audioController->getAmpliTubeEditorComponent())
+    {
+        if (!ampliTubeEditorContainer->isParentOf(editor))
+        {
+            ampliTubeEditorContainer->addAndMakeVisible(editor);
+        }
+        editor->setBounds(editorArea);
+    }
 }
 
 // 새로운 인터페이스 메서드 구현
@@ -806,6 +843,7 @@ void GuitarPracticeComponent::updateBottomViewVisibility()
     performanceAnalysisComponent->setVisible(currentBottomView == BottomViewType::PerformanceAnalysis);
     fingeringGuideComponent->setVisible(currentBottomView == BottomViewType::FingeringGuide);
     practiceProgressComponent->setVisible(currentBottomView == BottomViewType::PracticeProgress);
+    ampliTubeEditorContainer->setVisible(currentBottomView == BottomViewType::AmpliTubeEditor);
 }
 
 // 새로운 메서드: 하단 뷰 전환
@@ -816,16 +854,29 @@ void GuitarPracticeComponent::switchBottomView(BottomViewType viewType)
         currentBottomView = viewType;
         updateBottomViewVisibility();
         updateViewButtonStates();
+        
+        // AmpliTube 뷰로 전환시 에디터 업데이트
+        if (viewType == BottomViewType::AmpliTubeEditor && audioController)
+        {
+            auto* editor = audioController->getAmpliTubeEditorComponent();
+            if (editor && !ampliTubeEditorContainer->isParentOf(editor))
+            {
+                ampliTubeEditorContainer->addAndMakeVisible(editor);
+                resized(); // 에디터 크기 조정
+            }
+        }
+        
         resized(); // 레이아웃 업데이트
     }
 }
 
-// 버튼 상태 업데이트 메서드 추가
+// 버튼 상태 업데이트 메서드 수정
 void GuitarPracticeComponent::updateViewButtonStates()
 {
     analysisViewButton.setToggleState(currentBottomView == BottomViewType::PerformanceAnalysis, juce::dontSendNotification);
     fingeringViewButton.setToggleState(currentBottomView == BottomViewType::FingeringGuide, juce::dontSendNotification);
     progressViewButton.setToggleState(currentBottomView == BottomViewType::PracticeProgress, juce::dontSendNotification);
+    ampliTubeViewButton.setToggleState(currentBottomView == BottomViewType::AmpliTubeEditor, juce::dontSendNotification);
 }
 
 // 마이크 모니터링 관련 메서드 개선
@@ -907,4 +958,31 @@ void GuitarPracticeComponent::sliderValueChanged(juce::Slider* slider)
         // 현재 상태 로깅
         DBG("GuitarPracticeComponent: Microphone gain changed to " + juce::String(gain));
     }
+}
+
+// AmpliTube 이펙트 관련 메서드 구현
+void GuitarPracticeComponent::enableAmpliTubeEffect(bool shouldEnable)
+{
+    if (audioController)
+    {
+        audioController->enableAmpliTubeEffect(shouldEnable);
+        ampliTubeEnableButton.setToggleState(shouldEnable, juce::dontSendNotification);
+        
+        // 활성화 상태에 따라 텍스트 색상 변경
+        ampliTubeEnableButton.setColour(juce::ToggleButton::textColourId, 
+                                      shouldEnable ? juce::Colours::green : MapleTheme::getHighlightColour());
+    }
+}
+
+bool GuitarPracticeComponent::isAmpliTubeEffectEnabled() const
+{
+    if (audioController)
+        return audioController->isAmpliTubeEffectEnabled();
+    return false;
+}
+
+void GuitarPracticeComponent::toggleAmpliTubeEffect()
+{
+    bool currentState = isAmpliTubeEffectEnabled();
+    enableAmpliTubeEffect(!currentState);
 }

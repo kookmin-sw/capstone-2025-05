@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Model/AudioModel.h"
+#include "AmpliTubeProcessor.h"
 
 // 전방 선언
 class GuitarPracticeController;
@@ -31,6 +32,11 @@ public:
     void audioDeviceAboutToStart(juce::AudioIODevice* device) override;
     void audioDeviceStopped() override;
     
+    // AmpliTube 플러그인 관련 메서드
+    void enableAmpliTubeEffect(bool shouldEnable);
+    bool isAmpliTubeEffectEnabled() const;
+    juce::Component* getAmpliTubeEditorComponent();
+    
 private:
     AudioModel& audioModel;
     juce::AudioDeviceManager& deviceManager;
@@ -41,4 +47,7 @@ private:
     // 마이크 모니터링을 위한 변수
     bool microphoneMonitoringEnabled = false;
     float microphoneGain = 5.0f; // 마이크 모니터링 볼륨
+    
+    // AmpliTube 이펙터 처리기
+    std::unique_ptr<AmpliTubeProcessor> ampliTubeProcessor;
 };

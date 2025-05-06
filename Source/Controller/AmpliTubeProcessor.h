@@ -1,35 +1,42 @@
 #pragma once
 #include <JuceHeader.h>
 
-class AmpliTubeProcessor : public juce::AudioProcessor
+class AmpliTubeProcessor
 {
 public:
     AmpliTubeProcessor();
-    ~AmpliTubeProcessor() override;
-
-    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
-    void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-    void releaseResources() override;
-
-    const juce::String getName() const override { return "AmpliTubeProcessor"; }
-    bool acceptsMidi() const override { return true; }
-    bool producesMidi() const override { return false; }
-    double getTailLengthSeconds() const override { return 0.0; }
-    int getNumPrograms() override { return 1; }
-    int getCurrentProgram() override { return 0; }
-    void setCurrentProgram(int) override {}
-    const juce::String getProgramName(int) override { return "Default"; }
-    void changeProgramName(int, const juce::String&) override {}
-    bool hasEditor() const override { return true; }
-    juce::AudioProcessorEditor* createEditor() override;
-
-    void getStateInformation(juce::MemoryBlock& destData) override {}
-    void setStateInformation(const void* data, int sizeInBytes) override {}
-
+    ~AmpliTubeProcessor();
+    
+    // 플러그인 초기화
+    bool init();
+    
+    // 오디오 프로세싱
+    void processBlock(const float* const* inputChannelData, 
+                     int numInputChannels,
+                     float* const* outputChannelData, 
+                     int numOutputChannels,
+                     int numSamples);
+    
+    // 플러그인 에디터 컴포넌트 가져오기
+    juce::Component* getEditorComponent();
+    
+    // 프로세싱 활성화/비활성화
+    void setProcessingEnabled(bool shouldBeEnabled);
+    bool isProcessingEnabled() const { return processingEnabled; }
+    
+    // 샘플링 레이트 설정
+    void prepareToPlay(double sampleRate, int samplesPerBlock);
+    
 private:
-    juce::AudioPluginFormatManager formatManager;
     std::unique_ptr<juce::AudioPluginInstance> plugin;
-    bool useVST = false;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AmpliTubeProcessor)
-};
+    std::unique_ptr<juce::AudioPluginFormatManager> formatManager;
+    std::unique_ptr<juce::AudioProcessorEditor> editor;
+    
+    juce::AudioBuffer<float> tempBuffer;
+    double currentSampleRate = 44100.0;
+    int currentBlockSize = 512;
+    bool processingEnabled = false;
+    
+    // 플러그인 찾기 및 로드 메서드
+    juce::AudioPluginInstance* findAndLoadPlugin();
+}; 

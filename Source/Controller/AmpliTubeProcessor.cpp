@@ -2,169 +2,210 @@
 
 AmpliTubeProcessor::AmpliTubeProcessor()
 {
-    DBG("Starting AmpliTubeProcessor initialization...");
-
-    formatManager.addDefaultFormats();
-    DBG("Registered " + juce::String(formatManager.getNumFormats()) + " plugin formats");
-
-    juce::StringArray possiblePaths;
-    possiblePaths.add("C:/Program Files/Common Files/VST3/AmpliTube 5.vst3/Contents/x86_64-win/AmpliTube 5.vst3");
-    // 실제 경로로 변경 필요
-
-    juce::File pluginFile;
-    bool foundValidPath = false;
-
-    for (const auto& path : possiblePaths)
-    {
-        juce::File testFile(path);
-        if (testFile.exists())
-        {
-            pluginFile = testFile;
-            foundValidPath = true;
-            DBG("Found AmpliTube 5 at: " + pluginFile.getFullPathName());
-            break;
-        }
-    }
-
-    if (!foundValidPath)
-    {
-        DBG("AmpliTube 5 not found.");
-        return;
-    }
-
-    for (int i = 0; i < formatManager.getNumFormats(); ++i)
-    {
-        juce::AudioPluginFormat* format = formatManager.getFormat(i);
-        DBG("Trying plugin format: " + format->getName());
-
-        try
-        {
-            juce::OwnedArray<juce::PluginDescription> descriptions;
-            format->findAllTypesForFile(descriptions, pluginFile.getFullPathName());
-
-            if (!descriptions.isEmpty())
-            {
-                auto* desc = descriptions[0];
-                juce::String errorMsg;
-                plugin = formatManager.createPluginInstance(*desc, 44100.0, 512, errorMsg);
-                if (plugin != nullptr)
-                {
-                    DBG("Successfully loaded AmpliTube 5: " + plugin->getName());
-                    useVST = true;
-                    break;
-                }
-                else
-                {
-                    DBG("Failed to load AmpliTube 5: " + errorMsg);
-                }
-            }
-        }
-        catch (const std::exception& e)
-        {
-            DBG("Exception in plugin loading: " + juce::String(e.what()));
-        }
-    }
-
-    if (!useVST)
-        DBG("AmpliTube 5 initialization failed.");
+    formatManager = std::make_unique<juce::AudioPluginFormatManager>();
+    formatManager->addDefaultFormats();
 }
 
 AmpliTubeProcessor::~AmpliTubeProcessor()
 {
-    releaseResources();
+    // 플러그인 에디터 먼저 정리
+    editor = nullptr;
+    // 그 다음 플러그인 정리
+    plugin = nullptr;
+}
+
+bool AmpliTubeProcessor::init()
+{
+    // 플러그인 로드 시도
+    plugin.reset(findAndLoadPlugin());
+    
+    if (plugin == nullptr)
+    {
+        DBG("AmpliTubeProcessor: Failed to load plugin");
+        return false;
+    }
+    
+    // 성공적으로 로드했을 경우 에디터 생성
+    editor.reset(plugin->createEditor());
+    
+    if (editor == nullptr)
+    {
+        DBG("AmpliTubeProcessor: Failed to create plugin editor");
+        return false;
+    }
+    
+    // 초기 버퍼 크기 설정
+    tempBuffer.setSize(2, currentBlockSize);
+    
+    // 플러그인 초기화
+    plugin->prepareToPlay(currentSampleRate, currentBlockSize);
+    
+    // 프로세싱 활성화
+    processingEnabled = true;
+    
+    return true;
+}
+
+void AmpliTubeProcessor::processBlock(const float* const* inputChannelData, 
+                                     int numInputChannels,
+                                     float* const* outputChannelData, 
+                                     int numOutputChannels,
+                                     int numSamples)
+{
+    if (!processingEnabled || plugin == nullptr)
+    {
+        // 프로세싱이 비활성화되었거나 플러그인이 없는 경우 직접 복사
+        for (int channel = 0; channel < numOutputChannels; ++channel)
+        {
+            if (channel < numInputChannels)
+                std::memcpy(outputChannelData[channel], inputChannelData[channel], sizeof(float) * numSamples);
+            else
+                std::memset(outputChannelData[channel], 0, sizeof(float) * numSamples);
+        }
+        return;
+    }
+    
+    // 필요한 경우 임시 버퍼 크기 조정
+    if (tempBuffer.getNumSamples() < numSamples)
+        tempBuffer.setSize(numOutputChannels, numSamples, false, true, true);
+    
+    // 입력 데이터를 버퍼에 복사
+    for (int channel = 0; channel < numInputChannels && channel < tempBuffer.getNumChannels(); ++channel)
+    {
+        std::memcpy(tempBuffer.getWritePointer(channel), inputChannelData[channel], sizeof(float) * numSamples);
+    }
+    
+    // 추가 채널 초기화
+    for (int channel = numInputChannels; channel < tempBuffer.getNumChannels(); ++channel)
+    {
+        std::memset(tempBuffer.getWritePointer(channel), 0, sizeof(float) * numSamples);
+    }
+    
+    // MIDI 버퍼 (비어있음)
+    juce::MidiBuffer midiBuffer;
+    
+    // 플러그인으로 버퍼 처리
+    juce::AudioBuffer<float> buffer(tempBuffer.getArrayOfWritePointers(), 
+                                   tempBuffer.getNumChannels(), 
+                                   numSamples);
+    
+    plugin->processBlock(buffer, midiBuffer);
+    
+    // 처리된 데이터를 출력으로 복사
+    for (int channel = 0; channel < numOutputChannels; ++channel)
+    {
+        if (channel < tempBuffer.getNumChannels())
+            std::memcpy(outputChannelData[channel], 
+                       tempBuffer.getReadPointer(channel), 
+                       sizeof(float) * numSamples);
+        else
+            std::memset(outputChannelData[channel], 0, sizeof(float) * numSamples);
+    }
+}
+
+juce::Component* AmpliTubeProcessor::getEditorComponent()
+{
+    return editor.get();
+}
+
+void AmpliTubeProcessor::setProcessingEnabled(bool shouldBeEnabled)
+{
+    processingEnabled = shouldBeEnabled;
 }
 
 void AmpliTubeProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    currentSampleRate = sampleRate;
+    currentBlockSize = samplesPerBlock;
+    
     if (plugin != nullptr)
     {
         plugin->prepareToPlay(sampleRate, samplesPerBlock);
-        DBG("AmpliTubeProcessor prepared: SampleRate=" + juce::String(sampleRate) +
-            ", BlockSize=" + juce::String(samplesPerBlock));
+        
+        // 임시 버퍼 크기 조정
+        tempBuffer.setSize(2, samplesPerBlock);
     }
 }
 
-void AmpliTubeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+juce::AudioPluginInstance* AmpliTubeProcessor::findAndLoadPlugin()
 {
-    if (!useVST || plugin == nullptr || buffer.getNumChannels() < 1)
+    DBG("AmpliTubeProcessor: Attempting to load plugin...");
+    
+    // VST3 플러그인 형식 찾기
+    juce::AudioPluginFormat* format = nullptr;
+    for (int i = 0; i < formatManager->getNumFormats(); ++i)
     {
-        buffer.clear();
-        return;
-    }
-
-    plugin->processBlock(buffer, midiMessages);
-    DBG("AmpliTube processed block: Magnitude=" + juce::String(buffer.getMagnitude(0, buffer.getNumSamples())));
-}
-
-void AmpliTubeProcessor::releaseResources()
-{
-    if (plugin != nullptr)
-    {
-        plugin->releaseResources();
-        plugin = nullptr;
-    }
-    DBG("AmpliTubeProcessor resources released");
-}
-
-juce::AudioProcessorEditor* AmpliTubeProcessor::createEditor()
-{
-    try {
-        // plugin이 nullptr인지 더 명확하게 검사하고 디버깅 메시지 추가
-        if (plugin == nullptr)
+        auto* f = formatManager->getFormat(i);
+        if (f->getName() == "VST3")
         {
-            DBG("Cannot create editor: plugin is nullptr");
-            goto fallback;
-        }
-
-        // if (!useVST)
-        // {
-        //     DBG("Cannot create editor: useVST is false");
-        //     goto fallback;
-        // }
-
-        // hasEditor 호출 전에 try-catch로 감싸서 안전하게 처리
-        try {
-            bool hasEditorResult = plugin->hasEditor();
-            DBG("plugin->hasEditor() returned: " + juce::String(hasEditorResult ? "true" : "false"));
-            
-            if (hasEditorResult)
-            {
-                auto* editor = plugin->createEditorIfNeeded();
-                if (editor != nullptr)
-                {
-                    DBG("AmpliTube 5 editor created successfully");
-                    return editor;
-                }
-                else
-                {
-                    DBG("AmpliTube 5 createEditorIfNeeded returned nullptr");
-                }
-            }
-            else
-            {
-                DBG("AmpliTube 5 plugin doesn't have an editor");
-            }
-        }
-        catch (const std::exception& e)
-        {
-            DBG("Exception calling plugin->hasEditor(): " + juce::String(e.what()));
-        }
-        catch (...)
-        {
-            DBG("Unknown exception calling plugin->hasEditor()");
+            format = f;
+            break;
         }
     }
-    catch (const std::exception& e)
+    
+    if (format == nullptr)
     {
-        DBG("Exception creating AmpliTube 5 editor: " + juce::String(e.what()));
+        DBG("AmpliTubeProcessor: Cannot find VST3 plugin format!");
+        return nullptr;
     }
-    catch (...)
+    
+    // 플러그인 검색 경로 (기본 경로와 사용자 지정 경로)
+    juce::FileSearchPath searchPath;
+    
+    // Windows 기본 VST3 경로
+    #if JUCE_WINDOWS
+    searchPath.add(juce::File::getSpecialLocation(juce::File::globalApplicationsDirectory)
+                  .getChildFile("Common Files")
+                  .getChildFile("VST3"));
+    #elif JUCE_MAC
+    searchPath.add(juce::File::getSpecialLocation(juce::File::globalApplicationsDirectory)
+                  .getChildFile("Audio")
+                  .getChildFile("Plug-Ins")
+                  .getChildFile("VST3"));
+    #endif
+    
+    // 직접 특정 플러그인 경로 지정하는 방식으로 변경
+    juce::File pluginFile;
+    
+    #if JUCE_WINDOWS
+    // Windows의 일반적인 AmpliTube 경로
+    pluginFile = juce::File("C:/Program Files/Common Files/VST3/AmpliTube 5.vst3/Contents/x86_64-win/AmpliTube 5.vst3");
+    #elif JUCE_MAC
+    // Mac의 일반적인 AmpliTube 경로 
+    pluginFile = juce::File("/Library/Audio/Plug-Ins/VST3/AmpliTube 5.vst3");
+    #endif
+    
+    if (!pluginFile.exists())
     {
-        DBG("Unknown exception creating AmpliTube 5 editor");
+        DBG("AmpliTubeProcessor: Cannot find AmpliTube plugin file!");
+        return nullptr;
     }
-
-fallback:
-    // 에디터 생성에 실패했을 때 대체 에디터 반환
-    DBG("Falling back to GenericAudioProcessorEditor");
-    return new juce::GenericAudioProcessorEditor(*this);
-}
+    
+    DBG("AmpliTubeProcessor: Found plugin at " + pluginFile.getFullPathName());
+    
+    // 플러그인 설명 배열 가져오기
+    juce::OwnedArray<juce::PluginDescription> descriptions;
+    juce::KnownPluginList tempList;
+    
+    format->findAllTypesForFile(descriptions, pluginFile.getFullPathName());
+    
+    if (descriptions.isEmpty())
+    {
+        DBG("AmpliTubeProcessor: No plugin descriptions found!");
+        return nullptr;
+    }
+    
+    DBG("AmpliTubeProcessor: Found " + juce::String(descriptions.size()) + " plugin descriptions");
+    
+    // 첫 번째 설명 사용
+    juce::String errorMessage;
+    auto pluginInstance = format->createInstanceFromDescription(*descriptions[0], currentSampleRate, currentBlockSize, errorMessage);
+    
+    if (pluginInstance == nullptr)
+    {
+        DBG("AmpliTubeProcessor: Failed to create plugin instance: " + errorMessage);
+        return nullptr;
+    }
+    
+    return pluginInstance.release(); // std::unique_ptr에서 원시 포인터를 반환
+} 

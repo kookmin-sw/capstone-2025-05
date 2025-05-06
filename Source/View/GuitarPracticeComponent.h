@@ -44,7 +44,7 @@ public:
         PerformanceAnalysis,
         FingeringGuide,
         PracticeProgress,
-        None
+        AmpliTubeEditor  // 새로운 뷰 타입 추가
     };
     
     GuitarPracticeComponent(MainComponent& mainComponent);
@@ -104,6 +104,11 @@ public:
     
     // 컨트롤러 접근자
     GuitarPracticeController* getController() const { return controller.get(); }
+    
+    // AmpliTube 이펙트 관련 메서드 추가
+    void enableAmpliTubeEffect(bool shouldEnable);
+    bool isAmpliTubeEffectEnabled() const;
+    void toggleAmpliTubeEffect();
     
 private:
     // 이벤트 핸들러 메서드
@@ -168,6 +173,7 @@ private:
     juce::TextButton analysisViewButton;
     juce::TextButton fingeringViewButton;
     juce::TextButton progressViewButton;
+    juce::TextButton ampliTubeViewButton;  // 새로운 버튼 추가
     
     // 마이크 모니터링 관련 컨트롤
     juce::ToggleButton micMonitorButton;
@@ -177,4 +183,8 @@ private:
     
     // 현재 표시 중인 하단 뷰
     BottomViewType currentBottomView = BottomViewType::PerformanceAnalysis;
+    
+    // AmpliTube 이펙트 에디터 컨테이너
+    std::unique_ptr<juce::Component> ampliTubeEditorContainer;
+    juce::ToggleButton ampliTubeEnableButton;  // 이펙트 활성화 토글 버튼
 };
