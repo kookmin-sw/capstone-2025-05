@@ -64,6 +64,8 @@ jobs:
             echo "MODEL_DIR"="${{ secrets.MODEL_DIR }}" >> analysis.env
             echo "GROK_API_KEY=${{ secrets.GROK_API_KEY }}" >> analysis.env
             echo "GROK_API_URL=${{ secrets.GROK_API_URL }}" >> analysis.env
+            echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> analysis.env
+            echo "MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}" >> analysis.env
             
             # 기존 컨테이너 명시적으로 정리 (충돌 방지)
             docker rm -f maple-client maple-api maple-redis analysis_api analysis_worker 2>/dev/null || true
