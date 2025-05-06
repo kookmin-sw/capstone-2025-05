@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "LookAndFeel/MapleTheme.h"
+#include "Maple3DAudioVisualiserComponent.h"
 
 // Performance analysis display component
 class PerformanceAnalysisComponent : public juce::Component,
@@ -22,6 +23,7 @@ public:
         addAndMakeVisible(accuracyLabel);
         addAndMakeVisible(timingLabel);
         addAndMakeVisible(difficultyLabel);
+        addAndMakeVisible(visualiserComponent); // 3D 시각화 컴포넌트 추가
         
         titleLabel.setText("Performance Analysis", juce::dontSendNotification);
         titleLabel.setFont(juce::Font(18.0f, juce::Font::bold));
@@ -80,46 +82,6 @@ public:
         
         // Draw note accuracy graph
         drawNoteAccuracyGraph(g, noteGraphArea.reduced(15, 5));
-        
-        // Graph area for timing
-        auto graphArea = bounds.removeFromRight(bounds.getWidth() * 0.6f);
-        g.setColour(MapleTheme::getCardColour().darker(0.1f));
-        g.fillRoundedRectangle(graphArea.toFloat().reduced(5.0f), 5.0f);
-        
-        // Graph title
-        g.setColour(MapleTheme::getTextColour());
-        g.setFont(15.0f);
-        g.drawText("Timing Accuracy (ms)", graphArea.removeFromTop(25), juce::Justification::centred, true);
-        
-        // Draw demo graph
-        g.setColour(juce::Colour(0xff42a5f5));
-        auto zeroLine = graphArea.getCentreY();
-        auto graphWidth = graphArea.getWidth() - 30;
-        auto graphX = graphArea.getX() + 15;
-        auto lastX = graphX;
-        auto lastY = zeroLine;
-        
-        g.drawHorizontalLine(zeroLine, graphX, graphX + graphWidth);
-        
-        g.setColour(juce::Colour(0xff42a5f5).withAlpha(0.7f));
-        for (int i = 0; i < graphWidth; i += 3)
-        {
-            float delta = std::sin((i + animationOffset * 2) * 0.05f) * 20.0f;
-            auto x = graphX + i;
-            auto y = zeroLine + delta;
-            
-            if (i > 0)
-                g.drawLine(lastX, lastY, x, y, 1.5f);
-            
-            lastX = x;
-            lastY = y;
-        }
-        
-        // Draw scales
-        g.setColour(MapleTheme::getTextColour().withAlpha(0.5f));
-        g.setFont(12.0f);
-        g.drawText("+50ms", graphArea.getX() + 10, zeroLine - 50, 50, 20, juce::Justification::centredLeft);
-        g.drawText("-50ms", graphArea.getX() + 10, zeroLine + 30, 50, 20, juce::Justification::centredLeft);
     }
     
     void drawNoteAccuracyGraph(juce::Graphics& g, juce::Rectangle<int> bounds)
@@ -183,8 +145,9 @@ public:
         auto noteGraphHeight = bounds.getHeight() / 3;
         bounds.removeFromBottom(noteGraphHeight);
         
-        // Exclude graph area
-        bounds.removeFromRight(bounds.getWidth() * 0.6f);
+        // 3D 시각화 컴포넌트를 오른쪽에 배치
+        auto visualiserArea = bounds.removeFromRight(bounds.getWidth() * 0.6f);
+        visualiserComponent.setBounds(visualiserArea.reduced(5));
         
         // Metric labels layout
         auto labelHeight = 25;
@@ -235,11 +198,19 @@ public:
         repaint();
     }
     
+    // 오디오 데이터를 3D 시각화 컴포넌트로 전달하는 메서드
+    void pushAudioBuffer(const juce::AudioBuffer<float>& buffer)
+    {
+        visualiserComponent.pushBuffer(buffer);
+    }
+    
 private:
     juce::Label titleLabel;
     juce::Label accuracyLabel;
     juce::Label timingLabel;
     juce::Label difficultyLabel;
+    
+    Maple3DAudioVisualiserComponent visualiserComponent; // 3D 시각화 컴포넌트
     
     double progressValue = 0.8; // Value that ProgressBar will watch
     juce::ProgressBar accuracyMeter; // ProgressBar initialized with progressValue reference in constructor
