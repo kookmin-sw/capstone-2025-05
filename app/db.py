@@ -141,6 +141,41 @@ def get_analysis_result(task_id: str) -> Dict[str, Any]:
     result = analysis_collection.find_one({"task_id": task_id})
     return result
 
+def get_comparison_result(task_id: str) -> Dict[str, Any]:
+    """
+    MongoDB에서 비교 결과를 가져옵니다.
+    
+    Args:
+        task_id: Celery 작업 ID
+        
+    Returns:
+        비교 결과 데이터 또는 None
+    """
+    result = comparison_collection.find_one({"task_id": task_id})
+    return result
+
+def get_result(task_id: str) -> Dict[str, Any]:
+    """
+    MongoDB에서 분석 또는 비교 결과를 가져옵니다.
+    
+    Args:
+        task_id: Celery 작업 ID
+        
+    Returns:
+        분석 또는 비교 결과 데이터 또는 None
+    """
+    # 먼저 분석 결과에서 조회
+    result = analysis_collection.find_one({"task_id": task_id})
+    if result:
+        result["result_type"] = "analysis"
+        return result
+    
+    # 비교 결과에서 조회
+    result = comparison_collection.find_one({"task_id": task_id})
+    if result:
+        result["result_type"] = "comparison"
+    return result
+
 def get_user_analysis_results(user_id: str, limit: int = 10) -> list:
     """
     특정 사용자의 분석 결과를 가져옵니다.
@@ -158,6 +193,23 @@ def get_user_analysis_results(user_id: str, limit: int = 10) -> list:
     
     return list(cursor)
 
+def get_user_comparison_results(user_id: str, limit: int = 10) -> list:
+    """
+    특정 사용자의 비교 결과를 가져옵니다.
+    
+    Args:
+        user_id: 사용자 ID
+        limit: 최대 결과 수
+        
+    Returns:
+        비교 결과 목록
+    """
+    cursor = comparison_collection.find(
+        {"user_id": user_id}
+    ).sort("created_at", -1).limit(limit)
+    
+    return list(cursor)
+
 def get_song_analysis_results(song_id: str, limit: int = 10) -> list:
     """
     특정 곡의 분석 결과를 가져옵니다.
@@ -170,6 +222,23 @@ def get_song_analysis_results(song_id: str, limit: int = 10) -> list:
         분석 결과 목록
     """
     cursor = analysis_collection.find(
+        {"song_id": song_id}
+    ).sort("created_at", -1).limit(limit)
+    
+    return list(cursor)
+
+def get_song_comparison_results(song_id: str, limit: int = 10) -> list:
+    """
+    특정 곡의 비교 결과를 가져옵니다.
+    
+    Args:
+        song_id: 곡 ID
+        limit: 최대 결과 수
+        
+    Returns:
+        비교 결과 목록
+    """
+    cursor = comparison_collection.find(
         {"song_id": song_id}
     ).sort("created_at", -1).limit(limit)
     

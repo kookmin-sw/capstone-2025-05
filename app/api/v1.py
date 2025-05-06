@@ -6,9 +6,13 @@ import os
 from tempfile import NamedTemporaryFile
 from bson import ObjectId
 
-from app.schemas import AnalysisRequest, AnalysisType, TaskResponse, ProgressResponse, AnalysisResultResponse, AnalysisListResponse
+from app.schemas import AnalysisRequest, AnalysisType, TaskResponse, ProgressResponse, AnalysisResultResponse
 from workers.tasks import analyze_audio, compare_audio
-from app.db import get_analysis_result, get_user_analysis_results, get_song_analysis_results
+from app.db import (
+    get_analysis_result, get_comparison_result, get_result,
+    get_user_analysis_results, get_user_comparison_results,
+    get_song_analysis_results, get_song_comparison_results
+)
 
 router = APIRouter(prefix="/v1")
 
@@ -151,19 +155,19 @@ async def get_task_status(
 
 
 @router.get("/results/{task_id}", response_model=AnalysisResultResponse)
-async def get_result(
+async def get_result_by_id(
     task_id: str = Path(..., description="The ID of the task to get results for")
 ):
     """
-    MongoDB에서 분석 결과를 가져옵니다.
+    MongoDB에서 분석 또는 비교 결과를 가져옵니다.
     
     Parameters:
     - task_id: 결과를 가져올 작업 ID
     
     Returns:
-    - 분석 결과 데이터
+    - 분석 또는 비교 결과 데이터
     """
-    result = get_analysis_result(task_id)
+    result = get_result(task_id)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -176,49 +180,85 @@ async def get_result(
     return result
 
 
-@router.get("/user/{user_id}/results", response_model=AnalysisListResponse)
+@router.get("/user/{user_id}/results", response_model=List[AnalysisResultResponse])
 async def get_user_results(
     user_id: str = Path(..., description="사용자 ID"),
-    limit: int = Query(10, ge=1, le=100, description="결과 수 제한")
+    limit: int = Query(10, ge=1, le=100, description="결과 수 제한"),
+    result_type: str = Query("all", description="결과 유형 (all, analysis, comparison)")
 ):
     """
-    특정 사용자의 분석 결과를 가져옵니다.
+    특정 사용자의 분석 또는 비교 결과를 가져옵니다.
     
     Parameters:
     - user_id: 사용자 ID
     - limit: 최대 결과 수 (기본값: 10)
+    - result_type: 결과 유형 (all, analysis, comparison)
     
     Returns:
-    - 사용자의 분석 결과 목록
+    - 사용자의 분석 또는 비교 결과 목록
     """
-    results = get_user_analysis_results(user_id, limit)
+    results = []
     
-    # MongoDB ObjectId를 str로 변환
-    for result in results:
-        result["_id"] = str(result["_id"])
+    if result_type.lower() in ["all", "analysis"]:
+        analysis_results = get_user_analysis_results(user_id, limit if result_type.lower() == "analysis" else limit // 2)
+        for result in analysis_results:
+            result["_id"] = str(result["_id"])
+            result["result_type"] = "analysis"
+        results.extend(analysis_results)
     
-    return {"results": results, "count": len(results)}
+    if result_type.lower() in ["all", "comparison"]:
+        comparison_results = get_user_comparison_results(user_id, limit if result_type.lower() == "comparison" else limit // 2)
+        for result in comparison_results:
+            result["_id"] = str(result["_id"])
+            result["result_type"] = "comparison"
+        results.extend(comparison_results)
+    
+    # 날짜 기준으로 정렬
+    results.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    # 결과 수 제한
+    results = results[:limit]
+    
+    return results
 
 
-@router.get("/song/{song_id}/results", response_model=AnalysisListResponse)
+@router.get("/song/{song_id}/results", response_model=List[AnalysisResultResponse])
 async def get_song_results(
     song_id: str = Path(..., description="곡 ID"),
-    limit: int = Query(10, ge=1, le=100, description="결과 수 제한")
+    limit: int = Query(10, ge=1, le=100, description="결과 수 제한"),
+    result_type: str = Query("all", description="결과 유형 (all, analysis, comparison)")
 ):
     """
-    특정 곡의 분석 결과를 가져옵니다.
+    특정 곡의 분석 또는 비교 결과를 가져옵니다.
     
     Parameters:
     - song_id: 곡 ID
     - limit: 최대 결과 수 (기본값: 10)
+    - result_type: 결과 유형 (all, analysis, comparison)
     
     Returns:
-    - 곡의 분석 결과 목록
+    - 곡의 분석 또는 비교 결과 목록
     """
-    results = get_song_analysis_results(song_id, limit)
+    results = []
     
-    # MongoDB ObjectId를 str로 변환
-    for result in results:
-        result["_id"] = str(result["_id"])
+    if result_type.lower() in ["all", "analysis"]:
+        analysis_results = get_song_analysis_results(song_id, limit if result_type.lower() == "analysis" else limit // 2)
+        for result in analysis_results:
+            result["_id"] = str(result["_id"])
+            result["result_type"] = "analysis"
+        results.extend(analysis_results)
     
-    return {"results": results, "count": len(results)}
+    if result_type.lower() in ["all", "comparison"]:
+        comparison_results = get_song_comparison_results(song_id, limit if result_type.lower() == "comparison" else limit // 2)
+        for result in comparison_results:
+            result["_id"] = str(result["_id"])
+            result["result_type"] = "comparison"
+        results.extend(comparison_results)
+    
+    # 날짜 기준으로 정렬
+    results.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    # 결과 수 제한
+    results = results[:limit]
+    
+    return results

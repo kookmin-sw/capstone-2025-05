@@ -79,20 +79,15 @@ class ComparisonResult(BaseModel):
 
 # MongoDB 스키마 추가
 class AnalysisResultResponse(BaseModel):
-    """MongoDB에서 가져온 분석 결과를 위한 응답 모델"""
+    """MongoDB에서 가져온 분석 또는 비교 결과를 위한 응답 모델"""
     _id: str
     task_id: str
     result: Dict[str, Any]
     user_id: Optional[str] = None
     song_id: Optional[str] = None
     created_at: Optional[str] = None
+    result_type: Optional[str] = None  # "analysis" 또는 "comparison"
     
     class Config:
         """Pydantic 설정"""
         orm_mode = True
-
-
-class AnalysisListResponse(BaseModel):
-    """분석 결과 목록을 위한 응답 모델"""
-    results: List[Dict[str, Any]]
-    count: int
