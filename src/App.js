@@ -1,5 +1,5 @@
 import './App.css';
-import { HashRouter as Router } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { SpotifyPlayerProvider } from './Context/SpotifyContext';
 import MapleHeader from './Components/MapleHeader';
@@ -55,10 +55,10 @@ function App() {
   return (
     <div className="App">
       <SpotifyPlayerProvider token={token} authUrl={authUrl}>
-        <Router>
+        <BrowserRouter>
           <MapleHeader />
           <AppRoutes />
-        </Router>
+        </BrowserRouter>
       </SpotifyPlayerProvider>
     </div>
   );

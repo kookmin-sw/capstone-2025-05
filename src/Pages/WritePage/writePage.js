@@ -78,7 +78,7 @@ export default function WritePage() {
       <div className="flex justify-center items-center bg-[F0EFE6] px-4 py-12 w-full">
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-lg p-10 space-y-6 transition-all duration-300 lg:w-[60%] xl:w-[55%] 2xl:w-[45%]"
+          className="bg-white rounded-2xl shadow-lg p-10 space-y-6 transition-all duration-300 lg:w-[60%] xl:w-[55%] 2xl:w-[50%]"
         >
           <h1 className="text-3xl font-bold text-center text-[#5f4532] tracking-wide">
             <div className="flex items-center justify-center">

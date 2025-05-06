@@ -202,10 +202,10 @@ export default function MyPage() {
             >
               <Link
                 to="/myactivity"
-                className="ml-2 text-lg text-gray-500 hover:text-gray-700"
+                className="ml-2 text-xl font-bold hover:text-gray-400 duration-300 ease-in-out"
               >
-                <div className="ml-4 mt-5 flex items-center">
-                  <span className="font-bold text-[20px]">나의 활동</span>
+                <div className="ml-4 mt-5 flex items-center hover:scale-[105%] duration-300 ease-in-out">
+                  <span>나의 활동</span>
                   &gt;
                 </div>
               </Link>

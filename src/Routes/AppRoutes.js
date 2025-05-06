@@ -30,8 +30,6 @@ export default function AppRoutes() {
   if (!initialized) return null;
   return (
     <Routes>
-      <Route path="/oauth-success" element={<OauthRedirectHandler />} />
-
       {uid ? (
         <>
           <Route path="/main" element={<Main />} />
@@ -65,6 +63,7 @@ export default function AppRoutes() {
           <Route path="/audiotest" element={<AudioTest />} />
           <Route path="/musics" element={<MusicPage />} />
           <Route path="/feedback" element={<Feedback />} />
+          <Route path="/oauth-success" element={<OauthRedirectHandler />} />
           <Route path="*" element={<Login />} />
         </>
       )}
