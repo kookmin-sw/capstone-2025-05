@@ -11,6 +11,7 @@ import { useAuth } from '../../Context/AuthContext.js';
 import { useMyscrapQuery } from '../../Hooks/MyPage/PlayedMusic/MyActivity/myScrapQuery.js';
 import { useMylikeQuery } from '../../Hooks/MyPage/PlayedMusic/MyActivity/myLikesQuery.js';
 import { useMypostQuery } from '../../Hooks/MyPage/PlayedMusic/MyActivity/myPostsQuery.js';
+import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
 import api from '../../Utils/api.js';
 
 export default function MyActivity() {
@@ -23,9 +24,9 @@ export default function MyActivity() {
   const { data: bookmarkItems } = useMyscrapQuery(uid);
   const { data: likeItems } = useMylikeQuery(uid);
   const { data: mypostItems } = useMypostQuery(uid);
+  const { data: userInfo } = useUserQuery(uid);
 
   const getPostById = async (post_id) => {
-    console.log(post_id, 'post_id');
     const res = await api.get(`/posts/${post_id}`);
     return res.data.keyvaluedict[0];
   };
@@ -48,11 +49,9 @@ export default function MyActivity() {
           audio_url: item.audio_url,
           image_url: item.image_url,
         }}
+        key={idx}
       >
-        <div
-          key={idx}
-          className="p-2 border rounded bg-gray-50 shadow-sm hover:bg-white cursor transition-colors duration-200"
-        >
+        <div className="p-2 border rounded bg-gray-50 shadow-sm hover:bg-white cursor transition-colors duration-200">
           <p className="font-semibold truncate">{item.title}</p>
           <p className="text-sm text-gray-600 truncate">{item.content}</p>
         </div>
@@ -79,7 +78,6 @@ export default function MyActivity() {
     const fetchAllPosts = async () => {
       setLoading(true);
       setError(null);
-
       try {
         if (bookmarkItems?.length) {
           const bookmarkPosts = await Promise.all(
@@ -87,14 +85,12 @@ export default function MyActivity() {
           );
           setBookmarks(parseData(bookmarkPosts));
         }
-
         if (likeItems?.length) {
           const likePosts = await Promise.all(
             likeItems.map((item) => getPostById(item.post_id)),
           );
           setLikes(parseData(likePosts));
         }
-
         if (mypostItems?.length) {
           const myPostList = await Promise.all(
             mypostItems.map((item) => getPostById(item.post_id)),
@@ -115,10 +111,10 @@ export default function MyActivity() {
   }, [bookmarkItems, likeItems, mypostItems]);
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex flex-1">
+    <div className="flex min-h-screen">
+      <div className="flex">
         {/* Sidebar */}
-        <div className="w-[12%] bg-[#463936] text-white p-4 flex flex-col justify-between">
+        <div className="w-[12%] h-full bg-[#463936] text-white p-4 flex flex-col justify-between">
           <div>
             <h2 className="text-md font-bold">MAPLE</h2>
             <ul className="mt-4 space-y-2">
@@ -128,32 +124,38 @@ export default function MyActivity() {
                   alt="내 정보 아이콘"
                   className="w-4 h-4"
                 />
-                <Link to="/mypage" className="text-white">
+                <Link to="/mypage" className="text-white truncate">
                   내 정보
                 </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
-                <Link to="/playedmusic">연주한 곡</Link>
+                <Link to="/playedmusic" className="text-white truncate">
+                  연주한 곡
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
-                <Link to="/setting">관리</Link>
+                <Link to="/setting" className="text-white truncate">
+                  관리
+                </Link>
               </li>
             </ul>
           </div>
           <div>
-            <p className="font-semibold">Kildong Hong</p>
+            <p className="font-semibold truncate">
+              {userInfo?.nickname || '사용자'}
+            </p>
           </div>
         </div>
 
-        {/* 콘텐츠 영역 */}
-        <div className="flex-grow p-6 bg-[#F5F1EC]">
-          <div className="flex gap-6 flex-wrap mt-5 ml-7 w-full h-full items-stretch">
+        {/* Main content */}
+        <div className="w-[88%] overflow-y-auto bg-[#F5F1EC] p-8">
+          <div className="flex gap-8 flex-wrap w-full h-full items-stretch">
             {/* 북마크 */}
-            <div className="flex-1 min-w-[300px] max-w-[33%] h-[100%]">
+            <div className="basis-[30%] min-w-[240px] max-w-[32%] h-[100%]">
               <Box className="h-full flex flex-col">
-                <div className="p-3 flex items-center gap-3 border-b">
+                <div className="p-4 flex items-center gap-4 border-b">
                   <img src={Bookmark} alt="북마크" className="w-8 h-8" />
                   <span className="font-bold text-[18px]">북마크</span>
                 </div>
@@ -170,9 +172,9 @@ export default function MyActivity() {
             </div>
 
             {/* 좋아요 */}
-            <div className="flex-1 min-w-[300px] max-w-[33%] h-[100%]">
+            <div className="basis-[30%] min-w-[240px] max-w-[32%] h-[100%]">
               <Box className="h-full flex flex-col">
-                <div className="p-3 flex items-center gap-3 border-b">
+                <div className="p-4 flex items-center gap-4 border-b">
                   <img src={Heart} alt="좋아요" className="w-8 h-8" />
                   <span className="font-bold text-[18px]">좋아요</span>
                 </div>
@@ -189,9 +191,9 @@ export default function MyActivity() {
             </div>
 
             {/* 내가 쓴 글 */}
-            <div className="flex-1 min-w-[300px] max-w-[33%] h-[100%]">
+            <div className="basis-[30%] min-w-[240px] max-w-[32%] h-[100%]">
               <Box className="h-full flex flex-col">
-                <div className="p-3 flex items-center gap-3 border-b">
+                <div className="p-4 flex items-center gap-4 border-b">
                   <img src={Write} alt="내 글" className="w-8 h-8" />
                   <span className="font-bold text-[18px]">내가 쓴 글</span>
                 </div>
@@ -207,6 +209,7 @@ export default function MyActivity() {
               </Box>
             </div>
           </div>
+
         </div>
       </div>
     </div>
