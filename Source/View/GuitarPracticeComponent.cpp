@@ -896,6 +896,10 @@ bool GuitarPracticeComponent::keyPressed(const juce::KeyPress& key)
     // 스페이스바로 재생/정지 토글
     if (key == juce::KeyPress::spaceKey)
     {
+        // 녹음 중에는 스페이스바 기능 비활성화
+        if (isRecording())
+            return true; // 이벤트를 소비했지만 아무 동작 안함
+            
         togglePlayback();
         return true;
     }
