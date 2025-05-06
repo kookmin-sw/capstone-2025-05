@@ -24,6 +24,9 @@ export default function PostHeader({
   setEditedContent,
 }) {
   const { uid } = useAuth();
+  const insertSpaces = (text, maxLength = 50) => {
+    return text.replace(new RegExp(`(.{${maxLength}})`, 'g'), '$1 ');
+  };
   const handlePostReport = (reason) => {
     postReportMutate(
       {
@@ -95,7 +98,7 @@ export default function PostHeader({
 
   return (
     <div className="sm:w-[80%] lg:w-[60%] md:w-[70%] bg-white shadow-lg rounded-lg ">
-      <div className="min-h-[60vh]">
+      <div className="h-[60vh]">
         <div
           id="title"
           className=" border-b border-[#C4A08E] px-4 py-4 min-h-[8vh]"
@@ -170,12 +173,16 @@ export default function PostHeader({
           <textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="border p-2 w-full h-40"
+            className="p-2 block mx-auto my-2 w-[98%] h-1/2 border resize-none"
           />
         ) : (
-          <p className="mt-6 ml-2 px-2 whitespace-pre-wrap break-words">
+          <textarea
+            className="mt-6 w-[98%] block mx-auto w-full h-1/2 focus:outline-none focus:border-none resize-none"
+            readOnly
+            wrap="soft"
+          >
             {post.content}
-          </p>
+          </textarea>
         )}
       </div>
     </div>
