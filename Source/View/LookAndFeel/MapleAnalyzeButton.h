@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "MapleTheme.h"
 
 /**
  * 세련된 스타일의 분석 버튼을 위한 커스텀 LookAndFeel 클래스
@@ -29,12 +30,20 @@ public:
             baseColour = baseColour.brighter(0.1f);
         if (shouldDrawButtonAsDown)
             baseColour = baseColour.brighter(0.2f);
+
+        // 비활성화된 경우 버튼을 어둡게 표시
+        if (!button.isEnabled())
+            baseColour = baseColour.withAlpha(0.4f);
         
         g.setColour(baseColour);
         g.fillEllipse(centre.x - radius, centre.y - radius, radius * 2.0f, radius * 2.0f);
         
         // 분석 아이콘 그리기
-        g.setColour(juce::Colours::white);
+        juce::Colour iconColour = juce::Colours::white;
+        if (!button.isEnabled())
+            iconColour = iconColour.withAlpha(0.4f);
+            
+        g.setColour(iconColour);
         
         if (isAnalyzing)
         {
@@ -49,6 +58,9 @@ public:
             {
                 float angle = i * juce::MathConstants<float>::pi * 0.25f;
                 float alpha = 0.3f + 0.7f * std::fmod(i * 0.125f + std::fmod(rotation, 1.0f), 1.0f);
+                
+                if (!button.isEnabled())
+                    alpha *= 0.4f;
                 
                 g.setColour(juce::Colours::white.withAlpha(alpha));
                 
