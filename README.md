@@ -1,77 +1,90 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/gFPznrUY)
-# 🎸 **MAPLE** - 기타 연주 분석 플랫폼
+# 🎸 <span style="color:#A57865"><strong>MAPLE</strong></span> - AI 기반 기타 연주 분석 플랫폼
 
-캡스톤 팀 생성을 축하합니다.
+<div align="center"> 
+  <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/main/public/assets/logo.svg" width="30%" alt="MAPLE Logo"/>
+</div>
 
-## 팀소개 및 페이지를 꾸며주세요.
+---
 
-- 프로젝트 소개
-  - 프로젝트 설치방법 및 데모, 사용방법, 프리뷰등을 readme.md에 작성.
-  - Api나 사용방법등 내용이 많을경우 wiki에 꾸미고 링크 추가.
+## 📌 목차
 
-- 팀페이지 꾸미기
-  - 프로젝트 소개 및 팀원 소개
-  - index.md 예시보고 수정.
+1️⃣ [💡 프로젝트 소개](#-프로젝트-소개)  
+2️⃣ [🦾 주요 기능](#-주요-기능)  
+3️⃣ [🎬 시연 영상](#-시연-영상)  
+4️⃣ [👨‍👨‍👦‍👦 팀원 소개](#-팀원-소개)  
+5️⃣ [🌐 시스템 구조](#-시스템-구조)  
+6️⃣ [🛠 기술 스택](#-기술-스택)  
+7️⃣ [🚀 실행 방법](#-실행-방법)  
+8️⃣ [📂 폴더 구조](#-폴더-구조)  
+9️⃣ [📎 참고 자료](#-참고-자료)
 
-- GitHub Pages 리파지토리 Settings > Options > GitHub Pages 
-  - Source를 marster branch
-  - Theme Chooser에서 태마선택
-  - 수정후 팀페이지 확인하여 점검.
+---
 
-**팀페이지 주소** -> https://kookmin-sw.github.io/ '{{자신의 리파지토리 아이디}}'
+## 💡 프로젝트 소개
 
-**예시)** 2023년 0조  https://kookmin-sw.github.io/capstone-2023-00/
+**MAPLE**은 사용자의 기타 연주를 실시간으로 분석하여 **피치 정확도**, **리듬 정확도**, **연주 안정성** 등 다양한 측면의 피드백을 시각적으로 제공하는 AI 기반 웹 플랫폼입니다.
 
+🎯 초보자부터 전문가까지, 자기 연주를 **정량적으로 분석하고 성장**할 수 있도록 돕습니다.  
+🎧 연주는 클라이언트에서 직접 녹음되며, 서버로 전송된 후 분석이 수행됩니다.
 
-## 내용에 아래와 같은 내용들을 추가하세요.
+---
 
-### 1. 프로잭트 소개
+## 🦾 주요 기능
 
-프로젝트
+- 🎵 **실시간 기타 연주 녹음 및 분석**
+- 🎯 **피치·리듬 정확도 시각화**
+- 📈 **연주 히스토리 저장 및 조회**
+- 🔗 **Spotify 곡과의 비교 분석**
+- 📋 **피드백 요약 리포트 자동 생성**
+- 🌐 **웹 기반으로 어느 디바이스에서든 사용 가능**
 
-### 2. 소개 영상
+---
 
-프로젝트 소개하는 영상을 추가하세요
+## 🎬 시연 영상
 
-### 3. 팀 소개
+[![MAPLE Demo](https://your-thumbnail-image-link.com)](https://youtu.be/your-video-link)
 
-팀을 소개하세요.
+---
 
-팀원정보 및 담당이나 사진 및 SNS를 이용하여 소개하세요.
+## 👨‍👨‍👦‍👦 팀원 소개
 
-### 4. 사용법
+| 이름   | 역할                      | GitHub                                 | 연락처           |
+| ------ | ------------------------- | -------------------------------------- | ---------------- |
+| 김도경 | 프론트엔드 / Spotify 연동 | [@your-id](https://github.com/your-id) | your@mail.com    |
+| 이예시 | 백엔드 / AI 분석 서버     | [@example](https://github.com/example) | example@mail.com |
+| 박예시 | UI 디자인 / 리듬 분석     | [@another](https://github.com/another) | another@mail.com |
 
-소스코드제출시 설치법이나 사용법을 작성하세요.
+---
 
-### 5. 기타
+## 🌐 시스템 구조
 
-추가적인 내용은 자유롭게 작성하세요.
+<div align="center"> 
+  <img src="https://your-image-url.com/system-architecture.png" width="80%" alt="System Architecture"/>
+</div>
 
+---
 
-## Markdown을 사용하여 내용꾸미기
+## 🛠 기술 스택
 
-Markdown은 작문을 스타일링하기위한 가볍고 사용하기 쉬운 구문입니다. 여기에는 다음을위한 규칙이 포함됩니다.
+### 🖥 프론트엔드
 
-```markdown
-Syntax highlighted code block
+- React, Tailwind CSS
+- Spotify Web Playback SDK
+- Axios, Zustand, React Query
 
-# Header 1
-## Header 2
-### Header 3
+### ⚙ 백엔드
 
-- Bulleted
-- List
+- FastAPI, Uvicorn
+- librosa, PyTorch
+- Firebase Authentication, Storage
 
-1. Numbered
-2. List
+### 🧠 AI / 분석
 
-**Bold** and _Italic_ and `Code` text
+- 음정 인식 모델 (FFT 기반 + ML 보정)
+- 리듬 분석 알고리즘 (Onset detection + Madmom)
+- JSON 기반 시각화 데이터 반환
 
-[Link](url) and ![Image](src)
-```
+---
 
-자세한 내용은 [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+## 🚀 실행 방법
 
-### Support or Contact
-
-readme 파일 생성에 추가적인 도움이 필요하면 [도움말](https://help.github.com/articles/about-readmes/) 이나 [contact support](https://github.com/contact) 을 이용하세요.
