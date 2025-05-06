@@ -33,25 +33,44 @@ services:
     image: ${DOCKER_USERNAME}/maple-analysis-service:latest
     env_file:
       - analysis.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/
+      - MONGO_DB_NAME=maple_audio_db
     networks:
       - maple-network
     depends_on:
       - redis
+      - mongo
   
   analysis_worker:
     image: ${DOCKER_USERNAME}/maple-analysis-service:latest
     command: celery -A workers.tasks worker -l info
     env_file:
       - analysis.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/
+      - MONGO_DB_NAME=maple_audio_db
     networks:
       - maple-network
     depends_on:
       - redis
+      - mongo
   
   redis:
     image: redis:7-alpine
     networks:
       - maple-network
+  
+  mongo:
+    image: mongo:6.0
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+    networks:
+      - maple-network
+
+volumes:
+  mongo_data:
 
 networks:
   maple-network:
