@@ -41,7 +41,14 @@
 -🧠 MAPLE은 실시간 음정·박자·테크닉 분석과 함께 개별 피드백을 제공
 -🎯 초보자부터 전문가까지, 자기 연주를 **정량적으로 분석하고 성장**할 수 있도록 돕습니다.  
 ## 👨‍👨‍👦‍👦 팀원 소개
-
+| 사진 | 이름 | 역할 | GitHub | 이메일 |
+|------|------|------|--------|--------|
+| ![]() | **송혜원** | Backend(팀장) | [@songhyeone](https://github.com/songhyeone) | hyeone@song.com |
+| ![]() | **박재훈** | AI | [@jaehoonpark](https://github.com/lovelyoverflow) | jaehoon@maple.com |
+| ![]() | **신수민** | Backend | [@soominshin](https://github.com/soominshin) | soomin@maple.com |
+| ![]() | **이정윤** | Frontend | [@jungyoonlee](https://github.com/jungyoonlee) | jungyoon@maple.com |
+| ![]() | **김도경** | Frontend | [@dokyoungkim](https://github.com/dokyoungkim) | dokyoung@maple.com |
+| ![]() | **박지민** | Frontend | [@jiminpark](https://github.com/jiminpark) | jimin@maple.com |
 
 ## 🛠 기술 스택
 
