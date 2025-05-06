@@ -1,7 +1,7 @@
 # 🎸 <span style="color:#A57865"><strong>MAPLE</strong></span> - AI 기반 기타 연주 분석 플랫폼
 
 <div align="center"> 
-  <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/logo.svg" width="100%" alt="MAPLE Logo"/>
+  <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/logo.svg" width="70%" alt="MAPLE Logo"/>
 </div>
 
 
@@ -31,7 +31,7 @@
 ## ✨ 프로젝트 소개
 
 <div align="center"> 
-  <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/Maple.png" width="30%" alt="MAPLE App"/>
+  <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/Maple.png" width="100%" alt="MAPLE App"/>
 </div>
 
 > **MAPLE** (Music Analysis & Practice Learning Environment)은 기타 연주 학습자와 밴드 연습자들을 위한 AI 기반 실시간 연주 분석 및 피드백 시스템입니다.
