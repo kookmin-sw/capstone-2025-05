@@ -173,7 +173,9 @@ export default function PostHeader({
             className="border p-2 w-full h-40"
           />
         ) : (
-          <p className="mt-6 ml-2 whitespace-pre-line">{post.content}</p>
+          <p className="mt-6 ml-2 px-2 whitespace-pre-wrap break-words">
+            {post.content}
+          </p>
         )}
       </div>
     </div>

@@ -30,6 +30,8 @@ export default function MyActivity() {
     return res.data.keyvaluedict[0];
   };
 
+  console.log(bookmarkItems, '내가 북마크');
+
   const renderList = (data) => {
     return data.map((item, idx) => (
       <Link
@@ -205,12 +207,6 @@ export default function MyActivity() {
               </Box>
             </div>
           </div>
-
-          {error && (
-            <div className="mt-6 ml-7 text-red-600 font-semibold">
-              ⚠ {error}
-            </div>
-          )}
         </div>
       </div>
     </div>
