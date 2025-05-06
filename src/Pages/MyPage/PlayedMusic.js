@@ -15,7 +15,6 @@ export default function PlayedMusic() {
   const [records, setRecords] = useState([]);
   const { uid } = useAuth();
 
-  // api연결
   const { data: recordData } = useRecordQuery(uid);
   const {
     data: recentRecords,
@@ -23,29 +22,20 @@ export default function PlayedMusic() {
     isError: recentError,
   } = useRecentRecordsQuery(uid);
   const { data: userInfo } = useUserQuery(uid);
-  console.log(recentRecords, '최근 연주한곡');
-  console.log(recordData, '기록');
-  console.log(userInfo);
+
   useEffect(() => {
-    // record데이터가 호출되면 아래 코드 실행
-    console.log('기록응답');
     if (recordData) {
       try {
         const allRecords = [];
-
         for (const [songName, recordsArray] of Object.entries(recordData)) {
           recordsArray.forEach((record) => {
-            allRecords.push({
-              ...record,
-              song: songName,
-            });
+            allRecords.push({ ...record, song: songName });
           });
         }
-
         setRecords(allRecords || []);
       } catch (error) {
         swal({
-          text: `연습 기록 가져오기 실패:${error}`,
+          text: `연습 기록 가져오기 실패: ${error}`,
           icon: 'error',
           buttons: {
             confirm: {
@@ -78,11 +68,15 @@ export default function PlayedMusic() {
               </li>
               <li className="menu-item flex items-center gap-2 py-2 shadow-lg">
                 <img src={Music} alt="연주한 곡 아이콘" className="w-4 h-4" />
-                <Link to="/playedmusic">연주한 곡</Link>
+                <Link to="/playedmusic" className="text-white">
+                  연주한 곡
+                </Link>
               </li>
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
-                <Link to="/setting">관리</Link>
+                <Link to="/setting" className="text-white">
+                  관리
+                </Link>
               </li>
             </ul>
           </div>
@@ -91,16 +85,21 @@ export default function PlayedMusic() {
           </div>
         </div>
 
-        <div className="w-[100%] overflow-y-auto p-10">
-          <h2 className="text-xl font-bold ml-8 mb-6">최근 연주한 곡</h2>
-          <div className="flex flex-wrap gap-10 ml-2 justify-start">
-            {recentRecords && recentRecords?.length > 0 ? (
+        {/* Main Content */}
+        <div className="w-[88%] overflow-y-auto p-8">
+          {/* 최근 연주한 곡 */}
+          <h2 className="text-xl font-bold ml-4 mb-4">최근 연주한 곡</h2>
+          <div
+            className="grid gap-8 ml-2 justify-items-center"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            }}
+          >
+            {recentRecords && recentRecords.length > 0 ? (
               recentRecords.map((song, index) => (
                 <Box
                   key={song.song_id || index}
-                  width="23%"
-                  height="50%"
-                  overwrite="h-[18%] p-4 flex flex-col justify-between"
+                  overwrite="p-4 flex flex-col justify-between w-full"
                 >
                   <div className="flex justify-center items-center mt-4">
                     <Link to="/feedback">
@@ -112,7 +111,7 @@ export default function PlayedMusic() {
                     </Link>
                   </div>
                   <div className="flex items-center justify-between px-2 mt-2">
-                    <div className="flex flex-col w-[full]">
+                    <div className="flex flex-col w-full">
                       <span className="text-lg font-semibold truncate">
                         {song.song_name}
                       </span>
@@ -124,18 +123,17 @@ export default function PlayedMusic() {
                 </Box>
               ))
             ) : (
-              <p>로딩 중...</p>
+              <p className="ml-8">로딩 중...</p>
             )}
           </div>
 
           {/* 연습 기록 */}
-          <h2 className="text-xl font-bold mt-10 ml-8 mb-6">연습 기록</h2>
-          <div className="w-full justify-center mt-4 ml-9">
+          <h2 className="text-xl font-bold mt-12 ml-4 mb-4">연습 기록</h2>
+          <div className="w-full justify-center mt-4">
             <Box
-              width="96.5%"
-              height="600px"
               backgroundColor="white"
-              overwrite="sm:w-[90%] lg:w-[70%] p-4 overflow-y-auto"
+              height="400px"
+              overwrite="p-4 overflow-y-auto w-[99%] mx-auto"
             >
               <div className="flex flex-col overflow-y-auto max-h-[100%]">
                 <table className="w-full text-left text-sm">
