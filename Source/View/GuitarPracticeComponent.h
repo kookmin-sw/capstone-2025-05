@@ -35,7 +35,8 @@ class GuitarPracticeComponent : public juce::Component,
                                public IAudioModelListener,  // 오디오 모델 리스너
                                public IEventListener,      // 이벤트 시스템 리스너
                                public juce::Timer,         // 애니메이션을 위한 타이머 추가
-                               public PlaybackStateChangeListener // ScoreComponent의 재생 상태 변경 리스너
+                               public PlaybackStateChangeListener, // ScoreComponent의 재생 상태 변경 리스너
+                               public juce::Slider::Listener // 슬라이더 리스너 추가
 {
 public:
     // 표시할 악보 아래 컴포넌트 유형
@@ -83,6 +84,11 @@ public:
     void enableMicrophoneMonitoring(bool shouldEnable);
     bool isMicrophoneMonitoringEnabled() const { return microphoneMonitoringEnabled; }
     void toggleMicrophoneMonitoring();
+    void setMicrophoneGain(float gain);
+    float getMicrophoneGain() const;
+    
+    // Slider::Listener 인터페이스 구현
+    void sliderValueChanged(juce::Slider* slider) override;
     
     // UI 업데이트 메서드
     void updateUI();
@@ -165,6 +171,8 @@ private:
     
     // 마이크 모니터링 관련 컨트롤
     juce::ToggleButton micMonitorButton;
+    juce::Slider micGainSlider;
+    juce::Label micGainLabel;
     bool microphoneMonitoringEnabled = false;
     
     // 현재 표시 중인 하단 뷰

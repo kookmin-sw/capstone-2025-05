@@ -77,6 +77,21 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     micMonitorButton.setColour(juce::ToggleButton::textColourId, MapleTheme::getHighlightColour());
     addAndMakeVisible(micMonitorButton);
     
+    // 마이크 게인 슬라이더 초기화
+    micGainLabel.setText("Gain", juce::dontSendNotification);
+    micGainLabel.setJustificationType(juce::Justification::centredRight);
+    micGainLabel.setColour(juce::Label::textColourId, MapleTheme::getTextColour());
+    addAndMakeVisible(micGainLabel);
+
+    micGainSlider.setRange(0.1, 10.0, 0.1);
+    micGainSlider.setValue(5.0); // 기본값
+    micGainSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    micGainSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 40, 20);
+    micGainSlider.setColour(juce::Slider::thumbColourId, MapleTheme::getAccentColour());
+    micGainSlider.setColour(juce::Slider::trackColourId, MapleTheme::getAccentColour().withAlpha(0.6f));
+    micGainSlider.addListener(this);
+    addAndMakeVisible(micGainSlider);
+    
     // 뷰 전환 버튼 초기화
     analysisViewButton.setButtonText("Performance Analysis");
     analysisViewButton.onClick = [this]() { switchBottomView(BottomViewType::PerformanceAnalysis); };
@@ -252,7 +267,7 @@ void GuitarPracticeComponent::resized()
     auto spacing = 15;
     
     // 버튼 중앙 정렬을 위한 계산
-    auto totalControlsWidth = buttonWidth + (buttonSize * 2) + labelWidth + (spacing * 3) + 100; // 모니터링 버튼 폭 추가
+    auto totalControlsWidth = buttonWidth + (buttonSize * 2) + labelWidth + (spacing * 5) + 100 + 40 + 120; // 모니터링 버튼, 게인 라벨 및 슬라이더 포함
     auto startX = (controlsArea.getWidth() - totalControlsWidth) / 2;
     auto startY = (controlsArea.getHeight() - buttonHeight) / 2;
     
@@ -278,6 +293,14 @@ void GuitarPracticeComponent::resized()
     micMonitorButton.setBounds(analyzeButton.getRight() + spacing,
                              controlsArea.getY() + startY,
                              100, buttonHeight);
+    
+    // 마이크 게인 슬라이더 배치
+    micGainLabel.setBounds(micMonitorButton.getRight() + spacing,
+                          controlsArea.getY() + startY,
+                          40, buttonHeight);
+    micGainSlider.setBounds(micGainLabel.getRight() + 5,
+                           controlsArea.getY() + startY,
+                           120, buttonHeight);
     
     // 녹음된 오디오 파형 표시 영역 - 마진 추가
     auto waveformHeight = 80;
@@ -847,4 +870,41 @@ void GuitarPracticeComponent::toggleMicrophoneMonitoring()
     
     // 현재 상태 반전
     enableMicrophoneMonitoring(!currentState);
+}
+
+// 마이크 게인 조절 메서드 구현
+void GuitarPracticeComponent::setMicrophoneGain(float gain)
+{
+    if (audioController != nullptr)
+    {
+        audioController->setMicrophoneGain(gain);
+        
+        // UI 업데이트 (슬라이더 값이 다를 경우만)
+        if (std::abs(micGainSlider.getValue() - gain) > 0.01f)
+        {
+            micGainSlider.setValue(gain, juce::dontSendNotification);
+        }
+    }
+}
+
+float GuitarPracticeComponent::getMicrophoneGain() const
+{
+    if (audioController != nullptr)
+    {
+        return audioController->getMicrophoneGain();
+    }
+    return 5.0f; // 기본값
+}
+
+// Slider::Listener 인터페이스 구현
+void GuitarPracticeComponent::sliderValueChanged(juce::Slider* slider)
+{
+    if (slider == &micGainSlider)
+    {
+        float gain = static_cast<float>(micGainSlider.getValue());
+        setMicrophoneGain(gain);
+        
+        // 현재 상태 로깅
+        DBG("GuitarPracticeComponent: Microphone gain changed to " + juce::String(gain));
+    }
 }

@@ -17,6 +17,10 @@ public:
     void enableMicrophoneMonitoring(bool shouldEnable);
     bool isMicrophoneMonitoringEnabled() const { return microphoneMonitoringEnabled; }
     
+    // 게인 설정 메서드 추가 
+    void setMicrophoneGain(float gain);
+    float getMicrophoneGain() const { return microphoneGain; }
+    
     // AudioIODeviceCallback implementation
     void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, 
                                          int numInputChannels,
@@ -36,5 +40,5 @@ private:
     
     // 마이크 모니터링을 위한 변수
     bool microphoneMonitoringEnabled = false;
-    float microphoneGain = 1.0f; // 마이크 모니터링 볼륨
+    float microphoneGain = 5.0f; // 마이크 모니터링 볼륨
 };

@@ -30,6 +30,13 @@ void AudioController::enableMicrophoneMonitoring(bool shouldEnable)
     }
 }
 
+void AudioController::setMicrophoneGain(float gain)
+{
+    // 유효한 범위 내에서 게인 설정 (0.1 ~ 10.0)
+    microphoneGain = juce::jlimit(0.1f, 10.0f, gain);
+    DBG("AudioController: Microphone gain set to " + juce::String(microphoneGain));
+}
+
 void AudioController::audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
                                                       int numInputChannels,
                                                       float* const* outputChannelData,
@@ -151,23 +158,70 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                 ", volume=" + juce::String(volume) + ")");
         }
         
-        // 모든 출력 채널에 입력 신호 복사 (모노->스테레오 또는 멀티채널)
-        for (int outChannel = 0; outChannel < numOutputChannels; ++outChannel)
-        {
-            if (outputChannelData[outChannel] != nullptr)
-            {
-                // 해당 출력 채널에 대응하는 입력 채널 결정 (순환적으로)
-                int inChannel = outChannel % numInputChannels;
+        // 스테레오 출력을 위한 처리
+        if (numOutputChannels >= 2) {
+            // 스테레오 출력 (왼쪽/오른쪽 채널에 모두 입력 신호 적용)
+            int inputChannel = 0; // 기본적으로 첫 번째 입력 채널 사용
+            
+            if (inputChannelData[inputChannel] != nullptr) {
+                // 버퍼 복사 전 상태 로깅
+                if (shouldLogMonitoring) {
+                    DBG("AudioController: Stereo monitoring active (L/R channels)");
+                }
                 
-                if (inputChannelData[inChannel] != nullptr)
+                // 왼쪽 채널 (0번 채널)
+                float leftGain = monitorGain;
+                if (outputChannelData[0] != nullptr) {
+                    for (int i = 0; i < numSamples; ++i) {
+                        float inputSample = inputChannelData[inputChannel][i] * leftGain;
+                        outputChannelData[0][i] += juce::jlimit(-1.0f, 1.0f, inputSample);
+                    }
+                }
+                
+                // 오른쪽 채널 (1번 채널)
+                float rightGain = monitorGain * 0.98f; // 약간 다른 게인값 (스테레오 효과)
+                if (outputChannelData[1] != nullptr) {
+                    for (int i = 0; i < numSamples; ++i) {
+                        // 약간의 지연 효과 (1샘플 지연, 스테레오 이미지 향상)
+                        float delayedSample = (i > 0) ? inputChannelData[inputChannel][i-1] : 0.0f;
+                        float inputSample = delayedSample * rightGain;
+                        outputChannelData[1][i] += juce::jlimit(-1.0f, 1.0f, inputSample);
+                    }
+                }
+            }
+            
+            // 2개 이상의 입력 채널이 있을 경우, 스테레오 입력 활용
+            if (numInputChannels >= 2 && inputChannelData[1] != nullptr) {
+                if (shouldLogMonitoring) {
+                    DBG("AudioController: Using second input channel for enhanced stereo");
+                }
+                
+                // 두 번째 입력 채널을 오른쪽으로 추가 (약한 게인으로)
+                float secondInputGain = monitorGain * 0.5f;
+                if (outputChannelData[1] != nullptr) {
+                    for (int i = 0; i < numSamples; ++i) {
+                        float inputSample = inputChannelData[1][i] * secondInputGain;
+                        outputChannelData[1][i] += juce::jlimit(-1.0f, 1.0f, inputSample);
+                    }
+                }
+            }
+        }
+        else {
+            // 모노 출력 (기존 코드와 동일)
+            for (int outChannel = 0; outChannel < numOutputChannels; ++outChannel)
+            {
+                if (outputChannelData[outChannel] != nullptr)
                 {
-                    // 입력 데이터를 게인 값을 적용하여 출력으로 복사 (기존 출력에 더함)
-                    for (int i = 0; i < numSamples; ++i)
+                    // 해당 출력 채널에 대응하는 입력 채널 결정 (순환적으로)
+                    int inChannel = outChannel % numInputChannels;
+                    
+                    if (inputChannelData[inChannel] != nullptr)
                     {
-                        // 클리핑 방지를 위한 최대값 제한
-                        float inputSample = inputChannelData[inChannel][i] * monitorGain;
-                        // 기존 출력에 모니터링 신호 더하기 (필요시 클리핑 방지)
-                        outputChannelData[outChannel][i] += juce::jlimit(-1.0f, 1.0f, inputSample);
+                        for (int i = 0; i < numSamples; ++i)
+                        {
+                            float inputSample = inputChannelData[inChannel][i] * monitorGain;
+                            outputChannelData[outChannel][i] += juce::jlimit(-1.0f, 1.0f, inputSample);
+                        }
                     }
                 }
             }
