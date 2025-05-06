@@ -28,7 +28,23 @@ void ScoreComponent::notifyPlaybackStateChanged(bool isPlaying)
 {
     if (playbackListener != nullptr)
     {
-        playbackListener->onPlaybackStateChanged(isPlaying);
+        // 메인 스레드에서 안전하게 호출하기 위해 MessageManager 사용
+        if (juce::MessageManager::getInstance()->isThisTheMessageThread())
+        {
+            // 이미 메인 스레드에 있으면 직접 호출
+            playbackListener->onPlaybackStateChanged(isPlaying);
+        }
+        else
+        {
+            // 다른 스레드에서는 MessageManager를 통해 메인 스레드로 호출 전달
+            juce::MessageManager::callAsync([this, isPlaying]() {
+                // 리스너가 여전히 유효한지 확인
+                if (playbackListener != nullptr)
+                {
+                    playbackListener->onPlaybackStateChanged(isPlaying);
+                }
+            });
+        }
     }
 }
 
@@ -367,14 +383,12 @@ void ScoreComponent::mouseDown(const juce::MouseEvent& event)
         
         // 커서가 보이도록 뷰포트 위치 조정
         float cursorX = xOffset;
-        int beatSum = 0;
         
         const auto& track = tabFile.tracks[trackIndex];
         for (int m = 0; m < measureIndex; ++m)
-            beatSum += track.measures[m].beats.size();
+            cursorX += track.measures[m].beats.size() * noteSpacing;
         
-        beatSum += beatIndex;
-        cursorX += beatSum * noteSpacing;
+        cursorX += beatIndex * noteSpacing;
         
         // 커서 위치로 스크롤
         viewport.setViewPosition(cursorX - viewport.getWidth() / 4, viewport.getViewPosition().getY());
@@ -584,7 +598,11 @@ void ScoreComponent::timerCallback()
     if (isPlayerPlaying != lastPlayingState)
     {
         DBG("ScoreComponent detected playback state change: " + juce::String(isPlayerPlaying ? "playing" : "stopped"));
+        
+        // 상태 변경 알림 (멀티스레드 안전하게 수정됨)
         notifyPlaybackStateChanged(isPlayerPlaying);
+        
+        // 현재 상태 저장
         lastPlayingState = isPlayerPlaying;
     }
     
@@ -599,9 +617,13 @@ void ScoreComponent::timerCallback()
         int currentMeasure = tabPlayer.getCurrentMeasure();
         int currentBeat = tabPlayer.getCurrentBeat();
         
+        // 안전 검사
+        if (tabPlayer.getTabFile() == nullptr)
+            return;
+        
         const auto& tabFile = *tabPlayer.getTabFile();
         
-        // 위치가 유효한지 확인
+        // 위치가 유효한지 확인 (범위 검사 강화)
         if (currentTrack >= 0 && currentTrack < static_cast<int>(tabFile.tracks.size()) &&
             currentMeasure >= 0 && currentMeasure < static_cast<int>(tabFile.tracks[currentTrack].measures.size()))
         {
@@ -634,7 +656,17 @@ void ScoreComponent::timerCallback()
                 int targetX = static_cast<int>(cursorX - viewArea.getWidth() / 3);
                 int newX = currentX + juce::jmin(10, targetX - currentX); // 최대 10픽셀씩 이동
                 
-                viewport.setViewPosition(newX, viewport.getViewPositionY());
+                // UI 업데이트는 메인 스레드에서 수행되도록 보장
+                if (juce::MessageManager::getInstance()->isThisTheMessageThread())
+                {
+                    viewport.setViewPosition(newX, viewport.getViewPositionY());
+                }
+                else
+                {
+                    juce::MessageManager::callAsync([this, newX]() {
+                        viewport.setViewPosition(newX, viewport.getViewPositionY());
+                    });
+                }
             }
         }
     }
