@@ -68,6 +68,15 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     positionLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(positionLabel);
     
+    // 마이크 모니터링 버튼 초기화
+    micMonitorButton.setButtonText("Monitor");
+    micMonitorButton.setToggleState(false, juce::dontSendNotification);
+    micMonitorButton.onClick = [this]() { toggleMicrophoneMonitoring(); };
+    micMonitorButton.setColour(juce::ToggleButton::tickColourId, MapleTheme::getAccentColour());
+    micMonitorButton.setColour(juce::ToggleButton::tickDisabledColourId, MapleTheme::getAccentColour().withAlpha(0.5f));
+    micMonitorButton.setColour(juce::ToggleButton::textColourId, MapleTheme::getHighlightColour());
+    addAndMakeVisible(micMonitorButton);
+    
     // 뷰 전환 버튼 초기화
     analysisViewButton.setButtonText("Performance Analysis");
     analysisViewButton.onClick = [this]() { switchBottomView(BottomViewType::PerformanceAnalysis); };
@@ -243,7 +252,7 @@ void GuitarPracticeComponent::resized()
     auto spacing = 15;
     
     // 버튼 중앙 정렬을 위한 계산
-    auto totalControlsWidth = buttonWidth + (buttonSize * 2) + labelWidth + (spacing * 3);
+    auto totalControlsWidth = buttonWidth + (buttonSize * 2) + labelWidth + (spacing * 3) + 100; // 모니터링 버튼 폭 추가
     auto startX = (controlsArea.getWidth() - totalControlsWidth) / 2;
     auto startY = (controlsArea.getHeight() - buttonHeight) / 2;
     
@@ -264,6 +273,11 @@ void GuitarPracticeComponent::resized()
     analyzeButton.setBounds(recordButton.getRight() + spacing, 
                            controlsArea.getY() + startY - (buttonSize - buttonHeight)/2, 
                            buttonSize, buttonSize);
+    
+    // 마이크 모니터링 버튼 배치
+    micMonitorButton.setBounds(analyzeButton.getRight() + spacing,
+                             controlsArea.getY() + startY,
+                             100, buttonHeight);
     
     // 녹음된 오디오 파형 표시 영역 - 마진 추가
     auto waveformHeight = 80;
@@ -789,4 +803,48 @@ void GuitarPracticeComponent::updateViewButtonStates()
     analysisViewButton.setToggleState(currentBottomView == BottomViewType::PerformanceAnalysis, juce::dontSendNotification);
     fingeringViewButton.setToggleState(currentBottomView == BottomViewType::FingeringGuide, juce::dontSendNotification);
     progressViewButton.setToggleState(currentBottomView == BottomViewType::PracticeProgress, juce::dontSendNotification);
+}
+
+// 마이크 모니터링 관련 메서드 개선
+void GuitarPracticeComponent::enableMicrophoneMonitoring(bool shouldEnable)
+{
+    DBG("GuitarPracticeComponent: Setting microphone monitoring to " + juce::String(shouldEnable ? "enabled" : "disabled"));
+    
+    microphoneMonitoringEnabled = shouldEnable;
+    
+    // AudioController에 모니터링 상태 변경 전달
+    if (audioController != nullptr)
+    {
+        audioController->enableMicrophoneMonitoring(shouldEnable);
+        
+        // 디버그 확인
+        DBG("GuitarPracticeComponent: AudioController monitoring state = " + 
+            juce::String(audioController->isMicrophoneMonitoringEnabled() ? "enabled" : "disabled"));
+    }
+    else
+    {
+        DBG("GuitarPracticeComponent: Warning - audioController is nullptr!");
+    }
+    
+    // UI 업데이트 - 토글 상태가 변경되었을 때만 업데이트
+    if (micMonitorButton.getToggleState() != shouldEnable)
+    {
+        micMonitorButton.setToggleState(shouldEnable, juce::dontSendNotification);
+        
+        // 활성화 상태에 따라 텍스트 색상 변경
+        micMonitorButton.setColour(juce::ToggleButton::textColourId, 
+                                  shouldEnable ? juce::Colours::green : MapleTheme::getHighlightColour());
+    }
+}
+
+void GuitarPracticeComponent::toggleMicrophoneMonitoring()
+{
+    // 현재 상태 확인
+    bool currentState = microphoneMonitoringEnabled;
+    DBG("GuitarPracticeComponent: Toggle microphone monitoring from " + 
+        juce::String(currentState ? "enabled" : "disabled") + " to " + 
+        juce::String(!currentState ? "enabled" : "disabled"));
+    
+    // 현재 상태 반전
+    enableMicrophoneMonitoring(!currentState);
 }

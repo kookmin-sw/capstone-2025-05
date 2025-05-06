@@ -13,6 +13,10 @@ public:
     // GuitarPracticeController 설정 메서드 추가
     void setGuitarPracticeController(GuitarPracticeController* controller);
     
+    // 마이크 모니터링 기능 추가
+    void enableMicrophoneMonitoring(bool shouldEnable);
+    bool isMicrophoneMonitoringEnabled() const { return microphoneMonitoringEnabled; }
+    
     // AudioIODeviceCallback implementation
     void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, 
                                          int numInputChannels,
@@ -29,4 +33,8 @@ private:
     
     // GuitarPracticeController 포인터 추가 (약한 참조 - 소유권 없음)
     GuitarPracticeController* guitarPracticeController;
+    
+    // 마이크 모니터링을 위한 변수
+    bool microphoneMonitoringEnabled = false;
+    float microphoneGain = 1.0f; // 마이크 모니터링 볼륨
 };

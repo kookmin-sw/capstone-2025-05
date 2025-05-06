@@ -79,6 +79,11 @@ public:
     // 오디오 분석 메서드 (UI에서 호출됨)
     void analyzeRecording();
     
+    // 마이크 모니터링 관련 메서드
+    void enableMicrophoneMonitoring(bool shouldEnable);
+    bool isMicrophoneMonitoringEnabled() const { return microphoneMonitoringEnabled; }
+    void toggleMicrophoneMonitoring();
+    
     // UI 업데이트 메서드
     void updateUI();
     
@@ -157,6 +162,10 @@ private:
     juce::TextButton analysisViewButton;
     juce::TextButton fingeringViewButton;
     juce::TextButton progressViewButton;
+    
+    // 마이크 모니터링 관련 컨트롤
+    juce::ToggleButton micMonitorButton;
+    bool microphoneMonitoringEnabled = false;
     
     // 현재 표시 중인 하단 뷰
     BottomViewType currentBottomView = BottomViewType::PerformanceAnalysis;
