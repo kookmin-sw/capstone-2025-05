@@ -69,7 +69,7 @@ GuitarPracticeController::GuitarPracticeController(AudioModel& model, juce::Audi
     }
     #ifdef JUCE_DEBUG
     // 디버그 모드에서는 localhost 사용
-    apiService->setApiBaseUrl("http://localhost:8000");
+    apiService->setApiBaseUrl("http://maple.ne.kr:8001");
     #endif
     
     DBG("GuitarPracticeController: API URL set to: " + apiService->getApiBaseUrl());

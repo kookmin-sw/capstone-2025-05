@@ -1,7 +1,7 @@
 #include "SongsAPIService.h"
 
 SongsAPIService::SongsAPIService()
-    : apiBaseUrl("http://localhost:8000"),
+    : apiBaseUrl("http://maple.ne.kr:8001"),
       defaultHeaders("Accept: application/json\r\n")
 {
     DBG("SongsAPIService constructor - API base URL: " + apiBaseUrl);
