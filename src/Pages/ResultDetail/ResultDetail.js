@@ -137,7 +137,6 @@ export default function ResultDetail() {
         setResult(response.data);
         setLoading(false);
       } catch (err) {
-        setError(err.message);
         setLoading(false);
       }
     };
