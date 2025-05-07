@@ -187,4 +187,8 @@ private:
     // AmpliTube 이펙트 에디터 컨테이너
     std::unique_ptr<juce::Component> ampliTubeEditorContainer;
     juce::ToggleButton ampliTubeEnableButton;  // 이펙트 활성화 토글 버튼
+
+    // 타이머 관련 변수
+    uint32_t time = 0;
+    float recordingSeconds = 0.0f;
 };

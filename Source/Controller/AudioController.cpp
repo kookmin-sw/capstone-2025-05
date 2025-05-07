@@ -3,8 +3,13 @@
 
 AudioController::AudioController(AudioModel& model, juce::AudioDeviceManager& manager)
     : audioModel(model), deviceManager(manager), guitarPracticeController(nullptr),
-      microphoneMonitoringEnabled(false), microphoneGain(5.0f)
+      microphoneMonitoringEnabled(false), microphoneGain(5.0f),
+      // 새로운 초기화: AudioTap(채널, 크기) 및 레벨 측정용 버퍼
+      audioTap(2, 16384)
 {
+    // 레벨 측정 버퍼 초기화 (오디오 스레드에서 재할당 방지)
+    levelMeterBuffer.setSize(2, 1024);
+
     // AmpliTube 프로세서 초기화 - 기본적으로 비활성화 상태로 시작
     ampliTubeProcessor = std::make_unique<AmpliTubeProcessor>();
     // 명시적 비활성화 설정 (초기 상태 보장)
@@ -126,15 +131,17 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
     if (shouldLogMonitoring) 
         monitoringLogCounter = 0;
     
-    // 입력 레벨 계산 및 업데이트
+    // 입력 레벨 계산 및 업데이트 - 레벨 측정을 위한 최적화된 방식 사용
     if (numInputChannels > 0 && inputChannelData != nullptr)
     {
         float currentBlockLevel = 0.0f;
         
-        for (int channel = 0; channel < numInputChannels; ++channel)
+        // 더 효율적인 레벨 계산 (임시 버퍼 재사용)
+        for (int channel = 0; channel < juce::jmin(numInputChannels, 2); ++channel)
         {
             if (inputChannelData[channel] != nullptr)
             {
+                // 직접 채널 데이터를 이용해 계산
                 for (int i = 0; i < numSamples; ++i)
                 {
                     float sample = std::abs(inputChannelData[channel][i]);
@@ -150,6 +157,9 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
         if (shouldLogMonitoring && microphoneMonitoringEnabled) {
             DBG("AudioController: Input level = " + juce::String(newLevel));
         }
+        
+        // 오디오 시각화를 위한 탭 업데이트
+        audioTap.write(inputChannelData, numInputChannels, numSamples);
     }
     
     // 출력 버퍼 초기화
@@ -238,23 +248,29 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
                 DBG("AudioController: AmpliTube is ENABLED, processing audio with effects");
             }
             
-            // 동적 메모리 할당은 힙 메모리를 사용합니다
-            std::unique_ptr<float[]> tempBuffer1 = std::make_unique<float[]>(numSamples);
-            std::unique_ptr<float[]> tempBuffer2 = std::make_unique<float[]>(numSamples);
+            // 정적 버퍼 사용 (동적 할당 대신)
+            static float tempBuffer1[4096]; // 최대 블록 크기 고려
+            static float tempBuffer2[4096];
             
             float* tempOutputData[2] = { nullptr, nullptr };
             
+            // 버퍼 크기 검증
+            if (numSamples > 4096) {
+                DBG("AudioController: Warning: Block size exceeds static buffer size!");
+                return;
+            }
+            
             if (numOutputChannels >= 1)
-                tempOutputData[0] = tempBuffer1.get();
+                tempOutputData[0] = tempBuffer1;
             if (numOutputChannels >= 2)
-                tempOutputData[1] = tempBuffer2.get();
+                tempOutputData[1] = tempBuffer2;
             
             // 버퍼 초기화
             for (int ch = 0; ch < juce::jmin(2, numOutputChannels); ++ch)
                 if (tempOutputData[ch] != nullptr)
                     std::memset(tempOutputData[ch], 0, sizeof(float) * numSamples);
             
-            // 입력 채널 설정 - 채널 1번 (두번째 채널) a사용
+            // 입력 채널 설정 - 채널 1번 (두번째 채널) 사용
             const float* inputChannelToProcess[2] = { nullptr, nullptr };
             if (numInputChannels > 1)
                 inputChannelToProcess[0] = inputChannelData[1]; // 마이크 입력 (두번째 채널)

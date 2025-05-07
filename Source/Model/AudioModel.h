@@ -20,6 +20,21 @@ public:
     double getCurrentPosition() const { return currentPositionInSeconds.load(); }
     void setCurrentPosition(double positionInSeconds);
     
+    // 오디오 버퍼 관련 메서드 - 실시간 스레드 안전성 개선
+    bool hasLatestAudioBuffer() const { return latestAudioBuffer.getNumSamples() > 0; }
+    
+    // 버퍼를 복사본으로 반환
+    juce::AudioBuffer<float> getLatestAudioBuffer() const { 
+        const juce::ScopedLock sl(bufferLock);
+        return latestAudioBuffer; 
+    }
+    
+    // 버퍼 설정 시 복사본 저장 (참조 방식 피함)
+    void setLatestAudioBuffer(const juce::AudioBuffer<float>& buffer) {
+        const juce::ScopedLock sl(bufferLock);
+        latestAudioBuffer.makeCopyOf(buffer);
+    }
+    
     // 기존 Listener 클래스는 레거시 지원을 위해 유지하되,
     // 새로운 리스너 인터페이스로 점진적으로 마이그레이션 권장
     class Listener {
@@ -40,7 +55,7 @@ public:
     
     void removeListener(Listener* l) { 
         const juce::ScopedLock lock(listenerMutex); 
-        legacyListeners.remove(l); 
+        legacyListeners.removeFirstMatchingValue(l); 
     }
     
     // 새로운 리스너 인터페이스 관리
@@ -51,35 +66,45 @@ public:
     
     void removeListener(IAudioModelListener* l) { 
         const juce::ScopedLock lock(listenerMutex); 
-        listeners.remove(l); 
+        listeners.removeFirstMatchingValue(l); 
     }
     
 private:
-    // Audio state
-    std::atomic<float> currentInputLevel { 0.0f };
-    std::atomic<bool> playing { false };
-    std::atomic<float> volume { 1.0f };
-    std::atomic<double> currentPositionInSeconds { 0.0 };
-    
-    // 리스너 관리
-    juce::CriticalSection listenerMutex;
-    juce::ListenerList<Listener> legacyListeners;
-    juce::ListenerList<IAudioModelListener> listeners;
-    
     // 상태 변경 알림 메서드
     void notifyInputLevelChanged();
     void notifyPlayStateChanged();
     void notifyVolumeChanged();
     void notifyPositionChanged();
     
-    // 안전한 리스너 호출 도우미 메서드
-    template<typename ListenerType, typename Callback>
-    void safelyCallListeners(juce::ListenerList<ListenerType>& listenerList, Callback&& callback)
+    // 안전한 리스너 호출 템플릿 메서드
+    template <typename ListenerType, typename CallbackType>
+    void safelyCallListeners(juce::Array<ListenerType*>& listenerArray, CallbackType&& callback)
     {
-        // 리스너 목록 복사본을 만들어 작업
-        const juce::ScopedLock lock(listenerMutex);
+        // 현재 리스너 목록의 복사본 생성
+        juce::Array<ListenerType*> listenersCopy;
+        {
+            const juce::ScopedLock lock(listenerMutex);
+            listenersCopy = listenerArray;
+        }
         
-        // 복사 대신 직접 Iterator를 사용하여 리스너 호출
-        listenerList.call(std::forward<Callback>(callback));
+        // 각 리스너에 대해 콜백 호출
+        for (auto* listener : listenersCopy)
+            if (listener != nullptr)
+                callback(*listener);
     }
+    
+    // Audio state
+    std::atomic<float> currentInputLevel { 0.0f };
+    std::atomic<bool> playing { false };
+    std::atomic<float> volume { 1.0f };
+    std::atomic<double> currentPositionInSeconds { 0.0 };
+    
+    // 최신 오디오 버퍼 저장
+    juce::AudioBuffer<float> latestAudioBuffer;
+    mutable juce::CriticalSection bufferLock;
+    
+    // Listener collections
+    juce::Array<Listener*> legacyListeners;
+    juce::Array<IAudioModelListener*> listeners;
+    juce::CriticalSection listenerMutex;
 };

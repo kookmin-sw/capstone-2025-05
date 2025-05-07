@@ -69,6 +69,15 @@ private:
     void publishSongLoadedEvent(const juce::String& songId);
     void publishSongLoadFailedEvent(const juce::String& songId, const juce::String& errorMessage);
     
+    // 내부 분석 진행 확인 메서드
+    void checkAnalysisProgress();
+    
+    // API로 녹음 파일 분석
+    void sendRecordingForAnalysis(const juce::File& recordingFile);
+    
+    // TabFile의 JSON 표현 생성
+    juce::String getTabFileInfo() const;
+    
     // 모델 및 뷰 참조
     AudioModel& audioModel;
     juce::AudioDeviceManager& deviceManager;

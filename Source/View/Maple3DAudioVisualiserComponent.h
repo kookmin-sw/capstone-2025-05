@@ -115,9 +115,27 @@ public:
     
     void timerCallback() override
     {
-        // audioDataChanged가 true일 때만 repaint 호출 (불필요한 렌더링 방지)
+        // 30fps로 제한하여 CPU 사용량 감소
+        double currentTime = juce::Time::getMillisecondCounterHiRes();
+        double elapsed = currentTime - lastTimerCallTime;
+        
+        if (elapsed < 33.33) // 30fps (약 33.33ms)
+            return;
+            
+        lastTimerCallTime = currentTime;
+        
+        // audioDataChanged가 true일 때만 FFT 계산 및 repaint 호출
         if (audioDataChanged)
         {
+            // GUI 스레드에서 FFT 계산 (락 필요)
+            const juce::ScopedLock sl(audioDataLock);
+            
+            // 충분한 데이터가 있는지 확인
+            if (fifoIndex >= fftSize / 2)
+            {
+                calculateFFT();
+            }
+            
             repaint();
             audioDataChanged = false;
         }
@@ -127,8 +145,8 @@ public:
             if (animationOffset > 1000.0f)
                 animationOffset = 0.0f;
                 
-            // 낮은 빈도로 repaint 호출 (애니메이션 유지) - 더 적은 빈도로 조정
-            if (++idleFrameCount > 2) // 5에서 2로 변경하여 더 부드러운 애니메이션
+            // 낮은 빈도로 repaint 호출 (애니메이션 유지)
+            if (++idleFrameCount > 4) // 더 적은 빈도로 업데이트
             {
                 repaint();
                 idleFrameCount = 0;
@@ -136,50 +154,52 @@ public:
         }
     }
     
-    // 오디오 데이터 설정
+    // 오디오 데이터 설정 - 원본 오디오 훼손 방지 및 최적화
     void pushBuffer(const juce::AudioBuffer<float>& buffer)
     {
         const juce::ScopedLock sl(audioDataLock);
         
-        // 버퍼 복사
+        // 버퍼 정보 가져오기
         auto numChannels = juce::jmin(buffer.getNumChannels(), 2);
         auto numSamples = buffer.getNumSamples();
         
-        // 파형 표시용 데이터 저장
+        if (numChannels == 0 || numSamples == 0)
+            return;
+        
+        // 파형 표시용 데이터 저장 - 버퍼 크기가 변경된 경우에만 리사이즈
         if (waveformData.getNumChannels() != numChannels || 
             waveformData.getNumSamples() != numSamples)
         {
-            waveformData.setSize(numChannels, numSamples);
+            waveformData.setSize(numChannels, numSamples, false, false, true);
         }
         
-        // 데이터 복사
+        // 데이터 복사 (소유권 이전)
         for (int ch = 0; ch < numChannels; ++ch)
-            waveformData.copyFrom(ch, 0, buffer, ch, 0, numSamples);
-            
-        // FFT 데이터 처리
-        if (numChannels > 0)
         {
-            const float* samples = buffer.getReadPointer(0);
-            
-            // 샘플링 간격 계산 (모든 샘플 처리 대신 샘플링 - 대형 버퍼 최적화)
-            int stride = numSamples > 1024 ? numSamples / 1024 : 1;
-            
-            // 처리 시간 측정
-            auto startTime = juce::Time::getMillisecondCounterHiRes();
-            
-            // 샘플 처리
-            for (int i = 0; i < numSamples; i += stride)
-            {
-                // FFT용 FIFO에 샘플 추가 
-                pushNextSampleIntoFifo(samples[i]);
-                
-                // FFT 계산 빈도 제한 (시간 소모적 작업)
-                double elapsedMs = juce::Time::getMillisecondCounterHiRes() - startTime;
-                if (elapsedMs > 4.0) // 4ms 이상 소요되면 중단 (성능 최적화)
-                    break;
-            }
+            waveformData.copyFrom(ch, 0, buffer, ch, 0, numSamples);
         }
         
+        // FFT 계산을 위해 메인 채널 데이터 FIFO에 저장
+        // (실제 FFT 계산은 GUI 스레드에서 수행)
+        const float* samples = buffer.getReadPointer(0);
+        
+        // 다운샘플링 - 성능 최적화 및 배속 방지
+        int stride = numSamples > fftSize ? numSamples / fftSize : 1;
+        
+        // FIFO 인덱스 초기화
+        fifoIndex = 0;
+        
+        // 다운샘플링된 데이터만 처리
+        for (int i = 0; i < numSamples && fifoIndex < fftSize; i += stride)
+        {
+            fftDataFifo[fifoIndex++] = samples[i];
+        }
+        
+        // 남은 부분을 0으로 채움
+        while (fifoIndex < fftSize)
+            fftDataFifo[fifoIndex++] = 0.0f;
+        
+        // 데이터 변경 플래그 설정 - 다음 타이머 콜백에서 FFT 계산
         audioDataChanged = true;
     }
     
@@ -276,39 +296,9 @@ private:
         }
     }
     
-    // FFT 샘플 처리
-    void pushNextSampleIntoFifo(float sample)
-    {
-        // FIFO에 다음 샘플 추가
-        if (fifoIndex == fftSize)
-        {
-            // 마지막 FFT 이후 충분한 시간이 지났는지 확인 (성능 최적화)
-            double currentTimeMs = juce::Time::getMillisecondCounterHiRes();
-            if (currentTimeMs - lastFftTimeMs > 16.67) // 최소 16.67ms 간격 (60Hz)
-            {
-                // FIFO가 가득 차면 FFT 수행
-                calculateFFT();
-                lastFftTimeMs = currentTimeMs;
-            }
-            fifoIndex = 0;
-        }
-        
-        // 인덱스가 유효 범위 내에 있는지 확인
-        if (fifoIndex < fftDataFifo.size())
-        {
-            fftDataFifo[fifoIndex++] = sample;
-        }
-    }
-    
-    // FFT 계산
+    // FFT 계산 최적화
     void calculateFFT()
     {
-        // 밴드 인덱스가 필요한 경우에만 계산 (첫 실행 시)
-        if (bandIndexCache[0].first == 0 && bandIndexCache[0].second == 0)
-        {
-            precomputeBandIndices();
-        }
-        
         // 창함수 적용 및 FFT 데이터 준비
         for (int i = 0; i < fftSize; ++i)
         {
@@ -396,7 +386,7 @@ private:
             }
             
             // 노이즈 제거 (낮은 값 필터링)
-            float noiseThreshold = 0.03f; // 임계값 감소 - 더 많은 주파수 표시
+            float noiseThreshold = 0.03f;
             if (value < noiseThreshold)
                 value = 0.0f;
             
@@ -406,8 +396,6 @@ private:
                 weight = 0.6f + band / (numBands * 0.1f) * 0.4f;
             else if (band > numBands * 0.9f)  // 고주파 (더 작은 범위)
                 weight = 0.6f + (numBands - band) / (numBands * 0.1f) * 0.4f;
-            
-            // 중간 주파수는 약간 강조
             else if (band > numBands * 0.3f && band < numBands * 0.7f)
                 weight = 1.15f;
                 
@@ -720,6 +708,8 @@ private:
     // 적응형 스케일링 및 감쇠 요소
     float dynamicScaleFactor = 250.0f; // 값 증가
     float globalDecayFactor = 0.0f;
+    
+    double lastTimerCallTime = 0.0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Maple3DAudioVisualiserComponent)
 }; 

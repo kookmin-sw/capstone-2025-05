@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Model/AudioModel.h"
+#include "Model/AudioTap.h"
 #include "AmpliTubeProcessor.h"
 
 // 전방 선언
@@ -40,6 +41,9 @@ public:
     // AmpliTube 게인 제어 메서드 추가
     void setAmpliTubeInputGain(float gain);
     float getAmpliTubeInputGain() const;
+
+    // 오디오 탭 접근자 - 시각화에 필요한 데이터 제공
+    AudioTap& getAudioTap() { return audioTap; }
     
 private:
     AudioModel& audioModel;
@@ -54,4 +58,10 @@ private:
     
     // AmpliTube 이펙터 처리기
     std::unique_ptr<AmpliTubeProcessor> ampliTubeProcessor;
+
+    // 오디오 시각화를 위한 락-프리 탭
+    AudioTap audioTap;
+    
+    // 입력 레벨 계산용 임시 버퍼 (초기화 시 한 번만 할당)
+    juce::AudioBuffer<float> levelMeterBuffer;
 };

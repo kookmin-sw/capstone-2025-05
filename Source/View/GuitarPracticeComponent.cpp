@@ -483,6 +483,20 @@ void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
     // 재생 중일 때는 분석 버튼 비활성화
     analyzeButton.setEnabled(!isNowPlaying && lastRecording.existsAsFile());
     
+    // 타이머 제어 - 재생 중일 때만 타이머 실행 (3D 시각화를 위해)
+    if (isNowPlaying && !isTimerRunning())
+    {
+        startTimer(30); // 30ms 간격으로 타이머 시작 (약 33fps)
+        DBG("GuitarPracticeComponent: Started timer for visualization");
+    }
+    else if (!isNowPlaying && !isRecording() && analyzeButton.isEnabled())
+    {
+        // 재생 중이 아니고, 녹음 중이 아니고, 분석 중이 아닐 때만 타이머 중지
+        // (분석 중일 때는 analyzeButton이 비활성화됨)
+        stopTimer();
+        DBG("GuitarPracticeComponent: Stopped timer - playback ended");
+    }
+    
     // ScoreComponent 업데이트 - 가능한 빠르게 UI 반응
     if (scoreComponent != nullptr)
     {
@@ -690,15 +704,44 @@ void GuitarPracticeComponent::analyzeRecording()
 // GuitarPracticeComponent 클래스에 추가할 새 메서드
 void GuitarPracticeComponent::timerCallback()
 {
-    // 녹음 중일 때 버튼 펄싱 효과를 위한 메서드
-    if (isRecording() && recordButtonLookAndFeel) {
+    auto timePassed = juce::Time::getMillisecondCounter() - time;
+    time = juce::Time::getMillisecondCounter();
+    
+    // 녹음 중이라면 녹음 시간 업데이트
+    if (isRecording())
+    {
+        recordingSeconds += timePassed / 1000.0f;
+        float minutes = std::floor(recordingSeconds / 60);
+        float seconds = std::fmod(recordingSeconds, 60.0f);
+        
+        juce::String timeString = juce::String(int(minutes)).paddedLeft('0', 2) + ":" +
+                          juce::String(int(seconds)).paddedLeft('0', 2);
+        
+        // 녹음 상태 표시 업데이트
         recordButtonLookAndFeel->updatePulse();
         recordButton.repaint();
     }
     
-    // 분석 중일 때 버튼 애니메이션 처리
-    if (analyzeButtonLookAndFeel && !analyzeButton.isEnabled()) {
+    // 분석 중이라면 애니메이션 효과
+    if (!analyzeButton.isEnabled()) 
+    {
         analyzeButton.repaint();
+    }
+
+    // 오디오 시각화를 위한 데이터 가져오기 - AudioTap 사용
+    if (performanceAnalysisComponent != nullptr && audioController != nullptr)
+    {
+        // 시각화를 위한 오디오 버퍼 준비 (1024 샘플, 한 번만 할당)
+        static juce::AudioBuffer<float> visualizationBuffer(2, 1024);
+        
+        // AudioTap에서 데이터 읽기 - 락프리 FIFO 방식
+        int samplesRead = audioController->getAudioTap().read(visualizationBuffer);
+        
+        // 데이터가 있으면 시각화 컴포넌트에 전달
+        if (samplesRead > 0)
+        {
+            performanceAnalysisComponent->pushAudioBuffer(visualizationBuffer);
+        }
     }
 }
 
