@@ -1,7 +1,4 @@
 ## 💡 프로젝트 소개
-<p align="center">
-  <img src="assets/Maple.png" alt="MAPLE 로고" width="300"/>
-</p>
 <div align="center">
 1. 프로젝트 개요
 </div>
@@ -50,8 +47,13 @@
 - JSON 기반 시각화 데이터 반환
 
 ## 🌐 시스템 아키텍처
-![system architecture_01](https://github.com/kookmin-sw/capstone-2025-05/assets/67200721/badc0378-e521-4f8b-9da3-b21fbdcb1cdf)
-![system architecture_02](https://github.com/kookmin-sw/capstone-2025-05/assets/67200721/97829a51-8f23-463e-ae51-dba16b09be13)
+<p align="center">
+  <img src="assets/system architecture_01.png" alt="시스템 아키텍처" width="600" />
+</p>
+<p align="center">
+  <img src="assets/system architecture_02.png" alt="시스템 아키텍처" width="600" />
+</p>
+
 
 ## 🎬 시연 영상
 
