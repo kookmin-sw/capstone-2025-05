@@ -1,3 +1,5 @@
+## 💡 프로젝트 소개
+
 > **MAPLE** (Music Analysis & Practice Learning Environment)은 기타 연주 학습자와 밴드 연습자들을 위한 **AI 기반 실시간 연주 분석 및 피드백 시스템**입니다.
 
 - ✏️ 사용자의 기타 연주를 **실시간으로 분석**하여 피치 정확도, 리듬 정확도, 연주 안정성 등 다양한 측면의 **피드백을 시각적으로 제공**하는 웹 플랫폼  
@@ -27,5 +29,17 @@
 - JSON 기반 시각화 데이터 반환
 
 ## 🌐 시스템 아키텍처
-<img src="/assets/system_architecture_01.png" />
-<img src="/assets/system_architecture_02.png" />
+<p align="center">
+  <img src="/assets/system_architecture_01.png" width="45%" />
+  <img src="/assets/system_architecture_02.png" width="45%" />
+</p>
+
+## Contact US
+| 사진 | 이름 | 역할 |
+|------|------|------|
+| ![]() | **송혜원** | Backend |
+| ![]() | **박재훈** | AI |
+| ![]() | **신수민** | Backend |
+| ![]() | **김도경** | Frontend, Design |
+| ![]() | **박지민** | Frontend, Design |
+| ![]() | **이정윤** | Frontend, Design |
