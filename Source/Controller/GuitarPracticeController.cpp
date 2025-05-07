@@ -367,7 +367,10 @@ void GuitarPracticeController::resetParser()
 
 bool GuitarPracticeController::isRecording() const
 {
-    // AudioRecorder 객체가 View에 있으므로 실제 구현은 View에서 호출
+    // View에서 AudioRecorder 객체를 관리하므로 실제 View에 상태를 문의
+    if (view != nullptr) {
+        return view->isRecording();
+    }
     return false;
 }
 
@@ -378,11 +381,23 @@ void GuitarPracticeController::startRecording()
         togglePlayback();
     
     // 실제 녹음 시작은 View에서 처리
+    if (view != nullptr) {
+        view->startRecording();
+        DBG("GuitarPracticeController::startRecording - delegated to View");
+    } else {
+        DBG("GuitarPracticeController::startRecording - view is nullptr!");
+    }
 }
 
 void GuitarPracticeController::stopRecording()
 {
     // 실제 녹음 중지는 View에서 처리
+    if (view != nullptr) {
+        view->stopRecording();
+        DBG("GuitarPracticeController::stopRecording - delegated to View");
+    } else {
+        DBG("GuitarPracticeController::stopRecording - view is nullptr!");
+    }
 }
 
 // 분석 스레드 클래스 선언

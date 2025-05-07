@@ -158,8 +158,68 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
             DBG("AudioController: Input level = " + juce::String(newLevel));
         }
         
-        // 오디오 시각화를 위한 탭 업데이트
-        audioTap.write(inputChannelData, numInputChannels, numSamples);
+        // 마이크 채널 분석 및 캡처
+        int micChannel = -1;
+        float highestLevel = 0.01f; // 노이즈 무시를 위한 임계값
+        
+        // 어떤 채널이 마이크 채널인지 분석
+        for (int ch = 0; ch < numInputChannels; ++ch)
+        {
+            if (inputChannelData[ch] != nullptr)
+            {
+                float level = 0.0f;
+                for (int i = 0; i < numSamples; ++i)
+                    level = juce::jmax(level, std::abs(inputChannelData[ch][i]));
+                
+                if (level > highestLevel)
+                {
+                    highestLevel = level;
+                    micChannel = ch;
+                }
+            }
+        }
+        
+        // 활성 채널이 없으면 기본 마이크 채널은 1 (두 번째 채널)
+        if (micChannel == -1 && numInputChannels > 1)
+            micChannel = 1;
+        else if (micChannel == -1 && numInputChannels > 0)
+            micChannel = 0;
+            
+        // 채널 정보 로깅
+        if (shouldLogMonitoring && microphoneMonitoringEnabled)
+        {
+            juce::String channelInfo = "Audio input channels: ";
+            for (int ch = 0; ch < numInputChannels; ++ch)
+            {
+                if (inputChannelData[ch] != nullptr)
+                {
+                    float level = 0.0f;
+                    for (int i = 0; i < juce::jmin(numSamples, 64); ++i)
+                        level = juce::jmax(level, std::abs(inputChannelData[ch][i]));
+                    
+                    channelInfo += "ch" + juce::String(ch) + "=" + juce::String(level, 3) + " ";
+                }
+                else
+                {
+                    channelInfo += "ch" + juce::String(ch) + "=null ";
+                }
+            }
+            channelInfo += "| Active mic channel: " + juce::String(micChannel);
+            DBG(channelInfo);
+        }
+        
+        // 마이크 채널 데이터만 재구성하여 AudioTap에 전달
+        if (micChannel >= 0 && micChannel < numInputChannels)
+        {
+            const float* tempChannelData[2] = { nullptr, nullptr };
+            
+            // 모노 마이크 채널을 양쪽 채널에 복제
+            tempChannelData[0] = inputChannelData[micChannel];
+            tempChannelData[1] = inputChannelData[micChannel];
+            
+            // 마이크 채널만 AudioTap에 전달
+            audioTap.write(tempChannelData, 2, numSamples);
+        }
     }
     
     // 출력 버퍼 초기화

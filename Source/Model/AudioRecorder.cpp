@@ -79,19 +79,97 @@ void AudioRecorder::audioDeviceIOCallbackWithContext(const float* const* inputCh
 {
     juce::ignoreUnused(context);
     
+    // 디버깅을 위한 로깅 (100번에 1번만 출력)
+    static int logCounter = 0;
+    bool shouldLog = (++logCounter % 100) == 0;
+    
+    // 레코딩 상태 확인
     const juce::ScopedLock sl(writerLock);
-
-    if (activeWriter.load() != nullptr && numInputChannels >= thumbnail.getNumChannels())
+    bool isActive = activeWriter.load() != nullptr;
+    
+    if (shouldLog && isActive)
     {
-        activeWriter.load()->write(inputChannelData, numSamples);
+        DBG("AudioRecorder: Recording active, numInputChannels=" + juce::String(numInputChannels));
+        
+        // 채널별 레벨 로깅
+        if (numInputChannels > 0)
+        {
+            juce::String channelLevels = "Channel levels: ";
+            for (int ch = 0; ch < numInputChannels; ++ch)
+            {
+                if (inputChannelData[ch] != nullptr)
+                {
+                    float level = 0.0f;
+                    for (int i = 0; i < numSamples; ++i)
+                        level = juce::jmax(level, std::abs(inputChannelData[ch][i]));
+                    
+                    channelLevels += "ch" + juce::String(ch) + "=" + juce::String(level, 3) + " ";
+                }
+                else
+                {
+                    channelLevels += "ch" + juce::String(ch) + "=null ";
+                }
+            }
+            DBG(channelLevels);
+        }
+    }
 
-        // 오디오 데이터를 참조하는 AudioBuffer 생성 (메모리 할당 또는 복사 없음)
-        juce::AudioBuffer<float> buffer(const_cast<float**>(inputChannelData), thumbnail.getNumChannels(), numSamples);
+    // 마이크 채널 감지 - 일반적으로 두 번째 채널(인덱스 1)
+    int micChannel = -1;
+    if (numInputChannels > 1)
+    {
+        // 마이크 채널 자동 감지 (가장 강한 신호를 가진 채널)
+        float highestLevel = 0.01f; // 노이즈 임계값
+        
+        for (int ch = 0; ch < numInputChannels; ++ch)
+        {
+            if (inputChannelData[ch] != nullptr)
+            {
+                float level = 0.0f;
+                for (int i = 0; i < numSamples; ++i)
+                    level = juce::jmax(level, std::abs(inputChannelData[ch][i]));
+                
+                if (level > highestLevel)
+                {
+                    highestLevel = level;
+                    micChannel = ch;
+                }
+            }
+        }
+        
+        // 신호가 너무 약하면 기본값으로 채널 1 사용
+        if (micChannel == -1)
+            micChannel = 1; // 두 번째 채널이 일반적으로 마이크
+    }
+    else if (numInputChannels > 0)
+    {
+        micChannel = 0; // 채널이 하나뿐이면 그 채널 사용
+    }
+    
+    if (shouldLog && isActive)
+    {
+        DBG("AudioRecorder: Using mic channel " + juce::String(micChannel));
+    }
+
+    // 실제 레코딩 처리
+    if (isActive && micChannel >= 0 && micChannel < numInputChannels)
+    {
+        // 마이크 채널 데이터만 사용하여 임시 입력 버퍼 생성
+        const float* tempChannelData[2] = { nullptr, nullptr };
+        
+        // 마이크 채널 데이터를 첫 번째 채널에 복사
+        tempChannelData[0] = inputChannelData[micChannel];
+        
+        // 모노 레코딩 - 마이크 채널만 사용
+        activeWriter.load()->write(tempChannelData, numSamples);
+        
+        // 미리보기 썸네일 업데이트 (마이크 채널만 사용)
+        juce::AudioBuffer<float> buffer(const_cast<float**>(&tempChannelData[0]), 1, numSamples);
         thumbnail.addBlock(nextSampleNum, buffer, 0, numSamples);
         nextSampleNum += numSamples;
     }
 
-    // 출력 버퍼 클리어
+    // 출력 버퍼 클리어 
     for (int i = 0; i < numOutputChannels; ++i)
         if (outputChannelData[i] != nullptr)
             juce::FloatVectorOperations::clear(outputChannelData[i], numSamples);
