@@ -51,10 +51,10 @@
 
 
 ## 🌐 시스템 아키텍처
-<p align="center">
-  <img src="assets/system architecture_01.png" alt="시스템 아키텍처" width="400" />
-  <img src="assets/system architecture_02.png" alt="시스템 아키텍처" width="400" />
-</p>
+<div align="center">
+  <img src="assets/system architecture_01.png" alt="시스템 아키텍처 1" width="400" style="margin-right: 10px;" />
+  <img src="assets/system architecture_02.png" alt="시스템 아키텍처 2" width="400" />
+</div>
 
 
 ## 🎬 시연 영상
@@ -114,8 +114,8 @@
   </tr>
   <tr align="center">
     <td>Backend</td>
-    <td>AI</td>
     <td>Backend</td>
+    <td>AI</td>
     <td>Frontend, Design</td>
     <td>Frontend, Design</td>
     <td>Frontend, Design</td>
