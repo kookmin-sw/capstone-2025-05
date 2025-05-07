@@ -1,4 +1,7 @@
 ## 💡 프로젝트 소개
+<p align="center">
+  <img src="assets/Maple.png" alt="MAPLE 로고" width="300"/>
+</p>
 <div align="center">
 1. 프로젝트 개요
 </div>
