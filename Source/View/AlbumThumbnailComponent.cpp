@@ -111,8 +111,8 @@ void AlbumThumbnailComponent::loadCoverImageFromAPI()
     if (contentController == nullptr || song.getCoverImageUrl().isEmpty())
         return;
         
-    // 로딩 상태 표시
-    thumbnail = juce::Image(juce::Image::ARGB, 150, 150, true);
+    // 로딩 상태 표시 - 크기 증가
+    thumbnail = juce::Image(juce::Image::ARGB, 200, 200, true);
     juce::Graphics g(thumbnail);
     g.fillAll(juce::Colours::lightgrey);
     g.setColour(juce::Colours::darkgrey);
@@ -141,25 +141,24 @@ void AlbumThumbnailComponent::createDefaultThumbnail()
 {
     DBG("AlbumThumbnailComponent::createDefaultThumbnail for: " + albumTitle);
     
-    // 기본 썸네일 이미지 생성
-    thumbnail = juce::Image(juce::Image::RGB, 150, 150, true);
+    // 기본 썸네일 이미지 생성 - 크기 증가
+    thumbnail = juce::Image(juce::Image::RGB, 200, 200, true);
     juce::Graphics g(thumbnail);
     g.fillAll(juce::Colours::darkgrey);
     g.setColour(juce::Colours::white);
     
-    // 앨범 타이틀 표시
-    g.setFont(juce::Font(16.0f, juce::Font::bold));
-    g.drawText(albumTitle, thumbnail.getBounds().reduced(10).removeFromTop(50), 
+    // 앨범 타이틀 표시 (위쪽 부분에 표시)
+    g.setFont(juce::Font(18.0f, juce::Font::bold)); // 폰트 크기 증가
+    g.drawText(albumTitle, thumbnail.getBounds().reduced(10).removeFromTop(100), 
                juce::Justification::centred, true);
                
-    // 아티스트 표시
-    g.setFont(juce::Font(14.0f));
-    g.drawText(albumArtist, thumbnail.getBounds().reduced(10).withTrimmedTop(50), 
+    // 아티스트 표시 (아래쪽 부분에 표시)
+    g.setFont(juce::Font(16.0f)); // 폰트 크기 증가
+    g.setColour(juce::Colours::lightgrey); // 색상 변경
+    g.drawText(albumArtist, thumbnail.getBounds().reduced(10).removeFromBottom(50), 
                juce::Justification::centred, true);
     
-    // 테두리 추가
-    g.setColour(juce::Colours::lightgrey);
-    g.drawRect(thumbnail.getBounds().reduced(1), 2);
+    // 테두리 제거
 }
 
 void AlbumThumbnailComponent::loadCoverImage()
@@ -223,17 +222,24 @@ void AlbumThumbnailComponent::mouseUp(const juce::MouseEvent& event)
 
 void AlbumThumbnailComponent::paint(juce::Graphics& g)
 {
-    // Draw thumbnail
-    g.fillAll(juce::Colours::white);
-    g.setColour(juce::Colours::lightgrey);
-    g.drawRect(getLocalBounds(), 1);
+    // 배경을 투명하게 설정 (흰색 배경 제거)
+    g.fillAll(juce::Colours::transparentBlack);
     
-    auto thumbnailBounds = getLocalBounds().withHeight(getHeight() - 30);
+    // 테두리 제거
+    
+    // 텍스트 영역 증가 (40->60)
+    auto thumbnailBounds = getLocalBounds().withHeight(getHeight() - 60);
     g.drawImageWithin(thumbnail, thumbnailBounds.getX(), thumbnailBounds.getY(), 
                      thumbnailBounds.getWidth(), thumbnailBounds.getHeight(),
                      juce::RectanglePlacement::centred);
     
     // Draw title below thumbnail
-    g.setColour(juce::Colours::black);
-    g.drawText(albumTitle, 0, getHeight() - 30, getWidth(), 30, juce::Justification::centred);
-}
+    g.setColour(juce::Colours::white);
+    g.setFont(juce::Font(14.0f, juce::Font::bold));
+    g.drawText(albumTitle, 0, getHeight() - 60, getWidth(), 30, juce::Justification::centred);
+
+    // Draw artist below title
+    g.setColour(juce::Colours::lightgrey);
+    g.setFont(juce::Font(12.0f));
+    g.drawText(albumArtist, 0, getHeight() - 40, getWidth(), 30, juce::Justification::centred);
+} 

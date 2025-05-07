@@ -24,6 +24,7 @@ public:
     void setThumbnailSize(int size);
     void setSpacing(int newSpacing);
     
+    void paint(juce::Graphics& g) override;
     void resized() override;
     
 private:

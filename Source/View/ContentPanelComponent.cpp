@@ -11,17 +11,11 @@ ContentPanelComponent::ContentPanelComponent()
     
     addAndMakeVisible(recentGrid);
     
-    addAndMakeVisible(viewAllRecent);
-    viewAllRecent.setButtonText("View All");
-    
     addAndMakeVisible(recommendTitle);
     recommendTitle.setText("Recommended Songs", juce::dontSendNotification);
     recommendTitle.setFont(juce::Font(18.0f, juce::Font::bold));
     
     addAndMakeVisible(recommendGrid);
-    
-    addAndMakeVisible(viewAllRecommend);
-    viewAllRecommend.setButtonText("View All");
     
     // 로딩 인디케이터 초기화
     addAndMakeVisible(loadingLabel);
@@ -137,6 +131,12 @@ void ContentPanelComponent::notifySongSelected(const juce::String& songId)
     songListeners.call(&SongSelectedListener::songSelected, songId);
 }
 
+void ContentPanelComponent::paint(juce::Graphics& g)
+{
+    // 배경을 투명하게 설정
+    g.fillAll(juce::Colours::transparentBlack);
+}
+
 void ContentPanelComponent::resized()
 {
     DBG("ContentPanelComponent::resized - start");
@@ -151,27 +151,38 @@ void ContentPanelComponent::resized()
     recentTitle.setBounds(bounds.removeFromTop(30));
     bounds.removeFromTop(5); // 간격
     
-    auto recentSection = bounds.removeFromTop(200);
-    recentGrid.setBounds(recentSection.withTrimmedRight(100));
-    viewAllRecent.setBounds(recentSection.removeFromRight(90).withTrimmedTop(5));
+    auto recentSection = bounds.removeFromTop(500); // 높이 증가 (420->500)
+    recentGrid.setBounds(recentSection); // View All 버튼 공간 제거
     
     DBG("ContentPanelComponent::resized - recent grid position: " + 
         juce::String(recentGrid.getX()) + "," + juce::String(recentGrid.getY()) + 
         " size: " + juce::String(recentGrid.getWidth()) + "x" + juce::String(recentGrid.getHeight()));
     
-    bounds.removeFromTop(20); // 섹션 간 간격
+    bounds.removeFromTop(50); // 섹션 간 간격 증가
     
     // Recommended 섹션 레이아웃
     recommendTitle.setBounds(bounds.removeFromTop(30));
     bounds.removeFromTop(5); // 간격
     
-    auto recommendSection = bounds.removeFromTop(200);
-    recommendGrid.setBounds(recommendSection.withTrimmedRight(100));
-    viewAllRecommend.setBounds(recommendSection.removeFromRight(90).withTrimmedTop(5));
+    auto recommendSection = bounds.removeFromTop(500); // 높이 증가 (420->500)
+    recommendGrid.setBounds(recommendSection); // View All 버튼 공간 제거
+    
+    // 아래쪽에 여백 추가 (하단이 잘리지 않도록)
+    bounds.removeFromTop(50);
     
     DBG("ContentPanelComponent::resized - recommended grid position: " + 
         juce::String(recommendGrid.getX()) + "," + juce::String(recommendGrid.getY()) + 
         " size: " + juce::String(recommendGrid.getWidth()) + "x" + juce::String(recommendGrid.getHeight()));
     
-    DBG("ContentPanelComponent::resized - complete");
+    // 컴포넌트 크기 조정 (충분한 공간 확보)
+    int minHeight = recentTitle.getBottom() 
+                   + recentSection.getHeight() 
+                   + 50  // 섹션 간 간격
+                   + recommendTitle.getHeight()
+                   + recommendSection.getHeight()
+                   + 50; // 하단 여백
+                   
+    setSize(getWidth(), minHeight);
+    
+    DBG("ContentPanelComponent::resized - complete, total height: " + juce::String(minHeight));
 }

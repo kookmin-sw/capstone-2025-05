@@ -13,6 +13,7 @@ public:
     ContentPanelComponent();  // 생성자 수정
     ~ContentPanelComponent() = default;
     
+    void paint(juce::Graphics& g) override;
     void resized() override;
     
     // 컨트롤러 설정
@@ -45,11 +46,9 @@ private:
     // UI 컴포넌트
     juce::Label recentTitle;
     AlbumGridView recentGrid;
-    juce::TextButton viewAllRecent;
 
     juce::Label recommendTitle;
     AlbumGridView recommendGrid;
-    juce::TextButton viewAllRecommend;
     
     // 로딩 인디케이터
     juce::Label loadingLabel;

@@ -4,9 +4,9 @@
 AlbumGridView::AlbumGridView()
 {
     // Setup default properties
-    numColumns = 3;
-    thumbnailSize = 150;
-    spacing = 10;
+    numColumns = 6;
+    thumbnailSize = 180;
+    spacing = 15;
 }
 
 void AlbumGridView::addAlbum(const juce::String& title, const juce::Image& thumbnail)
@@ -104,6 +104,12 @@ void AlbumGridView::setSpacing(int newSpacing)
     resized();
 }
 
+void AlbumGridView::paint(juce::Graphics& g)
+{
+    // 배경을 투명하게 설정 (기존 흰색 배경 제거)
+    g.fillAll(juce::Colours::transparentBlack);
+}
+
 void AlbumGridView::resized()
 {
     DBG("AlbumGridView::resized - start, thumbnail count: " + juce::String(thumbnails.size()));
@@ -113,16 +119,17 @@ void AlbumGridView::resized()
     
     // Calculate item width including spacing
     int itemWidth = thumbnailSize;
-    int itemHeight = thumbnailSize + 30; // Adding space for text
+    int itemHeight = thumbnailSize + 100; // 높이 증가 (80->100)
     
     int row = 0;
     int col = 0;
     
     for (auto* thumbnail : thumbnails)
     {
-        thumbnail->setBounds(col * (itemWidth + spacing), 
-                            row * (itemHeight + spacing),
-                            itemWidth, itemHeight);
+        // 간격을 약간 늘려 테두리 없이도 구분되게 함
+        thumbnail->setBounds(col * (itemWidth + spacing) + 2, 
+                            row * (itemHeight + spacing) + 2,
+                            itemWidth - 4, itemHeight - 4);
         
         DBG("AlbumGridView::resized - thumbnail [" + juce::String(col) + "," + juce::String(row) + "] position: " + 
             juce::String(col * (itemWidth + spacing)) + "," + juce::String(row * (itemHeight + spacing)) + 

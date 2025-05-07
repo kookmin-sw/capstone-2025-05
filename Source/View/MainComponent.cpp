@@ -96,12 +96,12 @@ void MainComponent::resized()
         // 메인 콘텐츠 영역 (나머지)
         mainContentViewport.setBounds(bounds);
         
-        // 콘텐츠 패널 크기 설정
-        contentPanelComponent->setBounds(0, 0, bounds.getWidth() - 20, 800);
+        // 콘텐츠 패널 크기 설정 (동적으로 필요한 높이 계산)
+        int contentHeight = 1200; // 더 큰 기본 높이로 설정 (1000->1200)
+        contentPanelComponent->setBounds(0, 0, bounds.getWidth() - 20, contentHeight);
         
-        // 컨테이너 최종 크기 설정 (콘텐츠 패널 크기에 맞춤)
-        mainContentContainer.setBounds(0, 0, bounds.getWidth() - 20, 
-                                     contentPanelComponent->getHeight());
+        // 실제 콘텐츠 크기에 맞춰 컨테이너 크기 조정
+        mainContentContainer.setBounds(0, 0, bounds.getWidth() - 20, contentHeight);
     }
 }
 

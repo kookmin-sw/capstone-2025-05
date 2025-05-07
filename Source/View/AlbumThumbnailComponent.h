@@ -13,7 +13,7 @@ public:
         : albumTitle(title), thumbnail(thumbnailImage), albumId("")
     {
         if (thumbnail.isNull())
-            thumbnail = juce::Image(juce::Image::RGB, 150, 150, true);
+            thumbnail = juce::Image(juce::Image::RGB, 200, 200, true);
     }
 
     // 노래 ID 설정 (악보 파일 ID)
