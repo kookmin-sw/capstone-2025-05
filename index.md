@@ -2,7 +2,7 @@
 > Music Analysis & Performance Learning Environment  
 > AI 기반 기타 연주 실시간 분석 및 피드백 시스템
 
----
+<hr style="border: 2px solid #999; margin: 32px 0;" />
 
 ## 💡 프로젝트 소개
 <p align="center">
@@ -17,7 +17,7 @@
 </div>
    최근 밴드 음악과 기타 연주의 인기가 급격히 증가하고 있으며, 많은 사람들이 유튜브나 SNS을 통해 연주 방법을 배우고 공유하고 있습니다. 그러나 대부분의 연습은 독학에 의존하고 있어 정확한 피드백을 받기 어렵고, 이는 곧 실력 향상에 한계가 됩니다. 이에 따라, **MAPLE**은 보다 상세하고 사용자가 수용하기 쉬운 피드백을 제공할 수 있는 AI 기반 연주 분석 시스템을 제공합니다.
 
----
+<hr style="border: 2px solid #999; margin: 32px 0;" />
 
 ## 🦾 주요 기능
 ### 🎵실시간 연주 분석 및 피드백
@@ -40,7 +40,7 @@
 -단순한 박자/음정 분석이 아니라, 연주의 뉘앙스까지 평가 가능
 -밴드 합주를 대비한 개별 연습의 효율성을 높일 수 있는 도구 제공
 
----
+<hr style="border: 2px solid #999; margin: 32px 0;" />
 
 ## 🛠 기술 스택
 ### Frontend
@@ -57,7 +57,7 @@
 - 리듬 분석 알고리즘 (Onset detection + Madmom)
 - JSON 기반 시각화 데이터 반환
 
----
+<hr style="border: 2px solid #999; margin: 32px 0;" />
 
 ## 🌐 시스템 아키텍처
 <div align="center">
@@ -65,11 +65,11 @@
   <img src="assets/system architecture_02.png" alt="시스템 아키텍처 2" width="400" />
 </div>
 
----
+<hr style="border: 2px solid #999; margin: 32px 0;" />
 
 ## 🎬 시연 영상
 
----
+<hr style="border: 2px solid #999; margin: 32px 0;" />
 
 ## Contact US
 <table>
