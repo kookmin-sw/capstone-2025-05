@@ -29,17 +29,41 @@
 - JSON 기반 시각화 데이터 반환
 
 ## 🌐 시스템 아키텍처
-<p align="center">
-  <img src="/assets/system_architecture_01.png" width="45%" />
-  <img src="/assets/system_architecture_02.png" width="45%" />
-</p>
 
 ## Contact US
-| 사진 | 이름 | 역할 |
-|------|------|------|
-| ![]() | **송혜원** | Backend |
-| ![]() | **박재훈** | AI |
-| ![]() | **신수민** | Backend |
-| ![]() | **김도경** | Frontend, Design |
-| ![]() | **박지민** | Frontend, Design |
-| ![]() | **이정윤** | Frontend, Design |
+<table>
+  <tr align="center">
+    <td style="min-width: 120px;">
+      <br />
+      <b>송혜원</b><br />
+    </td>
+    <td style="min-width: 120px;">
+      <br />
+      <b>박재훈</b><br />
+    </td>
+    <td style="min-width: 120px;">
+      <br />
+      <b>신수민</b><br />
+    </td>
+    <td style="min-width: 120px;">
+      <br />
+      <b>김도경</b><br />
+    </td>
+    <td style="min-width: 120px;">
+      <br />
+      <b>박지민</b><br />
+    </td>
+    <td style="min-width: 120px;">
+      <br />
+      <b>이정윤</b><br />
+    </td>
+  </tr>
+  <tr align="center">
+    <td>Backend</td>
+    <td>AI</td>
+    <td>Backend</td>
+    <td>Frontend, Design</td>
+    <td>Frontend, Design</td>
+    <td>Frontend, Design</td>
+  </tr>
+</table>
