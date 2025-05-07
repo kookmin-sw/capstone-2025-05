@@ -1,1 +1,4 @@
-theme: jekyll-theme-slate
+title: 기타 연주 분석 시스템, MAPLE
+remote_theme: thedevslot/WhatATheme
+plugins:
+  - jekyll-remote-theme
