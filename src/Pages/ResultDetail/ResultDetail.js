@@ -11,8 +11,8 @@ import TechniqueChart from '../../Components/Chart/techniqueChart.js';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../../Context/AuthContext.js';
 import AudioPlayer from '../../Components/Audio/AudioPlayer.js';
-import fakeResult from '../../Data/resultDetail.json';
 import { FaPrint } from 'react-icons/fa6';
+import { useMemo } from 'react';
 
 const API_BASE_URL = process.env.REACT_APP_RESULT_URL;
 
@@ -61,7 +61,10 @@ export default function ResultDetail() {
     };
   }
 
-  const processed = result ? processCompareData(result) : null;
+  const processed = useMemo(() => {
+    if (!result) return null;
+    return processCompareData(result);
+  }, [result]);
 
   const graphs = [
     { label: '음정 분석', key: 'pitch', color: 'red' },
@@ -69,40 +72,46 @@ export default function ResultDetail() {
     { label: '기술 분석', key: 'technique', color: 'blue' },
   ];
 
-  const getChartDataByType = (type) => {
+  const getChartDataByType = (processed, type) => {
     if (type === 'pitch') {
-      return processed.pitch_comparison.map((item, i) => ({
-        second: parseFloat((i * 0.5).toFixed(2)),
-        original: Math.round(item.reference_pitch),
-        played: Math.round(item.user_pitch),
-        pitch_difference: Math.abs(item.reference_pitch - item.user_pitch),
-        technique_match: true,
-      }));
+      return (
+        processed?.pitch_comparison.map((item, i) => ({
+          second: parseFloat((i * 0.5).toFixed(2)),
+          original: Math.round(item.reference_pitch),
+          played: Math.round(item.user_pitch),
+          pitch_difference: Math.abs(item.reference_pitch - item.user_pitch),
+          technique_match: true,
+        })) || []
+      );
     }
     if (type === 'onset') {
-      return processed.onset_comparison.map((item, i) => ({
-        second: parseFloat((i * 0.5).toFixed(2)),
-        original: parseFloat(item.reference_onset.toFixed(2)),
-        played: parseFloat(item.user_onset.toFixed(2)),
-        pitch_difference: parseFloat(
-          Math.abs(item.reference_onset - item.user_onset).toFixed(2),
-        ),
-        technique_match: true,
-      }));
+      return (
+        processed?.onset_comparison.map((item, i) => ({
+          second: parseFloat((i * 0.5).toFixed(2)),
+          original: parseFloat(item.reference_onset.toFixed(2)),
+          played: parseFloat(item.user_onset.toFixed(2)),
+          pitch_difference: parseFloat(
+            Math.abs(item.reference_onset - item.user_onset).toFixed(2),
+          ),
+          technique_match: true,
+        })) || []
+      );
     }
     if (type === 'technique') {
-      return processed.technique_comparison.map((item, i) => ({
-        second: parseFloat((i * 0.5).toFixed(2)),
-        original: Array.isArray(item.reference_technique)
-          ? item.reference_technique.join(', ')
-          : item.reference_technique,
-        played: Array.isArray(item.user_technique)
-          ? item.user_technique.join(', ')
-          : item.user_technique,
-        technique_match:
-          JSON.stringify(item.user_technique) ===
-          JSON.stringify(item.reference_technique),
-      }));
+      return (
+        processed?.technique_comparison.map((item, i) => ({
+          second: parseFloat((i * 0.5).toFixed(2)),
+          original: Array.isArray(item.reference_technique)
+            ? item.reference_technique.join(', ')
+            : item.reference_technique,
+          played: Array.isArray(item.user_technique)
+            ? item.user_technique.join(', ')
+            : item.user_technique,
+          technique_match:
+            JSON.stringify(item.user_technique) ===
+            JSON.stringify(item.reference_technique),
+        })) || []
+      );
     }
     return [];
   };
@@ -211,7 +220,7 @@ export default function ResultDetail() {
                   </button>
                 </div>
                 <div className="prose prose-sm lg:prose-lg prose-slate max-w-none mt-4 leading-relaxed text-gray-700">
-                  <ReactMarkdown>{processed.feedback}</ReactMarkdown>
+                  <ReactMarkdown>{processed?.feedback}</ReactMarkdown>
                 </div>
               </div>
             </Box>
@@ -249,7 +258,7 @@ export default function ResultDetail() {
             <p
               className={`font-bold text-${graphs[currentGraphIndex].color}-500`}
             >
-              {processed.scores[
+              {processed?.scores[
                 `${graphs[currentGraphIndex].key}_match_percentage`
               ].toFixed(1)}
               %
@@ -258,18 +267,18 @@ export default function ResultDetail() {
               <div
                 className={`bg-${graphs[currentGraphIndex].color}-500 h-full`}
                 style={{
-                  width: `${processed.scores[`${graphs[currentGraphIndex].key}_match_percentage`].toFixed(1)}%`,
+                  width: `${processed?.scores[`${graphs[currentGraphIndex].key}_match_percentage`].toFixed(1)}%`,
                 }}
               />
             </div>
           </div>
 
           {graphs[currentGraphIndex].key === 'technique' ? (
-            <TechniqueChart data={getChartDataByType('technique')} />
+            <TechniqueChart data={getChartDataByType(processed, 'technique')} />
           ) : graphs[currentGraphIndex].key === 'onset' ? (
-            <BeatChart data={getChartDataByType('onset')} />
+            <BeatChart data={getChartDataByType(processed, 'onset')} />
           ) : (
-            <PerformanceChart data={getChartDataByType('pitch')} />
+            <PerformanceChart data={getChartDataByType(processed, 'pitch')} />
           )}
         </Box>
       </div>
