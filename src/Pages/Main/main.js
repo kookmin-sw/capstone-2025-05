@@ -22,8 +22,6 @@ export default function Main() {
   console.log('trendMusic', TrendMusic);
   console.log('topmusic', topMusic);
 
-  console.log(window.location.href, 'mainlocation');
-
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex items-center justify-center mt-12">

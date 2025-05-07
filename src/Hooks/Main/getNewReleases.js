@@ -9,7 +9,6 @@ const fetchTrendTracks = async () => {
     albums.map(async (album) => {
       const tracksRes = await spotifyApi.get(`/albums/${album.id}/tracks`);
       const firstTrack = tracksRes.data.items[0];
-
       return {
         title: firstTrack?.name || album.name,
         artist: album.artists[0].name,

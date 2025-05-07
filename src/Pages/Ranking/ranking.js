@@ -12,7 +12,7 @@ export default function Ranking() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const songName = location.state.song_name;
+  const songName = location.state.song_name || 'Drowning';
 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
