@@ -29,3 +29,5 @@
 - JSON 기반 시각화 데이터 반환
 
 ## 🌐 시스템 아키텍처
+<img src="/assets/system_architecture_01.png" />
+<img src="/assets/system_architecture_02.png" />
