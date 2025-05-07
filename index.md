@@ -1,37 +1,9 @@
-## Welcome to GitHub Pages
+## 💡 프로젝트 소개
 
-You can use the [editor on GitHub](https://github.com/kookmin-sw/cap-template/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+> **MAPLE** (Music Analysis & Practice Learning Environment)은 기타 연주 학습자와 밴드 연습자들을 위한 **AI 기반 실시간 연주 분석 및 피드백 시스템**입니다.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/kookmin-sw/cap-template/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+- ✏️ 사용자의 기타 연주를 **실시간으로 분석**하여 피치 정확도, 리듬 정확도, 연주 안정성 등 다양한 측면의 **피드백을 시각적으로 제공**하는 웹 플랫폼  
+- 🎵 **2024년 밴드 음악 인기 급상승**: DAY6, 실리카겔, Wave to Earth 등 **인디 및 대중 밴드**가 빠르게 성장 중  
+- 📉 기존 학습 도구의 한계: 유튜브·악보·튜너 등은 **실시간 피드백 부족**  
+- 🧠 MAPLE은 **음정·박자·테크닉 분석 기반의 개별 피드백**을 제공  
+- 🎯 **초보자부터 전문가까지**, 자기 연주를 **정량적으로 분석하고 성장**할 수 있도록 설계됨
