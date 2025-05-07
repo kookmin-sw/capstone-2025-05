@@ -10,122 +10,10 @@ TabPlayer::TabPlayer()
 {
     DBG("Starting TabPlayer initialization...");
     
-    // #ifdef _WIN32
-    // // COM 초기화 (VST 플러그인은 COM에 의존함)
-    // HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    // if (SUCCEEDED(hr))
-    //     DBG("COM initialized successfully");
-    // else
-    //     DBG("COM initialization failed: " + juce::String(static_cast<int>(hr)));
-    // #endif
+    // 벌크 VST 관련 코드 제거 (COM 초기화, 플러그인 로드 등)
     
-    formatManager.addDefaultFormats();
-    // formatManager.addFormat(new juce::VSTPluginFormat());  // VST2 명시적 추가
-
-    DBG("Registered " + juce::String(formatManager.getNumFormats()) + " plugin formats");
-    
-    // 다양한 경로에서 플러그인 파일 시도
-    juce::StringArray possiblePaths;
-    possiblePaths.add("C:/Program Files/Steinberg/VSTPlugins/AGLP.vst3");
-    possiblePaths.add("C:/Program Files/VSTPlugins/AGLP.vst3");
-    possiblePaths.add("C:/Program Files/Common Files/VST2/AGLP.vst3");
-    possiblePaths.add("C:/Program Files/Common Files/VST3/AGLP.vst3");
-    possiblePaths.add("C:/Program Files (x86)/Steinberg/VSTPlugins/AGLP.vst3");
-    possiblePaths.add("C:/Program Files (x86)/VSTPlugins/AGLP.vst3");
-    
-    juce::File pluginFile;
-    bool foundValidPath = false;
-    
-    for (const auto& path : possiblePaths)
-    {
-        juce::File testFile(path);
-        if (testFile.exists())
-        {
-            pluginFile = testFile;
-            foundValidPath = true;
-            DBG("Found plugin at: " + pluginFile.getFullPathName());
-            break;
-        }
-    }
-    
-    if (!foundValidPath)
-    {
-        DBG("Plugin file not found in any of the common paths. Using built-in audio generator instead.");
-        return;
-    }
-    
-    // 모든 등록된 플러그인 포맷에 대해 시도
-    for (int i = 0; i < formatManager.getNumFormats(); ++i)
-    {
-        juce::AudioPluginFormat* format = formatManager.getFormat(i);
-        juce::String formatName = format->getName();
-        DBG("Trying plugin format: " + formatName);
-        
-        try {
-            juce::OwnedArray<juce::PluginDescription> descriptions;
-            format->findAllTypesForFile(descriptions, pluginFile.getFullPathName());
-            
-            if (!descriptions.isEmpty())
-            {
-                DBG("Found " + juce::String(descriptions.size()) + " plugin descriptions for format: " + formatName);
-                
-                for (auto* desc : descriptions)
-                {
-                    DBG("Attempting to load plugin: " + desc->name + " (" + desc->pluginFormatName + ")");
-                    
-                    try {
-                        // 플러그인 인스턴스 생성
-                        juce::String errorMsg;
-                        plugin = formatManager.createPluginInstance(
-                            *desc,
-                            44100.0,  // 샘플레이트
-                            512,      // 버퍼 크기
-                            errorMsg
-                        );
-                        
-                        if (plugin != nullptr)
-                        {
-                            DBG("Successfully loaded plugin: " + plugin->getName());
-                            plugin->prepareToPlay(44100.0, 512);
-                            useVST = true;  // VST 사용 플래그 설정
-                            return;  // 성공적으로 로드되면 함수 종료
-                        }
-                        else
-                        {
-                            DBG("Failed to load plugin: " + errorMsg);
-                            error = errorMsg;  // 에러 메시지 저장
-                        }
-                    }
-                    catch (const std::exception& e)
-                    {
-                        DBG("Exception while creating plugin instance: " + juce::String(e.what()));
-                    }
-                    catch (...)
-                    {
-                        DBG("Unknown exception while creating plugin instance");
-                    }
-                }
-            }
-            else
-            {
-                DBG("No plugin descriptions found for format: " + formatName);
-            }
-        }
-        catch (const std::exception& e)
-        {
-            DBG("Exception while finding plugin types: " + juce::String(e.what()));
-        }
-        catch (...)
-        {
-            DBG("Unknown exception while finding plugin types");
-        }
-    }
-    
-    // VST 로드 실패 시 로그
-    if (!useVST)
-    {
-        DBG("Using built-in audio generator instead of VST plugin.");
-    }
+    // 기본 템포 설정
+    calculateTickSamples();
     
     DBG("TabPlayer initialization finished!");
 }
@@ -208,7 +96,7 @@ void TabPlayer::startPlaying()
     silenceCountdown = 0;
     trackEndReached = false;
     
-    // 모든 활성 노트를 확실히 비우기
+    // 활성 노트 초기화
     activeNotes.clear();
     
     DBG("Playback started with complete reset of state");
@@ -218,10 +106,7 @@ void TabPlayer::stopPlaying()
 {
     playing = false;
     
-    // 모든 활성 노트 중지 및 초기화
-    for (auto& note : activeNotes) {
-        note.isPlaying = false;
-    }
+    // 활성 노트 초기화
     activeNotes.clear();
     
     // 상태 초기화
@@ -246,6 +131,7 @@ void TabPlayer::prepareToPlay(double sampleRate, int samplesPerBlockIn)
 
 void TabPlayer::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    // 소리 재생 대신 악보 진행만 처리
     midiMessages.clear();
     buffer.clear(); // 버퍼 초기화
     
@@ -255,7 +141,7 @@ void TabPlayer::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&
     
     const int numSamples = buffer.getNumSamples();
     
-    // 활성화된 노트 처리 - 기존 코드 대신 더 안정적인 구현
+    // 활성화된 노트 관리 (소리는 재생하지 않음)
     processActiveNotes(midiMessages, numSamples);
     
     int samplePosition = 0;
@@ -322,14 +208,14 @@ void TabPlayer::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&
                                         // 마지막 노트가 충분히 재생될 수 있도록 지연 시간 추가
                                         silenceCountdown = static_cast<int>(currentSampleRate * 2.0); // 2초 지연
                                         
-                                        // 노트가 충돌하지 않도록 즉시 모든 노트 정리
+                                        // 노트 정리
                                         stopAllActiveNotes(midiMessages);
                                         
                                         // 트랙 끝 플래그 설정
                                         trackEndReached = true;
                                     }
                                     else {
-                                        // 다음 트랙으로 넘어갈 때 모든 노트를 초기화 - 중요!
+                                        // 다음 트랙으로 넘어갈 때 모든 노트를 초기화
                                         stopAllActiveNotes(midiMessages);
                                     }
                                 }
@@ -348,8 +234,6 @@ void TabPlayer::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&
         // 이 프레임에서 감소할 샘플 수 계산
         int samplesToDecrement = juce::jmin(silenceCountdown, numSamples);
         silenceCountdown -= samplesToDecrement;
-        
-        // 무음 기간 동안 새 노트가 트리거되지 않도록 함
         
         if (silenceCountdown <= 0) {
             DBG("Silence period ended, resetting playback state");
@@ -374,150 +258,18 @@ void TabPlayer::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&
         }
     }
     
-    // VST 플러그인이 로드되어 있으면 사용
-    if (useVST && plugin != nullptr)
-    {
-        try {
-            // VST 플러그인을 통해 오디오 처리
-            plugin->processBlock(buffer, midiMessages);
-        }
-        catch (const std::exception& e) {
-            DBG("Error in plugin processing: " + juce::String(e.what()));
-            buffer.clear();
-            useBuiltInSynthesizer(buffer);
-        }
-    }
-    else
-    {
-        useBuiltInSynthesizer(buffer);
-    }
+    // 소리 재생 기능 제거 (VST 플러그인 및 내장 신디사이저 사용 안함)
 }
 
-// 사용자 정의 합성기 함수 추가
-void TabPlayer::useBuiltInSynthesizer(juce::AudioBuffer<float>& buffer)
-{
-    const int numSamples = buffer.getNumSamples();
-    
-    // 각 채널의 오디오 데이터 처리
-    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-    {
-        float* channelData = buffer.getWritePointer(channel);
-        
-        // 먼저 버퍼 초기화
-        for (int sample = 0; sample < numSamples; ++sample)
-        {
-            channelData[sample] = 0.0f;
-        }
-        
-        // 각 활성 노트별로 오디오 데이터 생성
-        for (const auto& note : activeNotes)
-        {
-            if (note.isPlaying)
-            {
-                // 노트 주파수 계산
-                float frequency = 440.0f * std::pow(2.0f, (note.midiNote - 69) / 12.0f);
-                
-                // 노트 지속 시간 기반 엔벨로프 생성
-                int startSample = note.startSample;
-                int noteAgeSamples = sampleCounter - startSample;
-                int noteDurationSamples = note.duration * samplesPerTick;
-                
-                // 각 샘플에 대해 사운드 생성
-                for (int sample = 0; sample < numSamples; ++sample)
-                {
-                    // 현재 샘플의 절대 시간 위치
-                    float time = static_cast<float>(sampleCounter - numSamples + sample) / currentSampleRate;
-                    
-                    // 현재 샘플에서의 노트 나이
-                    int currentSampleAge = noteAgeSamples + sample;
-                    
-                    // ADSR 엔벨로프 적용 (Attack, Decay, Sustain, Release)
-                    float envelope = 1.0f;
-                    
-                    // 어택 단계 (시작 부분)
-                    int attackTime = juce::jmin(100, noteDurationSamples / 10);
-                    if (currentSampleAge < attackTime)
-                    {
-                        envelope = static_cast<float>(currentSampleAge) / attackTime;
-                    }
-                    // 릴리즈 단계 (끝 부분)
-                    else if (currentSampleAge > noteDurationSamples * 0.7f)
-                    {
-                        float releasePhase = (currentSampleAge - noteDurationSamples * 0.7f) 
-                                            / (noteDurationSamples * 0.3f);
-                        envelope = 1.0f - releasePhase;
-                        envelope = juce::jmax(0.0f, envelope);
-                    }
-                    
-                    // 기본 사인파
-                    float sinValue = std::sin(2.0f * juce::float_Pi * frequency * time);
-                    
-                    // 기타 음색을 위한 고조파 추가 (더 자연스러운 소리)
-                    float harmonics = 0.0f;
-                    // harmonics += 0.5f * std::sin(2.0f * 2.0f * juce::float_Pi * frequency * time); // 2차 고조파
-                    // harmonics += 0.3f * std::sin(3.0f * 2.0f * juce::float_Pi * frequency * time); // 3차 고조파
-                    // harmonics += 0.15f * std::sin(4.0f * 2.0f * juce::float_Pi * frequency * time); // 4차 고조파
-                    
-                    // 기본음과 고조파 믹스
-                    float finalSound = (0.7f * sinValue + 0.3f * harmonics) * envelope;
-                    
-                    // 모든 노트가 함께 재생될 때 볼륨을 조절하기 위한 계수
-                    float volumeScale = 0.2f / juce::jmax(1.0f, static_cast<float>(activeNotes.size()) * 0.5f);
-                    
-                    // 최종 출력 값을 버퍼에 추가
-                    channelData[sample] += finalSound * volumeScale;
-                }
-            }
-        }
-        
-        // 클리핑 방지 및 추가 노이즈 제거
-        for (int sample = 0; sample < numSamples; ++sample)
-        {
-            // 소프트 클리핑 적용
-            channelData[sample] = juce::jlimit(-0.9f, 0.9f, channelData[sample]);
-            
-            // 값이 매우 작으면 노이즈 방지를 위해 0으로 설정
-            if (std::abs(channelData[sample]) < 0.001f)
-                channelData[sample] = 0.0f;
-        }
-    }
-}
+// 사용자 정의 합성기 함수 제거 (useBuiltInSynthesizer 함수)
 
-// 트랙 변경 시 모든 활성 노트를 확실히 종료하도록 개선
+// 노트 관리 기능 간소화 - 실제로 소리는 재생하지 않음
 void TabPlayer::stopAllActiveNotes(juce::MidiBuffer& midiMessages)
 {
-    DBG("Stopping ALL active notes: " + juce::String(activeNotes.size()) + " notes active");
+    DBG("Clearing all active notes: " + juce::String(activeNotes.size()) + " notes active");
     
-    // 모든 활성 노트에 대해 Note Off 이벤트 생성
-    for (auto& note : activeNotes)
-    {
-        if (note.isPlaying)
-        {
-            midiMessages.addEvent(juce::MidiMessage::noteOff(note.channel, note.midiNote), 0);
-            note.isPlaying = false;
-            
-            DBG("Stopping note: " + juce::String(note.midiNote));
-        }
-    }
-    
-    // 모든 활성 노트 제거 - 초기화
+    // 활성 노트 초기화
     activeNotes.clear();
-    
-    // VST 플러그인을 사용 중이라면 모든 노트 초기화 추가 조치
-    if (useVST && plugin != nullptr)
-    {
-        try {
-            for (int channel = 1; channel <= 16; ++channel)
-            {
-                midiMessages.addEvent(juce::MidiMessage::allNotesOff(channel), 0);
-                midiMessages.addEvent(juce::MidiMessage::allSoundOff(channel), 0);
-                midiMessages.addEvent(juce::MidiMessage::controllerEvent(channel, 123, 0), 0);
-            }
-        }
-        catch (const std::exception& e) {
-            DBG("Error stopping notes in plugin: " + juce::String(e.what()));
-        }
-    }
 }
 
 void TabPlayer::processNextBeat(juce::MidiBuffer& midiMessages, int startSample)
@@ -555,7 +307,7 @@ void TabPlayer::processNextBeat(juce::MidiBuffer& midiMessages, int startSample)
         ", Beat: " + juce::String(currentBeat) + 
         ", Voices: " + juce::String(beat.voices.size()));
     
-    // 현재 비트의 모든 보이스 처리
+    // 현재 비트의 모든 보이스 처리 - 소리는 재생하지 않고 악보 위치만 업데이트
     for (const auto& voice : beat.voices)
     {
         // 비어있는 보이스는 건너뛰기
@@ -568,7 +320,7 @@ void TabPlayer::processNextBeat(juce::MidiBuffer& midiMessages, int startSample)
         // Voice의 지속 시간 가져오기
         float voiceDuration = voice.duration;
         
-        // 모든 노트 처리
+        // 모든 노트 처리 - 소리 재생 관련 부분 제거하고 정보만 처리
         for (const auto& note : voice.notes)
         {
             // 노트의 string 값이 유효한지 확인 (1~6 사이)
@@ -587,32 +339,18 @@ void TabPlayer::processNextBeat(juce::MidiBuffer& midiMessages, int startSample)
             // 박자를 실제 틱으로 변환 (정확한 지속 시간 계산)
             int noteDuration = static_cast<int>(beatDuration * ticksPerBeat);
             
-            // 최소 지속 시간 보장 (음이 너무 짧아지는 현상 방지)
+            // 최소 지속 시간 보장
             noteDuration = juce::jmax(noteDuration, ticksPerBeat / 16);
             
-            // 음표가 너무 길면 최대값 제한 (2마디 이상 지속되지 않도록)
+            // 음표가 너무 길면 최대값 제한
             noteDuration = juce::jmin(noteDuration, 2 * 4 * ticksPerBeat);
             
-            // 지속 노트 이펙트 처리
-            if (note.effect.letRing) {
-                // Let ring 효과가 있으면 지속 시간 증가 (최대 2배)
-                noteDuration = static_cast<int>(noteDuration * 1.5f);
-                DBG("Applied let ring effect: duration extended to " + juce::String(noteDuration));
-            }
-            
-            // 노트 온 이벤트 추가
-            int velocity = 100; // 기본 볼륨
-            
-            // MIDI 노트 온 메시지 생성 (1/127 볼륨 스케일)
-            midiMessages.addEvent(juce::MidiMessage::noteOn(1, midiNote, static_cast<float>(velocity) / 127.0f), startSample);
-            
-            // 활성 노트 목록에 추가
+            // 활성 노트 목록에 추가 (소리는 재생하지 않지만 노트 상태는 추적)
             activeNotes.push_back(ActiveNote(midiNote, 1, sampleCounter, noteDuration));
             
-            DBG("Playing note - String: " + juce::String(note.string) + 
+            DBG("Tracking note - String: " + juce::String(note.string) + 
                 ", Fret: " + juce::String(note.value) + 
                 ", MIDI: " + juce::String(midiNote) + 
-                ", Velocity: " + juce::String(velocity) + 
                 ", Duration: " + juce::String(noteDuration) + " ticks");
         }
     }
@@ -620,7 +358,7 @@ void TabPlayer::processNextBeat(juce::MidiBuffer& midiMessages, int startSample)
 
 void TabPlayer::processActiveNotes(juce::MidiBuffer& midiMessages, int numSamples)
 {
-    // 이 함수는 재생 중인 노트를 관리하고 필요한 경우 노트 오프 이벤트를 생성합니다.
+    // 이 함수는 노트 상태를 관리합니다 (소리 재생 없음)
     std::vector<size_t> notesToRemove;
     
     for (size_t i = 0; i < activeNotes.size(); ++i)
@@ -638,14 +376,12 @@ void TabPlayer::processActiveNotes(juce::MidiBuffer& midiMessages, int numSample
         
         if (elapsedTicks >= note.duration)
         {
-            // 노트 오프 이벤트 추가
-            midiMessages.addEvent(juce::MidiMessage::noteOff(note.channel, note.midiNote), 0);
             note.isPlaying = false;
             
             // 제거할 노트로 표시
             notesToRemove.push_back(i);
             
-            DBG("Note off - MIDI: " + juce::String(note.midiNote) + 
+            DBG("Note end - MIDI: " + juce::String(note.midiNote) + 
                 ", Duration: " + juce::String(note.duration) + 
                 " ticks, Elapsed: " + juce::String(elapsedTicks) + " ticks");
         }
@@ -688,18 +424,6 @@ void TabPlayer::releaseResources()
 {
     DBG("Releasing TabPlayer resources");
     stopPlaying();
-    
-    // VST 플러그인 리소스 해제
-    if (plugin != nullptr)
-    {
-        plugin = nullptr;
-    }
-    
-    // #ifdef _WIN32
-    // // COM 정리
-    // CoUninitialize();
-    // DBG("COM uninitialized");
-    // #endif
 }
 
 int TabPlayer::stringToMidiNote(int string, int fret)
@@ -745,47 +469,22 @@ void TabPlayer::audioDeviceIOCallbackWithContext(const float* const* inputChanne
                                             int numSamples,
                                             const juce::AudioIODeviceCallbackContext& context)
 {
-    // 이 함수는 오디오 장치에서 콜백을 받아 처리합니다
-    
-    // MIDI 메시지 처리를 위한 임시 버퍼
-    juce::MidiBuffer midiBuffer;
-    
-    // 오디오 데이터 처리를 위한 임시 버퍼
-    juce::AudioBuffer<float> tempBuffer(numOutputChannels, numSamples);
-    tempBuffer.clear();
-    
-    // TabPlayer의 processBlock 함수를 사용하여 오디오와 MIDI 데이터 생성
-    processBlock(tempBuffer, midiBuffer);
-    
-    // 생성된 오디오 데이터를 출력 버퍼로 복사
+    // 소리 재생 기능 제거 - 출력 버퍼만 초기화
     for (int channel = 0; channel < numOutputChannels; ++channel)
     {
-        if (channel < tempBuffer.getNumChannels())
-        {
-            // 생성된 오디오 데이터를 출력 버퍼에 복사
-            juce::FloatVectorOperations::copy(
-                outputChannelData[channel],
-                tempBuffer.getReadPointer(channel),
-                numSamples
-            );
-        }
-        else
-        {
-            // 채널이 부족한 경우 첫 번째 채널 데이터를 복사(모노->스테레오 변환)
-            if (tempBuffer.getNumChannels() > 0)
-            {
-                juce::FloatVectorOperations::copy(
-                    outputChannelData[channel],
-                    tempBuffer.getReadPointer(0),
-                    numSamples
-                );
-            }
-            else
-            {
-                // 데이터가 없으면 무음 출력
-                juce::FloatVectorOperations::clear(outputChannelData[channel], numSamples);
-            }
-        }
+        juce::FloatVectorOperations::clear(outputChannelData[channel], numSamples);
+    }
+    
+    // 악보 상태 업데이트만 처리
+    if (playing && tabFile != nullptr)
+    {
+        // MIDI 메시지와 오디오 버퍼 생성 (실제 출력 없음)
+        juce::MidiBuffer midiBuffer;
+        juce::AudioBuffer<float> tempBuffer(numOutputChannels, numSamples);
+        tempBuffer.clear();
+        
+        // 악보 위치 업데이트
+        processBlock(tempBuffer, midiBuffer);
     }
 }
 
