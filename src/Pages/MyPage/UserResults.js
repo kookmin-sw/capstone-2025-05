@@ -25,13 +25,15 @@ export default function UserResults() {
   }, [uid]);
 
   return (
-    <div className="min-h-screen bg-[#f1ede5] p-10">
-      <h2 className="text-2xl font-bold mb-6">🎼 내 연주 분석 결과</h2>
+    <div className="min-h-screen bg-[#f1ede5] p-10 flex flex-col items-center">
+      <h2 className="text-2xl font-bold mb-6">
+        <span className="mr-2">🎼</span>내 연주 분석 결과
+      </h2>
 
       {results.length === 0 ? (
         <p className="text-gray-500">분석 결과가 없습니다.</p>
       ) : (
-        <div className="space-y-6">
+        <div className="flex flex-col items-center space-y-6">
           {results.map((result, idx) => (
             <div
               key={idx}
