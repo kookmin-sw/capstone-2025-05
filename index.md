@@ -1,14 +1,8 @@
----
-layout: splash
-title: "🎸 MAPLE"
-subtitle: "Music Analysis & Performance Learning Environment "
-header:
-  overlay_image: /assets/guitar.jpg
-  actions:
-    - label: "READ MORE"
-      url: "#more"
----
+# 🎸 MAPLE
+> Music Analysis & Performance Learning Environment  
+> AI 기반 기타 연주 실시간 분석 및 피드백 시스템
 
+---
 
 ## 💡 프로젝트 소개
 <p align="center">
@@ -21,7 +15,7 @@ header:
 <div align="center">
 2. 배경 및 필요성
 </div>
-   최근 밴드 음악과 기타 연주의 인기가 급격히 증가하고 있으며, 많은 사람들이 유튜브나 SNS을 통해 연주 방법을 배우고 공유하고 있습니다. 그러나 대부분의 연습은 독학에 의존하고 있어 정확한 피드백을 받기 어렵고, 이는 곧 실력 향상에 한계가 됩니다. 이에 따라, ** MAPLE **은 보다 상세하고 사용자가 수용하기 쉬운 피드백을 제공할 수 있는 AI 기반 연주 분석 시스템을 제공합니다.
+   최근 밴드 음악과 기타 연주의 인기가 급격히 증가하고 있으며, 많은 사람들이 유튜브나 SNS을 통해 연주 방법을 배우고 공유하고 있습니다. 그러나 대부분의 연습은 독학에 의존하고 있어 정확한 피드백을 받기 어렵고, 이는 곧 실력 향상에 한계가 됩니다. 이에 따라, **MAPLE**은 보다 상세하고 사용자가 수용하기 쉬운 피드백을 제공할 수 있는 AI 기반 연주 분석 시스템을 제공합니다.
 
 ---
 
@@ -77,7 +71,7 @@ header:
 
 ---
 
-## 팀원 소개
+## Contact US
 <table>
   <tr align="center">
     <td style="min-width: 120px;">
