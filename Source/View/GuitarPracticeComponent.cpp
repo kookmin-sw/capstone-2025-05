@@ -734,8 +734,8 @@ void GuitarPracticeComponent::timerCallback()
         // 시각화를 위한 오디오 버퍼 준비 (1024 샘플, 한 번만 할당)
         static juce::AudioBuffer<float> visualizationBuffer(2, 1024);
         
-        // AudioTap에서 데이터 읽기 - 락프리 FIFO 방식
-        int samplesRead = audioController->getAudioTap().read(visualizationBuffer);
+        // AudioTap에서 재생 데이터만 직접 읽기 - 소스 타입 확인 필요 없음
+        int samplesRead = audioController->getAudioTap().readPlayback(visualizationBuffer);
         
         // 데이터가 있으면 시각화 컴포넌트에 전달
         if (samplesRead > 0)

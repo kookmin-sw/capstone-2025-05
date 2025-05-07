@@ -217,8 +217,8 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
             tempChannelData[0] = inputChannelData[micChannel];
             tempChannelData[1] = inputChannelData[micChannel];
             
-            // 마이크 채널만 AudioTap에 전달
-            audioTap.write(tempChannelData, 2, numSamples);
+            // 마이크 채널만 AudioTap에 전달 (writeMicrophone 메서드 사용)
+            audioTap.writeMicrophone(tempChannelData, 2, numSamples);
         }
     }
     
@@ -264,6 +264,22 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
             DBG("AudioController: After GPC - Checking if GPC added audio to buffer");
             float bufferLevelAfter = outputBuffer.getMagnitude(0, numSamples);
             DBG("AudioController: After GPC - Buffer level: " + juce::String(bufferLevelAfter));
+        }
+        
+        // 재생 중인 오디오 데이터를 AudioTap에 전달 (시각화용)
+        const float* outputChannelPtrs[2] = { nullptr, nullptr };
+        if (numOutputChannels >= 1)
+            outputChannelPtrs[0] = outputBuffer.getReadPointer(0);
+        if (numOutputChannels >= 2)
+            outputChannelPtrs[1] = outputBuffer.getReadPointer(1);
+        else if (numOutputChannels == 1)
+            outputChannelPtrs[1] = outputBuffer.getReadPointer(0); // 모노 출력을 스테레오로 복제
+        
+        // 실제 오디오 데이터가 있는지 확인 
+        bool hasAudioData = (outputBuffer.getMagnitude(0, numSamples) > 0.0001f);
+        if (hasAudioData) {
+            // 재생 오디오 데이터를 AudioTap에 전달 (writePlayback 메서드 사용)
+            audioTap.writePlayback(outputChannelPtrs, 2, numSamples);
         }
         
         // 디버깅 정보
