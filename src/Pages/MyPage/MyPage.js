@@ -53,6 +53,7 @@ export default function MyPage() {
                   연주한 곡
                 </Link>
               </li>
+
               <li className="menu-item flex items-center gap-2 py-2 hover:shadow-lg">
                 <img src={Setting} alt="관리 아이콘" className="w-4 h-4" />
                 <Link to="/setting" className="truncate">

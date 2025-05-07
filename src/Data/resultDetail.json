@@ -1,0 +1,588 @@
+{
+  "task_id": "1b12f625-32ba-45ba-a253-488a332b3a4f",
+  "status": "SUCCESS",
+  "progress": 100,
+  "result": {
+    "user_features": {
+      "tempo": 143.5546875,
+      "onsets": [
+        0.09287981859410431,
+        0.3250793650793651,
+        0.7198185941043084,
+        0.8359183673469388,
+        0.9287981859410431,
+        1.0681179138321995,
+        1.1609977324263039,
+        1.2770975056689342,
+        1.555736961451247,
+        1.6253968253968254,
+        1.7647165532879818,
+        2.020136054421769,
+        2.391655328798186,
+        2.48453514739229,
+        2.6238548752834467,
+        2.6238548752834467,
+        2.8328344671201813,
+        2.9257142857142857,
+        3.1579138321995464,
+        3.274013605442177,
+        3.4829931972789114,
+        3.5526530612244898,
+        3.7151927437641725,
+        3.7616326530612243,
+        3.8545124716553287,
+        3.9706122448979593,
+        4.063492063492063,
+        4.179591836734694,
+        4.272471655328798,
+        4.388571428571429,
+        4.527891156462585,
+        4.597551020408163,
+        4.667210884353741,
+        4.783310657596372,
+        4.9458503401360545,
+        5.015510204081632,
+        5.154829931972789,
+        5.201269841269841,
+        5.294149659863946,
+        5.410249433106576,
+        5.479909297052155,
+        5.7817687074829935
+      ],
+      "pitches": [
+        694.8484613162511,
+        660.7112011279659,
+        741.7584000886811,
+        882.1251596067211,
+        629.8311268050184,
+        693.8642856201789,
+        666.4524434672963,
+        742.7610786793362,
+        882.3372116557961,
+        585.022657366756,
+        978.2232166649886,
+        883.3865009032003,
+        778.8563856794202,
+        738.5630622334061,
+        671.4130853655774,
+        738.6527981304666,
+        779.5693211330098,
+        657.6489995122994,
+        737.996730382469,
+        669.9587742712923,
+        738.0035862218665,
+        883.2549166761125,
+        1081.2955192079035
+      ],
+      "techniques": [
+        [
+          "bend"
+        ],
+        [
+          "bend"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "bend"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "hammer"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "hammer"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "hammer"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ]
+      ]
+    },
+    "reference_features": {
+      "tempo": 135.99917763157896,
+      "onsets": [
+        0.11609977324263039,
+        0.4179591836734694,
+        0.4179591836734694,
+        0.626938775510204,
+        0.7894784580498866,
+        0.8591383219954648,
+        0.9520181405895691,
+        1.0913378684807256,
+        1.1609977324263039,
+        1.1609977324263039,
+        1.3931972789115645,
+        1.509297052154195,
+        1.6021768707482993,
+        1.6718367346938776,
+        1.7647165532879818,
+        2.043356009070295,
+        2.391655328798186,
+        2.507755102040816,
+        2.647074829931973,
+        2.716734693877551,
+        2.786394557823129,
+        2.972154195011338,
+        3.1346938775510202,
+        3.297233560090703,
+        3.4829931972789114,
+        3.6919727891156464,
+        3.7616326530612243,
+        3.8545124716553287,
+        3.947392290249433,
+        4.040272108843538,
+        4.179591836734694,
+        4.272471655328798,
+        4.388571428571429,
+        4.527891156462585,
+        4.597551020408163,
+        4.690430839002268,
+        4.806530612244898,
+        4.899410430839002,
+        5.015510204081632,
+        5.108390022675737,
+        5.224489795918367,
+        5.363809523809524,
+        5.433469387755102,
+        5.526349206349207,
+        5.7817687074829935,
+        5.828208616780046,
+        5.897868480725624,
+        6.199727891156463,
+        6.408707482993197,
+        6.617687074829932,
+        6.780226757369615,
+        6.873106575963718,
+        6.942766439909297,
+        7.1053061224489795
+      ],
+      "pitches": [
+        714.5676159714216,
+        680.0561657841826,
+        750.4082161412459,
+        876.9478093985514,
+        598.6386450281615,
+        712.934113619773,
+        676.5471166460856,
+        757.3445324967696,
+        884.1582699095001,
+        599.6473322837081,
+        985.1433599150092,
+        881.4648257558669,
+        783.6078109126056,
+        734.3761066638239,
+        664.8106319687954,
+        740.1051301916146,
+        777.9697557454928,
+        660.7827790895165,
+        737.7818624322872,
+        657.7117229899102,
+        738.2310941789467,
+        859.7239994959087,
+        1129.4447690502113
+      ],
+      "techniques": [
+        [
+          "bend"
+        ],
+        [
+          "bend"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "vibrato"
+        ],
+        [
+          "bend"
+        ],
+        [
+          "bend"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "vibrato"
+        ],
+        [
+          "hammer"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "hammer"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "normal"
+        ],
+        [
+          "hammer",
+          "vibrato"
+        ]
+      ]
+    },
+    "scores": {
+      "tempo_match_percentage": 84.88898026315792,
+      "pitch_match_percentage": 97.85022726196999,
+      "rhythm_match_percentage": 96.67009246895583,
+      "technique_match_percentage": 78.26086956521739,
+      "overall_score": 92.28219058483403,
+      "rhythm_absolute_match": 94.43658184051398,
+      "rhythm_relative_match": 98.15909955458373,
+      "expression_similarity": 76.79019134962628
+    },
+    "created_at": "2025-05-06T15:08:54.882858",
+    "note_comparisons": [
+      {
+        "note_index": 0,
+        "user_timing_deviation": 0.09287981859410431,
+        "reference_timing_deviation": 0.11609977324263039,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 1,
+        "user_timing_deviation": 0.08871363492063494,
+        "reference_timing_deviation": 0.004166183673469381,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 2,
+        "user_timing_deviation": 0.10776740589569167,
+        "reference_timing_deviation": 0.004166183673469381,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 3,
+        "user_timing_deviation": 0.008332367346938763,
+        "reference_timing_deviation": 0.200647224489796,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 4,
+        "user_timing_deviation": 0.10121218594104309,
+        "reference_timing_deviation": 0.038107541950113455,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 5,
+        "user_timing_deviation": 0.03363541383219948,
+        "reference_timing_deviation": 0.03155232199546476,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 6,
+        "user_timing_deviation": 0.08038126757369612,
+        "reference_timing_deviation": 0.08246435941043084,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 7,
+        "user_timing_deviation": 0.0357185056689342,
+        "reference_timing_deviation": 0.05685536848072559,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 8,
+        "user_timing_deviation": 0.09943503854875302,
+        "reference_timing_deviation": 0.08038126757369612,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 9,
+        "user_timing_deviation": 0.029775174603174692,
+        "reference_timing_deviation": 0.08038126757369612,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 10,
+        "user_timing_deviation": 0.10954455328798174,
+        "reference_timing_deviation": 0.15181827891156452,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 11,
+        "user_timing_deviation": 0.04882894557823114,
+        "reference_timing_deviation": 0.14587494784580501,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 12,
+        "user_timing_deviation": 0.09110267120181392,
+        "reference_timing_deviation": 0.0529951292517008,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 13,
+        "user_timing_deviation": 0.0017771473922900682,
+        "reference_timing_deviation": 0.016664734693877525,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 14,
+        "user_timing_deviation": 0.06579962471655332,
+        "reference_timing_deviation": 0.10954455328798174,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 15,
+        "user_timing_deviation": 0.06579962471655332,
+        "reference_timing_deviation": 0.025608990929705033,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 16,
+        "user_timing_deviation": 0.06371653287981882,
+        "reference_timing_deviation": 0.09110267120181392,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 17,
+        "user_timing_deviation": 0.029163285714285614,
+        "reference_timing_deviation": 0.024997102040816177,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 18,
+        "user_timing_deviation": 0.15243016780045382,
+        "reference_timing_deviation": 0.04257967006802721,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 19,
+        "user_timing_deviation": 0.036330394557823276,
+        "reference_timing_deviation": 0.027080193877551118,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 20,
+        "user_timing_deviation": 0.03424730272108878,
+        "reference_timing_deviation": 0.096740057823129,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 21,
+        "user_timing_deviation": 0.03541256122448955,
+        "reference_timing_deviation": 0.07560319501133783,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 22,
+        "user_timing_deviation": 0.00894425623582773,
+        "reference_timing_deviation": 0.17565012244897993,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 23,
+        "user_timing_deviation": 0.037495653061224044,
+        "reference_timing_deviation": 0.013110439909297167,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 24,
+        "user_timing_deviation": 0.07652102834467156,
+        "reference_timing_deviation": 0.03424730272108878,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 25,
+        "user_timing_deviation": 0.039578744897958984,
+        "reference_timing_deviation": 0.03216421088435384,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 26,
+        "user_timing_deviation": 0.07443793650793662,
+        "reference_timing_deviation": 0.037495653061224044,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 27,
+        "user_timing_deviation": 0.04166183673469437,
+        "reference_timing_deviation": 0.07652102834467156,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 28,
+        "user_timing_deviation": 0.07235484467120212,
+        "reference_timing_deviation": 0.016358790249432875,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 29,
+        "user_timing_deviation": 0.043744928571428865,
+        "reference_timing_deviation": 0.09765789115646228,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 30,
+        "user_timing_deviation": 0.02383184353741452,
+        "reference_timing_deviation": 0.04166183673469437,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 31,
+        "user_timing_deviation": 0.04582802040816336,
+        "reference_timing_deviation": 0.07235484467120212,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 32,
+        "user_timing_deviation": 0.0914086156462588,
+        "reference_timing_deviation": 0.043744928571428865,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 33,
+        "user_timing_deviation": 0.024691157596372193,
+        "reference_timing_deviation": 0.02383184353741452,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 34,
+        "user_timing_deviation": 0.019665659863945528,
+        "reference_timing_deviation": 0.04582802040816336,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 35,
+        "user_timing_deviation": 0.049994204081632354,
+        "reference_timing_deviation": 0.06818866099773224,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 36,
+        "user_timing_deviation": 0.017582568027211032,
+        "reference_timing_deviation": 0.04791111224489786,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 37,
+        "user_timing_deviation": 0.028857341269841186,
+        "reference_timing_deviation": 0.06610556916099775,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 38,
+        "user_timing_deviation": 0.08515934013605442,
+        "reference_timing_deviation": 0.049994204081632354,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 39,
+        "user_timing_deviation": 0.030940433106575682,
+        "reference_timing_deviation": 0.06402247732426325,
+        "timing_comparison": "better"
+      },
+      {
+        "note_index": 40,
+        "user_timing_deviation": 0.10060029705215445,
+        "reference_timing_deviation": 0.05207729591836685,
+        "timing_comparison": "worse"
+      },
+      {
+        "note_index": 41,
+        "user_timing_deviation": 0.011333292517006655,
+        "reference_timing_deviation": 0.015499476190476535,
+        "timing_comparison": "better"
+      }
+    ],
+    "metadata": {
+      "user_id": "JEnhRg0D9shVXoRtUsLJcpgTpYY2",
+      "song_id": "test-song",
+      "task_id": "1b12f625-32ba-45ba-a253-488a332b3a4f",
+      "has_reference": true,
+      "has_midi": true
+    },
+    "feedback": "음정 정확도가 97.85%로 매우 뛰어나며, 리듬 일치도도 96.67%로 안정적인 연주를 보여주셨습니다. 전반적으로 92.28%라는 높은 점수를 기록하며 훌륭한 실력을 입증하셨습니다.\n\n템포 일치도가 84.89%로 다소 아쉬운 부분이 있습니다. 곡의 흐름을 유지하기 위해 메트로놈을 활용해 일정한 속도를 연습하는 것이 필요합니다. 리듬은 매우 안정적이지만, 노트별 타이밍 분석에서 부정확한 노트가 45.2%로 나타났으니, 세밀한 타이밍 조정을 위해 느린 템포에서 시작해 점차 속도를 높이는 연습을 추천합니다. 음정은 거의 완벽하니 이 강점을 계속 유지하세요.\n\n기법 사용에서는 normal과 hammer를 잘 활용하고 있지만, 모범 연주에 포함된 vibrato 기법이 빠져 있습니다. vibrato를 연습해 곡에 더 풍부한 표현력을 더해보세요. 또한 bend 사용이 모범 연주보다 적으니, 특정 구간에서 bend를 의도적으로 강조하는 연습을 통해 기법의 다양성을 높이시길 바랍니다.\n\n개선이 필요한 부분은 표현력 유사도(76.79%)와 기법 일치도(78.26%)입니다. 곡의 감정 전달을 위해 다이내믹 변화를 의식적으로 연습하고, 모범 연주를 반복적으로 들으며 세부적인 표현 방식을 따라 해보는 것이 도움이 될 것입니다. 또한, 특정 기법을 집중적으로 연습할 수 있는 짧은 프레이즈를 반복 연습해 보세요.\n\n작은 부분만 보완하면 더욱 완성도 높은 연주를 보여줄 수 있을 거라 확신합니다. 꾸준히 연습하며 자신만의 스타일을 만들어가세요!",
+    "feedback_metadata": {
+      "model": "grok-3-beta",
+      "tokens": {
+        "prompt_tokens": 533,
+        "completion_tokens": 425,
+        "total_tokens": 958
+      }
+    }
+  },
+  "error": null
+}
