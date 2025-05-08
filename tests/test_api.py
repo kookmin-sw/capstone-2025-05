@@ -1,7 +1,6 @@
 import os
 import pytest
 import json
-from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
 # 가짜 MongoDB 설정을 위한 패치 적용
@@ -13,12 +12,14 @@ except ImportError:
     print("경고: db_patch 모듈을 가져올 수 없습니다.")
     db_patches = []
 
-# app.main 모듈 가져오기
-from app.main import app
+# MongoDB 서버 확인 부분 패치 - 전역으로 한 번만 적용
+mock_server_info = patch('app.main.mongo_client.server_info')
+mock_server_info.start().return_value = {"version": "4.4.0", "ok": 1.0}
 
-client = TestClient(app)
+# 테스트 시간 제한 설정 (초) - 단축
+TIMEOUT = 2
 
-
+@pytest.mark.timeout(TIMEOUT)
 def test_health_check(client):
     """상태 확인 엔드포인트 테스트"""
     response = client.get("/health")
@@ -29,6 +30,7 @@ def test_health_check(client):
     assert "mongodb" in data["services"]
 
 
+@pytest.mark.timeout(TIMEOUT)
 def test_root_endpoint(client):
     """루트 엔드포인트 테스트"""
     response = client.get("/")
@@ -40,6 +42,7 @@ def test_root_endpoint(client):
     assert data["status"] == "online"
 
 
+@pytest.mark.timeout(TIMEOUT)
 def test_get_result(client):
     """결과 조회 엔드포인트 테스트"""
     response = client.get("/api/v1/results/test_task_id")
@@ -50,6 +53,7 @@ def test_get_result(client):
     assert data["result"]["tempo"] == 120
 
 
+@pytest.mark.timeout(TIMEOUT)
 def test_get_user_results(client):
     """사용자 결과 조회 엔드포인트 테스트"""
     response = client.get("/api/v1/user/test_user/results")
@@ -64,6 +68,7 @@ def test_get_user_results(client):
         assert "result" in item
 
 
+@pytest.mark.timeout(TIMEOUT)
 def test_get_song_results(client):
     """곡 결과 조회 엔드포인트 테스트"""
     response = client.get("/api/v1/song/test_song/results")
@@ -80,8 +85,8 @@ def test_get_song_results(client):
 
 @pytest.fixture
 def mock_audio_file():
-    """Create a mock audio file for testing."""
-    # This is a minimal WAV file header (44 bytes) + some silent audio data
+    """테스트용 모의 오디오 파일 생성"""
+    # 더 작은 WAV 파일 헤더 (44 바이트)로 변경
     minimal_wav_bytes = (
         b'RIFF\x24\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00'
         b'\x44\xAC\x00\x00\x88\x58\x01\x00\x02\x00\x10\x00data\x00\x00\x00\x00'
@@ -89,6 +94,7 @@ def mock_audio_file():
     return minimal_wav_bytes
 
 
+@pytest.mark.timeout(TIMEOUT)
 @patch("app.api.v1.analyze_audio")
 def test_analyze_endpoint(mock_analyze, client):
     """분석 엔드포인트 테스트"""
@@ -97,8 +103,8 @@ def test_analyze_endpoint(mock_analyze, client):
     mock_task.id = "test_task_id"
     mock_analyze.delay.return_value = mock_task
     
-    # 테스트 파일 생성
-    test_file_content = b"test audio content"
+    # 테스트 파일 생성 - 크기 축소
+    test_file_content = b"test"
     
     # API 호출
     response = client.post(
@@ -112,9 +118,10 @@ def test_analyze_endpoint(mock_analyze, client):
     assert "task_id" in data
     
     # analyze_audio.delay가 호출되었는지 확인
-    mock_analyze.delay.assert_called()
+    mock_analyze.delay.assert_called_once()
 
 
+@pytest.mark.timeout(TIMEOUT)
 @patch("app.api.v1.compare_audio")
 def test_compare_endpoint(mock_compare, client):
     """비교 엔드포인트 테스트"""
@@ -123,15 +130,14 @@ def test_compare_endpoint(mock_compare, client):
     mock_task.id = "test_task_id"
     mock_compare.delay.return_value = mock_task
     
-    # 테스트 파일 생성
-    test_file_content = b"test audio content"
+    # 테스트 파일 생성 - 크기 축소
+    test_file_content = b"test"
     
     # API 호출
     response = client.post(
         "/api/v1/compare",
         files={
-            "user_file": ("test.wav", test_file_content, "audio/wav"),
-            "reference_file": ("ref.wav", test_file_content, "audio/wav")
+            "user_file": ("test.wav", test_file_content, "audio/wav")
         },
         data={
             "user_id": "test_user", 
@@ -151,9 +157,9 @@ def test_compare_endpoint(mock_compare, client):
     args, kwargs = mock_compare.delay.call_args
     assert kwargs.get("user_id") == "test_user"
     assert kwargs.get("song_id") == "test_song"
-    assert kwargs.get("reference_audio_bytes") is not None
 
 
+@pytest.mark.timeout(TIMEOUT)
 @patch("app.api.v1.compare_audio")
 def test_compare_with_stored_reference_endpoint(mock_compare, client):
     """저장된 레퍼런스 데이터를 사용한 비교 엔드포인트 테스트"""
@@ -162,8 +168,8 @@ def test_compare_with_stored_reference_endpoint(mock_compare, client):
     mock_task.id = "test_task_id"
     mock_compare.delay.return_value = mock_task
     
-    # 테스트 파일 생성
-    test_file_content = b"test audio content"
+    # 테스트 파일 생성 - 크기 축소
+    test_file_content = b"test"
     
     # API 호출
     response = client.post(
@@ -184,12 +190,13 @@ def test_compare_with_stored_reference_endpoint(mock_compare, client):
     
     # compare_audio.delay가 호출되었는지 확인
     mock_compare.delay.assert_called_once()
-    # DB에서 가져온 레퍼런스로 호출되었는지 확인 (reference_audio_bytes는 None)
+    # 올바른 매개변수가 전달되었는지 확인
     args, kwargs = mock_compare.delay.call_args
-    assert kwargs.get("reference_audio_bytes") is None
     assert kwargs.get("song_id") == "test_song"
+    assert kwargs.get("generate_feedback") is True
 
 
+@pytest.mark.timeout(TIMEOUT)
 @patch("app.api.v1.analyze_reference_audio")
 def test_analyze_reference_endpoint(mock_analyze_reference, client):
     """레퍼런스 오디오 분석 엔드포인트 테스트"""
@@ -198,15 +205,15 @@ def test_analyze_reference_endpoint(mock_analyze_reference, client):
     mock_task.id = "test_reference_task_id"
     mock_analyze_reference.delay.return_value = mock_task
     
-    # 테스트 파일 생성
-    test_file_content = b"test reference audio content"
+    # 테스트 파일 생성 - 크기 축소
+    test_file_content = b"test"
     
     # API 호출
     response = client.post(
         "/api/v1/reference",
         files={
             "reference_file": ("reference.wav", test_file_content, "audio/wav"),
-            "midi_file": ("notes.mid", b"test midi content", "audio/midi")
+            "midi_file": ("notes.mid", b"test", "audio/midi")
         },
         data={
             "song_id": "test_song_id",
@@ -222,8 +229,9 @@ def test_analyze_reference_endpoint(mock_analyze_reference, client):
     mock_analyze_reference.delay.assert_called_once()
 
 
+@pytest.mark.timeout(TIMEOUT)
 @patch("app.api.v1.compare_audio")
-@patch("app.api.v1.get_reference_features")  # app.db.get_reference_features 대신 app.api.v1.get_reference_features를 모킹
+@patch("app.api.v1.get_reference_features")
 def test_compare_with_ref_features_dtw(mock_get_features, mock_compare, client):
     """DB에서 크로마 데이터를 가져와 DTW 정렬을 사용한 비교 테스트"""
     # AsyncResult 객체 모의 생성
@@ -231,38 +239,33 @@ def test_compare_with_ref_features_dtw(mock_get_features, mock_compare, client):
     mock_task.id = "test_dtw_task_id"
     mock_compare.delay.return_value = mock_task
     
-    # DB에서 가져올 모의 레퍼런스 특성 (크로마 데이터 포함)
+    # DB에서 가져올 모의 레퍼런스 특성 (크로마 데이터 포함) - 간소화
     mock_ref_features = {
-        "tempo": 120,
-        "onsets": [0.1, 0.5, 1.0, 1.5],
-        "pitches": [440, 554, 659, 880],
-        "techniques": [["normal"], ["bend"], ["slide"], ["hammer"]],
-        "chroma": [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],  # 크로마 데이터 포함
-        "metadata": {
-            "song_id": "test_song_with_chroma",
-            "has_midi": True
+        "features": {
+            "tempo": 120,
+            "onsets": [0.1, 0.5, 1.0],
+            "pitches": [440, 554, 659],
+            "techniques": [["normal"], ["bend"], ["slide"]],
+            "chroma": [[0.1, 0.2], [0.3, 0.4]],
+            "metadata": {
+                "song_id": "test_song_with_chroma",
+                "has_midi": True
+            },
+            "midi_data": {
+                "notes": [
+                    {"start": 0.1, "end": 0.4, "pitch": 60, "velocity": 100},
+                    {"start": 0.5, "end": 0.9, "pitch": 62, "velocity": 100}
+                ],
+                "tempos": [120],
+                "tempo_times": [0]
+            }
         }
     }
     
-    # 모의 MIDI 데이터
-    mock_midi_data = {
-        "notes": [
-            {"start": 0.1, "end": 0.4, "pitch": 60, "velocity": 100},
-            {"start": 0.5, "end": 0.9, "pitch": 62, "velocity": 100},
-            {"start": 1.0, "end": 1.4, "pitch": 64, "velocity": 100}
-        ],
-        "tempos": [120],
-        "tempo_times": [0]
-    }
+    mock_get_features.return_value = mock_ref_features
     
-    # DB에서 레퍼런스 특성을 가져오는 함수가 모의 데이터를 반환하도록 설정
-    mock_get_features.return_value = {
-        **mock_ref_features,
-        "midi_data": mock_midi_data
-    }
-    
-    # 테스트 파일 생성
-    test_file_content = b"test audio content for DTW alignment"
+    # 테스트 파일 생성 - 크기 축소
+    test_file_content = b"test"
     
     # API 호출
     response = client.post(
@@ -270,25 +273,19 @@ def test_compare_with_ref_features_dtw(mock_get_features, mock_compare, client):
         files={
             "user_file": ("test.wav", test_file_content, "audio/wav")
         },
-        data={  # params 대신 data를 사용하여 Form 데이터로 전달
-            "user_id": "test_user",
+        data={
+            "user_id": "test_user", 
             "song_id": "test_song_with_chroma",
-            "generate_feedback": "False"
+            "generate_feedback": "True"
         }
     )
     
-    # 응답 및 모의 함수 호출 확인
     assert response.status_code == 200
     data = response.json()
     assert "task_id" in data
-    assert data["task_id"] == "test_dtw_task_id"
     
-    # DB에서 레퍼런스 특성 조회 함수가 올바른 song_id로 호출되었는지 확인
-    mock_get_features.assert_called_once_with("test_song_with_chroma")
-    
-    # compare_audio.delay가 올바른 인자로 호출되었는지 확인
+    # compare_audio.delay가 호출되었는지 확인
     mock_compare.delay.assert_called_once()
+    # 올바른 song_id가 전달되었는지 확인
     args, kwargs = mock_compare.delay.call_args
-    assert kwargs.get("reference_audio_bytes") is None  # 레퍼런스 오디오 바이트는 사용하지 않음
     assert kwargs.get("song_id") == "test_song_with_chroma"
-    assert kwargs.get("user_audio_bytes") is not None

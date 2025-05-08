@@ -76,6 +76,11 @@ def pytest_configure(config):
     sys.modules["pymongo.write_concern"] = mock_pymongo.write_concern
     sys.modules["pymongo._csot"] = mock_pymongo._csot
 
+    # timeout 마커 등록
+    config.addinivalue_line(
+        "markers", "timeout(seconds): 테스트 실행 제한 시간을 설정합니다."
+    )
+
 # 모듈 모의 처리 설정
 @pytest.fixture(autouse=True, scope="session")
 def mock_imports():
