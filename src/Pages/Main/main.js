@@ -120,7 +120,7 @@ export default function Main() {
 
       <div className="w-full mt-12">
         <button
-          className="flex items-center cursor-pointer transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%] ml-[calc(50%-750px)]"
+          className="flex items-center cursor-pointer transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%] ml-[calc(50%-700px)]"
           onClick={() =>
             navigate('/musics', {
               state: { musics: topMusic, musicType: 'top' },
