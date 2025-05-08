@@ -1,6 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Path, UploadFile, status, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Path, UploadFile, status, Query, Form
 from fastapi.responses import JSONResponse
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import io
 import os
 from tempfile import NamedTemporaryFile
@@ -22,11 +22,12 @@ except (ImportError, ModuleNotFoundError):
         pass
 
 from app.schemas import AnalysisRequest, AnalysisType, TaskResponse, ProgressResponse, AnalysisResultResponse
-from workers.tasks import analyze_audio, compare_audio
+from workers.tasks import analyze_audio, compare_audio, analyze_reference_audio
 from app.db import (
     get_analysis_result, get_comparison_result, get_result,
     get_user_analysis_results, get_user_comparison_results,
-    get_song_analysis_results, get_song_comparison_results
+    get_song_analysis_results, get_song_comparison_results,
+    get_reference_features, get_reference_features_list, delete_reference_features
 )
 
 router = APIRouter(prefix="/v1")
@@ -277,3 +278,125 @@ async def get_song_results(
     results = results[:limit]
     
     return results
+
+
+@router.post("/reference", response_model=TaskResponse)
+async def add_reference(
+    background_tasks: BackgroundTasks,
+    reference_file: UploadFile = File(...),
+    song_id: str = Form(...),
+    midi_file: Optional[UploadFile] = File(None),
+    description: Optional[str] = Form(None)
+):
+    """
+    레퍼런스 오디오를 분석하여 특성을 추출하고 DB에 저장합니다.
+    해당 레퍼런스 오디오는 이후 비교 분석에 사용할 수 있습니다.
+    
+    Parameters:
+    - reference_file: 레퍼런스 오디오 파일 (WAV 또는 MP3)
+    - song_id: 고유 곡 식별자
+    - midi_file: MIDI 파일 (선택 사항)
+    - description: 곡에 대한 설명 (선택 사항)
+    
+    Returns:
+    - task_id: 분석 작업의 ID
+    """
+    if not reference_file.filename.lower().endswith(('.wav', '.mp3')):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="WAV와 MP3 파일만 지원됩니다"
+        )
+    
+    reference_contents = await reference_file.read()
+    
+    midi_contents = None
+    if midi_file:
+        if not midi_file.filename.lower().endswith('.mid'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="MIDI 파일만 지원됩니다 (.mid)"
+            )
+        midi_contents = await midi_file.read()
+    
+    # Celery 작업 큐에 제출
+    task = analyze_reference_audio.delay(
+        reference_contents,
+        song_id,
+        midi_contents,
+        description
+    )
+    
+    return {"task_id": task.id}
+
+
+@router.get("/reference/{song_id}", response_model=Dict[str, Any])
+async def get_reference(song_id: str):
+    """
+    DB에서 레퍼런스 오디오 특성 정보를 가져옵니다.
+    
+    Parameters:
+    - song_id: 곡 식별자
+    
+    Returns:
+    - 레퍼런스 오디오 특성 정보
+    """
+    reference = get_reference_features(song_id)
+    if not reference:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"song_id '{song_id}'에 해당하는 레퍼런스 오디오를 찾을 수 없습니다"
+        )
+    
+    # MongoDB의 _id 필드를 문자열로 변환
+    if "_id" in reference:
+        reference["_id"] = str(reference["_id"])
+    
+    return reference
+
+
+@router.get("/references", response_model=List[Dict[str, Any]])
+async def list_references(limit: int = Query(20, ge=1, le=100)):
+    """
+    저장된 모든 레퍼런스 오디오 목록을 가져옵니다.
+    
+    Parameters:
+    - limit: 반환할 최대 항목 수 (기본값: 20, 최소: 1, 최대: 100)
+    
+    Returns:
+    - 레퍼런스 오디오 특성 목록
+    """
+    references = get_reference_features_list(limit)
+    
+    # MongoDB의 _id 필드를 문자열로 변환
+    for ref in references:
+        if "_id" in ref:
+            ref["_id"] = str(ref["_id"])
+    
+    return references
+
+
+@router.delete("/reference/{song_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_reference(song_id: str):
+    """
+    DB에서 레퍼런스 오디오 특성 정보를 삭제합니다.
+    
+    Parameters:
+    - song_id: 곡 식별자
+    """
+    # 먼저 레퍼런스가 존재하는지 확인
+    reference = get_reference_features(song_id)
+    if not reference:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"song_id '{song_id}'에 해당하는 레퍼런스 오디오를 찾을 수 없습니다"
+        )
+    
+    # 레퍼런스 삭제
+    success = delete_reference_features(song_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="레퍼런스 오디오 삭제 중 오류가 발생했습니다"
+        )
+    
+    return None

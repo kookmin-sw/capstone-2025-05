@@ -23,7 +23,7 @@ from workers.dsp import (
 # 피드백 생성기 추가
 from workers.feedback import GrokFeedbackGenerator
 # MongoDB 저장 기능 추가
-from app.db import save_analysis_result, save_comparison_result, save_feedback
+from app.db import save_analysis_result, save_comparison_result, save_feedback, save_reference_features
 
 # Initialize Celery app
 celery_app = Celery('maple_audio_analyzer')
@@ -462,4 +462,136 @@ def compare_audio(self, user_audio_bytes, reference_audio_bytes=None, midi_bytes
         
     except Exception as e:
         logger.exception(f"Error in audio comparison task: {str(e)}")
+        raise
+
+@celery_app.task(bind=True, name='workers.tasks.analyze_reference_audio')
+def analyze_reference_audio(self, audio_bytes, song_id, midi_bytes=None, description=None):
+    """
+    레퍼런스 오디오를 분석하여 특성을 추출하고 DB에 저장하는 Celery 태스크
+    
+    Parameters:
+    - audio_bytes: 레퍼런스 오디오 파일의 바이너리 콘텐츠
+    - song_id: 곡 식별자 (고유 ID)
+    - midi_bytes: 미디 파일의 바이너리 콘텐츠 (선택 사항)
+    - description: 곡에 대한 설명 (선택 사항)
+    
+    Returns:
+    - 추출된 특성 정보와 DB에 저장된 문서 ID
+    """
+    logger.info(f"레퍼런스 오디오 분석 태스크 시작 {self.request.id}, song_id: {song_id}")
+    self.update_state(state='STARTED', meta={'progress': 0})
+    
+    try:
+        # 1. 오디오 로드 (10%)
+        self.update_state(state='PROCESSING', meta={'progress': 10})
+        y, sr = load_audio_from_bytes(audio_bytes)
+        
+        # 2. 템포 추출 (20%)
+        self.update_state(state='PROCESSING', meta={'progress': 20})
+        tempo = extract_tempo(y, sr)
+        
+        # 3. 노트 시작점 추출 (30%)
+        self.update_state(state='PROCESSING', meta={'progress': 30})
+        onsets = extract_onsets(y, sr)
+        
+        # 4. MIDI 로드 및 세그먼트 생성 (40%)
+        self.update_state(state='PROCESSING', meta={'progress': 40})
+        midi_data = None
+        segments = []
+        
+        if midi_bytes:
+            # MIDI 파일이 제공된 경우
+            notes, tempos, tempo_times = load_midi_from_bytes(midi_bytes)
+            
+            # 노트 정보를 기반으로 세그먼트 생성
+            for i in range(len(notes) - 1):
+                start = int(notes[i]['start'] * sr)
+                end = int(notes[i+1]['start'] * sr)
+                if start < len(y) and end <= len(y):
+                    segments.append(y[start:end])
+            
+            # 마지막 노트
+            if notes:
+                start = int(notes[-1]['start'] * sr)
+                if start < len(y):
+                    segments.append(y[start:])
+            
+            # MIDI 데이터 저장
+            midi_data = {
+                "notes": notes,
+                "tempos": tempos,
+                "tempo_times": tempo_times
+            }
+        else:
+            # MIDI 없이 발음 시작점 기반 세그먼트 생성
+            for i in range(len(onsets) - 1):
+                start = int(onsets[i] * sr)
+                end = int(onsets[i+1] * sr)
+                if start < len(y) and end <= len(y):
+                    segments.append(y[start:end])
+            
+            # 마지막 부분
+            if onsets:
+                start = int(onsets[-1] * sr)
+                if start < len(y):
+                    segments.append(y[start:])
+        
+        # 세그먼트가 없으면 전체 오디오를 하나의 세그먼트로 처리
+        if not segments:
+            segments = [y]
+        
+        # 5. 음정 추출 (60%)
+        self.update_state(state='PROCESSING', meta={'progress': 60})
+        pitches = extract_pitch_with_crepe(segments, sr)
+        
+        # 6. 연주 기법 예측 (80%)
+        self.update_state(state='PROCESSING', meta={'progress': 80})
+        model_path = os.path.join(os.environ.get('MODEL_DIR', 'models'), 'guitar_technique_classifier.keras')
+        techniques = []
+        
+        if os.path.exists(model_path):
+            techniques = predict_techniques(segments, model_path, sr)
+        
+        # 7. 결과 정리 (90%)
+        self.update_state(state='FINALIZING', meta={'progress': 90})
+        
+        # 오디오 특성 정보 생성
+        features = {
+            "tempo": tempo,
+            "onsets": onsets.tolist() if isinstance(onsets, np.ndarray) else onsets,
+            "pitches": pitches,
+            "techniques": techniques,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        # 메타데이터 추가
+        metadata = {
+            "song_id": song_id,
+            "task_id": self.request.id,
+            "description": description,
+            "has_midi": midi_bytes is not None
+        }
+        features["metadata"] = metadata
+        
+        # 8. DB에 저장 (95%)
+        self.update_state(state='FINALIZING', meta={'progress': 95})
+        doc_id = save_reference_features(song_id, features, midi_data)
+        
+        logger.info(f"레퍼런스 오디오 분석 완료 및 저장 (song_id: {song_id}, doc_id: {doc_id})")
+        
+        # 9. 결과 반환 (100%)
+        self.update_state(state='FINALIZING', meta={'progress': 99})
+        result = {
+            "song_id": song_id,
+            "features": features,
+            "document_id": doc_id
+        }
+        
+        if midi_data:
+            result["has_midi"] = True
+        
+        return result
+    
+    except Exception as e:
+        logger.exception(f"레퍼런스 오디오 분석 오류: {str(e)}")
         raise
