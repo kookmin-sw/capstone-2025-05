@@ -82,8 +82,6 @@ async def analyze(
 async def compare(
     background_tasks: BackgroundTasks,
     user_file: UploadFile = File(...),
-    reference_file: Optional[UploadFile] = File(None),
-    midi_file: Optional[UploadFile] = File(None),
     user_id: Optional[str] = Form(None),
     song_id: Optional[str] = Form(None),
     generate_feedback: bool = Form(False)
@@ -93,8 +91,6 @@ async def compare(
     
     Parameters:
     - user_file: 사용자의 오디오 파일 (WAV 또는 MP3)
-    - reference_file: 레퍼런스 오디오 파일 (선택 사항)
-    - midi_file: MIDI 파일 (선택 사항)
     - user_id: 사용자 ID (선택 사항)
     - song_id: 곡 ID (선택 사항)
     - generate_feedback: 피드백 생성 여부
@@ -110,29 +106,9 @@ async def compare(
     
     user_contents = await user_file.read()
     
-    reference_contents = None
-    if reference_file:
-        if not reference_file.filename.lower().endswith(('.wav', '.mp3')):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only WAV and MP3 files are supported for reference audio"
-            )
-        reference_contents = await reference_file.read()
-    
-    midi_contents = None
-    if midi_file:
-        if not midi_file.filename.lower().endswith('.mid'):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only MIDI files are supported for score references"
-            )
-        midi_contents = await midi_file.read()
-    
     # Submit to Celery task queue
     task = compare_audio.delay(
-        user_audio_bytes=user_contents, 
-        reference_audio_bytes=reference_contents, 
-        midi_bytes=midi_contents,
+        user_audio_bytes=user_contents,
         user_id=user_id,
         song_id=song_id,
         generate_feedback=generate_feedback
@@ -325,7 +301,7 @@ async def add_reference(
     
     # Celery 작업 큐에 제출
     task = analyze_reference_audio.delay(
-        reference_audio_bytes=reference_contents,
+        audio_bytes=reference_contents,
         song_id=song_id,
         midi_bytes=midi_contents,
         description=description

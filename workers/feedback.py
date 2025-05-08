@@ -116,7 +116,7 @@ class GrokFeedbackGenerator:
         final_prompt = base_prompt + prompt
         
         data = {
-            "model": "grok-3",
+            "model": "grok-3-fast",
             "messages": [
                 {"role": "system", "content": "당신은 전문적인 음악 교육자입니다. 학생들에게 간결하고 핵심적인 음악 연주 피드백을 제공합니다. 절대로 소개나 서론을 포함하지 마세요. 바로 핵심 피드백부터 시작하세요."},
                 {"role": "user", "content": final_prompt}

@@ -234,8 +234,8 @@ def save_reference_features(
     
     Args:
         song_id: 곡 ID (고유 식별자)
-        features: 레퍼런스 오디오의 특성 데이터 (tempo, onsets, pitches, techniques 등)
-        midi_data: 미디 파일 데이터 (선택 사항)
+        features: 레퍼런스 오디오의 특성 데이터 (tempo, onsets, pitches, techniques, midi_data 등)
+        midi_data: 미디 파일 데이터 (선택 사항) - 더 이상 사용하지 않음, features에 포함됨
         
     Returns:
         저장된 문서의 ID
@@ -246,8 +246,10 @@ def save_reference_features(
         "created_at": features.get("created_at", None)
     }
     
-    if midi_data:
-        document["midi_data"] = midi_data
+    # midi_data 매개변수는 더 이상 사용하지 않지만 하위 호환성을 위해 유지합니다
+    # midi_data가 features에 포함되지 않고 별도로 제공된 경우 (기존 코드와의 호환성)
+    if midi_data and "midi_data" not in features:
+        features["midi_data"] = midi_data
     
     # 이미 같은 song_id로 저장된 문서가 있는지 확인
     existing = reference_features_collection.find_one({"song_id": song_id})
