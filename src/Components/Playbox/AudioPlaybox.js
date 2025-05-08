@@ -5,7 +5,6 @@ import PlayButton from '../Button/PlayButton';
 
 export default function AudioPlaybox({ img, title, artist, playurl, song_id }) {
   const navigate = useNavigate();
-  console.log(song_id, '가 뭐에요');
   const handlePlay = () => {
     // 곡에 대한 유저들의 연주기록
     navigate('/songResult', { state: { song_id: song_id, title: title } });
@@ -21,13 +20,16 @@ export default function AudioPlaybox({ img, title, artist, playurl, song_id }) {
           <img
             src={img}
             alt="Album Cover"
-            className="w-full h-full object-cover"
+            className="w-[200px] h-[200px] object-cover"
           />
-          <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <p className="text-md font-semibold text-center leading-tight">
-              지금 내 연주, 얼마나 정확할까? <br />
-              <span className="font-bold">▶ 버튼을 눌러 분석해보세요!</span>
-            </p>
+          <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-60 text-white flex items-center scale-[108%] rounded-[10px] justify-center opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 stransition-opacity duration-300">
+            <div className="flex flex-col items-center">
+              <p className="text-md font-semibold text-center leading-tight">
+                지금 내 연주, 얼마나 정확할까? <br />
+              </p>
+              <br />
+              <small className="text-xs">아래 ▶ 버튼을 눌러보세요!</small>
+            </div>
           </div>
         </div>
       </div>

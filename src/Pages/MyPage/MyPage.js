@@ -119,13 +119,17 @@ export default function MyPage() {
               height="105%"
               overwrite="flex flex-col overflow-y-auto"
             >
-              <div className="flex items-center ml-4 mt-5">
-                <span className="font-bold text-[20px]">최근 연주한 곡</span>
+              <div className="flex items-center ml-2 mt-2">
                 <Link
                   to="/playedmusic"
-                  className="ml-2 text-lg text-gray-500 hover:text-gray-700"
+                  className="ml-4 text-xl font-bold duration-300 ease-in-out "
                 >
-                  &gt;
+                  <div className="mt-5 flex items-center hover:scale-[105%] duration-300 ease-in-out">
+                    <span className="font-bold text-[20px]">
+                      최근 연주한 곡
+                    </span>
+                    &gt;
+                  </div>
                 </Link>
               </div>
               <ul className="mt-8 space-y-5 ml-8">
@@ -203,7 +207,7 @@ export default function MyPage() {
             >
               <Link
                 to="/myactivity"
-                className="ml-2 text-xl font-bold hover:text-gray-400 duration-300 ease-in-out"
+                className="ml-2 text-xl font-bold duration-300 ease-in-out"
               >
                 <div className="ml-4 mt-5 flex items-center hover:scale-[105%] duration-300 ease-in-out">
                   <span>나의 활동</span>
