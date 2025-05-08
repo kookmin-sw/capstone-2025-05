@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import spotifyApi from '../../Utils/spotifyApi';
 import axios from 'axios';
 
-const top_playlist_id = '4cRo44TavIHN54w46OqRVc';
+const top_playlist_id = '4cRo44TavIHN54w46OqRVc'; //우리나라 top50음악Id
 
 export const useKoreaTopTracks = () => {
   return useQuery({

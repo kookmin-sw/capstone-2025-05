@@ -5,6 +5,7 @@ import Box from '../../Components/Box/Box.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
+
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
 import BeatChart from '../../Components/Chart/beatChart.js';
 import TechniqueChart from '../../Components/Chart/techniqueChart.js';
@@ -22,7 +23,9 @@ export default function ResultDetail() {
   const { uid } = useAuth();
   const printRef = useRef();
   const location = useLocation().state;
-  const song_id = '5da3470d-c2fa-4ae8-a035-63404a44db07'; //location.song_id
+  const typeName = location.type;
+  const song_id = location.song_id; //location.song_id
+  const user_id = typeName === 'userResults' ? uid : location.uid; //type이 userResult인 경우만 uid가 내 계정
 
   const { data: songData } = useSongByIdQuery(song_id);
 
@@ -34,9 +37,9 @@ export default function ResultDetail() {
     title: songData?.title,
     artist: songData?.artist,
     cover_url: AUDIO_URL + songData?.thumbnail,
+    original_audio_url: AUDIO_URL + songData?.audio,
   };
 
-  console.log(specificSong);
   const original_audio_url = songData?.audio;
   const navigate = useNavigate();
 
@@ -128,7 +131,7 @@ export default function ResultDetail() {
   const fetchUserInfo = async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/get-user-info`, {
-        params: { uid },
+        params: { uid: user_id },
       });
       const { nickname, email } = response.data || {};
       setUserInfo({ nickname, email });
@@ -162,8 +165,8 @@ export default function ResultDetail() {
   }, [taskId]);
 
   useEffect(() => {
-    if (uid) fetchUserInfo();
-  }, [uid]);
+    if (user_id) fetchUserInfo();
+  }, [user_id]);
 
   return (
     <div className="flex min-h-screen">
@@ -207,8 +210,8 @@ export default function ResultDetail() {
                 <p className="text-gray-600">{specificSong.artist}</p>
               </div>
               <AudioPlayer
-                userAudio="/Audio/homecoming.wav"
-                referenceAudio={original_audio_url}
+                userAudio={specificSong.original_audio_url}
+                referenceAudio={specificSong.original_audio_url}
               />
             </div>
           </Box>

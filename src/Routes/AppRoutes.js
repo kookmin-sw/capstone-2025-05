@@ -14,7 +14,6 @@ import WritePage from '../Pages/WritePage/writePage';
 import Ranking from '../Pages/Ranking/ranking';
 import MyPage from '../Pages/MyPage/MyPage';
 import PlayedMusic from '../Pages/MyPage/PlayedMusic';
-import Feedback from '../Pages/MyPage/UserResults';
 import Setting from '../Pages/MyPage/Setting';
 import MyActivity from '../Pages/MyPage/MyActivity';
 import SearchPage from '../Pages/SearchPage/searchPage';
@@ -25,6 +24,7 @@ import MusicPage from '../Pages/Main/MusicPage';
 import OauthRedirectHandler from '../Pages/Google/OauthRedirectHandler';
 import UserResults from '../Pages/MyPage/UserResults';
 import ResultDetail from '../Pages/ResultDetail/ResultDetail';
+import SongResults from '../Pages/AboutSong/SongResults';
 
 export default function AppRoutes() {
   const { uid, initialized } = useAuth();
@@ -47,6 +47,7 @@ export default function AppRoutes() {
           {/* 오디오 분석 라우팅 */}
           <Route path="/results" element={<UserResults />} />
           <Route path="/results/:taskId" element={<ResultDetail />} />
+          <Route path="/songResult" element={<SongResults />} />
           <Route path="/setting" element={<Setting />} />
           <Route path="/myactivity" element={<MyActivity />} />
           <Route path="/searchpage" element={<SearchPage />} />
