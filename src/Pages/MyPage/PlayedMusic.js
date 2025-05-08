@@ -93,33 +93,29 @@ export default function PlayedMusic() {
 
         <div className="w-[100%] overflow-y-auto p-10">
           <h2 className="text-xl font-bold ml-8 mb-6">최근 연주한 곡</h2>
-          <div className="flex flex-wrap gap-10 ml-2 justify-start">
+          <div className="flex flex-wrap gap-10 ml-2 justify-between">
             {recentRecords && recentRecords?.length > 0 ? (
               recentRecords.map((song, index) => (
                 <Box
                   key={song.song_id || index}
-                  width="23%"
-                  height="50%"
-                  overwrite="h-[18%] p-4 flex flex-col justify-between"
+                  overwrite="w-[220px] h-[280px] p-4 flex flex-col justify-between"
                 >
-                  <div className="flex justify-center items-center mt-4">
-                    <Link to="/feedback">
+                  <div className="flex justify-center items-center">
+                    <Link to="/ranking">
                       <img
                         src={song.cover_url || Cover_1}
                         alt="Album Cover"
-                        className="object-cover w-full h-auto max-w-[100%]"
+                        className="object-cover w-full h-[180px]"
                       />
                     </Link>
                   </div>
-                  <div className="flex items-center justify-between px-2 mt-2">
-                    <div className="flex flex-col w-[full]">
-                      <span className="text-lg font-semibold truncate">
-                        {song.song_name}
-                      </span>
-                      <span className="text-sm mt-[-2px] truncate">
-                        {song.artist || 'Unknown Artist'}
-                      </span>
-                    </div>
+                  <div className="flex flex-col mt-2">
+                    <span className="text-lg font-semibold truncate">
+                      {song.song_name}
+                    </span>
+                    <span className="text-sm truncate">
+                      {song.artist || 'Unknown Artist'}
+                    </span>
                   </div>
                 </Box>
               ))

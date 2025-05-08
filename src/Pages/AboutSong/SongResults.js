@@ -1,37 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useAuth } from '../../Context/AuthContext.js';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 
-const API_BASE_URL = process.env.REACT_APP_RESULT_URL;
+import results from '../../Data/songDetail.json';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSongByIdQuery } from '../../Hooks/Audio/get/getSongById';
+import { useSongResultsQuery } from '../../Hooks/Audio/get/getSongResults';
+const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
 
-export default function UserResults() {
-  const { uid } = useAuth();
-  const [results, setResults] = useState([]);
+export default function SongResults() {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchUserResults = async () => {
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/user/${uid}/results?limit=10&result_type=comparison`,
-        );
-        console.log(response, 'resultpage');
-        setResults(response.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    if (uid) fetchUserResults();
-  }, [uid]);
-
-  console.log(results);
-
+  const location = useLocation();
+  const { song_id, title } = location.state;
+  const { data: songInfo } = useSongByIdQuery(song_id);
+  // const { data: results } = useSongResultsQuery(song_id);
   return (
     <div className="min-h-screen bg-[#f1ede5] p-10 flex flex-col items-center">
-      <h2 className="text-2xl font-bold mb-6">
-        <span className="mr-2">🎼</span>내 연주 분석 결과
-      </h2>
+      <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow mb-6 w-full lg:w-[60%]">
+        <img
+          src={AUDIO_URL + songInfo?.thumbnail}
+          alt="Cover"
+          className="w-20 h-20 object-cover rounded"
+        />
+        <div>
+          <p className="text-sm text-gray-500">분석 대상 곡</p>
+          <h2 className="text-xl font-bold text-[#463936]">
+            {songInfo?.title}
+          </h2>
+          <p className="text-sm text-gray-600">
+            {songInfo?.artist || 'Unknown Artist'}
+          </p>
+        </div>
+      </div>
 
       {results.length === 0 ? (
         <p className="text-gray-500">분석 결과가 없습니다.</p>
@@ -53,8 +51,7 @@ export default function UserResults() {
                     navigate(`/results/${result.task_id}`, {
                       state: {
                         song_id: result.song_id,
-                        type: 'userResults',
-                        uid: result.user_id,
+                        type: 'songResults',
                       },
                     })
                   }

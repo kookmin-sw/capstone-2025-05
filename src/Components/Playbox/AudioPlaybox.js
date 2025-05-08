@@ -4,11 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import PlayButton from '../Button/PlayButton';
 
 export default function AudioPlaybox({ img, title, artist, playurl, song_id }) {
-  const handlePlay = () => {
-    // 곡 상세 정보 페이지로
-    navigate(`/song/${song_id}`);
-  };
   const navigate = useNavigate();
+  console.log(song_id, '가 뭐에요');
+  const handlePlay = () => {
+    // 곡에 대한 유저들의 연주기록
+    navigate('/songResult', { state: { song_id: song_id, title: title } });
+  };
 
   return (
     <Box width="220px" height="288px">
