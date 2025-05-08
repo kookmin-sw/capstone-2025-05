@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../Context/AuthContext.js';
-import fakeResults from '../../Data/newCompare.json';
+import { useNavigate } from 'react-router-dom';
+
 const API_BASE_URL = process.env.REACT_APP_RESULT_URL;
 
 export default function UserResults() {
   const { uid } = useAuth();
   const [results, setResults] = useState([]);
+  const navigate = useNavigate();
 
-  // 실제 API 사용 시
   useEffect(() => {
     const fetchUserResults = async () => {
       try {
@@ -23,6 +24,8 @@ export default function UserResults() {
     };
     if (uid) fetchUserResults();
   }, [uid]);
+
+  console.log(results);
 
   return (
     <div className="min-h-screen bg-[#f1ede5] p-10 flex flex-col items-center">
@@ -47,7 +50,9 @@ export default function UserResults() {
                 <button
                   className="text-sm text-[#a57865] hover:underline"
                   onClick={() =>
-                    (window.location.href = `/results/${result.task_id}`)
+                    navigate(`/results/${result.task_id}`, {
+                      state: { song_id: result.song_id },
+                    })
                   }
                 >
                   상세 보기 →

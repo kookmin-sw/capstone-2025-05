@@ -7,7 +7,7 @@ import Button from '../Components/Button/Button.js';
 import { useAuth } from '../Context/AuthContext.js';
 
 const MapleHeader = () => {
-  const menuList = ['분석하기', '초보방', '자유게시판', '마이페이지'];
+  const menuList = ['분석방', '초보방', '자유게시판', '마이페이지'];
   const [isLogin, setIsLogin] = useState(true);
   const [searchValue, setSearchValue] = useState();
   const { uid, logout } = useAuth();
@@ -15,7 +15,7 @@ const MapleHeader = () => {
 
   const goPage = (menu) => {
     console.log(menu);
-    if (menu === '분석하기') {
+    if (menu === '분석방') {
       navigate('/results');
     } else if (menu === '초보방') {
       navigate('/beginner');
