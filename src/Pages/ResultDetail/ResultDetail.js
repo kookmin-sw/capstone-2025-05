@@ -22,7 +22,7 @@ export default function ResultDetail() {
   const { uid } = useAuth();
   const printRef = useRef();
   const location = useLocation().state;
-  const song_id = '5da3470d-c2fa-4ae8-a035-63404a44db07'; //location.song_id
+  const song_id = location.songId; //location.song_id
 
   const { data: songData } = useSongByIdQuery(song_id);
 
@@ -34,9 +34,9 @@ export default function ResultDetail() {
     title: songData?.title,
     artist: songData?.artist,
     cover_url: AUDIO_URL + songData?.thumbnail,
+    original_audio_url: AUDIO_URL + songData?.audio,
   };
 
-  console.log(specificSong);
   const original_audio_url = songData?.audio;
   const navigate = useNavigate();
 
@@ -207,8 +207,8 @@ export default function ResultDetail() {
                 <p className="text-gray-600">{specificSong.artist}</p>
               </div>
               <AudioPlayer
-                userAudio="/Audio/homecoming.wav"
-                referenceAudio={original_audio_url}
+                userAudio={specificSong.original_audio_url}
+                referenceAudio={specificSong.original_audio_url}
               />
             </div>
           </Box>

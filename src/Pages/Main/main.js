@@ -12,15 +12,20 @@ import 'swiper/css';
 import { useNewReleases } from '../../Hooks/Main/getNewReleases';
 import { useKoreaTopTracks } from '../../Hooks/Main/getTopPlaylists';
 import Playbox from '../../Components/Playbox/Playbox';
+import { useAllSongQuery } from '../../Hooks/Audio/get/getAllSongs';
+import AudioPlaybox from '../../Components/Playbox/AudioPlaybox';
+import analysisIcon from '../../Assets/Main/분석.svg';
+import updateIcon from '../../Assets/Main/updateIcon.svg';
+import popularIcon from '../../Assets/Main/음반.svg';
 
 export default function Main() {
   const navigate = useNavigate();
   const swiperRef = useRef(null);
   const { data: TrendMusic } = useNewReleases();
   const { data: topMusic, isLoading } = useKoreaTopTracks();
+  const { data: allSongs } = useAllSongQuery();
   const [playerTarget, setPlayerTarget] = useState();
-  console.log('trendMusic', TrendMusic);
-  console.log('topmusic', topMusic);
+  const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -81,20 +86,53 @@ export default function Main() {
         />
       </div>
 
+      {/* 분석 가능 곡 섹션 */}
       <div className="w-full mt-12">
-        <div
-          className="flex items-center cursor-pointer transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%]"
+        <button
+          className="flex items-center cursor-pointer ml-[calc(50%-750px)] transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%]"
+          onClick={() =>
+            navigate('/musics', {
+              state: { musics: allSongs, musicType: 'analysis' },
+            })
+          }
+        >
+          <img src={analysisIcon} alt="분석아이콘" className="w-8" />
+          <span className="text-xl font-bold text-[24px] ml-1 mr-4">
+            분석 가능 곡들
+          </span>
+          <img src={Right} alt="arrow" className="cursor-pointer" />
+        </button>
+        <div className="flex flex-wrap justify-center gap-12 mt-4">
+          {allSongs &&
+            allSongs
+              .slice(0, 4)
+              .map((album, index) => (
+                <AudioPlaybox
+                  img={AUDIO_URL + album.thumbnail}
+                  title={album.title}
+                  artist={album.artist}
+                  playurl={AUDIO_URL + album.audio}
+                  song_id={album.song_id}
+                />
+              ))}
+        </div>
+      </div>
+
+      <div className="w-full mt-12">
+        <button
+          className="flex items-center cursor-pointer transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%] ml-[calc(50%-750px)]"
           onClick={() =>
             navigate('/musics', {
               state: { musics: topMusic, musicType: 'top' },
             })
           }
         >
-          <span className="text-xl font-bold text-[24px] ml-[calc(50%-700px)] mr-4">
+          <img src={popularIcon} alt="분석아이콘" className="w-8" />
+          <span className="text-xl font-bold text-[24px] ml-1 mr-8">
             인기곡 추천
           </span>
           <img src={Right} alt="arrow" className="cursor-pointer" />
-        </div>
+        </button>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
           {topMusic &&
             topMusic
@@ -118,19 +156,20 @@ export default function Main() {
       </div>
 
       <div className="w-full mt-16 mb-16">
-        <div
-          className="flex items-center cursor-pointer transition duration-300 ease-in-out transform hover:translate-x-[15px] hover:scale-[105%]"
+        <button
+          className="flex items-center cursor-pointer transition duration-300 ease-in-out ml-[calc(50%-750px)] transform hover:translate-x-[15px] hover:scale-[105%]"
           onClick={() =>
             navigate('/musics', {
               state: { musics: TrendMusic, musicType: 'trend' },
             })
           }
         >
-          <span className="text-xl font-bold text-[24px] ml-[calc(50%-700px)] mr-4">
+          <img src={updateIcon} alt="분석아이콘" className="h-10" />
+          <span className="text-xl font-bold text-[24px] ml-1 mr-4">
             최근 등록된 곡
           </span>
           <img src={Right} alt="arrow" />
-        </div>
+        </button>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
           {TrendMusic &&
             TrendMusic.slice(0, 4).map((album, index) => (

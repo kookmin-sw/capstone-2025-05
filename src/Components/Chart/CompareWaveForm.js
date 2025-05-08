@@ -3,6 +3,7 @@ import WaveSurfer from 'wavesurfer.js';
 import Timeline from 'wavesurfer.js/dist/plugins/timeline.esm.js';
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
 import AudioChart from './AudioChart';
+import swal from 'sweetalert';
 
 export default function CompareWaveform({ userAudio, referenceAudio }) {
   const userRef = useRef(null);
@@ -82,8 +83,30 @@ export default function CompareWaveform({ userAudio, referenceAudio }) {
 
   const handlePlayBoth = () => {
     const isNowPlaying = userWave.current?.isPlaying();
-    userWave.current?.playPause();
-    refWave.current?.playPause();
+    userWave.current?.playPause().catch((err) => {
+      swal({
+        text: `로딩중... ` + '\n' + '잠시후 다시 실행시켜주세요!',
+        icon: 'info',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
+    });
+    refWave.current?.playPause().catch((err) => {
+      swal({
+        text: `로딩중 ...` + '\n' + '잠시후 다시 실행시켜주세요!',
+        icon: 'info',
+        buttons: {
+          confirm: {
+            text: '확인',
+            className: 'custom-confirm-button',
+          },
+        },
+      });
+    });
     setIsPlaying(!isNowPlaying);
   };
 

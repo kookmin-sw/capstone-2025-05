@@ -76,23 +76,38 @@ export default function Playbox({
   return (
     <Box width="220px" height="288px">
       <div className="flex justify-center items-center mt-4">
-        <Link
-          to="/ranking"
-          state={{
-            song_name: title,
-          }}
-        >
-          <img
-            src={img}
-            alt="Album Cover"
-            className="w-[200px] h-[200px] object-cover"
-          />
-        </Link>
+        <div className="relative group w-[200px] h-[200px] cursor-pointer">
+          <Link
+            to="/ranking"
+            state={{
+              song_name: title,
+            }}
+          >
+            <img
+              src={img}
+              alt="Album Cover"
+              className="w-[200px] h-[200px] object-cover"
+            />
+            <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="flex flex-col items-center">
+                <p className="text-md font-semibold text-center">
+                  👆🏻 이미지 클릭 시 연주 랭킹 페이지로 이동
+                </p>
+                <br />
+                <small className="text-xs">
+                  * 스트리밍은 아래 ▶ 버튼 클릭
+                </small>
+              </div>
+            </div>
+          </Link>
+        </div>
       </div>
       <div className="flex items-center justify-between px-4 mt-2">
         <div className="flex flex-col w-[140px]">
           <span className="text-lg font-semibold truncate">{title}</span>
-          <span className="text-lg mt-[-4px] truncate">{artist}</span>
+          <span className="text-sm text-gray-500 mt-[-4px] truncate">
+            {artist}
+          </span>
         </div>
         {!play ? (
           <PlayButton onClick={handlePlay} />
