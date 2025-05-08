@@ -19,7 +19,7 @@ const MapleFooter = ({ github, email }) => {
             <IoLogoGithub />
             GitHub
           </div>
-          {`: ${github} |`}
+          {`: ${'https://github.com/maple'} |`}
         </span>
         &nbsp;
         <span className="flex items-center">

@@ -88,10 +88,10 @@ export default function Playbox({
               alt="Album Cover"
               className="w-[200px] h-[200px] object-cover"
             />
-            <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-60 text-white flex items-center scale-[108%] rounded-[10px] justify-center opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 stransition-opacity duration-300">
               <div className="flex flex-col items-center">
                 <p className="text-md font-semibold text-center">
-                  👆🏻 이미지 클릭 시 연주 랭킹 페이지로 이동
+                  👆🏻 이미지 클릭시 <br /> 랭킹 페이지로 이동
                 </p>
                 <br />
                 <small className="text-xs">
