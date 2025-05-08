@@ -133,7 +133,11 @@ def test_compare_endpoint(mock_compare, client):
             "user_file": ("test.wav", test_file_content, "audio/wav"),
             "reference_file": ("ref.wav", test_file_content, "audio/wav")
         },
-        params={"user_id": "test_user", "song_id": "test_song"}
+        data={
+            "user_id": "test_user", 
+            "song_id": "test_song",
+            "generate_feedback": "False"
+        }
     )
     
     assert response.status_code == 200
@@ -141,4 +145,150 @@ def test_compare_endpoint(mock_compare, client):
     assert "task_id" in data
     
     # compare_audio.delay가 호출되었는지 확인
-    mock_compare.delay.assert_called()
+    mock_compare.delay.assert_called_once()
+    
+    # 올바른 매개변수가 전달되었는지 확인
+    args, kwargs = mock_compare.delay.call_args
+    assert kwargs.get("user_id") == "test_user"
+    assert kwargs.get("song_id") == "test_song"
+    assert kwargs.get("reference_audio_bytes") is not None
+
+
+@patch("app.api.v1.compare_audio")
+def test_compare_with_stored_reference_endpoint(mock_compare, client):
+    """저장된 레퍼런스 데이터를 사용한 비교 엔드포인트 테스트"""
+    # AsyncResult 객체 모의 생성
+    mock_task = MagicMock()
+    mock_task.id = "test_task_id"
+    mock_compare.delay.return_value = mock_task
+    
+    # 테스트 파일 생성
+    test_file_content = b"test audio content"
+    
+    # API 호출
+    response = client.post(
+        "/api/v1/compare-with-reference",
+        files={
+            "user_file": ("test.wav", test_file_content, "audio/wav")
+        },
+        data={
+            "user_id": "test_user", 
+            "song_id": "test_song",
+            "generate_feedback": "True"
+        }
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "task_id" in data
+    
+    # compare_audio.delay가 호출되었는지 확인
+    mock_compare.delay.assert_called_once()
+    # DB에서 가져온 레퍼런스로 호출되었는지 확인 (reference_audio_bytes는 None)
+    args, kwargs = mock_compare.delay.call_args
+    assert kwargs.get("reference_audio_bytes") is None
+    assert kwargs.get("song_id") == "test_song"
+
+
+@patch("app.api.v1.analyze_reference_audio")
+def test_analyze_reference_endpoint(mock_analyze_reference, client):
+    """레퍼런스 오디오 분석 엔드포인트 테스트"""
+    # AsyncResult 객체 모의 생성
+    mock_task = MagicMock()
+    mock_task.id = "test_reference_task_id"
+    mock_analyze_reference.delay.return_value = mock_task
+    
+    # 테스트 파일 생성
+    test_file_content = b"test reference audio content"
+    
+    # API 호출
+    response = client.post(
+        "/api/v1/reference",
+        files={
+            "reference_file": ("reference.wav", test_file_content, "audio/wav"),
+            "midi_file": ("notes.mid", b"test midi content", "audio/midi")
+        },
+        data={
+            "song_id": "test_song_id",
+            "description": "테스트 레퍼런스 오디오"
+        }
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "task_id" in data
+    
+    # analyze_reference_audio.delay가 호출되었는지 확인
+    mock_analyze_reference.delay.assert_called_once()
+
+
+@patch("app.api.v1.compare_audio")
+@patch("app.api.v1.get_reference_features")  # app.db.get_reference_features 대신 app.api.v1.get_reference_features를 모킹
+def test_compare_with_ref_features_dtw(mock_get_features, mock_compare, client):
+    """DB에서 크로마 데이터를 가져와 DTW 정렬을 사용한 비교 테스트"""
+    # AsyncResult 객체 모의 생성
+    mock_task = MagicMock()
+    mock_task.id = "test_dtw_task_id"
+    mock_compare.delay.return_value = mock_task
+    
+    # DB에서 가져올 모의 레퍼런스 특성 (크로마 데이터 포함)
+    mock_ref_features = {
+        "tempo": 120,
+        "onsets": [0.1, 0.5, 1.0, 1.5],
+        "pitches": [440, 554, 659, 880],
+        "techniques": [["normal"], ["bend"], ["slide"], ["hammer"]],
+        "chroma": [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],  # 크로마 데이터 포함
+        "metadata": {
+            "song_id": "test_song_with_chroma",
+            "has_midi": True
+        }
+    }
+    
+    # 모의 MIDI 데이터
+    mock_midi_data = {
+        "notes": [
+            {"start": 0.1, "end": 0.4, "pitch": 60, "velocity": 100},
+            {"start": 0.5, "end": 0.9, "pitch": 62, "velocity": 100},
+            {"start": 1.0, "end": 1.4, "pitch": 64, "velocity": 100}
+        ],
+        "tempos": [120],
+        "tempo_times": [0]
+    }
+    
+    # DB에서 레퍼런스 특성을 가져오는 함수가 모의 데이터를 반환하도록 설정
+    mock_get_features.return_value = {
+        **mock_ref_features,
+        "midi_data": mock_midi_data
+    }
+    
+    # 테스트 파일 생성
+    test_file_content = b"test audio content for DTW alignment"
+    
+    # API 호출
+    response = client.post(
+        "/api/v1/compare-with-reference",
+        files={
+            "user_file": ("test.wav", test_file_content, "audio/wav")
+        },
+        data={  # params 대신 data를 사용하여 Form 데이터로 전달
+            "user_id": "test_user",
+            "song_id": "test_song_with_chroma",
+            "generate_feedback": "False"
+        }
+    )
+    
+    # 응답 및 모의 함수 호출 확인
+    assert response.status_code == 200
+    data = response.json()
+    assert "task_id" in data
+    assert data["task_id"] == "test_dtw_task_id"
+    
+    # DB에서 레퍼런스 특성 조회 함수가 올바른 song_id로 호출되었는지 확인
+    mock_get_features.assert_called_once_with("test_song_with_chroma")
+    
+    # compare_audio.delay가 올바른 인자로 호출되었는지 확인
+    mock_compare.delay.assert_called_once()
+    args, kwargs = mock_compare.delay.call_args
+    assert kwargs.get("reference_audio_bytes") is None  # 레퍼런스 오디오 바이트는 사용하지 않음
+    assert kwargs.get("song_id") == "test_song_with_chroma"
+    assert kwargs.get("user_audio_bytes") is not None

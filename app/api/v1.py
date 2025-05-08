@@ -70,7 +70,10 @@ async def analyze(
     )
     
     # Submit to Celery task queue
-    task = analyze_audio.delay(contents, request.dict())
+    task = analyze_audio.delay(
+        audio_bytes=contents,
+        request_data=request.model_dump()
+    )
     
     return {"task_id": task.id}
 
@@ -81,21 +84,23 @@ async def compare(
     user_file: UploadFile = File(...),
     reference_file: Optional[UploadFile] = File(None),
     midi_file: Optional[UploadFile] = File(None),
-    user_id: Optional[str] = None,
-    song_id: Optional[str] = None,
-    generate_feedback: bool = False
+    user_id: Optional[str] = Form(None),
+    song_id: Optional[str] = Form(None),
+    generate_feedback: bool = Form(False)
 ):
     """
-    Compare a user's performance with a reference audio file and/or a MIDI file.
-    Returns a task ID that can be used to track progress and retrieve results.
+    사용자 연주를 레퍼런스 오디오 또는 MIDI와 비교합니다.
     
     Parameters:
-    - user_file: User's audio file to analyze (WAV or MP3)
-    - reference_file: Reference audio file for comparison (WAV or MP3)
-    - midi_file: MIDI file for score reference
-    - user_id: Optional user identifier
-    - song_id: Optional song identifier
-    - generate_feedback: Whether to generate textual feedback using GROK API
+    - user_file: 사용자의 오디오 파일 (WAV 또는 MP3)
+    - reference_file: 레퍼런스 오디오 파일 (선택 사항)
+    - midi_file: MIDI 파일 (선택 사항)
+    - user_id: 사용자 ID (선택 사항)
+    - song_id: 곡 ID (선택 사항)
+    - generate_feedback: 피드백 생성 여부
+    
+    Returns:
+    - task_id: 분석 작업의 ID
     """
     if not user_file.filename.lower().endswith(('.wav', '.mp3')):
         raise HTTPException(
@@ -125,12 +130,12 @@ async def compare(
     
     # Submit to Celery task queue
     task = compare_audio.delay(
-        user_contents, 
-        reference_contents, 
-        midi_contents,
-        user_id,
-        song_id,
-        generate_feedback  # 피드백 생성 옵션 추가
+        user_audio_bytes=user_contents, 
+        reference_audio_bytes=reference_contents, 
+        midi_bytes=midi_contents,
+        user_id=user_id,
+        song_id=song_id,
+        generate_feedback=generate_feedback
     )
     
     return {"task_id": task.id}
@@ -320,10 +325,10 @@ async def add_reference(
     
     # Celery 작업 큐에 제출
     task = analyze_reference_audio.delay(
-        reference_contents,
-        song_id,
-        midi_contents,
-        description
+        reference_audio_bytes=reference_contents,
+        song_id=song_id,
+        midi_bytes=midi_contents,
+        description=description
     )
     
     return {"task_id": task.id}
@@ -452,12 +457,12 @@ async def compare_with_reference(
     
     # Celery 작업 큐에 제출
     task = compare_audio.delay(
-        user_contents, 
-        None,  # reference_audio_bytes는 None으로 전달 (DB에서 가져오기 위함)
-        midi_contents,
-        user_id,
-        song_id,
-        generate_feedback
+        user_audio_bytes=user_contents, 
+        reference_audio_bytes=None,  # reference_audio_bytes는 None으로 전달 (DB에서 가져오기 위함)
+        midi_bytes=midi_contents,
+        user_id=user_id,
+        song_id=song_id,
+        generate_feedback=generate_feedback
     )
     
     return {"task_id": task.id}

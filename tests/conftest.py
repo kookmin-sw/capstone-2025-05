@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 import json
 from fastapi.testclient import TestClient
+import numpy as np
 
 # 프로젝트 루트 디렉토리를 Python 경로에 추가
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -110,18 +111,26 @@ def mock_celery():
             self.result = mock_task.result
             self.info = {"progress": 100}
     
-    # analyze_audio 및 compare_audio 모의
-    with patch("workers.tasks.analyze_audio") as mock_analyze, \
-         patch("workers.tasks.compare_audio") as mock_compare:
-        # delay 메서드가 모의 태스크를 반환하도록 설정
-        mock_analyze.delay.return_value = mock_task
-        mock_compare.delay.return_value = mock_task
+    # DSP 함수 모의 - extract_chroma를 추가합니다
+    with patch("workers.dsp.extract_chroma") as mock_extract_chroma:
+        # 모의 크로마 데이터 반환
+        mock_extract_chroma.return_value = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
         
-        # AsyncResult 메서드가 모의 결과를 반환하도록 설정
-        mock_analyze.AsyncResult.side_effect = MockAsyncResult
-        mock_compare.AsyncResult.side_effect = MockAsyncResult
-        
-        yield
+        # analyze_audio, compare_audio 및 analyze_reference_audio 모의
+        with patch("workers.tasks.analyze_audio") as mock_analyze, \
+             patch("workers.tasks.compare_audio") as mock_compare, \
+             patch("workers.tasks.analyze_reference_audio") as mock_analyze_reference:
+            # delay 메서드가 모의 태스크를 반환하도록 설정
+            mock_analyze.delay.return_value = mock_task
+            mock_compare.delay.return_value = mock_task
+            mock_analyze_reference.delay.return_value = mock_task
+            
+            # AsyncResult 메서드가 모의 결과를 반환하도록 설정
+            mock_analyze.AsyncResult.side_effect = MockAsyncResult
+            mock_compare.AsyncResult.side_effect = MockAsyncResult
+            mock_analyze_reference.AsyncResult.side_effect = MockAsyncResult
+            
+            yield
 
 # app.db 모듈에 대한 모의 객체 생성
 @pytest.fixture(scope="function")

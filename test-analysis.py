@@ -44,7 +44,7 @@ def test_compare(generate_feedback=True):
             "midi_file": midi_file
         }
         params = {
-            "user_id": "JEnhRg0D9shVXoRtUsLJcpgTpYY2", 
+            "user_id": "test-user", 
             "song_id": "test-song",
             "generate_feedback": str(generate_feedback).lower()  # GROK 피드백 생성 옵션 추가
         }
