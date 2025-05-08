@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Dict, List, Optional, Union, Any
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
@@ -77,6 +78,44 @@ class ComparisonResult(BaseModel):
     expression_similarity: Optional[float] = None
 
 
+class MidiNote(BaseModel):
+    """MIDI 노트 정보"""
+    start: float  # 시작 시간 (초)
+    end: float  # 종료 시간 (초)
+    pitch: int  # MIDI 음높이 (0-127)
+    velocity: int  # 세기 (0-127)
+    channel: int  # MIDI 채널 (0-15)
+
+
+class MidiData(BaseModel):
+    """MIDI 파일 데이터"""
+    notes: List[Dict[str, Any]]
+    tempos: List[float]
+    tempo_times: List[float]
+
+
+class ReferenceFeatures(BaseModel):
+    """레퍼런스 오디오 특성 데이터"""
+    song_id: str
+    features: Dict[str, Any]  # AudioFeatures 형식의 데이터
+    midi_data: Optional[Dict[str, Any]] = None  # MidiData 형식의 데이터 (선택 사항)
+    created_at: Optional[str] = None
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "song_id": "song-123",
+                "features": {
+                    "tempo": 120.5,
+                    "onsets": [0.5, 1.0, 1.5, 2.0, 2.5],
+                    "pitches": [440.0, 523.25, 587.33, 659.26, 783.99],
+                    "techniques": [["regular"], ["hammer-on"], ["pull-off"], ["slide"], ["bend"]]
+                },
+                "created_at": datetime.now().isoformat()
+            }
+        }
+
+
 # MongoDB 스키마 추가
 class AnalysisResultResponse(BaseModel):
     """MongoDB에서 가져온 분석 또는 비교 결과를 위한 응답 모델"""
@@ -87,6 +126,19 @@ class AnalysisResultResponse(BaseModel):
     song_id: Optional[str] = None
     created_at: Optional[str] = None
     result_type: Optional[str] = None  # "analysis" 또는 "comparison"
+    
+    class Config:
+        """Pydantic 설정"""
+        orm_mode = True
+
+
+class ReferenceFeatureResponse(BaseModel):
+    """MongoDB에서 가져온 레퍼런스 오디오 특성을 위한 응답 모델"""
+    _id: str
+    song_id: str
+    features: Dict[str, Any]
+    midi_data: Optional[Dict[str, Any]] = None
+    created_at: Optional[str] = None
     
     class Config:
         """Pydantic 설정"""

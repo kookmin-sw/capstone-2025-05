@@ -13,8 +13,8 @@ def test_analyze(generate_feedback=True):
     with open("/home/lovel/develop/maple-audio-analyzer/test/ref/homecoming.wav", "rb") as f:
         files = {"file": f}
         params = {
-            "user_id": "test-user", 
-            "song_id": "test-song",
+            "user_id": "JEnhRg0D9shVXoRtUsLJcpgTpYY2", 
+            "song_id": "test-song2",
             "generate_feedback": str(generate_feedback).lower()  # GROK 피드백 생성 옵션 추가
         }
         
@@ -44,7 +44,7 @@ def test_compare(generate_feedback=True):
             "midi_file": midi_file
         }
         params = {
-            "user_id": "test-user", 
+            "user_id": "JEnhRg0D9shVXoRtUsLJcpgTpYY2", 
             "song_id": "test-song",
             "generate_feedback": str(generate_feedback).lower()  # GROK 피드백 생성 옵션 추가
         }
@@ -169,24 +169,24 @@ def run_tests(generate_feedback=True):
     # 실행 옵션 출력
     print(f"테스트 실행 - GROK 피드백 생성: {'활성화' if generate_feedback else '비활성화'}")
     
-    # 분석 테스트
-    task_id = test_analyze(generate_feedback)
-    if task_id:
-        analysis_result = check_task_status(task_id)
+    # # 분석 테스트
+    # task_id = test_analyze(generate_feedback)
+    # if task_id:
+    #     analysis_result = check_task_status(task_id)
         
-        # 결과 파일 생성 (analysis.json)
-        if analysis_result and analysis_result.get('result'):
-            print("\nanalysis.json 파일 생성 중...")
-            formatted_result = {
-                "status": "success",
-                "analysis": analysis_result.get('result')
-            }
-            with open('analysis.json', 'w') as f:
-                json.dump(formatted_result, f, indent=2)
-            print("analysis.json 파일이 생성되었습니다.")
+    #     # 결과 파일 생성 (analysis.json)
+    #     if analysis_result and analysis_result.get('result'):
+    #         print("\nanalysis.json 파일 생성 중...")
+    #         formatted_result = {
+    #             "status": "success",
+    #             "analysis": analysis_result.get('result')
+    #         }
+    #         with open('analysis.json', 'w') as f:
+    #             json.dump(formatted_result, f, indent=2)
+    #         print("analysis.json 파일이 생성되었습니다.")
     
-    # 잠시 대기
-    time.sleep(2)
+    # # 잠시 대기
+    # time.sleep(2)
     
     # 비교 테스트
     task_id = test_compare(generate_feedback)
