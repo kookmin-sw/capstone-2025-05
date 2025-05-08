@@ -400,3 +400,64 @@ async def delete_reference(song_id: str):
         )
     
     return None
+
+
+@router.post("/compare-with-reference", response_model=TaskResponse)
+async def compare_with_reference(
+    background_tasks: BackgroundTasks,
+    user_file: UploadFile = File(...),
+    song_id: str = Form(...),
+    midi_file: Optional[UploadFile] = File(None),
+    user_id: Optional[str] = Form(None),
+    generate_feedback: bool = Form(False)
+):
+    """
+    사용자의 연주를 DB에 저장된 레퍼런스 오디오와 비교합니다.
+    song_id를 통해 저장된 레퍼런스 오디오 특성을 불러와 사용합니다.
+    
+    Parameters:
+    - user_file: 사용자의 오디오 파일 (WAV 또는 MP3)
+    - song_id: 비교할 레퍼런스 오디오의 곡 ID
+    - midi_file: MIDI 파일 (선택 사항, 레퍼런스에 저장된 MIDI가 우선함)
+    - user_id: 사용자 ID (선택 사항)
+    - generate_feedback: 피드백 생성 여부
+    
+    Returns:
+    - task_id: 분석 작업의 ID
+    """
+    if not user_file.filename.lower().endswith(('.wav', '.mp3')):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="WAV와 MP3 파일만 지원됩니다"
+        )
+    
+    # 먼저 song_id에 해당하는 레퍼런스 데이터가 있는지 확인
+    reference_data = get_reference_features(song_id)
+    if not reference_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"song_id '{song_id}'에 해당하는 레퍼런스 오디오를 찾을 수 없습니다"
+        )
+    
+    user_contents = await user_file.read()
+    
+    midi_contents = None
+    if midi_file:
+        if not midi_file.filename.lower().endswith('.mid'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="MIDI 파일만 지원됩니다 (.mid)"
+            )
+        midi_contents = await midi_file.read()
+    
+    # Celery 작업 큐에 제출
+    task = compare_audio.delay(
+        user_contents, 
+        None,  # reference_audio_bytes는 None으로 전달 (DB에서 가져오기 위함)
+        midi_contents,
+        user_id,
+        song_id,
+        generate_feedback
+    )
+    
+    return {"task_id": task.id}
