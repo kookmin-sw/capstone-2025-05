@@ -89,7 +89,7 @@ export default function Main() {
       {/* 분석 가능 곡 섹션 */}
       <div className="w-full mt-12">
         <button
-          className="flex items-center cursor-pointer ml-[calc(50%-750px)] transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%]"
+          className="flex items-center cursor-pointer ml-[calc(50%-700px)] transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%]"
           onClick={() =>
             navigate('/musics', {
               state: { musics: allSongs, musicType: 'analysis' },
@@ -157,7 +157,7 @@ export default function Main() {
 
       <div className="w-full mt-16 mb-16">
         <button
-          className="flex items-center cursor-pointer transition duration-300 ease-in-out ml-[calc(50%-750px)] transform hover:translate-x-[15px] hover:scale-[105%]"
+          className="flex items-center cursor-pointer transition duration-300 ease-in-out ml-[calc(50%-700px)] transform hover:translate-x-[15px] hover:scale-[105%]"
           onClick={() =>
             navigate('/musics', {
               state: { musics: TrendMusic, musicType: 'trend' },
