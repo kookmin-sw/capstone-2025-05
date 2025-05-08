@@ -100,6 +100,57 @@ def align_audio_with_dtw(user_y, orig_y, sr=22050):
     return time_mapping
 
 
+def align_audio_with_chromas(user_chroma, orig_chroma, sr=22050):
+    """크로마그램을 직접 이용한 DTW 오디오 정렬.
+    
+    Args:
+        user_chroma: 사용자 오디오의 크로마그램
+        orig_chroma: 원본 오디오의 크로마그램
+        user_duration: 사용자 오디오 길이(초)
+        orig_duration: 원본 오디오 길이(초)
+        sr: 샘플링 레이트
+        
+    Returns:
+        time_mapping: DTW 경로에 기반한 시간 매핑 [(user_time, orig_time), ...]
+    """
+    distance, path = fastdtw(user_chroma.T, orig_chroma.T, dist=euclidean)
+    
+    user_duration = user_chroma.shape[1] * 2048 / sr
+    orig_duration = orig_chroma.shape[1] * 2048 / sr
+    
+    # Create time arrays for chroma features
+    user_times = librosa.frames_to_time(np.arange(user_chroma.shape[1]), sr=sr, hop_length=2048)
+    orig_times = librosa.frames_to_time(np.arange(orig_chroma.shape[1]), sr=sr, hop_length=2048)
+    
+    # Create time mapping based on DTW path
+    time_mapping = []
+    for user_idx, orig_idx in path:
+        user_time = user_times[user_idx] if user_idx < len(user_times) else user_duration
+        orig_time = orig_times[orig_idx] if orig_idx < len(orig_times) else orig_duration
+        time_mapping.append((user_time, orig_time))
+    
+    # Expand time mapping to cover full audio length
+    if time_mapping:
+        time_mapping = sorted(time_mapping, key=lambda x: x[1])
+        new_time_mapping = []
+        last_user_time, last_orig_time = time_mapping[0]
+        new_time_mapping.append((last_user_time, last_orig_time))
+        
+        for user_time, orig_time in time_mapping[1:]:
+            if orig_time > last_orig_time:
+                new_time_mapping.append((user_time, orig_time))
+                last_user_time, last_orig_time = user_time, orig_time
+        
+        # Linear interpolation from 0 to orig_duration
+        time_mapping = []
+        orig_times = np.linspace(0, orig_duration, num=1000)
+        user_times = np.interp(orig_times, [t[1] for t in new_time_mapping], [t[0] for t in new_time_mapping])
+        for user_time, orig_time in zip(user_times, orig_times):
+            time_mapping.append((user_time, orig_time))
+    
+    return time_mapping
+
+
 def enhanced_segment_audio_with_midi_notes(y, time_mapping, notes, sr=22050, search_window=0.2):
     """
     향상된 오디오 세그먼트화 - MIDI 노트 이벤트와 실제 연주된 노트를 더 정확히 매칭합니다.

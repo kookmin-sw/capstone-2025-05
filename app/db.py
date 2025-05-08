@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 # 테스트 환경에서는 MockClient를 사용하고, 그렇지 않으면 실제 MongoClient를 사용합니다
 try:
@@ -104,12 +104,15 @@ try:
     comparison_collection = db["comparison_results"]
     # 피드백 저장을 위한 컬렉션
     feedback_collection = db["feedback_results"]
+    # 레퍼런스 오디오 특성 저장을 위한 컬렉션
+    reference_features_collection = db["reference_features"]
 except (TypeError, AttributeError) as e:
     # 테스트 환경에서는 임시 객체 사용
     print(f"MongoDB 초기화 중 오류 발생 (테스트 환경에서는 정상): {e}")
     analysis_collection = MagicMock()
     comparison_collection = MagicMock()
     feedback_collection = MagicMock()
+    reference_features_collection = MagicMock()
 
 def save_analysis_result(task_id: str, result: Dict[str, Any]) -> str:
     """
@@ -220,6 +223,86 @@ def save_feedback(task_id: str, feedback_data: Dict[str, Any]) -> str:
         # 새로 저장
         inserted = feedback_collection.insert_one(document)
         return str(inserted.inserted_id)
+
+def save_reference_features(
+    song_id: str, 
+    features: Dict[str, Any], 
+    midi_data: Optional[Dict[str, Any]] = None
+) -> str:
+    """
+    레퍼런스 오디오의 특성을 MongoDB에 저장합니다.
+    
+    Args:
+        song_id: 곡 ID (고유 식별자)
+        features: 레퍼런스 오디오의 특성 데이터 (tempo, onsets, pitches, techniques, midi_data 등)
+        midi_data: 미디 파일 데이터 (선택 사항) - 더 이상 사용하지 않음, features에 포함됨
+        
+    Returns:
+        저장된 문서의 ID
+    """
+    document = {
+        "song_id": song_id,
+        "features": features,
+        "created_at": features.get("created_at", None)
+    }
+    
+    # midi_data 매개변수는 더 이상 사용하지 않지만 하위 호환성을 위해 유지합니다
+    # midi_data가 features에 포함되지 않고 별도로 제공된 경우 (기존 코드와의 호환성)
+    if midi_data and "midi_data" not in features:
+        features["midi_data"] = midi_data
+    
+    # 이미 같은 song_id로 저장된 문서가 있는지 확인
+    existing = reference_features_collection.find_one({"song_id": song_id})
+    if existing:
+        # 이미 있는 경우 업데이트
+        reference_features_collection.update_one(
+            {"song_id": song_id},
+            {"$set": document}
+        )
+        return str(existing.get("_id", ""))
+    else:
+        # 새로 저장
+        inserted = reference_features_collection.insert_one(document)
+        return str(inserted.inserted_id)
+
+def get_reference_features(song_id: str) -> Dict[str, Any]:
+    """
+    MongoDB에서 레퍼런스 오디오의 특성을 가져옵니다.
+    
+    Args:
+        song_id: 곡 ID
+        
+    Returns:
+        레퍼런스 오디오 특성 데이터 또는 None
+    """
+    result = reference_features_collection.find_one({"song_id": song_id})
+    return result
+
+def get_reference_features_list(limit: int = 20) -> List[Dict[str, Any]]:
+    """
+    MongoDB에서 모든 레퍼런스 오디오 특성 목록을 가져옵니다.
+    
+    Args:
+        limit: 최대 결과 수
+        
+    Returns:
+        레퍼런스 오디오 특성 목록
+    """
+    cursor = reference_features_collection.find().sort("created_at", -1).limit(limit)
+    return list(cursor)
+
+def delete_reference_features(song_id: str) -> bool:
+    """
+    MongoDB에서 레퍼런스 오디오의 특성을 삭제합니다.
+    
+    Args:
+        song_id: 곡 ID
+        
+    Returns:
+        삭제 성공 여부
+    """
+    result = reference_features_collection.delete_one({"song_id": song_id})
+    return result.deleted_count > 0
 
 def get_analysis_result(task_id: str) -> Dict[str, Any]:
     """

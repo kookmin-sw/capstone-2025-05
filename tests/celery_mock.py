@@ -96,3 +96,15 @@ if 'celery' not in sys.modules:
     sys.modules['celery.utils.log'] = mock_log
     sys.modules['celery.result'] = mock_result
     sys.modules['celeryconfig'] = mock_celeryconfig 
+
+# workers.tasks 모듈에 가짜 함수 등록
+try:
+    import workers.tasks
+    # 모의 태스크 객체 생성 (이미 존재할 수 있으므로 AttributeError 무시)
+    try:
+        workers.tasks.analyze_reference_audio = MockTask()
+        print("Successfully mocked analyze_reference_audio")
+    except AttributeError:
+        pass
+except ImportError:
+    print("Warning: Could not import workers.tasks module to mock functions") 
