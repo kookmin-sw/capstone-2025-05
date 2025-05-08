@@ -13,22 +13,31 @@ import { useAuth } from '../../Context/AuthContext.js';
 import AudioPlayer from '../../Components/Audio/AudioPlayer.js';
 import { FaPrint } from 'react-icons/fa6';
 import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useSongByIdQuery } from '../../Hooks/Audio/get/getSongById.js';
 
 const API_BASE_URL = process.env.REACT_APP_RESULT_URL;
-
+const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
 export default function ResultDetail() {
   const { uid } = useAuth();
   const printRef = useRef();
+  const location = useLocation().state;
+  const song_id = '5da3470d-c2fa-4ae8-a035-63404a44db07'; //location.song_id
+
+  const { data: songData } = useSongByIdQuery(song_id);
 
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userInfo, setUserInfo] = useState({ nickname: '', email: '' });
   const [currentGraphIndex, setCurrentGraphIndex] = useState(0);
-  const [specificSong, setSpecificSong] = useState({
-    title: 'Test Song',
-    artist: 'Unknown',
-    cover_url: '',
-  });
+  const specificSong = {
+    title: songData?.title,
+    artist: songData?.artist,
+    cover_url: AUDIO_URL + songData?.thumbnail,
+  };
+
+  console.log(specificSong);
+  const original_audio_url = songData?.audio;
   const navigate = useNavigate();
 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
@@ -131,7 +140,6 @@ export default function ResultDetail() {
   const handlePrint = () => {
     const printContent = printRef.current.innerHTML;
     const originalContent = document.body.innerHTML;
-
     document.body.innerHTML = printContent;
     window.print();
     document.body.innerHTML = originalContent;
@@ -192,7 +200,7 @@ export default function ResultDetail() {
           >
             <div className="flex flex-col items-center space-y-4">
               <div className="w-56 h-56 bg-gray-200 flex items-center justify-center text-gray-400 rounded-md">
-                이미지 없음
+                <img src={specificSong.cover_url} className="" />
               </div>
               <div className="text-center">
                 <h3 className="text-lg font-bold">{specificSong.title}</h3>
@@ -200,7 +208,7 @@ export default function ResultDetail() {
               </div>
               <AudioPlayer
                 userAudio="/Audio/homecoming.wav"
-                referenceAudio="/Audio/homecoming-error-1.wav"
+                referenceAudio={original_audio_url}
               />
             </div>
           </Box>
