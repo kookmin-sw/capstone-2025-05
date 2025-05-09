@@ -11,9 +11,9 @@ markdown: kramdown
 url: "https://kookmin-sw.github.io"
 baseurl: "/capstone-2025-05"
 
-heroimage: /assets/guitar.jpg
+heroimage: /capstone-2025-05/assets/guitar.jpg
 
-author-name: Capstone Team
+author-name: Team 05
 author-url: https://github.com/kookmin-sw/capstone-2025-05
 
 permalink: "blog/:title"
