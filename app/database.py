@@ -2,14 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
-from dotenv import load_dotenv
-from pathlib import Path
-
-# 프로젝트 루트 디렉토리 찾기
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# .env 파일 로드 (프로젝트 루트에 있는 .env 파일 사용)
-load_dotenv(BASE_DIR / ".env")
 
 # 데이터베이스 URL 설정
 # 환경변수에서 데이터베이스 연결 정보 가져오기, 없으면 기본값 사용
