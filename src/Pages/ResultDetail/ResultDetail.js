@@ -28,6 +28,7 @@ export default function ResultDetail() {
   const user_id = typeName === 'userResults' ? uid : location.uid; //type이 userResult인 경우만 uid가 내 계정
 
   const { data: songData } = useSongByIdQuery(song_id);
+  console.log(songData, '노래정보');
 
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,6 +79,8 @@ export default function ResultDetail() {
     return processCompareData(result);
   }, [result]);
 
+  console.log(processed, '가공데이터');
+
   const graphs = [
     { label: '음정 분석', key: 'pitch', color: 'red' },
     { label: '박자 분석', key: 'rhythm', color: 'green' },
@@ -96,14 +99,14 @@ export default function ResultDetail() {
         })) || []
       );
     }
-    if (type === 'onset') {
+    if (type === 'rhythm') {
       return (
         processed?.onset_comparison.map((item, i) => ({
           second: parseFloat((i * 0.5).toFixed(2)),
-          original: parseFloat(item.reference_onset.toFixed(2)),
-          played: parseFloat(item.user_onset.toFixed(2)),
-          pitch_difference: parseFloat(
-            Math.abs(item.reference_onset - item.user_onset).toFixed(2),
+          original: Math.round(item.reference_onset),
+          played: Math.round(item.user_onset),
+          pitch_difference: Math.round(
+            Math.abs(item.reference_onset - item.user_onset),
           ),
           technique_match: true,
         })) || []
@@ -154,6 +157,7 @@ export default function ResultDetail() {
       try {
         setLoading(true);
         const response = await axios.get(`${API_BASE_URL}/results/${taskId}`);
+        console.log(response, 'resultdetail');
         setResult(response.data);
         setLoading(false);
       } catch (err) {
@@ -219,7 +223,7 @@ export default function ResultDetail() {
           <div className="flex-[2] ml-4 h-full">
             <Box
               width="100%"
-              height="608px"
+              height="516px"
               backgroundColor="white"
               overwrite="p-4 overflow-y-auto"
             >
@@ -286,8 +290,8 @@ export default function ResultDetail() {
 
           {graphs[currentGraphIndex].key === 'technique' ? (
             <TechniqueChart data={getChartDataByType(processed, 'technique')} />
-          ) : graphs[currentGraphIndex].key === 'onset' ? (
-            <BeatChart data={getChartDataByType(processed, 'onset')} />
+          ) : graphs[currentGraphIndex].key === 'rhythm' ? (
+            <BeatChart data={getChartDataByType(processed, 'rhythm')} />
           ) : (
             <PerformanceChart data={getChartDataByType(processed, 'pitch')} />
           )}

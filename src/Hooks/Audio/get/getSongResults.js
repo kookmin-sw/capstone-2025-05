@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import audioApi from '../../../Utils/audioApi';
+import analysisApi from '../../../Utils/analysisApi';
 
 const fetchSong = (song_id) => {
-  return audioApi.get(`/api/v1/song/${song_id}/results`);
+  return analysisApi.get(`/song/${song_id}/results`);
 };
 
 export const useSongResultsQuery = (song_id) => {

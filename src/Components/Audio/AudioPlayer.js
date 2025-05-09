@@ -11,29 +11,31 @@ export default function AudioPlayer({ userAudio, referenceAudio }) {
 
   return (
     <div className="flex flex-col w-full items-center justify-center space-y-2 ">
-      <div className="w-full">
-        <h3>
-          <strong>사용자 연주</strong>
-        </h3>
-        <audio
-          id="user-audio"
-          controls
-          src={userAudio}
-          className="w-full"
-        ></audio>
+      <div className="flex flex-col w-full h-full">
+        <div className="w-full">
+          <h3>
+            <strong>사용자 연주</strong>
+          </h3>
+          <audio
+            id="user-audio"
+            controls
+            src={userAudio}
+            className="w-full"
+          ></audio>
+        </div>
+        <div className="w-full">
+          <h3>
+            <strong>원본 연주</strong>
+          </h3>
+          <audio
+            id="reference-audio"
+            controls
+            src={referenceAudio}
+            className="w-full"
+          ></audio>
+        </div>
       </div>
-      <div className="w-full">
-        <h3>
-          <strong>원본 연주</strong>
-        </h3>
-        <audio
-          id="reference-audio"
-          controls
-          src={referenceAudio}
-          className="w-full"
-        ></audio>
-      </div>
-      <Button onClick={openModal} overwrite={'w-full h-12 mt-[15px]'}>
+      <Button onClick={openModal} overwrite={'w-full h-12 mt-[30px]'}>
         동시 재생 및 비교
       </Button>
       {/* Button에 px-4 py-2 적용 */}

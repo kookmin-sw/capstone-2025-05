@@ -11,6 +11,7 @@ export default function MusicPage() {
   const { musics, musicType } = location.state;
   const [playerTarget, setPlayerTarget] = useState();
   const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
+  console.log(musics, 'musics');
 
   return (
     <>
@@ -42,6 +43,7 @@ export default function MusicPage() {
               img={AUDIO_URL + album.thumbnail}
               title={album.title}
               artist={album.artist}
+              song_id={album.song_id}
               playurl={AUDIO_URL + album.audio}
             />
           ))}

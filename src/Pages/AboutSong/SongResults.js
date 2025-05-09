@@ -10,12 +10,11 @@ export default function SongResults() {
   const navigate = useNavigate();
   const location = useLocation();
   const { song_id, title } = location.state;
-  const { data: songInfo } = useSongByIdQuery(
-    song_id ? 'test-song' : '811ba8b9-d28c-4100-b305-622bc77d43cc',
-  );
-  const { data: results } = useSongResultsQuery(
-    '811ba8b9-d28c-4100-b305-622bc77d43cc',
-  );
+  console.log(song_id);
+  const { data: songInfo } = useSongByIdQuery(song_id);
+  const { data: results } = useSongResultsQuery(song_id);
+
+  console.log(results, '곡 결과');
   return (
     <div className="min-h-screen bg-[#f1ede5] p-10 flex flex-col items-center">
       <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow mb-6 w-full lg:w-[60%]">

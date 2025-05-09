@@ -26,6 +26,7 @@ export default function Main() {
   const { data: allSongs } = useAllSongQuery();
   const [playerTarget, setPlayerTarget] = useState();
   const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
+  console.log(allSongs);
 
   return (
     <div className="flex flex-col min-h-screen">

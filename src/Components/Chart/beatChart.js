@@ -118,14 +118,14 @@ export default function BeatChart({
               dataKey="original"
               stroke="green"
               dot={false}
-              name="Original Beat"
+              name="Original Onset"
             />
             <Line
               type="linear"
               dataKey="played"
               stroke="blue"
               dot={false}
-              name="User Beat"
+              name="User Onset"
             />
           </ComposedChart>
         </ResponsiveContainer>
