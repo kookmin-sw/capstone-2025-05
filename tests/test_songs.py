@@ -1,0 +1,30 @@
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+client = TestClient(app)
+
+def test_get_songs():
+    """곡 목록 조회 API 테스트"""
+    response = client.get("/songs")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert len(response.json()) > 0
+
+def test_get_song():
+    """개별 곡 조회 API 테스트"""
+    # 먼저 모든 곡 목록을 가져옴
+    response = client.get("/songs")
+    songs = response.json()
+    
+    # 첫 번째 곡의 ID를 사용하여 개별 곡 조회
+    first_song_id = songs[0]["song_id"]
+    response = client.get(f"/songs/{first_song_id}")
+    
+    assert response.status_code == 200
+    assert response.json()["song_id"] == first_song_id
+
+def test_get_not_found_song():
+    """존재하지 않는 곡 조회 시 404 응답 테스트"""
+    response = client.get("/songs/not-existing-id")
+    assert response.status_code == 404 

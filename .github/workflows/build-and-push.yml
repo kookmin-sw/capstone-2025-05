@@ -1,0 +1,68 @@
+name: Test and Deploy Maple Media Server
+
+on:
+  push:
+    branches: [ main, maple-media-server ]
+  pull_request:
+    branches: [ main, maple-media-server ]
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
+      
+      - name: Run tests
+        run: |
+          pytest -v
+  
+  docker:
+    needs: test
+    runs-on: self-hosted
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/maple-media-server') && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # Docker Hub에 로그인
+      - name: Login to Docker Hub
+        run: |
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      
+      # 이미지 빌드 및 푸시
+      - name: Build and push image
+        run: |
+          # Docker Hub 이미지 태그 설정
+          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/maple-media-server:latest"
+          echo "Building and pushing image: $IMAGE_NAME"
+          
+          # 이미지 빌드
+          docker build -t $IMAGE_NAME .
+          
+          # 이미지 푸시
+          docker push $IMAGE_NAME
+          
+      # 추가: 버전 태그 생성 (e.g., v1.0.0)
+      - name: Tag and push versioned image
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/maple-media-server:${VERSION}"
+          echo "Tagging and pushing versioned image: $IMAGE_NAME"
+          
+          docker tag ${{ secrets.DOCKER_USERNAME }}/maple-media-server:latest $IMAGE_NAME
+          docker push $IMAGE_NAME 

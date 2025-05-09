@@ -28,17 +28,6 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 ```
 
-### Docker 실행 (권장)
-
-```bash
-# Docker Compose 사용
-docker-compose up -d
-
-# 또는 Docker만 사용
-docker build -t maple-media-server .
-docker run -d -p 8000:8000 --name maple-media-server maple-media-server
-```
-
 자세한 Docker 사용법은 [DOCKER.md](DOCKER.md) 문서를 참조하세요.
 
 ## 실행 방법
@@ -94,7 +83,3 @@ maple-media-server/
 ├── Dockerfile               # Docker 이미지 빌드 설정
 └── docker-compose.yml       # Docker Compose 설정
 ```
-
-## 개발 & 기여
-
-이슈 또는 풀 리퀘스트는 [GitHub 저장소](https://github.com/kookmin-sw/capstone-2025-05)에 제출해주세요. 
