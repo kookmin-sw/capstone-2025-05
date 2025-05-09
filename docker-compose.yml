@@ -13,6 +13,7 @@ services:
       - client
       - api
       - analysis_api
+      - media_server
     networks:
       - maple-network
   client:
@@ -69,7 +70,7 @@ services:
     networks:
       - maple-network
 
-  media_api:
+  media_server:
     image: ${DOCKER_USERNAME}/maple-media-server:latest
     networks:
       - maple-network
