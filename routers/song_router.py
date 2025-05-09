@@ -1,4 +1,4 @@
-rom fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import StreamingResponse
 from typing import Optional
 from uuid import uuid4
@@ -6,7 +6,7 @@ import os
 
 from manager.firebase_manager import firestore_db, storage_bucket
 
-song_router = APIRouter(prefix="/songs", tags=["songs"])
+router = APIRouter()
 
 async def upload_file_to_storage(file: UploadFile, folder:str) -> str:
     filename=f"{folder}/{uuid4()}_{file.filename}"
@@ -20,7 +20,7 @@ async def validate_file_size(file: UploadFile, max_size_mb : int):
     if size > max_size_mb * 1024 * 1024:
         raise HTTPException(status_code=400, detail=f"File size excees {max_size_mb}MB.")
 
-@song_router.get("/")
+@router.get("/songs", tags=["Songs"])
 async def get_all_songs():
     songs = firestore_db.collection("songs").stream()
     return [
@@ -34,7 +34,7 @@ async def get_all_songs():
     ]
 
 # 특정 곡 상세 조회
-@song_router.get("/{song_id}")
+@router.get("/songs/{song_id}", tags=["Songs"])
 async def get_song(song_id: str):
     song_ref = firestore_db.collection("songs").document(song_id)
     song = song_ref.get()
@@ -43,7 +43,7 @@ async def get_song(song_id: str):
     return song.to_dict()
 
 # 새 곡 추가
-@song_router.post("/")
+@router.post("/songs", tags=["Songs"])
 async def create_song(
     title: str = Form(...),
     artist: str = Form(...),
@@ -85,7 +85,7 @@ async def create_song(
     return {"message": "Song created successfully", "song_id": song_id}
 
 # 곡 수정
-@song_router.put("/{song_id}")
+@router.put("/songs/{song_id}", tags=["Songs"])
 async def update_song(
     song_id: str,
     title: Optional[str] = Form(None),
@@ -112,7 +112,7 @@ async def update_song(
     return {"message": "Song updated successfully"}
 
 # 곡 삭제
-@song_router.delete("/{song_id}")
+@router.delete("/songs/{song_id}", tags=["Songs"])
 async def delete_song(song_id: str):
     song_ref = firestore_db.collection("songs").document(song_id)
     if not song_ref.get().exists:
