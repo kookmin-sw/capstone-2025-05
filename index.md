@@ -28,19 +28,19 @@ title: MAPLE
   <li>AI 모델을 활용해 연주의 뉘앙스(비브라토, 밴딩 등)까지 평가</li>
   <li>문제점을 자동으로 시각화하여 사용자가 쉽게 이해할 수 있도록 제공</li>
 </ul>
-<h4 style="margin-top:40px;">🎸프로 기타리스트 따라하기</h4>
+<h4 style="margin-top:20px;">🎸프로 기타리스트 따라하기</h4>
 <ul style="text-align: left; display: inline-block; margin-bottom:30px">
 <li>유명 기타리스트의 실제 연주 데이터를 학습한 AI가 사용자의 연주를 비교 분석</li>
 <li>연주자의 톤, 터치, 리듬감 등을 반영한 피드백 제공</li>
 <li>사용자가 자신의 연주를 업로드하면, 원곡과 얼마나 비슷한지 점수화 및 분석 결과 제공</li>
 </ul>
-<h4 style="margin-top:40px;">연습 데이터 시각화 및 </h4>
+<h4 style="margin-top:20px;">연습 데이터 시각화 및 </h4>
 <ul style="text-align: left; display: inline-block; margin-bottom:30px;">
 <li>사용자별 연습 기록 저장 및 발전 과정 시각화</li>
 <li>개인별 연습 리포트 제공, 부족한 부분을 개선할 수 있도록 가이드</li>
 <li>게임화 요소(뱃지, 점수, 시스템 등)을 추가하여 지속적인 연습 유도</li>
 </ul>
-<h4 style="margin-top:40px;">기존 시스템과의 차별점</h4>
+<h4 style="margin-top:20px;">기존 시스템과의 차별점</h4>
 <ul style="text-align: left; display: inline-block;">
 <li>기존 유튜브 강좌나 악보 연습과 달리, 개별 맞춤형 피드백 제공</li>
 <li>단순한 박자/음정 분석이 아니라, 연주의 뉘앙스까지 평가 가능</li>
