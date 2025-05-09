@@ -22,9 +22,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "26",
             "artist": "Younha",
-            "thumbnail": "/static/thumbnails/26.jpg",
-            "sheet_music": "/static/sheet_music/26.gp5",
-            "audio": "/static/audio/26.wav",
+            "thumbnail": "static/thumbnails/26.jpg",
+            "sheet_music": "static/sheet_music/26.gp5",
+            "audio": "static/audio/26.wav",
             "bpm": 92,
             "duration": 29.0
         },
@@ -32,9 +32,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "FLY",
             "artist": "YdBB",
-            "thumbnail": "/static/thumbnails/fly.jpg",
-            "sheet_music": "/static/sheet_music/fly.gp5",
-            "audio": "/static/audio/fly.wav",
+            "thumbnail": "static/thumbnails/fly.jpg",
+            "sheet_music": "static/sheet_music/fly.gp5",
+            "audio": "static/audio/fly.wav",
             "bpm": 104,
             "duration": 20.0
         },
@@ -42,9 +42,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Mela!",
             "artist": "Ryokuoushoku Shakai",
-            "thumbnail": "/static/thumbnails/mela.jpg",
-            "sheet_music": "/static/sheet_music/mela.gp5",
-            "audio": "/static/audio/mela.wav",
+            "thumbnail": "static/thumbnails/mela.jpg",
+            "sheet_music": "static/sheet_music/mela.gp5",
+            "audio": "static/audio/mela.wav",
             "bpm": 138,
             "duration": 28.0
         },
@@ -52,9 +52,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Happy",
             "artist": "DAY6",
-            "thumbnail": "/static/thumbnails/happy.jpg",
-            "sheet_music": "/static/sheet_music/26.gp5",
-            "audio": "/static/audio/26.wav",
+            "thumbnail": "static/thumbnails/happy.jpg",
+            "sheet_music": "static/sheet_music/26.gp5",
+            "audio": "static/audio/26.wav",
             "bpm": 160,
             "duration": 35.0
         },
@@ -62,9 +62,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Sunfish",
             "artist": "Younha",
-            "thumbnail": "/static/thumbnails/sunfish.jpg",
-            "sheet_music": "/static/sheet_music/fly.gp5",
-            "audio": "/static/audio/fly.wav",
+            "thumbnail": "static/thumbnails/sunfish.jpg",
+            "sheet_music": "static/sheet_music/fly.gp5",
+            "audio": "static/audio/fly.wav",
             "bpm": 142,
             "duration": 25.7
         },
@@ -72,9 +72,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Night Night",
             "artist": "YdBB",
-            "thumbnail": "/static/thumbnails/night_night.jpg",
-            "sheet_music": "/static/sheet_music/mela.gp5",
-            "audio": "/static/audio/mela.wav",
+            "thumbnail": "static/thumbnails/night_night.jpg",
+            "sheet_music": "static/sheet_music/mela.gp5",
+            "audio": "static/audio/mela.wav",
             "bpm": 120,
             "duration": 32.5
         },
@@ -82,9 +82,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Rebel Heart",
             "artist": "IVE",
-            "thumbnail": "/static/thumbnails/rebel_heart.jpg",
-            "sheet_music": "/static/sheet_music/26.gp5",
-            "audio": "/static/audio/26.wav",
+            "thumbnail": "static/thumbnails/rebel_heart.jpg",
+            "sheet_music": "static/sheet_music/26.gp5",
+            "audio": "static/audio/26.wav",
             "bpm": 95,
             "duration": 40.2
         },
@@ -92,9 +92,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "No Pain",
             "artist": "Silicagel",
-            "thumbnail": "/static/thumbnails/no_pain.jpg",
-            "sheet_music": "/static/sheet_music/fly.gp5",
-            "audio": "/static/audio/fly.wav",
+            "thumbnail": "static/thumbnails/no_pain.jpg",
+            "sheet_music": "static/sheet_music/fly.gp5",
+            "audio": "static/audio/fly.wav",
             "bpm": 128,
             "duration": 27.8
         },
@@ -102,9 +102,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Some Like It Hot",
             "artist": "SPYAIR",
-            "thumbnail": "/static/thumbnails/some_like_it_hot.jpg",
-            "sheet_music": "/static/sheet_music/mela.gp5",
-            "audio": "/static/audio/mela.wav",
+            "thumbnail": "static/thumbnails/some_like_it_hot.jpg",
+            "sheet_music": "static/sheet_music/mela.gp5",
+            "audio": "static/audio/mela.wav",
             "bpm": 115,
             "duration": 33.0
         },
@@ -112,9 +112,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Pretender",
             "artist": "Official HIGE DANdism",
-            "thumbnail": "/static/thumbnails/pretender.jpg",
-            "sheet_music": "/static/sheet_music/26.gp5",
-            "audio": "/static/audio/26.wav",
+            "thumbnail": "static/thumbnails/pretender.jpg",
+            "sheet_music": "static/sheet_music/26.gp5",
+            "audio": "static/audio/26.wav",
             "bpm": 92,
             "duration": 38.5
         },
@@ -122,9 +122,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Event Horizon",
             "artist": "Younha",
-            "thumbnail": "/static/thumbnails/event_horizon.jpg",
-            "sheet_music": "/static/sheet_music/fly.gp5",
-            "audio": "/static/audio/fly.wav",
+            "thumbnail": "static/thumbnails/event_horizon.jpg",
+            "sheet_music": "static/sheet_music/fly.gp5",
+            "audio": "static/audio/fly.wav",
             "bpm": 150,
             "duration": 22.3
         },
@@ -132,9 +132,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Can't Keep Smiling",
             "artist": "YdBB",
-            "thumbnail": "/static/thumbnails/can't_keep_smiling.jpg",
-            "sheet_music": "/static/sheet_music/mela.gp5",
-            "audio": "/static/audio/mela.wav",
+            "thumbnail": "static/thumbnails/can't_keep_smiling.jpg",
+            "sheet_music": "static/sheet_music/mela.gp5",
+            "audio": "static/audio/mela.wav",
             "bpm": 98,
             "duration": 30.2
         },
@@ -142,9 +142,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "T.B.H.",
             "artist": "QWER",
-            "thumbnail": "/static/thumbnails/t.b.h.jpg",
-            "sheet_music": "/static/sheet_music/26.gp5",
-            "audio": "/static/audio/26.wav",
+            "thumbnail": "static/thumbnails/t.b.h.jpg",
+            "sheet_music": "static/sheet_music/26.gp5",
+            "audio": "static/audio/26.wav",
             "bpm": 88,
             "duration": 25.0
         },
@@ -152,9 +152,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Karma",
             "artist": "Dareharu",
-            "thumbnail": "/static/thumbnails/karma.jpg",
-            "sheet_music": "/static/sheet_music/fly.gp5",
-            "audio": "/static/audio/fly.wav",
+            "thumbnail": "static/thumbnails/karma.jpg",
+            "sheet_music": "static/sheet_music/fly.gp5",
+            "audio": "static/audio/fly.wav",
             "bpm": 130,
             "duration": 27.9
         },
@@ -162,9 +162,9 @@ def create_test_data():
             "song_id": str(uuid.uuid4()),
             "title": "Character",
             "artist": "Ryokuoushoku Shakai",
-            "thumbnail": "/static/thumbnails/character.jpg",
-            "sheet_music": "/static/sheet_music/mela.gp5",
-            "audio": "/static/audio/mela.wav",
+            "thumbnail": "static/thumbnails/character.jpg",
+            "sheet_music": "static/sheet_music/mela.gp5",
+            "audio": "static/audio/mela.wav",
             "bpm": 112,
             "duration": 31.5
         }
@@ -181,7 +181,9 @@ def get_songs():
     """
     모든 곡 목록을 조회합니다.
     """
-    return songs_db
+    response = Response(content=[song.json() for song in songs_db], media_type="application/json")
+    response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
+    return response
 
 @router.get("/{song_id}", response_model=Song)
 def get_song(song_id: str):
@@ -272,12 +274,14 @@ def get_sheet_music(song_id: str):
     """
     for song in songs_db:
         if song.song_id == song_id:
-            # 경로 수정: 전체 경로 사용
-            file_path = song.sheet_music.lstrip("/")
+            # 경로 수정: 상대 경로 사용
+            file_path = song.sheet_music
             file_path = os.path.join("app", file_path)
             
             if os.path.exists(file_path):
-                return FileResponse(file_path, filename=Path(file_path).name)
+                response = FileResponse(file_path, filename=Path(file_path).name)
+                response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
+                return response
             else:
                 raise HTTPException(status_code=404, detail=f"악보 파일을 찾을 수 없습니다: {file_path}")
     
@@ -290,16 +294,18 @@ def get_audio(song_id: str):
     """
     for song in songs_db:
         if song.song_id == song_id:
-            # 경로 수정: 전체 경로 사용
-            file_path = song.audio.lstrip("/")
+            # 경로 수정: 상대 경로 사용
+            file_path = song.audio
             file_path = os.path.join("app", file_path)
             
             if os.path.exists(file_path):
-                return FileResponse(
+                response = FileResponse(
                     file_path, 
                     filename=Path(file_path).name,
                     media_type="audio/mpeg"
                 )
+                response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
+                return response
             else:
                 raise HTTPException(status_code=404, detail=f"음원 파일을 찾을 수 없습니다: {file_path}")
     
@@ -312,16 +318,18 @@ def get_thumbnail(song_id: str):
     """
     for song in songs_db:
         if song.song_id == song_id:
-            # 경로 수정: 전체 경로 사용
-            file_path = song.thumbnail.lstrip("/")
+            # 경로 수정: 상대 경로 사용
+            file_path = song.thumbnail
             file_path = os.path.join("app", file_path)
             
             if os.path.exists(file_path):
-                return FileResponse(
+                response = FileResponse(
                     file_path, 
                     filename=Path(file_path).name,
                     media_type="image/jpeg"
                 )
+                response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
+                return response
             else:
                 raise HTTPException(status_code=404, detail=f"앨범 커버 이미지를 찾을 수 없습니다: {file_path}")
     
