@@ -72,13 +72,6 @@ async def startup_event():
     if os.environ.get("TESTING") != "True":
         # 데이터베이스 테이블 생성
         Base.metadata.create_all(bind=engine)
-        
-        # 테스트 데이터 초기화
-        db = SessionLocal()
-        try:
-            songs.create_test_data(db)
-        finally:
-            db.close()
 
 if __name__ == "__main__":
     import uvicorn
