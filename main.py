@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+import os
 
 from app.routers import songs
 from app.database import engine, Base
@@ -67,15 +68,17 @@ async def startup_event():
     print(f"OpenAPI URL: {app.openapi_url}")
     print(f"Docs URL: {app.docs_url}")
     
-    # 데이터베이스 테이블 생성
-    Base.metadata.create_all(bind=engine)
-    
-    # 테스트 데이터 초기화
-    db = SessionLocal()
-    try:
-        songs.create_test_data(db)
-    finally:
-        db.close()
+    # 테스트 모드에서는 데이터베이스 초기화를 건너뜁니다
+    if os.environ.get("TESTING") != "True":
+        # 데이터베이스 테이블 생성
+        Base.metadata.create_all(bind=engine)
+        
+        # 테스트 데이터 초기화
+        db = SessionLocal()
+        try:
+            songs.create_test_data(db)
+        finally:
+            db.close()
 
 if __name__ == "__main__":
     import uvicorn
