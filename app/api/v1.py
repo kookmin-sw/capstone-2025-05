@@ -434,7 +434,6 @@ async def compare_with_reference(
     # Celery 작업 큐에 제출
     task = compare_audio.delay(
         user_audio_bytes=user_contents,
-        midi_bytes=midi_contents,
         user_id=user_id,
         song_id=song_id,
         generate_feedback=generate_feedback
