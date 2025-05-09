@@ -6,10 +6,10 @@ from pathlib import Path
 from datetime import datetime
 
 # 서버 URL
-# API_URL = "https://analysis.maple.ne.kr"
-API_URL = "http://localhost:8000"
-SONGS_API_URL = "http://maple.ne.kr:8001/songs/"
-
+# API_URL = "http://localhost:8000"
+API_URL = "https://analysis.maple.ne.kr"
+SONGS_API_URL = "http://localhost:8000/api/v1/songs"
+# SONGS_API_URL = "https://media.maple.ne.kr/api/v1/songs"
 # 오디오 파일 디렉터리
 USER_DIR = Path("test/user")  # 테스트 사용자 오디오 파일 디렉토리
 REF_DIR = Path("test/ref")
@@ -63,7 +63,7 @@ def display_available_songs():
     for user_file in user_files:
         # 파일 이름에서 '-user-' 앞부분을 제목으로 추출 (예: homecoming-user-1.wav -> homecoming)
         file_name = user_file.stem
-        title_parts = file_name.split('-user-')
+        title_parts = file_name.split('-user')
         file_title = title_parts[0].lower() if title_parts else file_name.lower()
         
         # API 목록에서 제목과 일치하는 항목 찾기
@@ -167,7 +167,7 @@ def test_compare(audio_file, song_id, user_id="test-user", generate_feedback=Tru
         }
         
         print("API 요청 전송 중...")
-        response = requests.post(f"{API_URL}/api/v1/compare", files=files, data=data)
+        response = requests.post(f"{API_URL}/api/v1/compare-with-reference", files=files, data=data)
         print(f"응답 상태 코드: {response.status_code}")
         
         if response.status_code == 200:

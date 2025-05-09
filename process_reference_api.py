@@ -23,8 +23,10 @@ logging.basicConfig(
 logger = logging.getLogger('process_reference_api')
 
 # API 기본 URL
-API_URL = "http://localhost:8000"
-SONGS_API_URL = "http://maple.ne.kr:8001/songs/"
+# API_URL = "http://localhost:8000"
+API_URL = "https://analysis.maple.ne.kr"
+# SONGS_API_URL = "https://media.maple.ne.kr/api/v1/songs"
+SONGS_API_URL = "http://localhost:8000/api/v1/songs"
 
 def get_songs_data():
     """
@@ -167,21 +169,22 @@ def process_reference_api(audio_path, midi_path=None, song_id=None, title=None, 
         logger.error(f"API 요청 중 오류 발생: {str(e)}")
         return None
 
-def check_task_status(task_id, max_attempts=30, wait_time=3):
+def check_task_status(task_id, wait_time=3):
     """
     작업 상태를 확인하고 결과를 기다립니다.
     
     Args:
         task_id: 확인할 작업 ID
-        max_attempts: 최대 시도 횟수 (기본값: 30회 - 최대 90초)
         wait_time: 각 시도 사이의 대기 시간(초) (기본값: 3초)
     """
     logger.info(f"작업 상태 확인 중... (ID: {task_id})")
     
     last_status = None
     last_progress = None
+    attempt = 0
     
-    for i in range(max_attempts):
+    while True:
+        attempt += 1
         try:
             response = requests.get(f"{API_URL}/api/v1/tasks/{task_id}")
             
@@ -190,7 +193,7 @@ def check_task_status(task_id, max_attempts=30, wait_time=3):
                 current_status = status.get('status')
                 current_progress = status.get('progress', 0)
                 
-                logger.info(f"시도 {i+1}/{max_attempts} - 상태: {current_status}, 진행률: {current_progress}%")
+                logger.info(f"시도 {attempt} - 상태: {current_status}, 진행률: {current_progress}%")
                 
                 # 상태 변경시 상세 로그
                 if current_status != last_status or current_progress != last_progress:
@@ -218,11 +221,10 @@ def check_task_status(task_id, max_attempts=30, wait_time=3):
         except Exception as e:
             logger.error(f"상태 확인 중 오류 발생: {str(e)}")
         
-        # 마지막 시도가 아니면 대기
-        if i < max_attempts - 1:
-            time.sleep(wait_time)
+        # 다음 시도 전 대기
+        time.sleep(wait_time)
     
-    logger.warning(f"최대 시도 횟수({max_attempts}회)를 초과했습니다. 작업이 여전히 진행 중일 수 있습니다.")
+    # 이 부분은 실행되지 않지만, 함수 구조상 유지
     return None
 
 def process_all_files():
