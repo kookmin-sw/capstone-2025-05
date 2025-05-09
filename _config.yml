@@ -5,6 +5,7 @@ remote_theme: thedevslot/WhatATheme
 
 url: "https://kookmin-sw.github.io"
 baseurl: "/capstone-2025-05"
+favicon-url: "https://kookmin-sw.github.io/capstone-2025-05/assets/favicon.png"
 
 heroimage: "https://kookmin-sw.github.io/capstone-2025-05/assets/guitar.jpg"
 
