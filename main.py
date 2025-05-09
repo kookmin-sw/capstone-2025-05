@@ -17,10 +17,12 @@ app = FastAPI(
     title="Maple Media Server",
     description="음악 및 미디어 데이터를 위한 서버",
     version="0.1.0",
-    # API 문서 URL 명시적 설정
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    # API 문서 URL 명시적 설정 - /api/v1 접두사 추가
+    docs_url="/api/v1/docs",
+    redoc_url="/api/v1/redoc",
+    openapi_url="/api/v1/openapi.json",
+    # 슬래시 리다이렉션 비활성화
+    redirect_slashes=False
 )
 
 # HTTPS 헤더 미들웨어 추가
@@ -29,16 +31,18 @@ app.add_middleware(HTTPSHeadersMiddleware)
 # 정적 파일 서빙 설정
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# 라우터 등록 - 명시적 경로 지정
-app.include_router(songs.router, prefix="/songs")
+# 라우터 등록 - /api/v1 접두사 추가
+app.include_router(songs.router, prefix="/api/v1/songs")
 
 @app.get("/")
 async def root():
     return {
-        "message": "Maple Media Server에 오신 것을 환영합니다!",
-        "documentation": "/docs",
+        "name": "Maple Media Server",
+        "version": "0.1.0",
+        "status": "online",
+        "documentation": "/api/v1/docs",
         "endpoints": {
-            "songs": "/songs"
+            "songs": "/api/v1/songs"
         }
     }
 
@@ -47,7 +51,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """전역 예외 핸들러"""
     return JSONResponse(
         status_code=500,
-        content={"detail": "서버 내부 오류", "error": str(exc)},
+        content={"detail": "Internal server error", "error": str(exc)},
     )
 
 @app.on_event("startup")

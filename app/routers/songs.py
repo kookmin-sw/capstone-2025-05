@@ -176,7 +176,7 @@ def create_test_data():
 # 애플리케이션 시작시 더미 데이터 로드
 create_test_data()
 
-@router.get("/", response_model=List[Song])
+@router.get("", response_model=List[Song])
 def get_songs():
     """
     모든 곡 목록을 조회합니다.
@@ -193,7 +193,7 @@ def get_song(song_id: str):
             return song
     raise HTTPException(status_code=404, detail="노래를 찾을 수 없습니다")
 
-@router.post("/", response_model=Song, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Song, status_code=status.HTTP_201_CREATED)
 def create_song(song: SongCreate):
     """
     새로운 곡을 추가합니다.
