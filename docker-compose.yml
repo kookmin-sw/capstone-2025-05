@@ -71,8 +71,6 @@ services:
 
   media_api:
     image: ${DOCKER_USERNAME}/maple-media-server:latest
-    env_file:
-      - media.env
     networks:
       - maple-network
 
