@@ -72,6 +72,8 @@ services:
 
   media_server:
     image: ${DOCKER_USERNAME}/maple-media-server:latest
+    env_file:
+      - .env
     networks:
       - maple-network
     depends_on:
