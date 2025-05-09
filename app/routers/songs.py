@@ -181,9 +181,7 @@ def get_songs():
     """
     모든 곡 목록을 조회합니다.
     """
-    response = Response(content=[song.json() for song in songs_db], media_type="application/json")
-    response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
-    return response
+    return songs_db
 
 @router.get("/{song_id}", response_model=Song)
 def get_song(song_id: str):
@@ -279,9 +277,7 @@ def get_sheet_music(song_id: str):
             file_path = os.path.join("app", file_path)
             
             if os.path.exists(file_path):
-                response = FileResponse(file_path, filename=Path(file_path).name)
-                response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
-                return response
+                return FileResponse(file_path, filename=Path(file_path).name)
             else:
                 raise HTTPException(status_code=404, detail=f"악보 파일을 찾을 수 없습니다: {file_path}")
     
@@ -299,13 +295,11 @@ def get_audio(song_id: str):
             file_path = os.path.join("app", file_path)
             
             if os.path.exists(file_path):
-                response = FileResponse(
+                return FileResponse(
                     file_path, 
                     filename=Path(file_path).name,
                     media_type="audio/mpeg"
                 )
-                response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
-                return response
             else:
                 raise HTTPException(status_code=404, detail=f"음원 파일을 찾을 수 없습니다: {file_path}")
     
@@ -323,13 +317,11 @@ def get_thumbnail(song_id: str):
             file_path = os.path.join("app", file_path)
             
             if os.path.exists(file_path):
-                response = FileResponse(
+                return FileResponse(
                     file_path, 
                     filename=Path(file_path).name,
                     media_type="image/jpeg"
                 )
-                response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
-                return response
             else:
                 raise HTTPException(status_code=404, detail=f"앨범 커버 이미지를 찾을 수 없습니다: {file_path}")
     

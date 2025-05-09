@@ -1,8 +1,17 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.routers import songs
+
+# 간단한 HSTS 미들웨어
+class HTTPSHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # HSTS 헤더 추가
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
 
 app = FastAPI(
     title="Maple Media Server",
@@ -13,6 +22,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+# HTTPS 헤더 미들웨어 추가
+app.add_middleware(HTTPSHeadersMiddleware)
 
 # 정적 파일 서빙 설정
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
