@@ -8,9 +8,6 @@ baseurl: "/capstone-2025-05"
 
 heroimage: "https://kookmin-sw.github.io/capstone-2025-05/assets/guitar.jpg"
 
-author-name: Team 05
-author-url: https://github.com/kookmin-sw/capstone-2025-05
-
 markdown: kramdown
 
 plugins:
