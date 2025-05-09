@@ -9,7 +9,7 @@ title: MAPLE
 
 ---
 
-## 💡 프로젝트 소개
+<h2 id="about">💡 프로젝트 소개</h2>
 <img src="assets/poster.png" alt="포스터" width="600" />
 
 ## 1. 프로젝트 개요
@@ -45,7 +45,7 @@ title: MAPLE
 
 ---
 
-## 🛠 기술 스택
+<h2 id="tech-stack">🛠 기술 스택</h2>
 ### Frontend
 <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB"/>
 <img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white"/>
@@ -62,7 +62,7 @@ title: MAPLE
 
 ---
 
-## 🌐 시스템 아키텍처
+<h2 id="architecture">🌐 시스템 구조</h2>
 <div align="center">
   <img src="assets/system architecture_01.png" alt="시스템 아키텍처 1" width="400" style="margin-right: 10px;" />
   <img src="assets/system architecture_02.png" alt="시스템 아키텍처 2" width="400" />
@@ -74,7 +74,7 @@ title: MAPLE
 
 ---
 
-## Contact US
+<h2 id="contact">👥 멤버 소개</h2>
 <table>
   <tr align="center">
     <td style="min-width: 120px;">
