@@ -21,12 +21,6 @@ var/
 .installed.cfg
 *.egg
 
-# 미디어 파일
-app/static/audio/
-app/static/sheet_music/
-app/static/thumbnails/
-app/static/midi/
-
 # 데이터베이스 파일
 *.db
 *.sqlite3
