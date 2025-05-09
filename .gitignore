@@ -1,3 +1,54 @@
+# Python 가상 환경
 venv/
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 미디어 파일
+app/static/audio/
+app/static/sheet_music/
+app/static/thumbnails/
+app/static/midi/
+
+# 데이터베이스 파일
+*.db
+*.sqlite3
+
+# 환경 설정 파일
+.env
+.venv
+env/
+
+# IDE 설정
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 로그 파일
+*.log
+
+# 캐시
+.cache/
+.pytest_cache/
+
+# OS 파일
+.DS_Store
+Thumbs.db
