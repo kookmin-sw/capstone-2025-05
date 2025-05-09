@@ -55,15 +55,12 @@ os.makedirs(UPLOAD_IMAGE_DIR, exist_ok = True)
 os.makedirs(UPLOAD_AUDIO_DIR, exist_ok = True)
 ADMIN_UID = os.getenv("ADMIN_UID")
 
-async def get_user_profile_image(uid: str) -> str:
+async def get_user_profile_image(uid: str):
     bucket = storage.bucket()
-    prefix = f"{uid}/profile/"
-
-    blob = list(bucket.list_blobs(prefix=prefix))
-    if blob:
-        return blob[0].generate_signed_url(version="v4", expiration=datetime.timedelta(minutes=15), method="GET")
-
-        return ""
+    blob = bucket.blob(f"profile_images/{uid}.jpg")
+    if blob.exists():
+        return blob.generate_signed_url(datetime.timedelta(seconds=300), method='GET')
+    return None
 @router.get("/", response_class=JSONResponse, tags=["Post"])
 async def root(request: Request):
     try:
