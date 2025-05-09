@@ -8,6 +8,7 @@ from routers.ranking_router import router as ranking_router
 from routers.mainsearch_router import router as mainsearch_router
 from routers.users_router import router as users_router
 from routers.analysis_router import router as analysis_router
+from routers.song_router import router as song_router
 
 # API 경로와 문서 설정
 app = FastAPI(
@@ -26,3 +27,4 @@ app.include_router(recent_prepared_router, prefix="/api")
 app.include_router(mainsearch_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(analysis_router, prefix="/api")
+app.include_router(song_router, prefix="/api")
