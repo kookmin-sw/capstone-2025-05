@@ -69,6 +69,13 @@ services:
     networks:
       - maple-network
 
+  media_api:
+    image: ${DOCKER_USERNAME}/maple-media-server:latest
+    env_file:
+      - media.env
+    networks:
+      - maple-network
+
 volumes:
   mongo_data:
 
