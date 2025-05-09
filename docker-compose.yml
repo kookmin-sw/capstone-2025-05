@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   maple-media-api:
@@ -8,6 +8,26 @@ services:
       - "8000:8000"
     volumes:
       - ./app/static:/app/app/static
+      - ./.env:/app/.env
     restart: unless-stopped
     environment:
-      - TZ=Asia/Seoul 
+      - TZ=Asia/Seoul
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: maple-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - POSTGRES_DB=${DB_NAME:-maple_media}
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data: 

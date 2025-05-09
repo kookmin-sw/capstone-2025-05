@@ -4,6 +4,10 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.routers import songs
+from app.database import engine, Base
+from app.models.song import SongModel
+from sqlalchemy.orm import Session
+from app.database import SessionLocal
 
 # 간단한 HSTS 미들웨어
 class HTTPSHeadersMiddleware(BaseHTTPMiddleware):
@@ -62,6 +66,16 @@ async def startup_event():
     print(f"서버 URL: {app.root_path}")
     print(f"OpenAPI URL: {app.openapi_url}")
     print(f"Docs URL: {app.docs_url}")
+    
+    # 데이터베이스 테이블 생성
+    Base.metadata.create_all(bind=engine)
+    
+    # 테스트 데이터 초기화
+    db = SessionLocal()
+    try:
+        songs.create_test_data(db)
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     import uvicorn

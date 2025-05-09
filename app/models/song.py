@@ -1,7 +1,23 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional
 import uuid
+from sqlalchemy import Column, String, Integer, Float
+from app.database import Base
 
+# SQLAlchemy ORM 모델
+class SongModel(Base):
+    __tablename__ = "songs"
+
+    song_id = Column(String, primary_key=True, index=True)
+    title = Column(String(100), nullable=False)
+    artist = Column(String(100), nullable=False)
+    thumbnail = Column(String, nullable=False)
+    sheet_music = Column(String, nullable=False)
+    audio = Column(String, nullable=False)
+    bpm = Column(Integer, nullable=True)
+    duration = Column(Float, nullable=True)
+
+# Pydantic 모델
 class SongBase(BaseModel):
     title: str = Field(..., max_length=100, description="곡 이름")
     artist: str = Field(..., max_length=100, description="아티스트 이름")
@@ -31,4 +47,5 @@ class Song(SongBase):
     song_id: str = Field(..., description="곡 고유 식별자")
 
     class Config:
-        orm_mode = True 
+        orm_mode = True
+        from_attributes = True 
