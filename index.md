@@ -1,3 +1,8 @@
+---
+layout: home
+title: MAPLE
+---
+
 # 🎸 MAPLE
 > Music Analysis & Performance Learning Environment  
 > AI 기반 기타 연주 실시간 분석 및 피드백 시스템
