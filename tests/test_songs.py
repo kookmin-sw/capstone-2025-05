@@ -15,7 +15,14 @@ def test_get_song():
     """개별 곡 조회 API 테스트"""
     # 먼저 모든 곡 목록을 가져옴
     response = client.get("/songs")
+    
+    # 응답 상태 코드 확인
+    if response.status_code != 200:
+        pytest.fail(f"곡 목록 조회 실패: {response.status_code}, {response.text}")
+    
     songs = response.json()
+    if not songs:
+        pytest.fail("곡 목록이 비어 있습니다.")
     
     # 첫 번째 곡의 ID를 사용하여 개별 곡 조회
     first_song_id = songs[0]["song_id"]

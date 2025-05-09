@@ -8,8 +8,6 @@ app = FastAPI(
     title="Maple Media Server",
     description="음악 및 미디어 데이터를 위한 서버",
     version="0.1.0",
-    # root_path를 설정하여 프록시 환경에서 올바른 URL을 생성하도록 함
-    root_path="https://media.maple.ne.kr",
     # API 문서 URL 명시적 설정
     docs_url="/docs",
     redoc_url="/redoc",
@@ -19,8 +17,8 @@ app = FastAPI(
 # 정적 파일 서빙 설정
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# 라우터 등록
-app.include_router(songs.router)
+# 라우터 등록 - 명시적 경로 지정
+app.include_router(songs.router, prefix="/songs")
 
 @app.get("/")
 async def root():
@@ -39,6 +37,15 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "서버 내부 오류", "error": str(exc)},
     )
+
+@app.on_event("startup")
+async def startup_event():
+    """서버 시작 시 실행되는 이벤트 핸들러"""
+    import fastapi
+    print(f"FastAPI 버전: {fastapi.__version__}")
+    print(f"서버 URL: {app.root_path}")
+    print(f"OpenAPI URL: {app.openapi_url}")
+    print(f"Docs URL: {app.docs_url}")
 
 if __name__ == "__main__":
     import uvicorn

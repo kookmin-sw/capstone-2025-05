@@ -8,7 +8,6 @@ from pathlib import Path
 from app.models.song import Song, SongCreate, SongUpdate
 
 router = APIRouter(
-    prefix="/songs",
     tags=["songs"],
     responses={404: {"description": "Not found"}},
 )
