@@ -69,6 +69,14 @@ jobs:
             echo "REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}" >> .env
             echo "REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main" >> .env
             echo "PUBLIC_URL=/" >> .env
+            echo "DB_USER=postgres" >> .env
+            echo "DB_PASSWORD=postgres" >> .env
+            echo "DB_HOST=db" >> .env
+            echo "DB_PORT=5432" >> .env
+            echo "DB_NAME=maple_media" >> .env
+            echo "POSTGRES_USER=postgres" >> .env
+            echo "POSTGRES_PASSWORD=postgres" >> .env
+            echo "POSTGRES_DB=maple_media" >> .env
             
             # analysis.env 파일 생성
             echo "# Analysis Service Environment Variables" > analysis.env
