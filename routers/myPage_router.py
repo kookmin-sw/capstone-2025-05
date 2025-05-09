@@ -5,7 +5,7 @@ from typing import List
 from io import BytesIO
 from manager.firebase_manager import firestore_db, storage_bucket
 import uuid
-import datetime
+from datetime import datetime
 from datetime import timedelta
 
 router = APIRouter()
@@ -216,7 +216,7 @@ async def get_all_records(uid: str):
         storage_bucket = storage.bucket()
         blobs = list(storage_bucket.list_blobs(prefix=f"{uid}/record/"))
 
-        records = {}
+        all_records = []
 
         for blob in blobs:
             path_parts = blob.name.split("/")
@@ -231,26 +231,30 @@ async def get_all_records(uid: str):
             artist = get_artist_info(uid, song_name)
 
             if score_data:
-                if song_name not in records:
-                    records[song_name] = []
+                date = score_data.get("date")
+                if hasattr(date, "strftime"):
+                    formatted_date = date.strftime("%Y-%m-%d")
+                else:
+                    formatted_date = date  
 
-                if not any(record["upload_count"] == upload_count and record.get("audio_url") == blob.public_url 
-                           for record in records[song_name]):
-                    date = score_data.get("date")
-                    if hasattr(date, "strftime"):
-                        date = date.strftime("%Y-%m-%d")
-
-                    records[song_name].append({
+                if not any(
+                    r["upload_count"] == upload_count and r["audio_url"] == blob.public_url
+                    for r in all_records
+                ):
+                    all_records.append({
+                        "song_name": song_name,
                         "upload_count": upload_count,
                         "pitch": score_data.get("pitch"),
                         "onset": score_data.get("onset"),
                         "technique": score_data.get("technique"),
-                        "date": date,
+                        "date": formatted_date,
                         "audio_url": blob.public_url,
                         "artist": artist
                     })
 
-        return records
+        all_records.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"), reverse=True)
+
+        return all_records
 
     except Exception as e:
         print(f"연습 기록 조회 실패: {str(e)}")
