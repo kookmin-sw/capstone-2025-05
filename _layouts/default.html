@@ -3,39 +3,44 @@ layout: compress
 ---
 
 <!DOCTYPE html>
-<html>
-{% include head.html %}
+<html lang="en">
+  {% include head.html %}
 
-<body>
-  {% include navbar.html %}
-  {% include showcase.html %}
-  {% include about.html %}
-  {% include contact.html %}
-  <!--Footer begins here-->
-  {% include footer.html %}
-</body>
-<script>
-  var navItems = document.getElementsByClassName('navbar-item');
-  var heroes = document.getElementsByClassName('hero');
-  const viewOffset = 200; 
+  <body>
+    {% include navbar.html %}
+    {% include showcase.html %}
+    {% include about.html %}
+    {% include contact.html %}
 
-  window.addEventListener("scroll", function (event) {
-    var scroll = this.scrollY;
-    var position = window.pageYOffset;
+    <section id="markdown-content" class="section has-background-light">
+      <div class="container content">
+        {{ content }}
+      </div>
+    </section>
 
-    for (var i = 0; i < navItems.length; i++) {
-      navItems[i].classList.remove('is-active');
-    }
+    {% include footer.html %}
 
-    for (var i = 0; i < heroes.length; i++) {
-        var sectionTop = heroes[i].offsetTop-viewOffset;
-        var sectionBottom = heroes[i].offsetTop + heroes[i].offsetHeight-viewOffset;
+    <script>
+      var navItems = document.getElementsByClassName('navbar-item');
+      var heroes = document.getElementsByClassName('hero');
+      const viewOffset = 200;
 
-        if (scroll >= sectionTop && scroll < sectionBottom) {
-          navItems[i+1].classList.add('is-active');
-      }
-    }
-  });
-</script>
+      window.addEventListener("scroll", function (event) {
+        var scroll = this.scrollY;
 
+        for (var i = 0; i < navItems.length; i++) {
+          navItems[i].classList.remove('is-active');
+        }
+
+        for (var i = 0; i < heroes.length; i++) {
+          var sectionTop = heroes[i].offsetTop - viewOffset;
+          var sectionBottom = heroes[i].offsetTop + heroes[i].offsetHeight - viewOffset;
+
+          if (scroll >= sectionTop && scroll < sectionBottom) {
+            navItems[i + 1].classList.add('is-active');
+          }
+        }
+      });
+    </script>
+  </body>
 </html>
