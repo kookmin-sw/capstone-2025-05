@@ -103,7 +103,7 @@ export default function Main() {
           <img src={Right} alt="arrow" className="cursor-pointer" />
         </button>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {Array.isArray(allSongs) &&
+          {allSongs &&
             allSongs
               .slice(0, 4)
               .map((album, index) => (
