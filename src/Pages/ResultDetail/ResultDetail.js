@@ -19,6 +19,7 @@ import { useSongByIdQuery } from '../../Hooks/Audio/get/getSongById.js';
 
 const API_BASE_URL = process.env.REACT_APP_RESULT_URL;
 const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
+const COVER_URL = process.env.REACT_APP_COVER_URL;
 export default function ResultDetail() {
   const { uid } = useAuth();
   const printRef = useRef();
@@ -37,11 +38,10 @@ export default function ResultDetail() {
   const specificSong = {
     title: songData?.title,
     artist: songData?.artist,
-    cover_url: AUDIO_URL + songData?.thumbnail,
+    cover_url: COVER_URL + '/' + songData?.thumbnail,
     original_audio_url: AUDIO_URL + songData?.audio,
   };
 
-  const original_audio_url = songData?.audio;
   const navigate = useNavigate();
 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
@@ -52,7 +52,6 @@ export default function ResultDetail() {
   function processCompareData(data) {
     const user = data.result.user_features;
     const ref = data.result.reference_features;
-
     return {
       pitch_comparison: user.pitches.map((p, i) => ({
         note_index: i,

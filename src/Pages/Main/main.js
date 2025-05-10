@@ -26,6 +26,11 @@ export default function Main() {
   const { data: allSongs } = useAllSongQuery();
   const [playerTarget, setPlayerTarget] = useState();
   const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
+  const cover_url = process.env.REACT_APP_COVER_URL;
+  console.log(AUDIO_URL);
+
+  console.log(cover_url);
+
   console.log(allSongs);
 
   return (
@@ -109,10 +114,10 @@ export default function Main() {
               .slice(0, 4)
               .map((album, index) => (
                 <AudioPlaybox
-                  img={AUDIO_URL + album.thumbnail}
+                  img={cover_url + '/' + album.thumbnail}
                   title={album.title}
                   artist={album.artist}
-                  playurl={AUDIO_URL + album.audio}
+                  playurl={album.audio}
                   song_id={album.song_id}
                 />
               ))}

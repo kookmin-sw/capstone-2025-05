@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Box from '../Box/Box';
 import { Link, useNavigate } from 'react-router-dom';
 import PlayButton from '../Button/PlayButton';
+import { useThumbnailQuery } from '../../Hooks/Audio/get/getThumbnail';
 
 export default function AudioPlaybox({ img, title, artist, playurl, song_id }) {
   const navigate = useNavigate();
@@ -10,8 +11,7 @@ export default function AudioPlaybox({ img, title, artist, playurl, song_id }) {
     navigate('/songResult', { state: { song_id: song_id, title: title } });
   };
 
-  console.log(img, '이미지url이자식아');
-
+  console.log(img);
   return (
     <Box width="220px" height="288px">
       <div className="flex justify-center items-center mt-4">

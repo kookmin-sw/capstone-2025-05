@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useSongByIdQuery } from '../../Hooks/Audio/get/getSongById';
 import { useSongResultsQuery } from '../../Hooks/Audio/get/getSongResults';
 const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
+const COVER_URL = process.env.REACT_APP_COVER_URL;
 
 export default function SongResults() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function SongResults() {
     <div className="min-h-screen bg-[#f1ede5] p-10 flex flex-col items-center">
       <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow mb-6 w-full lg:w-[60%]">
         <img
-          src={AUDIO_URL + songInfo?.thumbnail}
+          src={COVER_URL + '/' + songInfo?.thumbnail}
           alt="Cover"
           className="w-20 h-20 object-cover rounded"
         />
