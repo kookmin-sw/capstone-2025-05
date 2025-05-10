@@ -25,13 +25,7 @@ export default function Main() {
   const { data: topMusic, isLoading } = useKoreaTopTracks();
   const { data: allSongs } = useAllSongQuery();
   const [playerTarget, setPlayerTarget] = useState();
-  const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
   const cover_url = process.env.REACT_APP_COVER_URL;
-  console.log(AUDIO_URL);
-
-  console.log(cover_url);
-
-  console.log(allSongs);
 
   return (
     <div className="flex flex-col min-h-screen">

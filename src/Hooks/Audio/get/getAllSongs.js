@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import audioApi from '../../../Utils/audioApi';
+import mediaApi from '../../../Utils/audioApi';
 
 const fetchSongs = () => {
-  return audioApi.get(`/songs`);
+  return mediaApi.get(`/songs`);
 };
 
 export const useAllSongQuery = () => {
