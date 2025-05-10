@@ -103,7 +103,7 @@ export default function Main() {
           <img src={Right} alt="arrow" className="cursor-pointer" />
         </button>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {allSongs &&
+          {Array.isArray(allSongs) &&
             allSongs
               .slice(0, 4)
               .map((album, index) => (
@@ -134,7 +134,7 @@ export default function Main() {
           <img src={Right} alt="arrow" className="cursor-pointer" />
         </button>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {topMusic &&
+          {Array.isArray(topMusic) &&
             topMusic
               .slice(0, 4)
               .map((album, index) => (
@@ -171,7 +171,7 @@ export default function Main() {
           <img src={Right} alt="arrow" />
         </button>
         <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {TrendMusic &&
+          {Array.isArray(TrendMusic) &&
             TrendMusic.slice(0, 4).map((album, index) => (
               <Playbox
                 img={album.cover}
