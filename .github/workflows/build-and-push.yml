@@ -58,6 +58,6 @@ jobs:
             REACT_APP_CLIENT_ID=${{ secrets.REACT_APP_CLIENT_ID }}
             REACT_APP_REDIRECT_URI=${{ secrets.REACT_APP_REDIRECT_URI }}
             REACT_APP_SCOPE=${{ secrets.REACT_APP_SCOPE }}
-            REACT_APP_RESULT_URL=${{ secrets.REACT_APP_RESULT_URL }}
-            REACT_APP_AUDIO_URL=${{ secrets.REACT_APP_AUDIO_URL }}
+            REACT_APP_MEDIA_URL=${{ secrets.REACT_APP_MEDIA_URL }}
+            REACT_APP_COVER_URL=${{ secrets.REACT_APP_COVER_URL }}
             PUBLIC_URL=/
