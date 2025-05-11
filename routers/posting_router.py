@@ -519,10 +519,10 @@ async def create_comment(comment: Comment):
     if comment_data.get("uid"):
         uid = comment_data["uid"]
         post_id_str = str(comment_data["postid"]).zfill(8)
-    firestore.client().collection("my_activity").document(uid).collection("comment").document(str(new_comment_id).zfill(8)).set({
-        "post_id": post_id_str,
-        "date": now.isoformat()
-    })
+        firestore.client().collection("my_activity").document(uid).collection("comment").document(str(new_comment_id).zfill(8)).set({
+            "post_id": post_id_str,
+            "date": now.isoformat()
+        })
 
     return { 'result_msg': f'{"put"} Registered...' }
 
