@@ -3,7 +3,9 @@ import React from 'react';
 export default function SongCard({ cover_url, title, artist, onClick }) {
   return (
     <div
-      className="flex items-center gap-4 bg-white p-4 rounded-lg shadow mb-6 w-full lg:w-[60%]"
+      className="flex items-center gap-4 bg-white p-4 rounded-lg shadow mb-6 w-full lg:w-[60%]
+      transition-transform duration-200 hover:scale-[1.02] cursor-pointer
+      "
       onClick={onClick}
     >
       <img

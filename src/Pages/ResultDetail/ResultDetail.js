@@ -17,8 +17,8 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSongByIdQuery } from '../../Hooks/Audio/get/getSongById.js';
 
-const API_BASE_URL = process.env.REACT_APP_RESULT_URL;
-const AUDIO_URL = process.env.REACT_APP_AUDIO_URL;
+const ANALYSIS_URL = process.env.REACT_APP_ANALYSIS_URL;
+const MEDIA_URL = process.env.REACT_APP_MEDIA_URL;
 const COVER_URL = process.env.REACT_APP_COVER_URL;
 export default function ResultDetail() {
   const { uid } = useAuth();
@@ -39,7 +39,7 @@ export default function ResultDetail() {
     title: songData?.title,
     artist: songData?.artist,
     cover_url: COVER_URL + '/' + songData?.thumbnail,
-    original_audio_url: AUDIO_URL + songData?.audio,
+    original_audio_url: MEDIA_URL + songData?.audio,
   };
 
   const navigate = useNavigate();
@@ -155,7 +155,7 @@ export default function ResultDetail() {
     const fetchResultDetail = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/results/${taskId}`);
+        const response = await axios.get(`${ANALYSIS_URL}/results/${taskId}`);
         console.log(response, 'resultdetail');
         setResult(response.data);
         setLoading(false);

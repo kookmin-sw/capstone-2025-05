@@ -20,7 +20,7 @@ export default function UserResults() {
       {results && results.length === 0 ? (
         <p className="text-gray-500">분석 결과가 없습니다.</p>
       ) : (
-        <div className="flex flex-col items-center space-y-6">
+        <div className="flex flex-col items-center space-y-6 w-full">
           {results &&
             results.map((result, idx) => (
               <ResultCard idx={idx} result={result} />
