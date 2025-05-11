@@ -1,10 +1,12 @@
 import './App.css';
 import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { SpotifyPlayerProvider } from './Context/SpotifyContext';
 import MapleHeader from './Components/MapleHeader';
 import { AuthProvider, useAuth } from './Context/AuthContext'; // 추가
 import AppRoutes from './Routes/AppRoutes';
+import { Hash } from 'lucide-react';
 
 function App() {
   const [token, setToken] = useState(null);
@@ -55,10 +57,10 @@ function App() {
   return (
     <div className="App">
       <SpotifyPlayerProvider token={token} authUrl={authUrl}>
-        <BrowserRouter>
+        <HashRouter>
           <MapleHeader />
           <AppRoutes />
-        </BrowserRouter>
+        </HashRouter>
       </SpotifyPlayerProvider>
     </div>
   );

@@ -32,6 +32,8 @@ export default function AppRoutes() {
   if (!initialized) return null;
   return (
     <Routes>
+      <Route path="/oauth-success" element={<OauthRedirectHandler />} />
+      <Route path="/audiotest" element={<AudioTest />} />
       {uid ? (
         <>
           <Route path="/main" element={<Main />} />
@@ -53,7 +55,6 @@ export default function AppRoutes() {
           <Route path="/searchpage" element={<SearchPage />} />
           <Route path="/print" element={<PrintPage />} />
           <Route path="/test" element={<TestPage />} />
-          <Route path="/audiotest" element={<AudioTest />} />
           <Route path="/beginner" element={<Beginner />} />
           <Route path="/musics" element={<MusicPage />} />
           <Route path="*" element={<Main />} />
@@ -67,7 +68,6 @@ export default function AppRoutes() {
           <Route path="/" element={<Main />} />
           <Route path="/audiotest" element={<AudioTest />} />
           <Route path="/musics" element={<MusicPage />} />
-          <Route path="/oauth-success" element={<OauthRedirectHandler />} />
           <Route path="*" element={<Login />} />
         </>
       )}

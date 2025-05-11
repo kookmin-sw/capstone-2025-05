@@ -105,23 +105,27 @@ export default function PlayedMusic() {
                   key={song.song_id || index}
                   overwrite="p-4 flex flex-col justify-between w-[90%]"
                 >
-                  <div className="flex justify-center items-center mt-4">
-                    <Link to={`/ranking`} state={{ song_name: song.song_name }}>
-                      <img
-                        src={song.cover_url || Cover_1}
-                        alt="Album Cover"
-                        className="object-cover w-full h-[280px] rounded"
-                      />
-                    </Link>
-                  </div>
-                  <div className="flex items-center justify-between px-2 mt-2">
-                    <div className="flex flex-col w-full">
-                      <span className="text-lg font-semibold truncate">
-                        {song.song_name}
-                      </span>
-                      <span className="text-sm mt-[-2px] truncate">
-                        {song.artist || 'Unknown Artist'}
-                      </span>
+                  <div className="flex flex-col justify-center items-center m-4">
+                    <div className="w-full">
+                      <Link
+                        to={`/ranking`}
+                        state={{ song_name: song.song_name }}
+                        className="w-full flex justify-center"
+                      >
+                        <img
+                          src={song.cover_url || Cover_1}
+                          alt="Album Cover"
+                          className="object-cover w-[280px] h-[280px] rounded"
+                        />
+                      </Link>
+                      <div className="flex flex-col w-full mt-2 ml-2">
+                        <span className="text-lg font-semibold truncate">
+                          {song.song_name}
+                        </span>
+                        <span className="text-sm mt-[-2px] truncate">
+                          {song.artist || 'Unknown Artist'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </Box>
