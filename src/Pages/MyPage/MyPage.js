@@ -14,13 +14,15 @@ import Cover3 from '../../Assets/Main/album/iveCover.svg';
 import Cover4 from '../../Assets/Main/album/riizeCover.svg';
 import { Link } from 'react-router-dom';
 import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
-import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
 import { useAuth } from '../../Context/AuthContext.js';
+import Album from '../../Components/Album/Album.js';
+import { useUserResultsQuery } from '../../Hooks/Audio/get/getUserResult.js';
+import NoRecentPage from '../NoDataPage.js/NoRecentPage.js';
 
 export default function MyPage() {
   const { uid } = useAuth();
   const { data: userInfo } = useUserQuery(uid);
-  const { data: records, isLoading } = useRecentRecordsQuery(uid);
+  const { data: records, isLoading } = useUserResultsQuery(uid);
 
   const recommendedSongs = [
     { cover: Cover1, title: '오늘만 I LOVE YOU', artist: 'BOYNEXTDOOR' },
@@ -133,34 +135,13 @@ export default function MyPage() {
                 </Link>
               </div>
               <ul className="mt-8 space-y-5 ml-8">
-                {isLoading ? (
-                  <li>Loading...</li>
-                ) : records?.length > 0 ? (
-                  records.map((song, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center justify-between pb-2 mb-2 min-w-0"
-                    >
-                      <img
-                        src={song.cover_url}
-                        alt="Album"
-                        className="w-16 h-16 mr-8 mt-7"
-                      />
-                      <div className="flex flex-col justify-center flex-grow min-w-0">
-                        <p className="font-semibold text-[20px] mt-7 truncate overflow-hidden whitespace-nowrap text-ellipsis">
-                          {song.song_name}
-                        </p>
-                        <p className="text-[15px] text-gray-600 mt-0 truncate">
-                          {song.artist || '아티스트 미정'}
-                        </p>
-                      </div>
-                    </li>
-                  ))
-                ) : (
-                  <h1 className="font-bold text-xl text-gray-600 mt-7 truncate">
-                    최근 연주한 곡이 없습니다...
-                  </h1>
-                )}
+                {records &&
+                  records
+                    .slice(0, 4)
+                    .map((record, index) => (
+                      <Album record={record} index={index} />
+                    ))}
+                {!records && <NoRecentPage />}
               </ul>
             </Box>
 

@@ -87,36 +87,38 @@ export default function Main() {
       </div>
 
       {/* 분석 가능 곡 섹션 */}
-      <div className="w-full mt-12">
-        <button
-          className="flex items-center cursor-pointer ml-[calc(50%-700px)] transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%]"
-          onClick={() =>
-            navigate('/musics', {
-              state: { musics: allSongs, musicType: 'analysis' },
-            })
-          }
-        >
-          <img src={analysisIcon} alt="분석아이콘" className="w-8" />
-          <span className="text-xl font-bold text-[24px] ml-1 mr-4">
-            분석 가능 곡들
-          </span>
-          <img src={Right} alt="arrow" className="cursor-pointer" />
-        </button>
-        <div className="flex flex-wrap justify-center gap-12 mt-4">
-          {Array.isArray(allSongs) &&
-            allSongs
-              .slice(0, 4)
-              .map((album, index) => (
-                <AudioPlaybox
-                  img={cover_url + '/' + album.thumbnail}
-                  title={album.title}
-                  artist={album.artist}
-                  playurl={album.audio}
-                  song_id={album.song_id}
-                />
-              ))}
+      {allSongs && (
+        <div className="w-full mt-12">
+          <button
+            className="flex items-center cursor-pointer ml-[calc(50%-700px)] transition duration-300 ease-in-out transform hover:translate-x-[18px] hover:scale-[105%]"
+            onClick={() =>
+              navigate('/musics', {
+                state: { musics: allSongs, musicType: 'analysis' },
+              })
+            }
+          >
+            <img src={analysisIcon} alt="분석아이콘" className="w-8" />
+            <span className="text-xl font-bold text-[24px] ml-1 mr-4">
+              분석 가능 곡들
+            </span>
+            <img src={Right} alt="arrow" className="cursor-pointer" />
+          </button>
+          <div className="flex flex-wrap justify-center gap-12 mt-4">
+            {Array.isArray(allSongs) &&
+              allSongs
+                .slice(0, 4)
+                .map((album, index) => (
+                  <AudioPlaybox
+                    img={cover_url + '/' + album.thumbnail}
+                    title={album.title}
+                    artist={album.artist}
+                    playurl={album.audio}
+                    song_id={album.song_id}
+                  />
+                ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="w-full mt-12">
         <button

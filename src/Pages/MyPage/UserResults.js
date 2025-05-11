@@ -4,6 +4,7 @@ import { useAuth } from '../../Context/AuthContext.js';
 import { useNavigate } from 'react-router-dom';
 import { useUserResultsQuery } from '../../Hooks/Audio/get/getUserResult.js';
 import ResultCard from '../../Components/Card/ResultCard.js';
+import NoDataPage from '../NoDataPage.js/NoDataPage.js';
 
 export default function UserResults() {
   const { uid } = useAuth();
@@ -27,6 +28,7 @@ export default function UserResults() {
             ))}
         </div>
       )}
+      {!results && <NoDataPage />}
     </div>
   );
 }

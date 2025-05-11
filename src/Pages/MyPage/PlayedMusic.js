@@ -4,12 +4,13 @@ import Box from '../../Components/Box/Box.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
-import Cover_1 from '../../Assets/Main/album/iveCover.svg';
 import { useRecordQuery } from '../../Hooks/MyPage/PlayedMusic/useRecordQuery.js';
 import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery.js';
-import { useRecentRecordsQuery } from '../../Hooks/MyPage/PlayedMusic/useRecentRecordQuery.js';
 import swal from 'sweetalert';
 import { useAuth } from '../../Context/AuthContext.js';
+import { useUserResultsQuery } from '../../Hooks/Audio/get/getUserResult.js';
+import BigAlbum from '../../Components/Album/BigAlbum.js';
+import NoRecentPage from '../NoDataPage.js/NoRecentPage.js';
 
 export default function PlayedMusic() {
   const [records, setRecords] = useState([]);
@@ -21,11 +22,8 @@ export default function PlayedMusic() {
     data: recentRecords,
     isLoading: recentLoading,
     isError: recentError,
-  } = useRecentRecordsQuery(uid);
+  } = useUserResultsQuery(uid);
   const { data: userInfo } = useUserQuery(uid);
-  console.log(recentRecords, '최근 연주한곡');
-  console.log(recordData, '기록');
-  console.log(userInfo);
   useEffect(() => {
     // record데이터가 호출되면 아래 코드 실행
     console.log('기록응답');
@@ -99,40 +97,13 @@ export default function PlayedMusic() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             }}
           >
-            {recentRecords && recentRecords.length > 0 ? (
-              recentRecords.map((song, index) => (
-                <Box
-                  key={song.song_id || index}
-                  overwrite="p-4 flex flex-col justify-between w-[90%]"
-                >
-                  <div className="flex flex-col justify-center items-center m-4">
-                    <div className="w-full">
-                      <Link
-                        to={`/ranking`}
-                        state={{ song_name: song.song_name }}
-                        className="w-full flex justify-center"
-                      >
-                        <img
-                          src={song.cover_url || Cover_1}
-                          alt="Album Cover"
-                          className="object-cover w-[280px] h-[280px] rounded"
-                        />
-                      </Link>
-                      <div className="flex flex-col w-full mt-2 ml-2">
-                        <span className="text-lg font-semibold truncate">
-                          {song.song_name}
-                        </span>
-                        <span className="text-sm mt-[-2px] truncate">
-                          {song.artist || 'Unknown Artist'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Box>
-              ))
-            ) : (
-              <p className="ml-8">로딩 중...</p>
-            )}
+            {recentRecords &&
+              recentRecords
+                .slice(0, 4)
+                .map((record, index) => (
+                  <BigAlbum record={record} index={index} />
+                ))}
+            {!recentRecords && <NoRecentPage />}
           </div>
 
           {/* 연습 기록 */}

@@ -1,17 +1,14 @@
 import React from 'react';
 import musicIcon from '../../Assets/music-note.svg';
-
-import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Playbox from '../../Components/Playbox/Playbox';
 import AudioPlaybox from '../../Components/Playbox/AudioPlaybox';
+import NoDataPage from '../NoDataPage.js/NoDataPage';
 
 export default function MusicPage() {
   const location = useLocation();
-  const { musics, musicType } = location.state;
-  const [playerTarget, setPlayerTarget] = useState();
+  const { musics, musicType, isLoading } = location.state;
   const COVER_URL = process.env.REACT_APP_COVER_URL;
-  console.log(musics, 'musics');
 
   return (
     <>
@@ -28,7 +25,9 @@ export default function MusicPage() {
         </h1>
       </div>
       <div className="grid gap-12 lg:grid-cols-4 md:grid-cols-3 sm: grid-cols-2 ml-32 pb-16">
+        {isLoading && <h1>로딩중...</h1>}
         {musicType !== 'analysis' &&
+          musics &&
           musics.map((music) => (
             <Playbox
               img={music.cover}
@@ -38,6 +37,7 @@ export default function MusicPage() {
             />
           ))}
         {musicType === 'analysis' &&
+          musics &&
           musics.map((album) => (
             <AudioPlaybox
               img={COVER_URL + '/' + album.thumbnail}
@@ -47,6 +47,7 @@ export default function MusicPage() {
               playurl={album.audio}
             />
           ))}
+        {!musics && <NoDataPage />}
       </div>
     </>
   );
