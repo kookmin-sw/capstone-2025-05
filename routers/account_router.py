@@ -79,7 +79,21 @@ async def google_auth_callback(code: str):
         decoded_token = auth.verify_id_token(firebase_id_token)
         uid = decoded_token["uid"]
 
-        return RedirectResponse(url=f"https://maple.ne.kr/#/oauth-success?uid={uid}")
+        access_token = tokens.get("access_token")
+
+        if not id_token or not access_token:
+            raise HTTPException(status_code=400, detail= { "error": "토큰 누락", "tokens": tokens })
+
+        userinfo_response = requests.get(
+            GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {tokens['access_token']}"}
+        )
+        userinfo_response.raise_for_status()
+        userinfo = userinfo_response.json()
+
+        picture_url = userinfo.get("picture")
+
+        return RedirectResponse(url=f"https://maple.ne.kr/oauth-success?uid={uid}&picture={picture_url}")
 
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=400, detail=f"구글 계정 요청 오류: {str(e)}")
