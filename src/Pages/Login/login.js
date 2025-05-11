@@ -37,8 +37,6 @@ export default function Login() {
     `&scope=${encodeURIComponent(scopes.join(' '))}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
-  console.log(BACKEND_URL);
-
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();

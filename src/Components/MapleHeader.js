@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import SearchBox from '../Components/SearchBox/searchBox.js';
 import Button from '../Components/Button/Button.js';
 import { useAuth } from '../Context/AuthContext.js';
+import Profile from './Profile/Profile.js';
 
 const MapleHeader = () => {
   const menuList = ['분석방', '초보방', '자유게시판', '마이페이지'];
@@ -12,6 +13,8 @@ const MapleHeader = () => {
   const [searchValue, setSearchValue] = useState();
   const { uid, logout } = useAuth();
   const navigate = useNavigate();
+
+  const profile_picture = sessionStorage.getItem('profile_picture');
 
   const goPage = (menu) => {
     console.log(menu);
@@ -32,6 +35,7 @@ const MapleHeader = () => {
 
   const handleLogout = () => {
     logout();
+    sessionStorage.removeItem('profile_picture');
   };
 
   return (
@@ -67,7 +71,8 @@ const MapleHeader = () => {
             />
           </div>
         </form>
-        <div className="flex mr-8">
+        <div className="flex items-center mr-8">
+          {profile_picture && <Profile profile_url={profile_picture} />}
           {uid ? (
             <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
               <Button width={'100px'} height={'40px'} onClick={handleLogout}>

@@ -9,6 +9,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import CustomizedLines from './CustomizedLines';
+import { Customized } from 'recharts';
 
 // 고정된 테크닉 카테고리 (필요시 동적 추출 가능)
 const TECHNIQUES = ['normal', 'bend', 'vibrato', 'hammer'];
@@ -86,6 +88,16 @@ export default function TechniqueChart({ data }) {
             />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} />
             <Legend />
+            <Customized
+              component={(props) => (
+                <CustomizedLines
+                  originalPoints={originalPoints}
+                  playedPoints={playedPoints}
+                  xAxisMap={props.xAxisMap}
+                  yAxisMap={props.yAxisMap}
+                />
+              )}
+            />
 
             <Scatter
               name="Matched"

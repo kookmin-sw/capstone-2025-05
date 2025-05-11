@@ -16,6 +16,7 @@ import { FaPrint } from 'react-icons/fa6';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSongByIdQuery } from '../../Hooks/Audio/get/getSongById.js';
+import ProgressBar from '../../Components/Graph/ProgressBar.js';
 
 const ANALYSIS_URL = process.env.REACT_APP_ANALYSIS_URL;
 const MEDIA_URL = process.env.REACT_APP_MEDIA_URL;
@@ -39,7 +40,7 @@ export default function ResultDetail() {
     title: songData?.title,
     artist: songData?.artist,
     cover_url: COVER_URL + '/' + songData?.thumbnail,
-    original_audio_url: MEDIA_URL + songData?.audio,
+    original_audio_url: COVER_URL + songData?.audio,
   };
 
   const navigate = useNavigate();
@@ -219,10 +220,10 @@ export default function ResultDetail() {
             </div>
           </Box>
 
-          <div className="flex-[2] ml-4 h-full">
+          <div className="flex-[2] ml-4">
             <Box
               width="100%"
-              height="516px"
+              height="100%"
               backgroundColor="white"
               overwrite="p-4 overflow-y-auto"
             >
@@ -233,68 +234,46 @@ export default function ResultDetail() {
                     <FaPrint />
                   </button>
                 </div>
-                <div className="prose prose-sm lg:prose-lg prose-slate max-w-none mt-4 leading-relaxed text-gray-700">
+                <div className=" prose prose-sm lg:prose-lg prose-slate max-w-none mt-4 leading-relaxed text-gray-700">
                   <ReactMarkdown>{processed?.feedback}</ReactMarkdown>
+                  <div className="flex flex-col items-center mt-8">
+                    {graphs.map((graph) => (
+                      <ProgressBar
+                        graph={graph}
+                        percentage={
+                          processed?.scores?.[
+                            `${graph.key}_match_percentage`
+                          ] ?? 0
+                        }
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </Box>
           </div>
         </div>
 
-        <Box width="100%" height="45%" overwrite="p-6 shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold">{graphs[currentGraphIndex].label}</h3>
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  setCurrentGraphIndex((prev) =>
-                    prev === 0 ? graphs.length - 1 : prev - 1,
-                  )
-                }
-                className="px-4 py-2 bg-gray-200 rounded-full"
-              >
-                ◀
-              </button>
-              <button
-                onClick={() =>
-                  setCurrentGraphIndex((prev) =>
-                    prev === graphs.length - 1 ? 0 : prev + 1,
-                  )
-                }
-                className="px-4 py-2 bg-gray-200 rounded-full"
-              >
-                ▶
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 mb-4">
-            <p
-              className={`font-bold text-${graphs[currentGraphIndex].color}-500`}
-            >
-              {processed?.scores[
-                `${graphs[currentGraphIndex].key}_match_percentage`
-              ].toFixed(1)}
-              %
-            </p>
-            <div className="flex-1 bg-gray-300 rounded-full h-2 overflow-hidden">
-              <div
-                className={`bg-${graphs[currentGraphIndex].color}-500 h-full`}
-                style={{
-                  width: `${processed?.scores[`${graphs[currentGraphIndex].key}_match_percentage`].toFixed(1)}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          {graphs[currentGraphIndex].key === 'technique' ? (
-            <TechniqueChart data={getChartDataByType(processed, 'technique')} />
-          ) : graphs[currentGraphIndex].key === 'rhythm' ? (
-            <BeatChart data={getChartDataByType(processed, 'rhythm')} />
-          ) : (
-            <PerformanceChart data={getChartDataByType(processed, 'pitch')} />
-          )}
-        </Box>
+        <div className="space-y-6">
+          {graphs.map((graph) => (
+            <Box key={graph.key} width="100%" overwrite="p-6 shadow-lg">
+              <h3 className={`text-xl font-bold text-${graph.color}-500 mb-4`}>
+                {graph.label}
+              </h3>
+              {graph.key === 'technique' ? (
+                <TechniqueChart
+                  data={getChartDataByType(processed, 'technique')}
+                />
+              ) : graph.key === 'rhythm' ? (
+                <BeatChart data={getChartDataByType(processed, 'rhythm')} />
+              ) : (
+                <PerformanceChart
+                  data={getChartDataByType(processed, 'pitch')}
+                />
+              )}
+            </Box>
+          ))}
+        </div>
       </div>
     </div>
   );
