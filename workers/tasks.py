@@ -17,7 +17,7 @@ from workers.dsp import analyze_simple, compare_audio_with_reference
 # dsp 모듈의 개별 함수들을 직접 가져와서 진행 상황을 추적할 수 있도록 합니다
 from workers.dsp import (
     load_audio_from_bytes, load_midi_from_bytes, 
-    extract_tempo, extract_onsets, extract_pitch_with_crepe,
+    extract_tempo, extract_onsets, extract_pitch_with_crepe, extract_pitch_with_pyin,
     predict_techniques, align_audio_with_dtw, align_audio_with_chromas, segment_audio_with_midi_notes,
     extract_chroma
 )
@@ -271,7 +271,8 @@ def compare_audio(self, user_audio_bytes, user_id=None, song_id=None, generate_f
     
     # 5. 음정 추출 (50-60%)
     self.update_state(state='PROCESSING', meta={'progress': 50})
-    user_pitches = extract_pitch_with_crepe(user_segments, sr)
+    # user_pitches = extract_pitch_with_crepe(user_segments, sr)
+    user_pitches = extract_pitch_with_pyin(user_segments, sr)
     self.update_state(state='PROCESSING', meta={'progress': 60})
     # ref_pitches = extract_pitch_with_crepe(ref_segments, sr)
     ref_pitches = ref_features['features']['pitches']
@@ -519,29 +520,35 @@ def analyze_reference_audio(self, audio_bytes, song_id, midi_bytes=None, descrip
         
         if midi_bytes:
             # MIDI 파일이 제공된 경우
-            notes, tempos, tempo_times = load_midi_from_bytes(midi_bytes)
-            
-            # 노트 정보를 기반으로 세그먼트 생성
-            for i in range(len(notes) - 1):
-                start = int(notes[i]['start'] * sr)
-                end = int(notes[i+1]['start'] * sr)
-                if start < len(y) and end <= len(y):
-                    segments.append(y[start:end])
-            
-            # 마지막 노트
-            if notes:
-                start = int(notes[-1]['start'] * sr)
-                if start < len(y):
-                    segments.append(y[start:])
-            
-            # MIDI 데이터 저장
-            midi_data = {
-                "notes": notes,
-                "tempos": tempos,
-                "tempo_times": tempo_times
-            }
-        else:
-            # MIDI 없이 발음 시작점 기반 세그먼트 생성
+            try:
+                notes, tempos, tempo_times = load_midi_from_bytes(midi_bytes)
+                
+                # 노트 정보를 기반으로 세그먼트 생성
+                for i in range(len(notes) - 1):
+                    start = int(notes[i]['start'] * sr)
+                    end = int(notes[i+1]['start'] * sr)
+                    if start < len(y) and end <= len(y):
+                        segments.append(y[start:end])
+                
+                # 마지막 노트
+                if notes:
+                    start = int(notes[-1]['start'] * sr)
+                    if start < len(y):
+                        segments.append(y[start:])
+                
+                # MIDI 데이터 저장
+                midi_data = {
+                    "notes": notes,
+                    "tempos": tempos,
+                    "tempo_times": tempo_times
+                }
+            except Exception as e:
+                logger.warning(f"MIDI 파일 로드 중 오류 발생: {str(e)}")
+                # MIDI 오류 시 발음 시작점 기반으로 세그먼트 생성
+                segments = []
+        
+        # MIDI 오류나 MIDI 파일이 없는 경우 발음 시작점 기반 세그먼트 생성
+        if not segments:
             for i in range(len(onsets) - 1):
                 start = int(onsets[i] * sr)
                 end = int(onsets[i+1] * sr)
@@ -560,7 +567,14 @@ def analyze_reference_audio(self, audio_bytes, song_id, midi_bytes=None, descrip
         
         # 5. 음정 추출 (60%)
         self.update_state(state='PROCESSING', meta={'progress': 60})
-        pitches = extract_pitch_with_crepe(segments, sr)
+        pitches = []
+        try:
+            # pitches = extract_pitch_with_crepe(segments, sr)
+            pitches = extract_pitch_with_pyin(segments, sr)
+        except Exception as e:
+            logger.error(f"음정 추출 중 오류 발생: {str(e)}")
+            # 오류 발생 시 빈 값 할당
+            pitches = [0.0] * len(segments)
         
         # 6. 연주 기법 예측 (80%)
         self.update_state(state='PROCESSING', meta={'progress': 80})
@@ -568,7 +582,12 @@ def analyze_reference_audio(self, audio_bytes, song_id, midi_bytes=None, descrip
         techniques = []
         
         if os.path.exists(model_path):
-            techniques = predict_techniques(segments, model_path, sr)
+            try:
+                techniques = predict_techniques(segments, model_path, sr)
+            except Exception as e:
+                logger.error(f"기법 예측 중 오류 발생: {str(e)}")
+                # 오류 발생 시 빈 값 할당
+                techniques = [[] for _ in range(len(segments))]
         
         # 7. 결과 정리 (90%)
         self.update_state(state='FINALIZING', meta={'progress': 90})
@@ -583,9 +602,14 @@ def analyze_reference_audio(self, audio_bytes, song_id, midi_bytes=None, descrip
         }
         
         # 크로마 특성 추출 및 저장
-        chroma = extract_chroma(y, sr)
-        # 크로마그램은 2D 넘파이 배열이므로 리스트로 변환하여 저장
-        features["chroma"] = chroma.tolist() if isinstance(chroma, np.ndarray) else chroma
+        try:
+            chroma = extract_chroma(y, sr)
+            # 크로마그램은 2D 넘파이 배열이므로 리스트로 변환하여 저장
+            features["chroma"] = chroma.tolist() if isinstance(chroma, np.ndarray) else chroma
+        except Exception as e:
+            logger.error(f"크로마 추출 중 오류 발생: {str(e)}")
+            # 오류 발생 시 빈 2D 배열 저장
+            features["chroma"] = [[0.0] * 12 for _ in range(10)]
         
         # MIDI 데이터가 있으면 features에 직접 추가
         if midi_data:
@@ -639,4 +663,5 @@ def analyze_reference_audio(self, audio_bytes, song_id, midi_bytes=None, descrip
     
     except Exception as e:
         logger.exception(f"레퍼런스 오디오 분석 오류: {str(e)}")
+        # 예외 발생 시 예외를 Celery에 다시 던져 작업 실패로 표시
         raise
