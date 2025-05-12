@@ -49,7 +49,7 @@ def create_test_data(db: Session):
         {
             "song_id": str(uuid.uuid4()),
             "title": "26",
-            "artist": "Younha",
+            "artist": "윤하",
             "thumbnail": "static/thumbnails/26.jpg",
             "sheet_music": "static/sheet_music/26.gp5",
             "audio": "static/audio/26.wav",
@@ -59,7 +59,7 @@ def create_test_data(db: Session):
         {
             "song_id": str(uuid.uuid4()),
             "title": "FLY",
-            "artist": "YdBB",
+            "artist": "유다빈밴드드",
             "thumbnail": "static/thumbnails/fly.jpg",
             "sheet_music": "static/sheet_music/fly.gp5",
             "audio": "static/audio/fly.wav",
@@ -89,7 +89,7 @@ def create_test_data(db: Session):
         {
             "song_id": str(uuid.uuid4()),
             "title": "태양물고기",
-            "artist": "Younha",
+            "artist": "윤하",
             "thumbnail": "static/thumbnails/sunfish.jpg",
             "sheet_music": "static/sheet_music/sunfish.gp5",
             "audio": "static/audio/sunfish.wav",
@@ -99,7 +99,7 @@ def create_test_data(db: Session):
         {
             "song_id": str(uuid.uuid4()),
             "title": "오늘은 잠에 들 거예요",
-            "artist": "YdBB",
+            "artist": "유다빈밴드",
             "thumbnail": "static/thumbnails/night-night.jpg",
             "sheet_music": "static/sheet_music/night-night.gp5",
             "audio": "static/audio/night-night.wav",
@@ -119,7 +119,7 @@ def create_test_data(db: Session):
         {
             "song_id": str(uuid.uuid4()),
             "title": "No Pain",
-            "artist": "Silicagel",
+            "artist": "실리카겔",
             "thumbnail": "static/thumbnails/no-pain.jpg",
             "sheet_music": "static/sheet_music/no-pain.gp5",
             "audio": "static/audio/no-pain.wav",
@@ -149,7 +149,7 @@ def create_test_data(db: Session):
         {
             "song_id": str(uuid.uuid4()),
             "title": "사건의 지평선",
-            "artist": "Younha",
+            "artist": "윤하",
             "thumbnail": "static/thumbnails/event-horizon.jpg",
             "sheet_music": "static/sheet_music/event-horizon.gp5",
             "audio": "static/audio/event-horizon.wav",
