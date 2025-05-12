@@ -1,51 +1,31 @@
 import React from 'react';
 
 export default function CustomizedLines({
-  originalPoints,
-  playedPoints,
-  xAxisMap,
-  yAxisMap,
+  originalPoints = [],
+  playedPoints = [],
 }) {
-  const xScale = xAxisMap?.second?.scale;
-  const yScale = yAxisMap?.technique?.scale;
+  if (!originalPoints.length || !playedPoints.length) return null;
 
-  if (!xScale || !yScale) return null;
+  // 각 점쌍을 선으로 연결
+  const lines = originalPoints.map((orig, idx) => {
+    const played = playedPoints[idx];
 
-  const lines = [];
+    // 좌표가 없거나 index가 초과된 경우 방어
+    if (!orig || !played) return null;
 
-  for (
-    let i = 0;
-    i < Math.min(originalPoints.length, playedPoints.length);
-    i++
-  ) {
-    const o = originalPoints[i];
-    const p = playedPoints[i];
-
-    // 필수 데이터 확인
-    if (
-      !o ||
-      !p ||
-      o.second == null ||
-      p.second == null ||
-      !o.technique ||
-      !p.technique
-    )
-      continue;
-
-    lines.push(
+    return (
       <line
-        key={`line-${i}`}
-        x1={xScale(o.second)}
-        y1={yScale(o.technique)}
-        x2={xScale(p.second)}
-        y2={yScale(p.technique)}
-        stroke="#e53935"
-        strokeWidth={2}
+        key={`line-${idx}`}
+        x1={orig.cx}
+        y1={orig.cy}
+        x2={played.cx}
+        y2={played.cy}
+        stroke="gray"
+        strokeWidth={1}
         strokeDasharray="4 2"
-        opacity={0.8}
-      />,
+      />
     );
-  }
+  });
 
   return <g>{lines}</g>;
 }

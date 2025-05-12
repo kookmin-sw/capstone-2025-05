@@ -27,6 +27,8 @@ export default function Main() {
   const [playerTarget, setPlayerTarget] = useState();
   const cover_url = process.env.REACT_APP_COVER_URL;
 
+  console.log(allSongs, '모든 곡');
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex items-center justify-center mt-12">

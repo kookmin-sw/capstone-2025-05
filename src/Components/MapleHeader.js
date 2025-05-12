@@ -74,7 +74,7 @@ const MapleHeader = () => {
         <div className="flex items-center mr-8">
           {profile_picture && <Profile profile_url={profile_picture} />}
           {uid ? (
-            <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
+            <div className="hover:brightness-110 hover:scale-[110%]  duration-[0.5s] ease-in-out">
               <Button width={'100px'} height={'40px'} onClick={handleLogout}>
                 <div className="flex items-center">
                   <span>로그아웃</span>
@@ -83,7 +83,7 @@ const MapleHeader = () => {
               </Button>
             </div>
           ) : (
-            <div className="hover:brightness-150 duration-[0.5s] ease-in-out">
+            <div className="hover:brightness-110 hover:scale-[110%] duration-[0.5s] ease-in-out">
               <Button width={'100px'} height={'40px'} onClick={handleLogin}>
                 <div className="flex items-center">
                   <span>로그인</span>

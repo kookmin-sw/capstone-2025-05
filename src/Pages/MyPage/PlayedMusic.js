@@ -24,6 +24,7 @@ export default function PlayedMusic() {
     isError: recentError,
   } = useUserResultsQuery(uid);
   const { data: userInfo } = useUserQuery(uid);
+  console.log(recentRecords, '나의 곡 정보');
   useEffect(() => {
     // record데이터가 호출되면 아래 코드 실행
     console.log('기록응답');

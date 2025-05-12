@@ -6,7 +6,8 @@ import Cover_1 from '../../Assets/Main/album/iveCover.svg';
 const COVER_URL = process.env.REACT_APP_COVER_URL;
 
 export default function BigAlbum({ record, index }) {
-  const { data: songInfo } = useSongByIdQuery(record.song_id);
+  const { data: songInfo } = useSongByIdQuery(record?.song_id);
+  console.log(songInfo, '노래 정보');
   return (
     <Box
       key={record.song_id || index}
@@ -15,22 +16,26 @@ export default function BigAlbum({ record, index }) {
       <div className="flex flex-col justify-center items-center m-4">
         <div className="w-full">
           <Link
-            to={`/ranking`}
-            state={{ song_name: songInfo.title }}
+            to={`/songResult`}
+            state={{ song_id: songInfo?.song_id }}
             className="w-full flex justify-center"
           >
             <img
-              src={COVER_URL + '/' + songInfo.thumbnail || Cover_1}
+              src={
+                songInfo?.thumbnail
+                  ? COVER_URL + '/' + songInfo?.thumbnail
+                  : Cover_1
+              }
               alt="Album Cover"
               className="object-cover w-[280px] h-[280px] rounded"
             />
           </Link>
           <div className="flex flex-col w-full mt-2 ml-2">
             <span className="text-lg font-semibold truncate">
-              {songInfo.title}
+              {songInfo?.title || '제목 없음'}
             </span>
             <span className="text-sm mt-[-2px] truncate">
-              {songInfo.artist || 'Unknown Artist'}
+              {songInfo?.artist || 'Unknown Artist'}
             </span>
           </div>
         </div>

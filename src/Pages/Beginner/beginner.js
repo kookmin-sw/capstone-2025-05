@@ -1,6 +1,12 @@
 import React from 'react';
 import Footer from '../../Components/MapleFooter';
 
+const trendingContents = [
+  '파워코드 정복하기',
+  '코드 잡는 법 3단계',
+  '기타 독학 꿀팁',
+];
+
 // 주제별로 링크 분리
 const linkGroups = {
   basic: [
@@ -99,7 +105,7 @@ const LinkCard = ({ preview }) => (
 export default function Beginner() {
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex flex-col mt-16 ml-20 space-y-16">
+      <div className="flex flex-col mt-16 ml-20 space-y-16 w-full">
         <div>
           <h2 className="text-2xl font-bold mb-4">기본 코드 잡는법</h2>
           <div className="space-y-4">

@@ -8,19 +8,23 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Customized,
 } from 'recharts';
-import CustomizedLines from './CustomizedLines';
-import { Customized } from 'recharts';
+import CustomizedMismatchRects from './CustomizedMismatchRects';
 
-// 고정된 테크닉 카테고리 (필요시 동적 추출 가능)
-const TECHNIQUES = ['normal', 'bend', 'vibrato', 'hammer'];
+const normalizeTechnique = (tech) => {
+  if (typeof tech === 'string' && tech.includes(',')) {
+    return tech.split(',')[0].trim();
+  }
+  return tech;
+};
 
 export default function TechniqueChart({ data }) {
   const matchedPoints = [];
   const originalPoints = [];
   const playedPoints = [];
 
-  // x축 눈금: 0.5초 간격으로 생성
+  // x축 눈금 계산
   const allSeconds = data.map((d) => d.second);
   const maxSecond = Math.max(...allSeconds, 0);
   const xTicks = [];
@@ -28,14 +32,12 @@ export default function TechniqueChart({ data }) {
     xTicks.push(parseFloat(i.toFixed(1)));
   }
 
-  // 데이터 분류 처리
+  // 데이터 분류
   data.forEach((point) => {
     const second = point.second;
-
     const originalList = Array.isArray(point.original)
       ? point.original
       : [point.original || 'unknown'];
-
     const playedList = Array.isArray(point.played)
       ? point.played
       : [point.played || 'unknown'];
@@ -45,20 +47,36 @@ export default function TechniqueChart({ data }) {
       originalList.every((tech, i) => tech === playedList[i]);
 
     if (isMatched) {
-      // 일치 시 matched 표시
       matchedPoints.push(
-        ...originalList.map((technique) => ({ second, technique })),
+        ...originalList.map((technique) => ({
+          second,
+          technique: normalizeTechnique(technique),
+        })),
       );
     } else {
-      // 불일치 시 각각 표시
       originalPoints.push(
-        ...originalList.map((technique) => ({ second, technique })),
+        ...originalList.map((technique) => ({
+          second,
+          technique: normalizeTechnique(technique),
+        })),
       );
       playedPoints.push(
-        ...playedList.map((technique) => ({ second, technique })),
+        ...playedList.map((technique) => ({
+          second,
+          technique: normalizeTechnique(technique),
+        })),
       );
     }
   });
+
+  // Y축 domain 자동 생성
+  const TECHNIQUES = Array.from(
+    new Set(
+      [...matchedPoints, ...originalPoints, ...playedPoints].map(
+        (d) => d.technique,
+      ),
+    ),
+  ).sort();
 
   return (
     <div className="overflow-x-auto h-full">
@@ -70,7 +88,6 @@ export default function TechniqueChart({ data }) {
               type="number"
               dataKey="second"
               ticks={xTicks}
-              name="Time (s)"
               tickFormatter={(v) => v.toFixed(1)}
               domain={['auto', 'auto']}
               label={{
@@ -90,32 +107,59 @@ export default function TechniqueChart({ data }) {
             <Legend />
             <Customized
               component={(props) => (
-                <CustomizedLines
-                  originalPoints={originalPoints}
+                <CustomizedMismatchRects
+                  {...props}
                   playedPoints={playedPoints}
-                  xAxisMap={props.xAxisMap}
-                  yAxisMap={props.yAxisMap}
+                  originalPoints={originalPoints}
                 />
               )}
             />
-
             <Scatter
               name="Matched"
               data={matchedPoints}
-              fill="green"
-              shape="circle"
+              fill="limegreen"
+              stroke="black"
+              strokeWidth={1.2}
+              r={6}
+              shape={(props) => (
+                <circle
+                  {...props}
+                  r={6}
+                  style={{
+                    filter: 'drop-shadow(0 0 4px limegreen)',
+                  }}
+                />
+              )}
             />
             <Scatter
               name="Original"
               data={originalPoints}
               fill="orange"
-              shape="circle"
+              r={5}
+              shape="square"
             />
             <Scatter
               name="Played"
               data={playedPoints}
               fill="blue"
-              shape="circle"
+              r={5}
+              shape="triangle"
+            />
+            <Scatter
+              name="Mismatch"
+              data={[]}
+              fill="rgba(255, 0, 0, 0.3)"
+              shape={(props) => (
+                <text
+                  {...props}
+                  dy={4}
+                  fontSize={18}
+                  textAnchor="middle"
+                  fill="red"
+                >
+                  ❌
+                </text>
+              )}
             />
           </ScatterChart>
         </ResponsiveContainer>

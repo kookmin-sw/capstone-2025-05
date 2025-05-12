@@ -41,9 +41,9 @@ export default function CommentInputBox({
         <div
           className={`flex sm:w-[85%] lg:w-[65%] md:w-[75%] my-5 transition-opacity ${
             isPostComment ? 'visible' : 'hidden'
-          } ease-in-out duration-700`}
+          } ease-in-out duration-700 fixed bottom-[1px]`}
         >
-          <div className="flex w-full justify-center relative left-[45px]">
+          <div className="flex w-full justify-center relative left-[45px] absolute bottom-4">
             <Input
               className="w-full"
               height="60px"
