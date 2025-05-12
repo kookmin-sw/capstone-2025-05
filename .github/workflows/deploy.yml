@@ -93,20 +93,15 @@ jobs:
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> analysis.env
             echo "MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}" >> analysis.env
             
-            # 기존 컨테이너 명시적으로 정리 (충돌 방지)
-            docker rm -f maple-client maple-api maple-redis analysis_api analysis_worker 2>/dev/null || true
+            docker rm -f maple-client maple-api analysis_api analysis_worker 2>/dev/null || true
             
-            # 사용되지 않는 이미지, 볼륨, 네트워크 정리
-            docker system prune -f
+            docker image prune -f
+            docker container prune -f
             
-            # 컨테이너 중지 및 제거
-            docker-compose down --remove-orphans
+            docker compose stop maple-client maple-api analysis_api analysis_worker
             
-            # Docker 이미지 캐시 삭제 및 최신 이미지 강제 가져오기
             docker image rm -f ${DOCKER_USERNAME}/maple-client:latest ${DOCKER_USERNAME}/maple-api:latest ${DOCKER_USERNAME}/maple-analysis-service:latest 2>/dev/null || true
             
-            # 최신 이미지 강제 pull (캐시 무시)
-            docker-compose pull --no-parallel
+            docker compose pull --no-parallel
             
-            # 새 컨테이너 시작 (--force-recreate로 항상 새 컨테이너 생성)
-            docker-compose up -d --build --force-recreate
+            docker compose up -d --build --force-recreate
