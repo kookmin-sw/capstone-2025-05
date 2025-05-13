@@ -31,3 +31,8 @@ services:
 
 volumes:
   postgres_data: 
+
+networks:
+  default:
+    name: maple-network
+    driver: bridge
