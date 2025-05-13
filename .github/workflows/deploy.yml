@@ -15,7 +15,6 @@ jobs:
           port: ${{ secrets.OCI_PORT }}
           username: ${{ secrets.OCI_USERNAME }}
           key: ${{ secrets.OCI_SSH_KEY }}
-          # passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
           source: "docker-compose.yml,nginx/**"
           target: "/home/${{ secrets.OCI_USERNAME }}/deployment"
           strip_components: 0
@@ -28,7 +27,6 @@ jobs:
           port: ${{ secrets.OCI_PORT }}
           username: ${{ secrets.OCI_USERNAME }}
           key: ${{ secrets.OCI_SSH_KEY }}
-          # passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
           script: |
             echo "=== Verifying files in deployment directory ==="
             ls -la /home/${{ secrets.OCI_USERNAME }}/deployment/
@@ -43,7 +41,6 @@ jobs:
           port: ${{ secrets.OCI_PORT }}
           username: ${{ secrets.OCI_USERNAME }}
           key: ${{ secrets.OCI_SSH_KEY }}
-          # passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
           script: |
             cd /home/${{ secrets.OCI_USERNAME }}/deployment
             
@@ -69,38 +66,15 @@ jobs:
             echo "REACT_APP_SPOTIFY_CLIENT_ID=${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}" >> .env
             echo "REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main" >> .env
             echo "PUBLIC_URL=/" >> .env
-            echo "DB_USER=postgres" >> .env
-            echo "DB_PASSWORD=postgres" >> .env
-            echo "DB_HOST=db" >> .env
-            echo "DB_PORT=5432" >> .env
-            echo "DB_NAME=maple_media" >> .env
-            echo "POSTGRES_USER=postgres" >> .env
-            echo "POSTGRES_PASSWORD=postgres" >> .env
-            echo "POSTGRES_DB=maple_media" >> .env
             
-            # analysis.env 파일 생성
-            echo "# Analysis Service Environment Variables" > analysis.env
-            echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> analysis.env
-            echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> analysis.env
-            echo "CELERY_BROKER_URL=${{ secrets.CELERY_BROKER_URL }}" >> analysis.env
-            echo "CELERY_RESULT_BACKEND=${{ secrets.CELERY_RESULT_BACKEND }}" >> analysis.env
-            echo "API_HOST=0.0.0.0" >> analysis.env
-            echo "API_PORT=8000" >> analysis.env
-            echo "LOG_LEVEL=info" >> analysis.env
-            echo "MODEL_DIR"="${{ secrets.MODEL_DIR }}" >> analysis.env
-            echo "GROK_API_KEY=${{ secrets.GROK_API_KEY }}" >> analysis.env
-            echo "GROK_API_URL=${{ secrets.GROK_API_URL }}" >> analysis.env
-            echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> analysis.env
-            echo "MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}" >> analysis.env
-            
-            docker rm -f maple-client maple-api analysis_api analysis_worker 2>/dev/null || true
+            docker rm -f maple-client maple-api 2>/dev/null || true
             
             docker image prune -f
             docker container prune -f
             
-            docker compose stop maple-client maple-api analysis_api analysis_worker
+            docker compose stop maple-client maple-api
             
-            docker image rm -f ${DOCKER_USERNAME}/maple-client:latest ${DOCKER_USERNAME}/maple-api:latest ${DOCKER_USERNAME}/maple-analysis-service:latest 2>/dev/null || true
+            docker image rm -f ${DOCKER_USERNAME}/maple-client:latest ${DOCKER_USERNAME}/maple-api:latest 2>/dev/null || true
             
             docker compose pull --no-parallel
             
