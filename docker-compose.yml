@@ -83,7 +83,3 @@ volumes:
 networks:
   maple-network:
     driver: bridge
-
-networks:
-  maple-network:
-    driver: bridge
