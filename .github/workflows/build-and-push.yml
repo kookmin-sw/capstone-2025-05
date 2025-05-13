@@ -54,3 +54,49 @@ jobs:
           
           # 이미지 푸시
           docker push $IMAGE_NAME
+  
+  deploy:
+    needs: docker
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Create environment file
+        run: |
+          # GitHub Secrets에서 환경 변수 값을 가져와 analysis.env 파일 생성
+          cat > analysis.env << EOF
+          # Celery 및 Redis 설정
+          CELERY_BROKER_URL=${{ secrets.CELERY_BROKER_URL }}
+          CELERY_RESULT_BACKEND=${{ secrets.CELERY_RESULT_BACKEND }}
+
+          # 모델 디렉토리 경로
+          MODEL_DIR=${{ secrets.MODEL_DIR }}
+
+          # GROK API 설정
+          GROK_API_KEY=${{ secrets.GROK_API_KEY }}
+          GROK_API_URL=${{ secrets.GROK_API_URL }}
+
+          # 중앙 서버 API 설정
+          API_BASE_URL=${{ secrets.API_BASE_URL }}
+
+          # MongoDB 설정
+          MONGO_URI=${{ secrets.MONGO_URI }}
+          MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
+          EOF
+          
+          echo "환경 변수 파일(analysis.env)이 생성되었습니다."
+      
+      - name: Deploy with Docker Compose
+        run: |
+          # API 이미지 태그 업데이트 (최신 빌드 이미지 사용)
+          sed -i "s|build: .|image: ${{ secrets.DOCKER_USERNAME }}/maple-analysis-service:latest|g" docker-compose.yml
+          
+          # 도커 컴포즈로 서비스 배포 (백그라운드에서 실행)
+          docker compose down
+          docker compose pull
+          docker compose up -d
+          
+          echo "애플리케이션이 Docker Compose를 통해 성공적으로 배포되었습니다."
