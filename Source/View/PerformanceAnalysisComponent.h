@@ -30,6 +30,9 @@ public:
         // 수평 시각화 컴포넌트의 진폭 감도 조절
         horizontalVisualiserComponent.setDynamicScaleFactor(150.0f); // 기본값 270.0f에서 감소
         
+        // 시각화 모드 초기화 - 바 모드로 고정
+        horizontalVisualiserComponent.setVisualisationMode(MapleHorizontalAudioVisualiserComponent::BarSpectrum);
+        
         // 기타 주파수 범위 초기화 (기타 주파수 범위로 제한)
         // 일반적인 기타 음역 범위: 표준 튜닝 E2(82Hz)~E6(1318Hz), 하모닉스 포함 ~2kHz
         const float minFreq = 80.0f;   // 최저 주파수 (Hz) - 가장 낮은 E 음 커버
@@ -90,6 +93,8 @@ public:
         // 수평 오디오 시각화 컴포넌트를 하단에 배치
         auto horizontalVisualiserHeight = 150;
         auto horizontalVisualiserArea = bounds.removeFromBottom(horizontalVisualiserHeight);
+        
+        // 수평 시각화 컴포넌트 배치 (전체 공간 사용)
         horizontalVisualiserComponent.setBounds(horizontalVisualiserArea.reduced(5));
         
         // 3D 시각화 컴포넌트를 오른쪽에 배치
@@ -180,7 +185,7 @@ public:
         // 스케일이 조절된 데이터를 시각화 컴포넌트로 전달
         horizontalVisualiserComponent.pushBuffer(scaledBuffer);
     }
-    
+
 private:
     juce::Label titleLabel;
     juce::Label accuracyLabel;

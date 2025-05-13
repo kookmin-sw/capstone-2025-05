@@ -11,12 +11,24 @@ class MapleHorizontalAudioVisualiserComponent : public juce::Component,
 public:
     MapleHorizontalAudioVisualiserComponent()
     {
-        // 색상 팔레트 초기화 - 기타 주파수에 적합한 색상으로 변경
-        colours.add(juce::Colour(0xff3366FF)); // 파랑 (저주파 영역 80-300Hz)
-        colours.add(juce::Colour(0xff33CCFF)); // 하늘색 (낮은 중주파 300-600Hz)
-        colours.add(juce::Colour(0xff00FF99)); // 연두색 (중간 주파수 600-1000Hz - 기타 핵심 영역)
-        colours.add(juce::Colour(0xffFFCC00)); // 주황색 (높은 중주파 1000-1500Hz)
-        colours.add(juce::Colour(0xffFF6600)); // 오렌지색 (고주파 1500-2000Hz)
+        // 색상 팔레트 초기화 - 더 아름다운 그래디언트를 위한 색상 선택
+        colours.add(juce::Colour(0xff1E3FFF)); // 진한 파랑 (저주파 영역)
+        colours.add(juce::Colour(0xff00A4FF)); // 밝은 파랑 (낮은 중주파)
+        colours.add(juce::Colour(0xff00FFBF)); // 청록색 (중간 주파수 - 기타 핵심 영역)
+        colours.add(juce::Colour(0xffFFD500)); // 노랑/금색 (높은 중주파)
+        colours.add(juce::Colour(0xffFF5C00)); // 주황/오렌지 (고주파)
+        
+        // 그래디언트를 위한 추가 색상 팔레트
+        // 중간 블렌딩 색상을 추가하여 더 부드러운 전환 제공
+        gradientColours.add(juce::Colour(0xff1E3FFF)); // 진한 파랑
+        gradientColours.add(juce::Colour(0xff0069FF)); // 중간 파랑
+        gradientColours.add(juce::Colour(0xff00A4FF)); // 밝은 파랑
+        gradientColours.add(juce::Colour(0xff00D9FF)); // 하늘색
+        gradientColours.add(juce::Colour(0xff00FFBF)); // 청록색
+        gradientColours.add(juce::Colour(0xff80FF00)); // 라임색
+        gradientColours.add(juce::Colour(0xffFFD500)); // 노랑/금색
+        gradientColours.add(juce::Colour(0xffFF8A00)); // 금색/주황
+        gradientColours.add(juce::Colour(0xffFF5C00)); // 주황/오렌지
         
         // FFT 초기화
         fftSize = 1024;
@@ -25,14 +37,14 @@ public:
         fifoIndex = 0;
         fftDataFifo.resize(fftSize, 0.0f);
         
-        // 주파수 밴드 설정 - 수평 바에 최적화된 수
-        numBands = 64; // 수평 시각화에 적합한 밴드 수
+        // 주파수 밴드 설정 - 더 연속적인 시각화를 위해 밴드 수 증가
+        numBands = 256; // 밴드 수 증가 (기존 128에서 256으로)
         
         // 스펙트럼 데이터 초기화
         for (int i = 0; i < numBands; ++i)
             frequencyData.add(0.0f);
             
-        // 이동 평균 필터 히스토리 초기화
+        // 이동 평균 필터 히스토리 초기화 - 더 부드러운 전환을 위해 사이즈 증가
         for (int i = 0; i < movingAverageSize; ++i) {
             juce::Array<float> history;
             for (int j = 0; j < numBands; ++j) {
@@ -43,6 +55,9 @@ public:
         
         // 스무스 값 초기화
         smoothedFrequencyData.resize(numBands, 0.0f);
+        
+        // 보간된 데이터 저장용 (중간 값 포함)
+        interpolatedData.resize(numBands, 0.0f);
             
         // 파형 데이터 초기화
         waveformData.setSize(2, 1024);
@@ -53,7 +68,7 @@ public:
         // 밴드 인덱스 미리 계산
         precomputeBandIndices();
         
-        // 타이머 시작
+        // 타이머 시작 - 더 부드러운 애니메이션을 위해 주파수 증가
         startTimerHz(60);
         
         // 마지막 페인트 시간 초기화
@@ -64,6 +79,13 @@ public:
         
         // 기타 주파수 특화 설정
         dynamicScaleFactor = 270.0f; // 진폭 스케일 증가
+        
+        // 처음부터 보간 모드 활성화
+        useInterpolation = true;
+        useGradientRendering = true;
+        
+        // 시각화 모드 초기화
+        visualisationMode = GradientSpectrum;
     }
     
     ~MapleHorizontalAudioVisualiserComponent() override
@@ -203,6 +225,37 @@ public:
     float getDynamicScaleFactor() const
     {
         return dynamicScaleFactor;
+    }
+    
+    // 시각화 모드 설정 열거형
+    enum VisualisationMode
+    {
+        GradientSpectrum,   // 연속적인 그래디언트 스펙트럼
+        BarSpectrum         // 개별 막대 스펙트럼
+    };
+    
+    // 시각화 모드 설정 메서드
+    void setVisualisationMode(VisualisationMode newMode)
+    {
+        visualisationMode = newMode;
+        repaint();
+    }
+    
+    // 현재 시각화 모드 반환
+    VisualisationMode getVisualisationMode() const
+    {
+        return visualisationMode;
+    }
+    
+    // 시각화 모드 전환 메서드
+    void toggleVisualisationMode()
+    {
+        if (visualisationMode == GradientSpectrum)
+            visualisationMode = BarSpectrum;
+        else
+            visualisationMode = GradientSpectrum;
+        
+        repaint();
     }
     
 private:
@@ -432,6 +485,81 @@ private:
             // 주파수 값에 한계 설정
             smoothedFrequencyData[band] = juce::jmin(0.98f, smoothedFrequencyData[band]);
         }
+        
+        // 스무딩된 데이터를 보간하여 더 연속적인 스펙트럼 생성
+        if (useInterpolation)
+            interpolateFrequencyData();
+    }
+    
+    // 주파수 데이터 보간 - 빈 공간 채우기와 연속적인 스펙트럼을 위한 메서드
+    void interpolateFrequencyData()
+    {
+        // 보간 전 기존 데이터 복사
+        for (int band = 0; band < numBands; ++band)
+            interpolatedData[band] = smoothedFrequencyData[band];
+            
+        // 보간 적용 (0이거나 매우 낮은 값을 주변 값에 기반하여 보정)
+        for (int band = 1; band < numBands - 1; ++band)
+        {
+            // 현재 값이 매우 낮고, 주변 값이 높다면 보간 적용
+            float currentValue = interpolatedData[band];
+            if (currentValue < 0.01f) // 낮은 값 기준점
+            {
+                float prevValue = interpolatedData[band - 1];
+                float nextValue = interpolatedData[band + 1];
+                
+                // 양 옆의 값이 모두 일정 기준 이상일 때만 보간
+                if (prevValue > 0.05f || nextValue > 0.05f)
+                {
+                    // 양쪽 값의 가중 평균으로 보간 (가까운 쪽에 더 큰 가중치)
+                    float interpolated = 0.0f;
+                    float weightSum = 0.0f;
+                    
+                    if (prevValue > 0.01f)
+                    {
+                        float weight = 1.0f;
+                        interpolated += prevValue * weight;
+                        weightSum += weight;
+                    }
+                    
+                    if (nextValue > 0.01f)
+                    {
+                        float weight = 1.0f;
+                        interpolated += nextValue * weight;
+                        weightSum += weight;
+                    }
+                    
+                    if (weightSum > 0.0f)
+                    {
+                        // 실제 가중 평균 계산 및 주변 값보다 약간 낮게 설정
+                        interpolated = (interpolated / weightSum) * 0.85f;
+                        interpolatedData[band] = interpolated;
+                    }
+                }
+            }
+        }
+        
+        // 추가 스무딩 - 인접 밴드 간 부드러운 전환을 위한 가우시안 블러 효과
+        std::vector<float> tempData = interpolatedData;
+        
+        for (int band = 2; band < numBands - 2; ++band)
+        {
+            // 5-포인트 가우시안 블러 커널 적용 (1,4,6,4,1)/16
+            float blurred = (
+                interpolatedData[band - 2] * 1.0f +
+                interpolatedData[band - 1] * 4.0f +
+                interpolatedData[band]     * 6.0f +
+                interpolatedData[band + 1] * 4.0f +
+                interpolatedData[band + 2] * 1.0f
+            ) / 16.0f;
+            
+            // 원래 값과 블러된 값 사이 적절히 블렌딩
+            float blendFactor = 0.3f; // 블러 강도 (0.0 ~ 1.0)
+            tempData[band] = interpolatedData[band] * (1.0f - blendFactor) + blurred * blendFactor;
+        }
+        
+        // 블러 결과를 다시 원래 배열에 복사
+        interpolatedData = tempData;
     }
     
     // 수평 주파수 바 그리기
@@ -439,103 +567,343 @@ private:
     {
         const juce::ScopedLock sl(audioDataLock);
         
-        // 바 치수 계산
-        float barWidth = bounds.getWidth() / numBands;
-        float maxBarHeight = bounds.getHeight() * 0.85f; // 화면 높이의 85%를 최대 높이로 설정
+        // 배경에 주파수 영역 표시
+        drawFrequencyRangeBackground(g, bounds, bounds.getBottom() - 10.0f);
+        
+        // 시각화 모드에 따른 렌더링 선택
+        switch (visualisationMode)
+        {
+            case GradientSpectrum:
+                drawGradientSpectrum(g, bounds);
+                break;
+                
+            case BarSpectrum:
+                drawBarSpectrum(g, bounds);
+                break;
+                
+            default:
+                drawGradientSpectrum(g, bounds);
+                break;
+        }
+    }
+    
+    // 막대 스펙트럼 그리기 - 개별 막대 시각화
+    void drawBarSpectrum(juce::Graphics& g, juce::Rectangle<float> bounds)
+    {
+        float maxHeight = bounds.getHeight() * 0.85f; // 화면 높이의 85%를 최대 높이로 설정
         float baseY = bounds.getBottom() - 10.0f; // 약간의 여백
         
-        // 바의 패딩 계산 (각 바 사이의 간격)
-        float barPadding = juce::jmin(barWidth * 0.2f, 3.0f);
+        // 보간된 데이터 사용
+        const std::vector<float>& dataToUse = useInterpolation ? interpolatedData : smoothedFrequencyData;
         
-        // 배경에 주파수 영역 표시 (옵션)
-        drawFrequencyRangeBackground(g, bounds, baseY);
+        // 막대 간격 설정 - 더 좁은 간격으로 연속적인 느낌 부여
+        int dividerInterval = 1; // 각 밴드마다 하나의 막대 (최대한 조밀하게)
         
-        // 각 주파수 밴드에 대한 바 그리기
-        for (int band = 0; band < numBands; ++band)
+        // 주파수 막대 그리기
+        for (int band = 0; band < numBands; band += dividerInterval)
         {
-            // 값이 0이면 건너뛰기 (성능 최적화)
-            float value = band < smoothedFrequencyData.size() ? smoothedFrequencyData[band] : 0.0f;
-            if (value <= 0.001f)
-                continue;
-                
-            // 바의 높이 계산
-            float barHeight = value * maxBarHeight;
+            float x = bounds.getX() + (float)band * bounds.getWidth() / numBands;
+            float lineHeight = 0.0f;
             
-            // 바의 위치 계산
-            float x = bounds.getX() + band * barWidth;
-            float y = baseY - barHeight;
+            // 현재 밴드의 값과 다음 밴드의 값 중 큰 값으로 라인 높이 결정
+            float value = band < dataToUse.size() ? dataToUse[band] : 0.0f;
             
-            // 주파수 영역에 따른 색상 설정
-            juce::Colour barColour;
+            // 밴드 범위(band에서 band+dividerInterval)에서 최대값 찾기
+            float maxValue = value;
+            for (int i = 1; i < dividerInterval && (band + i) < dataToUse.size(); ++i) {
+                maxValue = juce::jmax(maxValue, dataToUse[band + i]);
+            }
+            
+            lineHeight = maxValue * maxHeight;
+            
+            // 최소 높이 보장 (베이스라인 위로 약간 올라오게)
+            lineHeight = juce::jmax(lineHeight, 2.0f);
+            
+            // 알파값 계산 (진폭에 따라 더 밝게)
+            float alpha = 0.15f + 0.25f * lineHeight / maxHeight;
+            
+            // 주파수 대역에 따른 색상 선택
             float normalizedBand = (float)band / numBands;
+            juce::Colour dividerColour;
             
-            // 기타 주파수 영역별 색상 맵핑
+            // 주파수 영역별 색상 맵핑
             if (normalizedBand < 0.2f) {
-                // 저주파 영역 (파란색 계열)
-                barColour = colours[0];
-            }
-            else if (normalizedBand < 0.35f) {
-                // 낮은 중주파 영역 (하늘색)
-                barColour = colours[1];
-            }
-            else if (normalizedBand < 0.6f) {
-                // 중간 주파수 영역 (연두색) - 기타 핵심 영역
-                barColour = colours[2];
-            }
-            else if (normalizedBand < 0.8f) {
-                // 높은 중주파 영역 (주황색)
-                barColour = colours[3];
-            }
-            else {
-                // 고주파 영역 (오렌지색)
-                barColour = colours[4];
+                dividerColour = gradientColours[0].brighter(0.8f);
+            } else if (normalizedBand < 0.4f) {
+                dividerColour = gradientColours[2].brighter(0.8f);
+            } else if (normalizedBand < 0.6f) {
+                dividerColour = gradientColours[4].brighter(0.8f);
+            } else if (normalizedBand < 0.8f) {
+                dividerColour = gradientColours[6].brighter(0.8f);
+            } else {
+                dividerColour = gradientColours[8].brighter(0.8f);
             }
             
-            // 진폭에 따른 밝기 설정 - 더 역동적인 효과
-            float brightness = 0.7f + 0.5f * value;
-            barColour = barColour.withMultipliedBrightness(brightness);
+            // 막대의 오른쪽 경계 계산
+            float xEnd = bounds.getX() + (float)(band + dividerInterval) * bounds.getWidth() / numBands;
+            if (xEnd > bounds.getRight()) xEnd = bounds.getRight();
             
-            // 애니메이션 효과를 위한 알파값 변동
-            float alpha = 0.9f + 0.1f * std::sin(animationOffset * 0.1f + band * 0.2f);
+            // 바 너비 계산 (더 얇게 만들기 위해 조정)
+            float barWidth = (xEnd - x);
+            float barPadding = barWidth * 0.05f; // 패딩 감소 (5%만 남김)
+            float actualBarWidth = barWidth - barPadding;
+            float barX = x + barPadding / 2;
             
-            // 바 그리기 (약간의 둥근 모서리로)
-            g.setColour(barColour.withAlpha(alpha));
+            // 매우 얇은 막대로 그려서 연속적인 스펙트럼처럼 보이게 함
+            // 막대 영역 채우기 - 반투명 채우기로 막대 효과 생성
+            g.setColour(dividerColour.withAlpha(0.1f + 0.2f * lineHeight / maxHeight));
+            g.fillRect(barX, baseY - lineHeight, actualBarWidth, lineHeight);
             
-            // 기타 주파수 영역에서는 더 두껍고 눈에 띄게 표현
-            if (normalizedBand >= 0.2f && normalizedBand < 0.6f) {
-                // 더 넓은 바 (패딩 줄임)
-                g.fillRoundedRectangle(x + barPadding * 0.3f, y, barWidth - barPadding * 0.6f, barHeight, 2.5f);
+            // 막대 테두리 그리기 (더 얇은 선으로)
+            g.setColour(dividerColour.withAlpha(alpha));
+            // 왼쪽 경계
+            g.drawLine(barX, baseY, barX, baseY - lineHeight, 0.3f);
+            // 오른쪽 경계
+            g.drawLine(barX + actualBarWidth, baseY, barX + actualBarWidth, baseY - lineHeight, 0.3f);
+            // 상단 경계
+            g.drawLine(barX, baseY - lineHeight, barX + actualBarWidth, baseY - lineHeight, 0.3f);
+            
+            // 막대 상단에 하이라이트 추가 (진폭이 높을 때만)
+            if (lineHeight > maxHeight * 0.25f) {
+                // 상단 하이라이트
+                g.setColour(dividerColour.brighter(0.5f).withAlpha(0.4f + 0.3f * lineHeight / maxHeight));
+                g.drawLine(barX, baseY - lineHeight + 0.5f, barX + actualBarWidth, baseY - lineHeight + 0.5f, 0.7f);
                 
-                // 더 강한 상단 하이라이트
-                g.setColour(barColour.brighter(0.4f).withAlpha(alpha));
-                g.fillRoundedRectangle(x + barPadding * 0.3f, y, barWidth - barPadding * 0.6f, 3.5f, 1.8f);
-            } 
-            else {
-                // 일반 바
-                g.fillRoundedRectangle(x + barPadding * 0.5f, y, barWidth - barPadding, barHeight, 2.0f);
-                
-                // 상단 하이라이트 (3D 효과)
-                g.setColour(barColour.brighter(0.3f).withAlpha(alpha));
-                g.fillRoundedRectangle(x + barPadding * 0.5f, y, barWidth - barPadding, 2.5f, 1.5f);
-            }
-            
-            // 글로우 효과 (높은 값에서만) - 활성화된 주파수 강조
-            if (value > 0.5f)
-            {
-                float glowSize = barWidth * (0.8f + 0.2f * value); // 값이 클수록 더 큰 글로우
-                float glowY = y - 2.0f;
-                float glowX = x + (barWidth - glowSize) * 0.5f;
-                
-                // 값이 높을수록 더 밝은 글로우
-                float glowBrightness = 0.5f + 0.5f * value;
-                g.setColour(barColour.brighter(glowBrightness).withAlpha(0.3f + 0.1f * value));
-                g.fillEllipse(glowX, glowY - glowSize * 0.3f, glowSize, glowSize * 0.6f);
+                // 상단 점 효과 (매우 높은 진폭에서만)
+                if (lineHeight > maxHeight * 0.6f) {
+                    float centerX = barX + actualBarWidth * 0.5f;
+                    float dotSize = 1.5f;
+                    g.setColour(dividerColour.brighter(1.0f).withAlpha(0.8f));
+                    g.fillEllipse(centerX - dotSize/2, baseY - lineHeight - dotSize/2, dotSize, dotSize);
+                }
             }
         }
         
-        // 가이드 라인 (선택 사항)
+        // 주요 주파수 대역 구분선 (더 강조된 구분선)
+        // 주요 주파수 영역 경계 계산 (기타 주요 주파수 영역)
+        float lowMidBound = bounds.getX() + bounds.getWidth() * 0.2f;  // 300Hz 지점
+        float midHighBound = bounds.getX() + bounds.getWidth() * 0.6f; // 1200Hz 지점
+        
+        // 주요 구분선 그리기
+        g.setColour(juce::Colours::white.withAlpha(0.1f)); // 더 투명하게
+        g.drawLine(lowMidBound, baseY, lowMidBound, bounds.getY(), 0.5f); // 더 얇게
+        g.drawLine(midHighBound, baseY, midHighBound, bounds.getY(), 0.5f);
+    }
+    
+    // 그래디언트 스펙트럼 그리기 - 연속적인 스펙트럼 시각화
+    void drawGradientSpectrum(juce::Graphics& g, juce::Rectangle<float> bounds)
+    {
+        float maxHeight = bounds.getHeight() * 0.85f; // 화면 높이의 85%를 최대 높이로 설정
+        float baseY = bounds.getBottom() - 10.0f; // 약간의 여백
+        
+        // 보간된 데이터 사용
+        const std::vector<float>& dataToUse = useInterpolation ? interpolatedData : smoothedFrequencyData;
+        
+        // 스펙트럼 경로 생성
+        juce::Path spectrumPath;
+        spectrumPath.startNewSubPath(bounds.getX(), baseY); // 왼쪽 하단에서 시작
+        
+        // 각 포인트를 경로에 추가
+        for (int band = 0; band < numBands; ++band)
+        {
+            float x = bounds.getX() + (float)band * bounds.getWidth() / numBands;
+            float value = band < dataToUse.size() ? dataToUse[band] : 0.0f;
+            float y = baseY - value * maxHeight;
+            
+            // 서브패스가 시작되지 않았으면 시작, 그렇지 않으면 라인 추가
+            if (band == 0)
+                spectrumPath.startNewSubPath(x, y);
+            else
+                spectrumPath.lineTo(x, y);
+        }
+        
+        // 경로 닫기 (오른쪽 하단 -> 왼쪽 하단)
+        spectrumPath.lineTo(bounds.getRight(), baseY);
+        spectrumPath.lineTo(bounds.getX(), baseY);
+        spectrumPath.closeSubPath();
+        
+        // 그래디언트 컬러 맵 생성 (스펙트럼 포지션에 맞춰 색상 배치)
+        juce::ColourGradient gradient;
+        gradient.clearColours();
+        
+        int numColours = gradientColours.size();
+        for (int i = 0; i < numColours; ++i)
+        {
+            float position = (float)i / (numColours - 1);
+            gradient.addColour(position, gradientColours[i]);
+        }
+        
+        // 애니메이션 효과를 위한 알파 맵 생성
+        juce::Path spectrumOutline;
+        spectrumOutline = spectrumPath;
+        
+        // 다중 그래디언트 렌더링
+        // 1. 메인 채우기 - 부드러운 그래디언트
+        juce::ColourGradient fillGradient(
+            juce::Colour(0xff1E3FFF), bounds.getX(), baseY, // 왼쪽 하단
+            juce::Colour(0xffFF5C00), bounds.getRight(), baseY, // 오른쪽 하단
+            false); // 수직 그래디언트 아님
+            
+        // 그래디언트에 중간 색상 추가
+        fillGradient.clearColours();
+        for (int i = 0; i < gradientColours.size(); ++i)
+        {
+            float pos = (float)i / (gradientColours.size() - 1);
+            fillGradient.addColour(pos, gradientColours[i].withAlpha(0.85f));
+        }
+        
+        // 스펙트럼 채우기
+        g.setGradientFill(fillGradient);
+        g.fillPath(spectrumPath);
+        
+        // 2. 글로우 효과 
+        juce::Path glowPath = spectrumPath;
+        float glowThickness = 2.5f;
+        juce::PathStrokeType strokeType(glowThickness, juce::PathStrokeType::curved, juce::PathStrokeType::rounded);
+        
+        juce::ColourGradient glowGradient(
+            juce::Colour(0xff1E3FFF).brighter(0.7f), bounds.getX(), baseY, // 왼쪽 하단
+            juce::Colour(0xffFF5C00).brighter(0.7f), bounds.getRight(), baseY, // 오른쪽 하단
+            false); // 수직 그래디언트 아님
+            
+        glowGradient.clearColours();
+        for (int i = 0; i < gradientColours.size(); ++i)
+        {
+            float pos = (float)i / (gradientColours.size() - 1);
+            glowGradient.addColour(pos, gradientColours[i].brighter(0.8f).withAlpha(0.7f));
+        }
+        
+        // 스톡을 위한 임시 경로 - 채워진 경로의 상단 가장자리만 포함
+        juce::Path topEdgePath;
+        topEdgePath.startNewSubPath(bounds.getX(), baseY); // 왼쪽 하단에서 시작
+        
+        // 각 포인트를 경로에 추가
+        for (int band = 0; band < numBands; ++band)
+        {
+            float x = bounds.getX() + (float)band * bounds.getWidth() / numBands;
+            float value = band < dataToUse.size() ? dataToUse[band] : 0.0f;
+            float y = baseY - value * maxHeight;
+            
+            // 서브패스가 시작되지 않았으면 시작, 그렇지 않으면 라인 추가
+            if (band == 0)
+                topEdgePath.startNewSubPath(x, y);
+            else
+                topEdgePath.lineTo(x, y);
+        }
+        
+        // 글로우 효과 적용
+        g.setGradientFill(glowGradient);
+        g.strokePath(topEdgePath, strokeType);
+        
+        // 3. 상단 엣지 하이라이트 
+        juce::Path highlightPath = topEdgePath;
+        
+        juce::ColourGradient highlightGradient(
+            juce::Colour(0xff1E3FFF).brighter(1.5f), bounds.getX(), baseY, // 왼쪽 하단
+            juce::Colour(0xffFF5C00).brighter(1.5f), bounds.getRight(), baseY, // 오른쪽 하단
+            false); // 수직 그래디언트 아님
+            
+        highlightGradient.clearColours();
+        for (int i = 0; i < gradientColours.size(); ++i)
+        {
+            float pos = (float)i / (gradientColours.size() - 1);
+            highlightGradient.addColour(pos, gradientColours[i].brighter(1.5f).withAlpha(0.9f + 
+                                                    0.1f * std::sin(animationOffset * 0.1f + i * 0.3f)));
+        }
+        
+        // 하이라이트 효과 적용 (얇은 라인)
+        g.setGradientFill(highlightGradient);
+        g.strokePath(topEdgePath, juce::PathStrokeType(1.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        
+        // 바닥 라인 (베이스라인)
         g.setColour(juce::Colours::white.withAlpha(0.08f));
         g.drawHorizontalLine((int)baseY, bounds.getX(), bounds.getRight());
+        
+        // 4. 막대 형태로 주파수 시각화
+        int dividerInterval = 4; // 4개 밴드마다 구분선 표시 (더 조밀하게)
+        
+        // 주파수 막대 그리기
+        for (int band = 0; band < numBands; band += dividerInterval)
+        {
+            float x = bounds.getX() + (float)band * bounds.getWidth() / numBands;
+            float lineHeight = 0.0f;
+            
+            // 현재 밴드의 값과 다음 밴드의 값 중 큰 값으로 라인 높이 결정
+            float value = band < dataToUse.size() ? dataToUse[band] : 0.0f;
+            
+            // 밴드 범위(band에서 band+dividerInterval)에서 최대값 찾기
+            float maxValue = value;
+            for (int i = 1; i < dividerInterval && (band + i) < dataToUse.size(); ++i) {
+                maxValue = juce::jmax(maxValue, dataToUse[band + i]);
+            }
+            
+            lineHeight = maxValue * maxHeight;
+            
+            // 최소 높이 보장 (베이스라인 위로 약간 올라오게)
+            lineHeight = juce::jmax(lineHeight, 3.0f);
+            
+            // 알파값 계산 (진폭에 따라 더 밝게)
+            float alpha = 0.15f + 0.25f * lineHeight / maxHeight;
+            
+            // 주파수 대역에 따른 색상 선택
+            float normalizedBand = (float)band / numBands;
+            juce::Colour dividerColour;
+            
+            // 주파수 영역별 색상 맵핑
+            if (normalizedBand < 0.2f) {
+                dividerColour = gradientColours[0].brighter(0.8f);
+            } else if (normalizedBand < 0.4f) {
+                dividerColour = gradientColours[2].brighter(0.8f);
+            } else if (normalizedBand < 0.6f) {
+                dividerColour = gradientColours[4].brighter(0.8f);
+            } else if (normalizedBand < 0.8f) {
+                dividerColour = gradientColours[6].brighter(0.8f);
+            } else {
+                dividerColour = gradientColours[8].brighter(0.8f);
+            }
+            
+            // 막대의 오른쪽 경계 계산
+            float xEnd = bounds.getX() + (float)(band + dividerInterval) * bounds.getWidth() / numBands;
+            if (xEnd > bounds.getRight()) xEnd = bounds.getRight();
+            
+            // 막대 영역 채우기 - 반투명 채우기로 막대 효과 생성
+            g.setColour(dividerColour.withAlpha(0.1f + 0.2f * lineHeight / maxHeight));
+            g.fillRect(x, baseY - lineHeight, xEnd - x, lineHeight);
+            
+            // 막대 테두리 그리기
+            g.setColour(dividerColour.withAlpha(alpha));
+            // 왼쪽 경계
+            g.drawLine(x, baseY, x, baseY - lineHeight, 0.6f);
+            // 오른쪽 경계
+            g.drawLine(xEnd, baseY, xEnd, baseY - lineHeight, 0.6f);
+            // 상단 경계
+            g.drawLine(x, baseY - lineHeight, xEnd, baseY - lineHeight, 0.5f);
+            
+            // 막대 상단에 하이라이트 추가 (진폭이 높을 때만)
+            if (lineHeight > maxHeight * 0.25f) {
+                // 상단 하이라이트
+                g.setColour(dividerColour.brighter(0.5f).withAlpha(0.4f + 0.3f * lineHeight / maxHeight));
+                g.drawLine(x + 1, baseY - lineHeight + 1, xEnd - 1, baseY - lineHeight + 1, 1.0f);
+                
+                // 상단 점 효과 (매우 높은 진폭에서만)
+                if (lineHeight > maxHeight * 0.6f) {
+                    float centerX = (x + xEnd) * 0.5f;
+                    float dotSize = 2.0f;
+                    g.setColour(dividerColour.brighter(1.0f).withAlpha(0.8f));
+                    g.fillEllipse(centerX - dotSize/2, baseY - lineHeight - dotSize/2, dotSize, dotSize);
+                }
+            }
+        }
+        
+        // 5. 주요 주파수 대역 구분선 (더 강조된 구분선)
+        // 주요 주파수 영역 경계 계산 (기타 주요 주파수 영역)
+        float lowMidBound = bounds.getX() + bounds.getWidth() * 0.2f;  // 300Hz 지점
+        float midHighBound = bounds.getX() + bounds.getWidth() * 0.6f; // 1200Hz 지점
+        
+        // 주요 구분선 그리기
+        g.setColour(juce::Colours::white.withAlpha(0.2f)); // 더 뚜렷한 색상
+        g.drawLine(lowMidBound, baseY, lowMidBound, bounds.getY(), 0.7f); // 더 두꺼운 선
+        g.drawLine(midHighBound, baseY, midHighBound, bounds.getY(), 0.7f);
     }
     
     // 주파수 영역 배경 표시
@@ -570,6 +938,7 @@ private:
     juce::AudioBuffer<float> waveformData;
     juce::Array<float> frequencyData;
     std::vector<float> smoothedFrequencyData;
+    std::vector<float> interpolatedData; // 보간된 주파수 데이터 (더 연속적인 시각화용)
     
     // FFT 관련 데이터
     std::unique_ptr<juce::dsp::FFT> fftEngine;
@@ -609,6 +978,16 @@ private:
     // 주파수 범위 관련 데이터
     float minFrequency = 80.0f;
     float maxFrequency = 2000.0f;
+    
+    // 그래디언트 관련 데이터
+    juce::Array<juce::Colour> gradientColours;
+    
+    // 보간 관련 데이터
+    bool useInterpolation = true;
+    bool useGradientRendering = true;
+    
+    // 시각화 모드 설정
+    VisualisationMode visualisationMode;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MapleHorizontalAudioVisualiserComponent)
 }; 
