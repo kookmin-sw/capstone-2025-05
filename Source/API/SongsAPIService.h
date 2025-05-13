@@ -23,6 +23,9 @@ public:
     // 특정 곡 정보 가져오기
     void getSongById(const juce::String& songId, std::function<void(ApiResponse)> callback);
     
+    // 썸네일 이미지 다운로드 메서드 추가
+    void downloadSongThumbnail(const juce::String& songId, std::function<void(bool success, juce::Image image)> callback);
+    
     // 이미지 다운로드 메서드
     void downloadImage(const juce::String& imageUrl, std::function<void(bool success, juce::Image image)> callback);
     
@@ -49,6 +52,10 @@ public:
     // 기본 HTTP 헤더 가져오기
     juce::String getDefaultHeaders() const { return defaultHeaders; }
     
+    // 오디오 파일 다운로드 메서드 추가
+    void downloadSongAudio(const juce::String& audioUrl, const juce::File& destinationFile, 
+                          std::function<void(bool success, juce::String filePath)> callback);
+    
 private:
     juce::String apiBaseUrl;
     juce::String defaultHeaders;
@@ -62,4 +69,7 @@ private:
     
     // 캐시 디렉토리 가져오기
     juce::File getCacheDirectory();
-}; 
+    
+    // 환경 변수에서 API URL 가져오기
+    juce::String getApiUrlFromEnvironment();
+};

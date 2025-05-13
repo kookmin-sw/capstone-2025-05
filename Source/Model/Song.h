@@ -62,7 +62,19 @@ public:
         // 썸네일/커버 이미지 URL
         juce::String thumbnailPath = json.getProperty("thumbnail", "").toString();
         song.thumbnailPath = thumbnailPath;
-        song.coverImageUrl = thumbnailPath;
+        
+        // 커버 이미지 URL 설정 - ID가 있는 경우 API 엔드포인트 사용 (apiBaseUrl이 이미 /api/v1 포함)
+        if (!song.id.isEmpty())
+        {
+            // ID 기반 썸네일 API 엔드포인트 설정
+            song.coverImageUrl = "/songs/" + song.id + "/thumbnail";
+            DBG("Song::fromJson - generated thumbnail URL from ID: " + song.coverImageUrl);
+        }
+        else
+        {
+            song.coverImageUrl = thumbnailPath;
+            DBG("Song::fromJson - using provided thumbnail path: " + thumbnailPath);
+        }
         
         // 오디오 경로 - song_id 기반 API 엔드포인트 설정
         juce::String audioPath = json.getProperty("audio", "").toString();

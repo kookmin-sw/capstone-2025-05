@@ -62,14 +62,20 @@ GuitarPracticeController::GuitarPracticeController(AudioModel& model, juce::Audi
     apiService = std::make_unique<SongsAPIService>();
     
     // 환경 변수에서 API URL 설정
-    juce::String apiUrl = EnvLoader::get("MAPLE_API_URL");
+    juce::String apiUrl = EnvLoader::get("MAPLE_MEDIA_API_URL");
     if (apiUrl.isNotEmpty())
     {
         apiService->setApiBaseUrl(apiUrl);
+        DBG("GuitarPracticeController: API URL from environment: " + apiUrl);
     }
+    else
+    {
+        DBG("GuitarPracticeController: Using default API URL from SongsAPIService");
+    }
+    
     #ifdef JUCE_DEBUG
     // 디버그 모드에서는 localhost 사용
-    apiService->setApiBaseUrl("http://maple.ne.kr:8001");
+    // apiService->setApiBaseUrl("http://localhost:8000");
     #endif
     
     DBG("GuitarPracticeController: API URL set to: " + apiService->getApiBaseUrl());
@@ -258,6 +264,14 @@ bool GuitarPracticeController::loadSong(const juce::String& songId)
         // 오디오 URL 추출
         juce::String audioUrl = response.data.getProperty("audio", "").toString();
         
+        // 오디오 URL이 비어있고, 곡 ID가 있는 경우 API 엔드포인트 직접 구성
+        if (audioUrl.isEmpty() && !songId.isEmpty())
+        {
+            // ID 기반 오디오 경로 설정
+            audioUrl = "/songs/" + songId + "/audio";
+            DBG("Generated audio URL from ID: " + audioUrl);
+        }
+        
         // 악보 데이터 URL 엔드포인트 직접 구성 (선택 사항)
         juce::String scoreEndpoint = "/songs/" + songId + "/sheet";
         
@@ -299,8 +313,10 @@ bool GuitarPracticeController::loadSong(const juce::String& songId)
                         juce::String audioFileName = songId + "_audio.wav";
                         juce::File audioFile = audioCacheDir.getChildFile(audioFileName);
                         
-                        // 오디오 파일 다운로드
-                        apiService->downloadAudioFile(audioUrl, audioFile, [this, songId](bool audioSuccess, juce::String audioFilePath) {
+                        DBG("Downloading audio from URL: " + audioUrl + " to: " + audioFile.getFullPathName());
+                        
+                        // 새로운 downloadSongAudio 메소드를 사용하여 곡 ID로 직접 오디오 다운로드
+                        apiService->downloadSongAudio(songId, audioFile, [this, songId](bool audioSuccess, juce::String audioFilePath) {
                             if (audioSuccess)
                             {
                                 DBG("Audio file downloaded to: " + audioFilePath);
@@ -321,7 +337,8 @@ bool GuitarPracticeController::loadSong(const juce::String& songId)
                             }
                             else
                             {
-                                DBG("Failed to download audio file, but continuing with score only");
+                                DBG("Failed to download audio for song ID: " + songId);
+                                
                                 // 오디오 다운로드 실패해도 악보만으로도 계속 진행
                                 publishSongLoadedEvent(songId);
                             }
@@ -851,10 +868,55 @@ bool GuitarPracticeController::loadAudioFile(const juce::File& audioFile)
         {
             DBG("GuitarPracticeController::loadAudioFile - ERROR: WAV format not registered!");
         }
+        
+        // 다시 지원되는 포맷 로깅
+        juce::StringArray updatedFormats;
+        for (int i = 0; i < formatManager.getNumKnownFormats(); ++i)
+        {
+            auto* format = formatManager.getKnownFormat(i);
+            updatedFormats.add(format->getFormatName());
+        }
+        DBG("GuitarPracticeController::loadAudioFile - Updated supported formats: " + updatedFormats.joinIntoString(", "));
+    }
+    
+    // 오디오 파일 열어보기 시도
+    juce::File originalFile = audioFile;
+    DBG("GuitarPracticeController::loadAudioFile - Attempting to read: " + originalFile.getFullPathName());
+    
+    // 파일 내용 확인을 위한 기본 체크
+    {
+        juce::FileInputStream fileStream(originalFile);
+        if (fileStream.openedOk())
+        {
+            // WAV 헤더 체크 (간단한 검증)
+            char header[16] = {0};
+            fileStream.read(header, 16);
+            
+            // RIFF/WAVE 헤더 검사
+            bool hasValidHeader = std::memcmp(header, "RIFF", 4) == 0 && 
+                                std::memcmp(header + 8, "WAVE", 4) == 0;
+            
+            DBG("GuitarPracticeController::loadAudioFile - WAV header check: " + juce::String(hasValidHeader ? "Valid" : "Invalid"));
+            
+            // 첫 16바이트 출력
+            juce::String headerBytes;
+            for (int i = 0; i < 16; i++) {
+                char c = header[i];
+                if (c >= 32 && c <= 126) // 출력 가능한 ASCII 문자
+                    headerBytes += c;
+                else
+                    headerBytes += juce::String::formatted("[%02X]", (unsigned char)c);
+            }
+            DBG("GuitarPracticeController::loadAudioFile - File header: " + headerBytes);
+        }
+        else
+        {
+            DBG("GuitarPracticeController::loadAudioFile - Could not open file for header check!");
+        }
     }
     
     // 오디오 파일 읽기
-    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(audioFile));
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(originalFile));
     
     if (reader != nullptr)
     {
@@ -900,7 +962,7 @@ bool GuitarPracticeController::loadAudioFile(const juce::File& audioFile)
         }
         
         // 현재 파일 저장
-        currentAudioFile = audioFile;
+        currentAudioFile = originalFile;
         
         // 정상 로드 확인
         if (readerSource != nullptr)
@@ -914,7 +976,7 @@ bool GuitarPracticeController::loadAudioFile(const juce::File& audioFile)
     }
     else
     {
-        DBG("GuitarPracticeController::loadAudioFile - FAILED to create reader for: " + audioFile.getFullPathName());
+        DBG("GuitarPracticeController::loadAudioFile - FAILED to create reader for: " + originalFile.getFullPathName());
         
         // 파일 타입 확인
         DBG("  File type: " + extension);
@@ -928,7 +990,7 @@ bool GuitarPracticeController::loadAudioFile(const juce::File& audioFile)
             DBG("  - Unsupported channel configuration");
             
             // 추가 디버깅을 위해 파일의 첫 부분 체크
-            juce::FileInputStream fileStream(audioFile);
+            juce::FileInputStream fileStream(originalFile);
             if (fileStream.openedOk())
             {
                 // WAV 헤더 체크 (간단한 검증)
