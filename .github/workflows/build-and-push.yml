@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # 🔥 여기서 React 앱을 빌드하지 않음
+      # 여기서 React 앱을 빌드하지 않음
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -45,7 +45,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          platforms: linux/arm64
+          # platforms: linux/arm64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/maple-client:latest
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/maple-api:buildcache
