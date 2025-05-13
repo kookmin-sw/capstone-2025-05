@@ -27,6 +27,15 @@ public:
         addAndMakeVisible(visualiserComponent); // 3D 시각화 컴포넌트 추가
         addAndMakeVisible(horizontalVisualiserComponent); // 수평 시각화 컴포넌트 추가
         
+        // 수평 시각화 컴포넌트의 진폭 감도 조절
+        horizontalVisualiserComponent.setDynamicScaleFactor(150.0f); // 기본값 270.0f에서 감소
+        
+        // 기타 주파수 범위 초기화 (기타 주파수 범위로 제한)
+        // 일반적인 기타 음역 범위: 표준 튜닝 E2(82Hz)~E6(1318Hz), 하모닉스 포함 ~2kHz
+        const float minFreq = 80.0f;   // 최저 주파수 (Hz) - 가장 낮은 E 음 커버
+        const float maxFreq = 2000.0f; // 최고 주파수 (Hz) - 하모닉스 포함
+        horizontalVisualiserComponent.setFrequencyRange(minFreq, maxFreq);
+        
         titleLabel.setText("Performance Analysis", juce::dontSendNotification);
         titleLabel.setFont(juce::Font(18.0f, juce::Font::bold));
         titleLabel.setJustificationType(juce::Justification::centred);
@@ -145,7 +154,31 @@ public:
     // 마이크 입력 데이터를 수평 시각화 컴포넌트로 전달하는 메서드
     void pushMicrophoneBuffer(const juce::AudioBuffer<float>& buffer)
     {
-        horizontalVisualiserComponent.pushBuffer(buffer);
+        // 마이크 입력 데이터의 진폭을 조절하기 위한 임시 버퍼
+        static juce::AudioBuffer<float> scaledBuffer(buffer.getNumChannels(), buffer.getNumSamples());
+        
+        // 입력 버퍼 복사
+        scaledBuffer.clear();
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        {
+            scaledBuffer.copyFrom(ch, 0, buffer, ch, 0, buffer.getNumSamples());
+        }
+        
+        // 진폭 스케일 조절 (값을 작게 만들어 최대치까지 올라가는 것을 방지)
+        // 적당한 스케일 값을 찾아 조절. 필요에 따라 이 값을 변경할 수 있음
+        float scaleFactor = 0.15f; // 0.3f에서 더 감소
+        
+        for (int ch = 0; ch < scaledBuffer.getNumChannels(); ++ch)
+        {
+            auto* channelData = scaledBuffer.getWritePointer(ch);
+            for (int i = 0; i < scaledBuffer.getNumSamples(); ++i)
+            {
+                channelData[i] *= scaleFactor;
+            }
+        }
+        
+        // 스케일이 조절된 데이터를 시각화 컴포넌트로 전달
+        horizontalVisualiserComponent.pushBuffer(scaledBuffer);
     }
     
 private:

@@ -183,6 +183,28 @@ public:
         audioDataChanged = true;
     }
     
+    // 주파수 범위 설정 메서드 추가
+    void setFrequencyRange(float minFrequency, float maxFrequency)
+    {
+        this->minFrequency = minFrequency;
+        this->maxFrequency = maxFrequency;
+        
+        // 밴드 인덱스 다시 계산
+        precomputeBandIndices();
+    }
+    
+    // 진폭 스케일 팩터 설정 메서드 추가
+    void setDynamicScaleFactor(float factor)
+    {
+        dynamicScaleFactor = factor;
+    }
+    
+    // 현재 진폭 스케일 팩터 반환
+    float getDynamicScaleFactor() const
+    {
+        return dynamicScaleFactor;
+    }
+    
 private:
     // 데이터 구조 업데이트 (밴드 수 변경 시 호출)
     void updateDataStructures()
@@ -215,9 +237,8 @@ private:
     // FFT 밴드 인덱스 미리 계산 (성능 최적화)
     void precomputeBandIndices()
     {
-        // 기타 주파수 범위 설정 (80Hz ~ 2000Hz)
-        const float minFrequency = 80.0f;
-        const float maxFrequency = 2000.0f;
+        // 멤버 변수의 기타 주파수 범위 사용 (80Hz ~ 2000Hz)
+        // 이 범위는 setFrequencyRange를 통해 조정할 수 있음
         
         for (int band = 0; band < numBands; ++band)
         {
@@ -584,6 +605,10 @@ private:
     // 적응형 스케일링 및 감쇠 요소
     float dynamicScaleFactor = 270.0f;
     float globalDecayFactor = 0.0f;
+    
+    // 주파수 범위 관련 데이터
+    float minFrequency = 80.0f;
+    float maxFrequency = 2000.0f;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MapleHorizontalAudioVisualiserComponent)
 }; 

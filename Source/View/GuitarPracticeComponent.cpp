@@ -214,6 +214,9 @@ GuitarPracticeComponent::GuitarPracticeComponent(MainComponent &mainComp)
     // 버튼 상태 업데이트
     updateViewButtonStates();
     
+    // 시각화를 위한 타이머 시작 (마이크 시각화를 위해 처음부터 활성화)
+    startTimer(30);
+    
     DBG("GuitarPracticeComponent - constructor complete");
 }
 
@@ -483,18 +486,20 @@ void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
     // 재생 중일 때는 분석 버튼 비활성화
     analyzeButton.setEnabled(!isNowPlaying && lastRecording.existsAsFile());
     
-    // 타이머 제어 - 재생 중일 때만 타이머 실행 (3D 시각화를 위해)
-    if (isNowPlaying && !isTimerRunning())
+    // 타이머 제어 - 재생 중이거나 마이크 모니터링이 켜져 있을 때 타이머 실행
+    if ((isNowPlaying || microphoneMonitoringEnabled) && !isTimerRunning())
     {
         startTimer(30); // 30ms 간격으로 타이머 시작 (약 33fps)
-        DBG("GuitarPracticeComponent: Started timer for visualization");
+        DBG("GuitarPracticeComponent: Started timer for visualization" + 
+            juce::String(isNowPlaying ? " (playback)" : "") + 
+            juce::String(microphoneMonitoringEnabled ? " (mic monitoring)" : ""));
     }
-    else if (!isNowPlaying && !isRecording() && analyzeButton.isEnabled())
+    else if (!isNowPlaying && !microphoneMonitoringEnabled && !isRecording() && analyzeButton.isEnabled())
     {
-        // 재생 중이 아니고, 녹음 중이 아니고, 분석 중이 아닐 때만 타이머 중지
+        // 재생 중이 아니고, 마이크 모니터링도 꺼져있고, 녹음 중이 아니고, 분석 중이 아닐 때만 타이머 중지
         // (분석 중일 때는 analyzeButton이 비활성화됨)
         stopTimer();
-        DBG("GuitarPracticeComponent: Stopped timer - playback ended");
+        DBG("GuitarPracticeComponent: Stopped timer - no active functions");
     }
     
     // ScoreComponent 업데이트 - 가능한 빠르게 UI 반응
@@ -1042,6 +1047,20 @@ void GuitarPracticeComponent::enableMicrophoneMonitoring(bool shouldEnable)
         // 활성화 상태에 따라 텍스트 색상 변경
         micMonitorButton.setColour(juce::ToggleButton::textColourId, 
                                   shouldEnable ? juce::Colours::green : MapleTheme::getHighlightColour());
+    }
+    
+    // 타이머 시작/중지 - 마이크 모니터링 상태에 따라 처리
+    if (shouldEnable && !isTimerRunning())
+    {
+        // 마이크 모니터링이 활성화되었고 타이머가 실행 중이 아니면 시작
+        startTimer(30); // 30ms 간격 (약 33fps)
+        DBG("GuitarPracticeComponent: Started timer for microphone visualization");
+    }
+    else if (!shouldEnable && !audioModel.isPlaying() && !isRecording() && analyzeButton.isEnabled())
+    {
+        // 마이크 모니터링이 비활성화되고, 재생 중이 아니고, 녹음 중이 아니고, 분석 중이 아니면 타이머 중지
+        stopTimer();
+        DBG("GuitarPracticeComponent: Stopped timer - microphone monitoring disabled");
     }
 }
 
