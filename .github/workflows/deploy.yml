@@ -2,7 +2,7 @@ name: Deploy to OCI Server
 on:
   push:
     branches:
-      - maple-deployment
+      - maple-audio-deployment
 jobs:
   deploy:
     runs-on: ubuntu-latest
