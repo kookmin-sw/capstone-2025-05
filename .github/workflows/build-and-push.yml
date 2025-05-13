@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
   
   docker:
     needs: test
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/maple-media-server') && github.event_name == 'push'
     
     steps:
