@@ -30,6 +30,13 @@ public:
         gradientColours.add(juce::Colour(0xffFF8A00)); // 금색/주황
         gradientColours.add(juce::Colour(0xffFF5C00)); // 주황/오렌지
         
+        // 화려한 효과를 위한 추가 색상
+        accentColours.add(juce::Colour(0xffFF00FF)); // 마젠타
+        accentColours.add(juce::Colour(0xff00FFFF)); // 시안
+        accentColours.add(juce::Colour(0xffFFFF00)); // 노랑
+        accentColours.add(juce::Colour(0xff00FF73)); // 네온 그린
+        accentColours.add(juce::Colour(0xffFF4081)); // 핑크
+        
         // FFT 초기화
         fftSize = 1024;
         fftEngine = std::make_unique<juce::dsp::FFT>(std::log2(fftSize));
@@ -38,7 +45,7 @@ public:
         fftDataFifo.resize(fftSize, 0.0f);
         
         // 주파수 밴드 설정 - 더 연속적인 시각화를 위해 밴드 수 증가
-        numBands = 256; // 밴드 수 증가 (기존 128에서 256으로)
+        numBands = 512; // 밴드 수 증가 (기존 256에서 512로)
         
         // 스펙트럼 데이터 초기화
         for (int i = 0; i < numBands; ++i)
@@ -58,6 +65,10 @@ public:
         
         // 보간된 데이터 저장용 (중간 값 포함)
         interpolatedData.resize(numBands, 0.0f);
+        
+        // 피크 홀드 데이터 초기화
+        peakHoldTimes.resize(numBands, 0.0f);
+        peakLevels.resize(numBands, 0.0f);
             
         // 파형 데이터 초기화
         waveformData.setSize(2, 1024);
@@ -69,7 +80,7 @@ public:
         precomputeBandIndices();
         
         // 타이머 시작 - 더 부드러운 애니메이션을 위해 주파수 증가
-        startTimerHz(60);
+        startTimerHz(90); // 60Hz에서 90Hz로 증가
         
         // 마지막 페인트 시간 초기화
         lastPaintTime = juce::Time::getMillisecondCounterHiRes();
@@ -105,8 +116,16 @@ public:
         
         auto bounds = getLocalBounds().toFloat();
         
-        // 배경 그리기 (어두운 색상)
-        g.fillAll(juce::Colour(0xff151515));
+        // 그래디언트 배경 그리기
+        juce::ColourGradient bgGradient(
+            juce::Colour(0xff101010), bounds.getX(), bounds.getY(),
+            juce::Colour(0xff202020), bounds.getX(), bounds.getBottom(),
+            false);
+        g.setGradientFill(bgGradient);
+        g.fillAll();
+        
+        // 배경에 글로우 효과 추가
+        drawBackgroundGlow(g, bounds);
         
         // 수평 주파수 바 그리기
         drawHorizontalBars(g, bounds);
@@ -137,23 +156,49 @@ public:
     
     void timerCallback() override
     {
-        // audioDataChanged가 true일 때만 repaint 호출
-        if (audioDataChanged)
+        // 피크 홀드 시간 업데이트
+        updatePeakHolds();
+        
+        // 항상 repaint 호출하여 애니메이션 유지
+        repaint();
+        
+        // 애니메이션 오프셋 업데이트
+        animationOffset += 0.06f;
+        if (animationOffset > 1000.0f)
+            animationOffset = 0.0f;
+    }
+    
+    // 피크 홀드 업데이트
+    void updatePeakHolds()
+    {
+        const juce::ScopedLock sl(audioDataLock);
+        
+        // 각 밴드의 피크 레벨 업데이트
+        for (int band = 0; band < numBands; ++band)
         {
-            repaint();
-            audioDataChanged = false;
-        }
-        else
-        {
-            // 데이터가 변경되지 않았더라도 애니메이션 진행
-            if (animationOffset > 1000.0f)
-                animationOffset = 0.0f;
+            if (band >= interpolatedData.size())
+                continue;
                 
-            // 낮은 빈도로 repaint 호출 (애니메이션 유지)
-            if (++idleFrameCount > 2)
+            float currentLevel = interpolatedData[band];
+            
+            // 현재 레벨이 저장된 피크보다 높으면 피크 업데이트
+            if (currentLevel > peakLevels[band])
             {
-                repaint();
-                idleFrameCount = 0;
+                peakLevels[band] = currentLevel;
+                peakHoldTimes[band] = 30.0f; // 홀드 시간 재설정 (프레임 단위)
+            }
+            else
+            {
+                // 홀드 시간이 남아있으면 감소
+                if (peakHoldTimes[band] > 0.0f)
+                {
+                    peakHoldTimes[band] -= 1.0f;
+                }
+                else
+                {
+                    // 홀드 시간이 끝나면 피크 레벨 서서히 감소
+                    peakLevels[band] *= 0.95f; // 천천히 감소하는 속도
+                }
             }
         }
     }
@@ -201,8 +246,6 @@ public:
                     break;
             }
         }
-        
-        audioDataChanged = true;
     }
     
     // 주파수 범위 설정 메서드 추가
@@ -599,6 +642,9 @@ private:
         // 막대 간격 설정 - 더 좁은 간격으로 연속적인 느낌 부여
         int dividerInterval = 1; // 각 밴드마다 하나의 막대 (최대한 조밀하게)
         
+        // 배경 효과 - 웨이브 라인 그리기
+        drawWaveBackground(g, bounds, baseY);
+        
         // 주파수 막대 그리기
         for (int band = 0; band < numBands; band += dividerInterval)
         {
@@ -617,64 +663,72 @@ private:
             lineHeight = maxValue * maxHeight;
             
             // 최소 높이 보장 (베이스라인 위로 약간 올라오게)
-            lineHeight = juce::jmax(lineHeight, 2.0f);
-            
-            // 알파값 계산 (진폭에 따라 더 밝게)
-            float alpha = 0.15f + 0.25f * lineHeight / maxHeight;
-            
-            // 주파수 대역에 따른 색상 선택
-            float normalizedBand = (float)band / numBands;
-            juce::Colour dividerColour;
-            
-            // 주파수 영역별 색상 맵핑
-            if (normalizedBand < 0.2f) {
-                dividerColour = gradientColours[0].brighter(0.8f);
-            } else if (normalizedBand < 0.4f) {
-                dividerColour = gradientColours[2].brighter(0.8f);
-            } else if (normalizedBand < 0.6f) {
-                dividerColour = gradientColours[4].brighter(0.8f);
-            } else if (normalizedBand < 0.8f) {
-                dividerColour = gradientColours[6].brighter(0.8f);
-            } else {
-                dividerColour = gradientColours[8].brighter(0.8f);
-            }
-            
-            // 막대의 오른쪽 경계 계산
-            float xEnd = bounds.getX() + (float)(band + dividerInterval) * bounds.getWidth() / numBands;
-            if (xEnd > bounds.getRight()) xEnd = bounds.getRight();
+            lineHeight = juce::jmax(lineHeight, 1.0f);
             
             // 바 너비 계산 (더 얇게 만들기 위해 조정)
-            float barWidth = (xEnd - x);
-            float barPadding = barWidth * 0.05f; // 패딩 감소 (5%만 남김)
+            float barWidth = (bounds.getWidth() / numBands);
+            float barPadding = barWidth * 0.4f; // 패딩 증가 (40%)
             float actualBarWidth = barWidth - barPadding;
             float barX = x + barPadding / 2;
             
+            // 주파수 대역에 따른 색상 선택 (시간에 따라 변화하는 효과)
+            float normalizedBand = (float)band / numBands;
+            float timeOffset = normalizedBand * 3.0f + animationOffset * 0.05f;
+            float colorOffset = (std::sin(timeOffset) + 1.0f) * 0.5f;
+            
+            // 주파수 영역 및 시간 기반 색상 선택
+            juce::Colour barColour;
+            if (normalizedBand < 0.2f) {
+                barColour = gradientColours[0].interpolatedWith(gradientColours[1], colorOffset);
+            } else if (normalizedBand < 0.4f) {
+                barColour = gradientColours[2].interpolatedWith(gradientColours[3], colorOffset);
+            } else if (normalizedBand < 0.6f) {
+                barColour = gradientColours[4].interpolatedWith(gradientColours[5], colorOffset);
+            } else if (normalizedBand < 0.8f) {
+                barColour = gradientColours[6].interpolatedWith(gradientColours[7], colorOffset);
+            } else {
+                barColour = gradientColours[7].interpolatedWith(gradientColours[8], colorOffset);
+            }
+            
+            // 진폭에 따른 밝기 변화 - 더 동적인 효과
+            float brightness = 0.7f + 0.3f * value + 0.2f * std::sin(animationOffset * 0.03f + band * 0.01f);
+            barColour = barColour.withMultipliedBrightness(brightness);
+            
+            // 알파값 계산 (진폭에 따라 더 밝게)
+            float alpha = 0.2f + 0.6f * lineHeight / maxHeight;
+            
+            // 너비 변화 애니메이션 (뿌리는 효과)
+            float widthMultiplier = 1.0f + 0.2f * std::sin(animationOffset * 0.02f + band * 0.05f);
+            float animatedBarWidth = actualBarWidth * widthMultiplier;
+            
+            // 높은 진폭일 때 더 넓은 바 (박동 효과)
+            if (lineHeight > maxHeight * 0.4f) {
+                animatedBarWidth *= (1.0f + 0.3f * (lineHeight / maxHeight));
+            }
+            
             // 매우 얇은 막대로 그려서 연속적인 스펙트럼처럼 보이게 함
-            // 막대 영역 채우기 - 반투명 채우기로 막대 효과 생성
-            g.setColour(dividerColour.withAlpha(0.1f + 0.2f * lineHeight / maxHeight));
-            g.fillRect(barX, baseY - lineHeight, actualBarWidth, lineHeight);
+            g.setColour(barColour.withAlpha(alpha));
+            g.fillRect(barX, baseY - lineHeight, animatedBarWidth, lineHeight);
             
-            // 막대 테두리 그리기 (더 얇은 선으로)
-            g.setColour(dividerColour.withAlpha(alpha));
-            // 왼쪽 경계
-            g.drawLine(barX, baseY, barX, baseY - lineHeight, 0.3f);
-            // 오른쪽 경계
-            g.drawLine(barX + actualBarWidth, baseY, barX + actualBarWidth, baseY - lineHeight, 0.3f);
-            // 상단 경계
-            g.drawLine(barX, baseY - lineHeight, barX + actualBarWidth, baseY - lineHeight, 0.3f);
-            
-            // 막대 상단에 하이라이트 추가 (진폭이 높을 때만)
-            if (lineHeight > maxHeight * 0.25f) {
-                // 상단 하이라이트
-                g.setColour(dividerColour.brighter(0.5f).withAlpha(0.4f + 0.3f * lineHeight / maxHeight));
-                g.drawLine(barX, baseY - lineHeight + 0.5f, barX + actualBarWidth, baseY - lineHeight + 0.5f, 0.7f);
+            // 피크 홀드 표시 (작은 점으로)
+            if (band < peakHoldTimes.size() && peakHoldTimes[band] > 0.0f) {
+                float peakY = baseY - peakLevels[band] * maxHeight;
                 
-                // 상단 점 효과 (매우 높은 진폭에서만)
-                if (lineHeight > maxHeight * 0.6f) {
-                    float centerX = barX + actualBarWidth * 0.5f;
-                    float dotSize = 1.5f;
-                    g.setColour(dividerColour.brighter(1.0f).withAlpha(0.8f));
-                    g.fillEllipse(centerX - dotSize/2, baseY - lineHeight - dotSize/2, dotSize, dotSize);
+                // 피크 포인트 색상 (밝은 색상)
+                juce::Colour peakColour;
+                int accentIndex = (band / 20) % accentColours.size();
+                peakColour = accentColours[accentIndex].withAlpha(peakHoldTimes[band] / 30.0f);
+                
+                // 피크 점 그리기
+                g.setColour(peakColour);
+                float dotWidth = animatedBarWidth * 2.0f;
+                g.fillRect(barX - dotWidth * 0.25f, peakY - 1.0f, dotWidth, 2.0f);
+                
+                // 피크 위에 글로우 효과
+                if (peakLevels[band] > 0.5f) {
+                    g.setColour(peakColour.withAlpha(0.3f));
+                    float glowSize = 4.0f + 2.0f * peakLevels[band];
+                    g.fillEllipse(barX + animatedBarWidth/2 - glowSize/2, peakY - glowSize/2, glowSize, glowSize);
                 }
             }
         }
@@ -685,9 +739,50 @@ private:
         float midHighBound = bounds.getX() + bounds.getWidth() * 0.6f; // 1200Hz 지점
         
         // 주요 구분선 그리기
-        g.setColour(juce::Colours::white.withAlpha(0.1f)); // 더 투명하게
+        g.setColour(juce::Colours::white.withAlpha(0.08f)); // 더 투명하게
         g.drawLine(lowMidBound, baseY, lowMidBound, bounds.getY(), 0.5f); // 더 얇게
         g.drawLine(midHighBound, baseY, midHighBound, bounds.getY(), 0.5f);
+    }
+    
+    // 웨이브 배경 효과 그리기
+    void drawWaveBackground(juce::Graphics& g, juce::Rectangle<float> bounds, float baseY)
+    {
+        // 배경에 웨이브 라인 그리기
+        juce::Path wavePath;
+        
+        float waveFrequency = 0.05f;
+        float waveAmplitude = 2.0f;
+        float timeScale = animationOffset * 0.01f;
+        
+        wavePath.startNewSubPath(bounds.getX(), baseY);
+        
+        for (float x = bounds.getX(); x <= bounds.getRight(); x += 2.0f)
+        {
+            float y = baseY - waveAmplitude * std::sin((x * waveFrequency) + timeScale);
+            wavePath.lineTo(x, y);
+        }
+        
+        // 웨이브 라인 그리기
+        g.setColour(juce::Colours::white.withAlpha(0.04f));
+        g.strokePath(wavePath, juce::PathStrokeType(0.5f));
+        
+        // 추가 웨이브 (다른 주파수)
+        juce::Path wavePath2;
+        wavePath2.startNewSubPath(bounds.getX(), baseY);
+        
+        waveFrequency = 0.02f;
+        waveAmplitude = 1.5f;
+        timeScale = animationOffset * 0.015f;
+        
+        for (float x = bounds.getX(); x <= bounds.getRight(); x += 2.0f)
+        {
+            float y = baseY - waveAmplitude * std::sin((x * waveFrequency) + timeScale);
+            wavePath2.lineTo(x, y);
+        }
+        
+        // 두 번째 웨이브 라인 그리기
+        g.setColour(juce::Colours::white.withAlpha(0.03f));
+        g.strokePath(wavePath2, juce::PathStrokeType(0.5f));
     }
     
     // 그래디언트 스펙트럼 그리기 - 연속적인 스펙트럼 시각화
@@ -929,6 +1024,50 @@ private:
         g.drawVerticalLine((int)midHighBound, bounds.getY(), baseY);
     }
     
+    // 배경에 글로우 효과 추가
+    void drawBackgroundGlow(juce::Graphics& g, juce::Rectangle<float> bounds)
+    {
+        // 시간에 따라 움직이는 글로우 효과 
+        float time = animationOffset * 0.01f;
+        float centerX = bounds.getCentreX() + 50.0f * std::sin(time * 0.7f);
+        float centerY = bounds.getCentreY() + 30.0f * std::cos(time * 0.5f);
+        
+        // 글로우 색상 (시간에 따라 변화)
+        juce::Colour glowColour1 = gradientColours[0].withAlpha(0.05f);
+        juce::Colour glowColour2 = gradientColours[4].withAlpha(0.05f);
+        juce::Colour glowColour3 = gradientColours[8].withAlpha(0.05f);
+        
+        float glowRadius1 = bounds.getWidth() * (0.3f + 0.1f * std::sin(time * 0.3f));
+        float glowRadius2 = bounds.getWidth() * (0.2f + 0.1f * std::sin(time * 0.5f + 1.0f));
+        float glowRadius3 = bounds.getWidth() * (0.15f + 0.05f * std::sin(time * 0.7f + 2.0f));
+        
+        // 글로우 그리기
+        juce::ColourGradient glow1(
+            glowColour1, centerX, centerY,
+            juce::Colours::transparentBlack, centerX + glowRadius1, centerY + glowRadius1,
+            true);
+        g.setGradientFill(glow1);
+        g.fillEllipse(centerX - glowRadius1, centerY - glowRadius1, glowRadius1 * 2.0f, glowRadius1 * 2.0f);
+        
+        juce::ColourGradient glow2(
+            glowColour2, centerX - 50.0f * std::sin(time), centerY + 30.0f * std::cos(time * 0.8f),
+            juce::Colours::transparentBlack, centerX + glowRadius2, centerY + glowRadius2,
+            true);
+        g.setGradientFill(glow2);
+        g.fillEllipse(centerX - 50.0f * std::sin(time) - glowRadius2, 
+                      centerY + 30.0f * std::cos(time * 0.8f) - glowRadius2, 
+                      glowRadius2 * 2.0f, glowRadius2 * 2.0f);
+                      
+        juce::ColourGradient glow3(
+            glowColour3, centerX + 70.0f * std::cos(time * 0.9f), centerY - 40.0f * std::sin(time * 1.1f),
+            juce::Colours::transparentBlack, centerX + glowRadius3, centerY + glowRadius3,
+            true);
+        g.setGradientFill(glow3);
+        g.fillEllipse(centerX + 70.0f * std::cos(time * 0.9f) - glowRadius3, 
+                     centerY - 40.0f * std::sin(time * 1.1f) - glowRadius3, 
+                     glowRadius3 * 2.0f, glowRadius3 * 2.0f);
+    }
+    
     void updateVisualizationParams()
     {
         // 필요한 경우 크기에 따른 파라미터 조정
@@ -967,9 +1106,12 @@ private:
     
     // 애니메이션 상태
     float animationOffset = 0.0f;
+    std::vector<float> peakHoldTimes; // 각 밴드의 피크 홀드 시간
+    std::vector<float> peakLevels;    // 각 밴드의 피크 레벨
     
     // 색상 팔레트
     juce::Array<juce::Colour> colours;
+    juce::Array<juce::Colour> accentColours; // 강조 색상 (화려한 효과용)
     
     // 적응형 스케일링 및 감쇠 요소
     float dynamicScaleFactor = 270.0f;
