@@ -15,7 +15,7 @@ jobs:
           port: ${{ secrets.OCI_PORT }}
           username: ${{ secrets.OCI_USERNAME }}
           key: ${{ secrets.OCI_SSH_KEY }}
-          passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
+          # passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
           source: "docker-compose.yml,nginx/**"
           target: "/home/${{ secrets.OCI_USERNAME }}/deployment"
           strip_components: 0
@@ -28,7 +28,7 @@ jobs:
           port: ${{ secrets.OCI_PORT }}
           username: ${{ secrets.OCI_USERNAME }}
           key: ${{ secrets.OCI_SSH_KEY }}
-          passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
+          # passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
           script: |
             echo "=== Verifying files in deployment directory ==="
             ls -la /home/${{ secrets.OCI_USERNAME }}/deployment/
@@ -43,7 +43,7 @@ jobs:
           port: ${{ secrets.OCI_PORT }}
           username: ${{ secrets.OCI_USERNAME }}
           key: ${{ secrets.OCI_SSH_KEY }}
-          passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
+          # passphrase: ${{ secrets.OCI_SSH_KEY_PASSPHRASE }}
           script: |
             cd /home/${{ secrets.OCI_USERNAME }}/deployment
             
