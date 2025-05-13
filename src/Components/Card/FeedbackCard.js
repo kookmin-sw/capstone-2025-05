@@ -9,7 +9,10 @@ export default function FeedbackCard({ result, idx }) {
     >
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-lg font-semibold text-gray-800">
-          📊 비교 분석 - {new Date(result.result.created_at).toLocaleString()}
+          📊 비교 분석 -{' '}
+          {new Date(result.result.created_at).toLocaleString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+          })}
         </h3>
         <button
           className="text-sm text-[#a57865] hover:underline"

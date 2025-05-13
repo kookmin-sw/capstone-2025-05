@@ -5,7 +5,7 @@ import Box from '../../Components/Box/Box.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
-
+import 음반 from '../../Assets/Main/음반.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
 import BeatChart from '../../Components/Chart/beatChart.js';
 import TechniqueChart from '../../Components/Chart/techniqueChart.js';
@@ -16,7 +16,10 @@ import { FaPrint } from 'react-icons/fa6';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSongByIdQuery } from '../../Hooks/Audio/get/getSongById.js';
-import ProgressBar from '../../Components/Graph/ProgressBar.js';
+import CircularProgressBar from '../../Components/Graph/CircularProgressBar.js';
+import useFileDownloader from '../../Hooks/useFileDownloader.js';
+import mediaApi from '../../Utils/audioApi.js';
+import Button from '../../Components/Button/Button.js';
 
 const ANALYSIS_URL = process.env.REACT_APP_ANALYSIS_URL;
 const MEDIA_URL = process.env.REACT_APP_MEDIA_URL;
@@ -28,22 +31,21 @@ export default function ResultDetail() {
   const typeName = location.type;
   const song_id = location.song_id; //location.song_id
   const user_id = typeName === 'userResults' ? uid : location.uid; //type이 userResult인 경우만 uid가 내 계정
-
+  const downloadFile = useFileDownloader();
   const { data: songData } = useSongByIdQuery(song_id);
   console.log(songData, '노래정보');
 
-  const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userInfo, setUserInfo] = useState({ nickname: '', email: '' });
-  const [currentGraphIndex, setCurrentGraphIndex] = useState(0);
+
   const specificSong = {
     title: songData?.title,
     artist: songData?.artist,
     cover_url: COVER_URL + '/' + songData?.thumbnail,
-    original_audio_url: COVER_URL + songData?.audio,
+    original_audio_url: COVER_URL + '/' + songData?.audio,
   };
 
-  const navigate = useNavigate();
+  console.log('오디오 url', specificSong.original_audio_url);
 
   const BACKEND_URL = process.env.REACT_APP_API_DATABASE_URL;
 
@@ -79,6 +81,9 @@ export default function ResultDetail() {
     return processCompareData(result);
   }, [result]);
 
+  const overall_score = useMemo(() => {
+    return processed?.scores.overall_score;
+  }, [processed]);
   console.log(processed, '가공데이터');
 
   const graphs = [
@@ -197,13 +202,16 @@ export default function ResultDetail() {
         <p className="font-semibold">{userInfo?.nickname || '사용자'}</p>
       </div>
 
-      <div ref={printRef} className="flex-1 overflow-y-auto p-10 space-y-12">
+      <div
+        ref={printRef}
+        className="flex-1 overflow-y-auto p-10 space-y-12 print-area"
+      >
         <div className="flex gap-10">
           <Box
             width="300px"
             height="100%"
             backgroundColor="white"
-            overwrite="p-6 shadow-lg"
+            overwrite="p-6 shadow-lg h-full"
           >
             <div className="flex flex-col items-center space-y-4">
               <div className="w-56 h-56 bg-gray-200 flex items-center justify-center text-gray-400 rounded-md">
@@ -213,10 +221,48 @@ export default function ResultDetail() {
                 <h3 className="text-lg font-bold">{specificSong.title}</h3>
                 <p className="text-gray-600">{specificSong.artist}</p>
               </div>
-              <AudioPlayer
+              {/* <AudioPlayer
                 userAudio={specificSong.original_audio_url}
                 referenceAudio={specificSong.original_audio_url}
-              />
+              /> */}
+
+              <button
+                className={
+                  'w-56 h-10 font-bold bg-[#fcc5ae] rounded-[10px] text-white text-center flex items-center justify-center'
+                }
+                onClick={() =>
+                  downloadFile(
+                    `${MEDIA_URL}/songs/${song_id}/audio`,
+                    `${specificSong.title}.wav`,
+                  )
+                }
+              >
+                💿 음원 다운로드
+              </button>
+              <button
+                className={
+                  'w-56 h-10 font-bold bg-[#bf9684] rounded-[10px] text-white'
+                }
+                onClick={() =>
+                  downloadFile(
+                    `${MEDIA_URL}/songs/${song_id}/sheet`,
+                    `${specificSong.title}_악보.gp5`,
+                  )
+                }
+              >
+                📄 악보 다운로드
+              </button>
+              <p className="text-sm text-gray-600 mt-2">
+                ※ 다운로드된 gp5 악보 파일은{' '}
+                <a
+                  href="https://sourceforge.net/projects/tuxguitar/"
+                  target="_blank"
+                  className="text-blue-500 underline"
+                >
+                  TuxGuitar
+                </a>{' '}
+                또는 Guitar Pro 프로그램으로 열어 PDF로 저장할 수 있어요.
+              </p>
             </div>
           </Box>
 
@@ -234,11 +280,32 @@ export default function ResultDetail() {
                     <FaPrint />
                   </button>
                 </div>
-                <div className=" prose prose-sm lg:prose-lg prose-slate max-w-none mt-4 leading-relaxed text-gray-700">
+                {userInfo?.nickname && overall_score && (
+                  <div className="text-lg font-semibold mb-2 text-gray-800">
+                    <span className="font-bold text-xl ">
+                      {userInfo.nickname}
+                    </span>
+                    님의 총점은{' '}
+                    <span className=" font-bold text-xl">
+                      {parseInt(overall_score)}
+                    </span>
+                    점입니다!
+                    <span>
+                      &nbsp;
+                      {overall_score >= 90
+                        ? '매우 훌륭한 연주였어요🎉'
+                        : overall_score >= 80
+                          ? '점점 더 좋아지고 있어요! 조금만 더 힘내요 💪'
+                          : '조금 아쉬운 결과예요. 꾸준히 연습하면 분명 더 좋아질 거예요!'}
+                    </span>
+                  </div>
+                )}
+                <div className=" prose prose-sm lg:prose-lg prose-slate max-w-none mt-4 leading-relaxed text-gray-700 print:overflow-visible print:w-auto">
                   <ReactMarkdown>{processed?.feedback}</ReactMarkdown>
-                  <div className="flex flex-col items-center mt-8">
+                  <div className="flex justify-center mt-8">
                     {graphs.map((graph) => (
-                      <ProgressBar
+                      <CircularProgressBar
+                        key={graph.key}
                         graph={graph}
                         percentage={
                           processed?.scores?.[
@@ -256,7 +323,11 @@ export default function ResultDetail() {
 
         <div className="space-y-6">
           {graphs.map((graph) => (
-            <Box key={graph.key} width="100%" overwrite="p-6 shadow-lg">
+            <Box
+              key={graph.key}
+              width="100%"
+              overwrite="p-6 shadow-lg print:overflow-visible print:w-auto"
+            >
               <h3 className={`text-xl font-bold text-${graph.color}-500 mb-4`}>
                 {graph.label}
               </h3>

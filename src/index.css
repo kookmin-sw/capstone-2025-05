@@ -1,0 +1,30 @@
+@media print {
+  .hide-on-print {
+    display: none !important;
+  }
+  .print-area {
+    width: 100% !important;
+    padding: 0;
+    margin: 0;
+  }
+  .no-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  button,
+  a {
+    display: none !important;
+  }
+
+  .print\:w-auto {
+    width: auto !important;
+  }
+
+  .print\:overflow-visible {
+    overflow: visible !important;
+  }
+}
