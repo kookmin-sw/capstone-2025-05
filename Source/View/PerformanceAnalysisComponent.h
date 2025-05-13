@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 #include "LookAndFeel/MapleTheme.h"
 #include "Maple3DAudioVisualiserComponent.h"
+#include "View/MapleHorizontalAudioVisualiserComponent.h"
 
 // Performance analysis display component
 class PerformanceAnalysisComponent : public juce::Component,
@@ -24,6 +25,7 @@ public:
         addAndMakeVisible(timingLabel);
         addAndMakeVisible(difficultyLabel);
         addAndMakeVisible(visualiserComponent); // 3D 시각화 컴포넌트 추가
+        addAndMakeVisible(horizontalVisualiserComponent); // 수평 시각화 컴포넌트 추가
         
         titleLabel.setText("Performance Analysis", juce::dontSendNotification);
         titleLabel.setFont(juce::Font(18.0f, juce::Font::bold));
@@ -67,71 +69,6 @@ public:
     void paint(juce::Graphics& g) override
     {
         g.fillAll(MapleTheme::getCardColour());
-        
-        auto bounds = getLocalBounds().reduced(10);
-        
-        // Note accuracy graph area
-        auto noteGraphArea = bounds.removeFromBottom(bounds.getHeight() / 3);
-        g.setColour(MapleTheme::getCardColour().darker(0.1f));
-        g.fillRoundedRectangle(noteGraphArea.toFloat().reduced(5.0f), 5.0f);
-        
-        // Note graph title
-        g.setColour(MapleTheme::getTextColour());
-        g.setFont(15.0f);
-        g.drawText("Note Accuracy Timeline", noteGraphArea.removeFromTop(25), juce::Justification::centred, true);
-        
-        // Draw note accuracy graph
-        drawNoteAccuracyGraph(g, noteGraphArea.reduced(15, 5));
-    }
-    
-    void drawNoteAccuracyGraph(juce::Graphics& g, juce::Rectangle<int> bounds)
-    {
-        if (noteAccuracyData.isEmpty())
-            return;
-            
-        const int numNotes = noteAccuracyData.size();
-        const float noteWidth = static_cast<float>(bounds.getWidth()) / numNotes;
-        const float graphHeight = bounds.getHeight() - 20.0f; // Leave space for labels
-        
-        // Draw timeline
-        g.setColour(MapleTheme::getTextColour().withAlpha(0.3f));
-        g.drawLine(bounds.getX(), bounds.getBottom() - 15,
-                  bounds.getRight(), bounds.getBottom() - 15, 1.0f);
-                  
-        // Draw start and end labels
-        g.setColour(MapleTheme::getTextColour().withAlpha(0.5f));
-        g.setFont(12.0f);
-        g.drawText("Start", bounds.getX(), bounds.getBottom() - 15, 40, 15, juce::Justification::centredLeft);
-        g.drawText("End", bounds.getRight() - 40, bounds.getBottom() - 15, 40, 15, juce::Justification::centredRight);
-        
-        // Draw each note's accuracy
-        for (int i = 0; i < numNotes; ++i)
-        {
-            const auto& note = noteAccuracyData[i];
-            float x = bounds.getX() + i * noteWidth;
-            
-            // Set color based on whether note is correct
-            g.setColour(note.isCorrect ? juce::Colours::green.withAlpha(0.7f) : juce::Colours::red.withAlpha(0.7f));
-            
-            // Calculate height based on accuracy
-            float height = graphHeight * note.accuracy;
-            
-            // Draw vertical bar for each note
-            g.fillRect(x, bounds.getBottom() - 15 - height, noteWidth * 0.8f, height);
-            
-            // Add animated highlight to show current position (for demo purposes)
-            if (std::abs(i - (animationOffset * 0.1f)) < 1.0f)
-            {
-                g.setColour(juce::Colours::white.withAlpha(0.5f));
-                g.fillRect(x, bounds.getBottom() - 15 - height, noteWidth * 0.8f, height);
-            }
-        }
-        
-        // Draw accuracy threshold line
-        g.setColour(juce::Colours::yellow.withAlpha(0.5f));
-        float thresholdY = bounds.getBottom() - 15 - (graphHeight * 0.6f); // 60% threshold
-        g.drawLine(bounds.getX(), thresholdY, bounds.getRight(), thresholdY, 1.0f);
-        g.drawText("Threshold", bounds.getX() + 5, thresholdY - 15, 70, 15, juce::Justification::centredLeft);
     }
     
     void resized() override
@@ -141,9 +78,10 @@ public:
         // Title
         titleLabel.setBounds(bounds.removeFromTop(30));
         
-        // Exclude bottom note graph area
-        auto noteGraphHeight = bounds.getHeight() / 3;
-        bounds.removeFromBottom(noteGraphHeight);
+        // 수평 오디오 시각화 컴포넌트를 하단에 배치
+        auto horizontalVisualiserHeight = 150;
+        auto horizontalVisualiserArea = bounds.removeFromBottom(horizontalVisualiserHeight);
+        horizontalVisualiserComponent.setBounds(horizontalVisualiserArea.reduced(5));
         
         // 3D 시각화 컴포넌트를 오른쪽에 배치
         auto visualiserArea = bounds.removeFromRight(bounds.getWidth() * 0.6f);
@@ -198,10 +136,11 @@ public:
         repaint();
     }
     
-    // 오디오 데이터를 3D 시각화 컴포넌트로 전달하는 메서드
+    // 오디오 데이터를 시각화 컴포넌트로 전달하는 메서드
     void pushAudioBuffer(const juce::AudioBuffer<float>& buffer)
     {
         visualiserComponent.pushBuffer(buffer);
+        horizontalVisualiserComponent.pushBuffer(buffer);
     }
     
 private:
@@ -211,6 +150,7 @@ private:
     juce::Label difficultyLabel;
     
     Maple3DAudioVisualiserComponent visualiserComponent; // 3D 시각화 컴포넌트
+    MapleHorizontalAudioVisualiserComponent horizontalVisualiserComponent; // 수평 시각화 컴포넌트
     
     double progressValue = 0.8; // Value that ProgressBar will watch
     juce::ProgressBar accuracyMeter; // ProgressBar initialized with progressValue reference in constructor

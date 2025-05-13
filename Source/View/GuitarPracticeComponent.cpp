@@ -742,6 +742,16 @@ void GuitarPracticeComponent::timerCallback()
         {
             performanceAnalysisComponent->pushAudioBuffer(visualizationBuffer);
         }
+        
+        // 마이크 입력 데이터 가져오기
+        static juce::AudioBuffer<float> micBuffer(2, 1024);
+        int micSamplesRead = audioController->getAudioTap().readMicrophone(micBuffer);
+        
+        // 마이크 데이터가 있으면 성능 분석 컴포넌트에 전달
+        if (micSamplesRead > 0)
+        {
+            performanceAnalysisComponent->pushAudioBuffer(micBuffer);
+        }
     }
 }
 
