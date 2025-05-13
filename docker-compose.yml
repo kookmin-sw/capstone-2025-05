@@ -23,16 +23,11 @@ services:
     env_file:
       - ./.env
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - POSTGRES_DB=${DB_NAME:-maple_media}
     ports:
       - "5432:5432"
 
 volumes:
-  postgres_data:
-
-networks:
-  default:
-    name: maple-network
-    driver: bridge
+  postgres_data: 
