@@ -737,7 +737,7 @@ void GuitarPracticeComponent::timerCallback()
         // AudioTap에서 재생 데이터만 직접 읽기 - 소스 타입 확인 필요 없음
         int samplesRead = audioController->getAudioTap().readPlayback(visualizationBuffer);
         
-        // 데이터가 있으면 시각화 컴포넌트에 전달
+        // 데이터가 있으면 3D 시각화 컴포넌트에 전달 (재생 오디오 데이터)
         if (samplesRead > 0)
         {
             performanceAnalysisComponent->pushAudioBuffer(visualizationBuffer);
@@ -747,10 +747,10 @@ void GuitarPracticeComponent::timerCallback()
         static juce::AudioBuffer<float> micBuffer(2, 1024);
         int micSamplesRead = audioController->getAudioTap().readMicrophone(micBuffer);
         
-        // 마이크 데이터가 있으면 성능 분석 컴포넌트에 전달
+        // 마이크 데이터가 있으면 수평 시각화 컴포넌트에 전달
         if (micSamplesRead > 0)
         {
-            performanceAnalysisComponent->pushAudioBuffer(micBuffer);
+            performanceAnalysisComponent->pushMicrophoneBuffer(micBuffer);
         }
     }
 }

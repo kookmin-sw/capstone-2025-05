@@ -136,10 +136,15 @@ public:
         repaint();
     }
     
-    // 오디오 데이터를 시각화 컴포넌트로 전달하는 메서드
+    // 오디오 데이터를 시각화 컴포넌트로 전달하는 메서드 (재생 데이터용)
     void pushAudioBuffer(const juce::AudioBuffer<float>& buffer)
     {
         visualiserComponent.pushBuffer(buffer);
+    }
+    
+    // 마이크 입력 데이터를 수평 시각화 컴포넌트로 전달하는 메서드
+    void pushMicrophoneBuffer(const juce::AudioBuffer<float>& buffer)
+    {
         horizontalVisualiserComponent.pushBuffer(buffer);
     }
     
