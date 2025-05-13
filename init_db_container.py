@@ -59,7 +59,7 @@ def create_test_data(db: Session):
         {
             "song_id": str(uuid.uuid4()),
             "title": "FLY",
-            "artist": "유다빈밴드드",
+            "artist": "유다빈밴드",
             "thumbnail": "static/thumbnails/fly.jpg",
             "sheet_music": "static/sheet_music/fly.gp5",
             "audio": "static/audio/fly.wav",
