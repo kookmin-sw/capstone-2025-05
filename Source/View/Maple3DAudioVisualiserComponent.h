@@ -204,6 +204,41 @@ public:
         audioDataChanged = true;
     }
     
+    // 시각화 데이터 초기화 (재생 중지 시 호출)
+    void clear()
+    {
+        const juce::ScopedLock sl(audioDataLock);
+        
+        // FFT와 파형 데이터 초기화
+        for (int i = 0; i < fftSize * 2; ++i)
+            fftData[i] = 0.0f;
+            
+        for (int i = 0; i < fftSize; ++i)
+            fftDataFifo[i] = 0.0f;
+            
+        // 파형 데이터 초기화
+        waveformData.clear();
+        
+        // 주파수 데이터 초기화
+        for (int i = 0; i < numBands; ++i)
+            frequencyData.set(i, 0.0f);
+            
+        // 스무스 데이터 초기화
+        for (int i = 0; i < numBands; ++i)
+            smoothedFrequencyData[i] = 0.0f;
+            
+        // 이동 평균 히스토리 초기화
+        for (int i = 0; i < movingAverageSize; ++i) {
+            for (int j = 0; j < numBands; ++j) {
+                frequencyHistory.getReference(i).set(j, 0.0f);
+            }
+        }
+        
+        // 즉시 다시 그리기 요청
+        audioDataChanged = true;
+        repaint();
+    }
+    
     // 주파수 스펙트럼 데이터 설정 (외부에서 계산된 경우)
     void pushFrequencyData(const juce::Array<float>& freqData)
     {

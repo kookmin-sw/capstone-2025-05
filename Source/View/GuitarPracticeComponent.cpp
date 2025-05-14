@@ -752,6 +752,11 @@ void GuitarPracticeComponent::timerCallback()
                 performanceAnalysisComponent->pushAudioBuffer(visualizationBuffer);
             }
         }
+        else {
+            // 재생 중이 아닐 때는 시각화 초기화 (비우기)
+            // 마지막 시각화 결과가 남아있는 것을 방지
+            performanceAnalysisComponent->clearVisualization();
+        }
         
         // 샘플 읽기 결과를 간헐적으로 로그에 기록 (매 30프레임마다)
         static int logCounter = 0;

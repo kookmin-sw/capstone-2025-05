@@ -203,56 +203,96 @@ public:
         }
     }
     
-    // 오디오 데이터 설정
+    // 오디오 데이터 설정 - 원본 오디오 훼손 방지 및 최적화
     void pushBuffer(const juce::AudioBuffer<float>& buffer)
     {
         const juce::ScopedLock sl(audioDataLock);
         
-        // 버퍼 복사
+        // 버퍼 정보 가져오기
         auto numChannels = juce::jmin(buffer.getNumChannels(), 2);
         auto numSamples = buffer.getNumSamples();
         
+        if (numChannels == 0 || numSamples == 0)
+            return;
+        
+        // 타이밍 디버깅
+        auto startTime = juce::Time::getMillisecondCounterHiRes();
+        
         // 파형 표시용 데이터 저장
-        if (waveformData.getNumChannels() != numChannels || 
-            waveformData.getNumSamples() != numSamples)
+        waveformData.setSize(numChannels, numSamples, false, false, true);
+        
+        // 데이터 복사 (소유권 이전)
+        for (int ch = 0; ch < numChannels; ++ch)
         {
-            waveformData.setSize(numChannels, numSamples);
+            waveformData.copyFrom(ch, 0, buffer, ch, 0, numSamples);
         }
         
-        // 데이터 복사
-        for (int ch = 0; ch < numChannels; ++ch)
-            waveformData.copyFrom(ch, 0, buffer, ch, 0, numSamples);
-            
-        // FFT 데이터 처리
-        if (numChannels > 0)
+        // FFT 계산을 위해 단일 채널만 사용
+        const float* samples = buffer.getReadPointer(0);
+        
+        // 모든 샘플을 FIFO로 푸시
+        for (int i = 0; i < numSamples; ++i)
         {
-            const float* samples = buffer.getReadPointer(0);
-            
-            // 샘플링 간격 계산 (최적화)
-            int stride = numSamples > 1024 ? numSamples / 1024 : 1;
-            
-            // 처리 시간 측정
-            auto startTime = juce::Time::getMillisecondCounterHiRes();
-            
-            // 샘플 처리
-            for (int i = 0; i < numSamples; i += stride)
-            {
-                // FFT용 FIFO에 샘플 추가 
-                pushNextSampleIntoFifo(samples[i]);
-                
-                // FFT 계산 빈도 제한 (성능 최적화)
-                double elapsedMs = juce::Time::getMillisecondCounterHiRes() - startTime;
-                if (elapsedMs > 4.0) // 4ms 이상 소요되면 중단
-                    break;
-            }
+            pushNextSampleIntoFifo(samples[i]);
         }
+        
+        // FFT 계산 (FIFO에 충분한 데이터가 있는 경우만)
+        calculateFFT();
+        
+        auto endTime = juce::Time::getMillisecondCounterHiRes();
+        //DBG("MapleHorizontalAudioVisualiserComponent: FFT 계산 시간: " + juce::String(endTime - startTime) + "ms");
     }
     
-    // 주파수 범위 설정 메서드 추가
+    // 시각화 데이터 초기화 (재생 중지 시 호출)
+    void clear()
+    {
+        const juce::ScopedLock sl(audioDataLock);
+        
+        // FFT와 파형 데이터 초기화
+        for (int i = 0; i < fftSize * 2; ++i)
+            fftData[i] = 0.0f;
+            
+        for (int i = 0; i < fftSize; ++i)
+            fftDataFifo[i] = 0.0f;
+            
+        // 파형 데이터 초기화
+        waveformData.clear();
+        
+        // 주파수 데이터 초기화
+        for (int i = 0; i < numBands; ++i)
+            frequencyData.set(i, 0.0f);
+            
+        // 스무스 데이터 초기화
+        for (int i = 0; i < numBands; ++i)
+            smoothedFrequencyData[i] = 0.0f;
+            
+        // 보간 데이터 초기화
+        for (int i = 0; i < numBands; ++i)
+            interpolatedData[i] = 0.0f;
+            
+        // 피크 홀드 데이터 초기화
+        for (int i = 0; i < numBands; ++i) {
+            peakHoldTimes[i] = 0.0f;
+            peakLevels[i] = 0.0f;
+        }
+            
+        // 이동 평균 히스토리 초기화
+        for (int i = 0; i < movingAverageSize; ++i) {
+            for (int j = 0; j < numBands; ++j) {
+                frequencyHistory.getReference(i).set(j, 0.0f);
+            }
+        }
+        
+        // 즉시 다시 그리기 요청
+        fifoIndex = 0;
+        repaint();
+    }
+    
+    // 주파수 범위 설정
     void setFrequencyRange(float minFrequency, float maxFrequency)
     {
-        this->minFrequency = minFrequency;
-        this->maxFrequency = maxFrequency;
+        minDisplayFrequency = minFrequency;
+        maxDisplayFrequency = maxFrequency;
         
         // 밴드 인덱스 다시 계산
         precomputeBandIndices();
@@ -344,8 +384,8 @@ private:
             if (useLogFrequencyScale)
             {
                 // 로그 스케일로 기타 주파수 범위 내에서 밴드 계산
-                float logMinFreq = std::log(minFrequency);
-                float logMaxFreq = std::log(maxFrequency);
+                float logMinFreq = std::log(minDisplayFrequency);
+                float logMaxFreq = std::log(maxDisplayFrequency);
                 float logFreqRange = logMaxFreq - logMinFreq;
                 
                 // 밴드별 주파수 범위 계산 (로그 스케일)
@@ -364,9 +404,9 @@ private:
             else
             {
                 // 선형 스케일로 기타 주파수 범위 내에서 밴드 계산
-                float freqRange = maxFrequency - minFrequency;
-                float startFreq = minFrequency + (band * freqRange) / numBands;
-                float endFreq = minFrequency + ((band + 1) * freqRange) / numBands;
+                float freqRange = maxDisplayFrequency - minDisplayFrequency;
+                float startFreq = minDisplayFrequency + (band * freqRange) / numBands;
+                float endFreq = minDisplayFrequency + ((band + 1) * freqRange) / numBands;
                 
                 // 주파수를 FFT 인덱스로 변환
                 float sampleRate = 44100.0f; // 기본 샘플레이트 가정
@@ -1120,6 +1160,8 @@ private:
     // 주파수 범위 관련 데이터
     float minFrequency = 80.0f;
     float maxFrequency = 2000.0f;
+    float minDisplayFrequency = 80.0f;   // 표시 범위 최소 주파수
+    float maxDisplayFrequency = 2000.0f; // 표시 범위 최대 주파수
     
     // 그래디언트 관련 데이터
     juce::Array<juce::Colour> gradientColours;

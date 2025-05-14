@@ -186,6 +186,20 @@ public:
         // 스케일이 조절된 데이터를 시각화 컴포넌트로 전달
         horizontalVisualiserComponent.pushBuffer(scaledBuffer);
     }
+    
+    // 시각화 컴포넌트를 초기화하는 메서드 (재생 중지 시 호출)
+    void clearVisualization()
+    {
+        // 빈 버퍼를 생성하여 시각화 초기화
+        juce::AudioBuffer<float> emptyBuffer(2, 1024);
+        emptyBuffer.clear(); // 모든 샘플을 0으로 설정
+        
+        // 3D 시각화 초기화
+        visualiserComponent.clear();
+        
+        // 수평 시각화 초기화
+        horizontalVisualiserComponent.clear();
+    }
 
 private:
     juce::Label titleLabel;
