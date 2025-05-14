@@ -540,7 +540,8 @@ private:
                 g.setColour(juce::Colours::white.withAlpha(0.5f));
                 g.drawRoundedRectangle(targetBounds.expanded(2.0f), 3.0f, 1.5f);
                 
-                // 이미지 그리기
+                // 이미지 그리기 - 투명도를 유지하면서 그리기
+                g.setOpacity(1.0f);
                 g.drawImage(image, targetBounds);
             }
         }
