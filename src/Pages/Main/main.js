@@ -28,6 +28,8 @@ export default function Main() {
   const cover_url = process.env.REACT_APP_COVER_URL;
 
   console.log(allSongs, '모든 곡');
+  console.log('client_id:', process.env.REACT_APP_SPOTIFY_CLIENT_ID);
+  console.log('client_secret:', process.env.REACT_APP_SPOTIFY_CLIENT_SECRET);
 
   return (
     <div className="flex flex-col min-h-screen">

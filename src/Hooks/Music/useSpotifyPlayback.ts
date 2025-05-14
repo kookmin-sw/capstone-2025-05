@@ -29,12 +29,6 @@ export const useSpotifyPlayback = ({
         return;
       }
 
-      console.log('client_id:', process.env.REACT_APP_SPOTIFY_CLIENT_ID);
-      console.log(
-        'client_secret:',
-        process.env.REACT_APP_SPOTIFY_CLIENT_SECRET,
-      );
-
       try {
         const res = await axios.put(
           `https://api.spotify.com/v1/me/player/${action}?device_id=${deviceId}`,
