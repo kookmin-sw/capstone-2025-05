@@ -110,6 +110,9 @@ public:
     bool isAmpliTubeEffectEnabled() const;
     void toggleAmpliTubeEffect();
     
+    // 시각화 정리를 위한 헬퍼 메서드
+    void startCleanupTimer();
+    
 private:
     // 이벤트 핸들러 메서드
     void handleAnalysisCompleteEvent(const AnalysisCompleteEvent& event);

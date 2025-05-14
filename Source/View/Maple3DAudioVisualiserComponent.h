@@ -147,8 +147,8 @@ public:
         // 페이드 아웃 처리 - 항상 실행
         if (isFadingOut)
         {
-            // 페이드 아웃 진행 - 빠른 속도로 페이드 아웃
-            fadeOutFactor -= 0.08f; // 페이드 속도 조절 (더 빠르게)
+            // 페이드 아웃 진행 - 더 빠른 속도로 페이드 아웃
+            fadeOutFactor -= 0.15f; // 페이드 속도 증가 (더 빠르게)
             
             // 페이드 아웃이 완료되면 모든 데이터 초기화
             if (fadeOutFactor <= 0.0f)
@@ -158,10 +158,14 @@ public:
                 
                 // 실제 데이터 초기화
                 resetData();
+                
+                // 경쟁 상태 방지를 위한 추가 안전장치
+                DBG("Maple3DAudioVisualiserComponent: Fade out complete, data reset");
             }
             
             // 다시 그리기 요청
             repaint();
+            return; // 페이드 아웃 중일 때는 다른 처리 하지 않음
         }
         
         // audioDataChanged가 true일 때만 FFT 계산 및 repaint 호출
@@ -260,14 +264,17 @@ public:
     // 시각화 데이터 초기화 (재생 중지 시 호출)
     void clear()
     {
-        // 타이머가 중지된 경우 아무것도 하지 않음
-        if (!isTimerRunning())
-            return;
-            
         const juce::ScopedLock sl(audioDataLock);
         
         // 페이드 아웃 효과 시작
         startFadeOut();
+        
+        // 타이머가 중지되었다면 즉시 데이터 초기화
+        if (!isTimerRunning())
+        {
+            resetData();
+            DBG("Maple3DAudioVisualiserComponent: Timer not running, immediate reset");
+        }
         
         // 즉시 다시 그리기 요청
         repaint();
@@ -323,6 +330,51 @@ public:
         frequencyData.addArray(freqData);
         
         audioDataChanged = true;
+    }
+    
+    // 타이머 중지 시 안전한 처리를 위한 확장 메서드
+    void stopTimer()
+    {
+        // 중지 전에 페이드 아웃 중이라면 즉시 데이터 초기화
+        if (isFadingOut)
+        {
+            const juce::ScopedLock sl(audioDataLock);
+            fadeOutFactor = 0.0f;
+            isFadingOut = false;
+            resetData();
+            DBG("Maple3DAudioVisualiserComponent: Forced reset on timer stop");
+        }
+        
+        // 타이머 중지
+        juce::Timer::stopTimer();
+    }
+    
+    // 컴포넌트가 소멸되기 전에 안전하게 정리
+    void safeShutdown()
+    {
+        // 타이머 중지 및 플래그 초기화
+        stopTimer();
+        
+        // 모든 데이터 즉시 초기화
+        const juce::ScopedLock sl(audioDataLock);
+        fadeOutFactor = 0.0f;
+        isFadingOut = false;
+        audioDataChanged = false;
+        
+        // 강제 초기화
+        for (int i = 0; i < fftSize * 2; ++i)
+            fftData[i] = 0.0f;
+            
+        for (int i = 0; i < fftSize; ++i)
+            fftDataFifo[i] = 0.0f;
+            
+        // 빈 파형으로 교체 (메모리 해제)
+        waveformData = juce::AudioBuffer<float>();
+        
+        // 주파수 데이터 초기화
+        frequencyData.clear();
+        
+        DBG("Maple3DAudioVisualiserComponent: Safe shutdown complete");
     }
     
 private:

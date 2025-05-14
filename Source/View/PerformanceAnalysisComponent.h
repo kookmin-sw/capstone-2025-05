@@ -190,15 +190,51 @@ public:
     // 시각화 컴포넌트를 초기화하는 메서드 (재생 중지 시 호출)
     void clearVisualization()
     {
-        // 빈 버퍼를 생성하여 시각화 초기화
+        // 두 시각화 컴포넌트를 모두 초기화
+        clear3DVisualization();
+        clearHorizontalVisualization();
+    }
+    
+    // 3D 시각화만 초기화하는 메서드 (재생 중지 시 호출)
+    void clear3DVisualization()
+    {
+        // 3D 시각화 초기화
+        visualiserComponent.clear();
+    }
+    
+    // 수평 시각화만 초기화하는 메서드 (마이크 모니터링 비활성화 시 호출)
+    void clearHorizontalVisualization()
+    {
+        // 빈 버퍼를 생성하여 수평 시각화 초기화
         juce::AudioBuffer<float> emptyBuffer(2, 1024);
         emptyBuffer.clear(); // 모든 샘플을 0으로 설정
         
-        // 3D 시각화 초기화
-        visualiserComponent.clear();
+        // 수평 시각화 초기화
+        horizontalVisualiserComponent.clear();
+    }
+    
+    // 안전한 종료를 위한 메서드 (GuitarPracticeComponent 소멸자에서 호출)
+    void safeShutdown()
+    {
+        // 내부 타이머 중지
+        stopTimer();
+        
+        // 3D 시각화 안전 종료
+        visualiserComponent.safeShutdown();
         
         // 수평 시각화 초기화
         horizontalVisualiserComponent.clear();
+        horizontalVisualiserComponent.stopTimer();
+        
+        DBG("PerformanceAnalysisComponent: Safe shutdown complete");
+    }
+    
+    // 내부 컴포넌트 타이머 중지
+    void stopTimer()
+    {
+        // 내부 컴포넌트의 타이머 중지
+        visualiserComponent.stopTimer();
+        horizontalVisualiserComponent.stopTimer();
     }
 
 private:

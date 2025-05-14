@@ -225,6 +225,16 @@ GuitarPracticeComponent::~GuitarPracticeComponent()
     // 타이머 정리
     stopTimer();
 
+    // 종료 전에 시각화 명시적 초기화 (충돌 방지)
+    if (performanceAnalysisComponent)
+    {
+        // 3D 시각화 컴포넌트 안전 종료
+        performanceAnalysisComponent->safeShutdown();
+        
+        // 비동기 호출 대기 (짧은 시간만)
+        juce::Thread::sleep(50);
+    }
+
     // 모델에서 리스너 제거 (새 인터페이스 사용)
     audioModel.removeListener(this);
     
@@ -476,6 +486,9 @@ void GuitarPracticeComponent::onPlaybackStateChanged(bool isPlaying)
 // UI 업데이트 메서드
 void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
 {
+    // 이전 재생 상태 캡처
+    static bool wasPlaying = false;
+    
     // 플레이 버튼의 토글 상태만 업데이트 (이벤트 발생 없이)
     if (playButton.getToggleState() != isNowPlaying)
     {
@@ -485,6 +498,17 @@ void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
     
     // 재생 중일 때는 분석 버튼 비활성화
     analyzeButton.setEnabled(!isNowPlaying && lastRecording.existsAsFile());
+    
+    // 재생 -> 정지 전환 감지
+    if (wasPlaying && !isNowPlaying && performanceAnalysisComponent)
+    {
+        // 재생 중지 시 3D 시각화 초기화 (페이드 아웃 효과)
+        performanceAnalysisComponent->clear3DVisualization();        
+        DBG("GuitarPracticeComponent: Clearing 3D visualization on playback stop");
+    }
+    
+    // 현재 상태 저장
+    wasPlaying = isNowPlaying;
     
     // 타이머 제어 - 재생 중이거나 마이크 모니터링이 켜져 있을 때 타이머 실행
     if ((isNowPlaying || microphoneMonitoringEnabled) && !isTimerRunning())
@@ -510,6 +534,41 @@ void GuitarPracticeComponent::updatePlaybackState(bool isNowPlaying)
         else
             scoreComponent->stopPlayback();
     }
+}
+
+// 시각화 정리를 위한 타이머 시작 (여러 번 시도)
+void GuitarPracticeComponent::startCleanupTimer()
+{
+    class CleanupTimer : public juce::Timer
+    {
+    public:
+        CleanupTimer(GuitarPracticeComponent* owner) : comp(owner) {}
+        
+        void timerCallback() override
+        {
+            if (comp && comp->performanceAnalysisComponent)
+            {
+                // 3D 시각화 페이드 아웃 재시도
+                comp->performanceAnalysisComponent->clear3DVisualization();
+                DBG("GuitarPracticeComponent: Cleanup timer - 3D visualization clear retry");
+            }
+            
+            // 일정 횟수 후 타이머 자동 정지
+            if (++attempts >= 3)
+            {
+                stopTimer();
+                delete this; // 자기 자신 제거
+            }
+        }
+        
+    private:
+        GuitarPracticeComponent* comp;
+        int attempts = 0;
+    };
+    
+    // 타이머 생성 및 시작 (100ms 간격으로 최대 3번 시도)
+    CleanupTimer* timer = new CleanupTimer(this);
+    timer->startTimer(100);
 }
 
 void GuitarPracticeComponent::updateVolumeDisplay(float volume)
@@ -673,8 +732,31 @@ void GuitarPracticeComponent::stopRecording()
     analyzeButton.setEnabled(true);
     playButton.setEnabled(true); // 녹음 중지 시 재생 버튼 활성화
     
-    // 타이머 중지
-    stopTimer();
+    // 시각화 처리 - 녹음 중지 시에도 3D 시각화가 페이드 아웃 되도록 처리
+    if (performanceAnalysisComponent)
+    {
+        // 3D 시각화 페이드 아웃
+        performanceAnalysisComponent->clear3DVisualization();
+        
+        // 마이크 모니터링이 비활성화 상태인 경우만 수평 시각화도 초기화
+        if (!microphoneMonitoringEnabled)
+        {
+            performanceAnalysisComponent->clearHorizontalVisualization();
+        }
+        
+        DBG("GuitarPracticeComponent: Clearing visualizations on recording stop");
+    }
+    
+    // 타이머는 마이크 모니터링이나 재생 중이 아닐 때만 중지
+    if (!microphoneMonitoringEnabled && !audioModel.isPlaying())
+    {
+        stopTimer();
+        DBG("GuitarPracticeComponent: Stopped timer after recording");
+    }
+    else
+    {
+        DBG("GuitarPracticeComponent: Keeping timer running - other active functions exist");
+    }
 }
 
 bool GuitarPracticeComponent::isRecording() const
@@ -754,17 +836,18 @@ void GuitarPracticeComponent::timerCallback()
                 performanceAnalysisComponent->pushAudioBuffer(visualizationBuffer);
             }
         }
-        else if (!isPlaying && !isMonitoring && !isRecording()) {
-            // 재생 중이 아니고 모니터링도 꺼져 있고 녹음 중이 아닐 때만 시각화 초기화
-            performanceAnalysisComponent->clearVisualization();
+        
+        // 수평 시각화 초기화 조건 - 마이크 모니터링과 관련됨
+        if (!isMonitoring) {
+            performanceAnalysisComponent->clearHorizontalVisualization();
         }
         
         // 마이크 입력 데이터 가져오기
         static juce::AudioBuffer<float> micBuffer(2, 1024);
         int micSamplesRead = audioController->getAudioTap().readMicrophone(micBuffer);
         
-        // 마이크 데이터가 있고, 마이크 모니터링이 활성화되어 있거나 녹음 중일 때 시각화
-        if (micSamplesRead > 0 && (isMonitoring || isRecording())) 
+        // 마이크 데이터가 있고, 마이크 모니터링이 활성화되어 있을 때만 시각화
+        if (micSamplesRead > 0 && isMonitoring) 
         {
             performanceAnalysisComponent->pushMicrophoneBuffer(micBuffer);
         }
@@ -1060,6 +1143,13 @@ void GuitarPracticeComponent::enableMicrophoneMonitoring(bool shouldEnable)
                                   shouldEnable ? juce::Colours::green : MapleTheme::getHighlightColour());
     }
     
+    // 모니터링 비활성화 시 수평 시각화만 초기화
+    if (!shouldEnable && performanceAnalysisComponent)
+    {
+        performanceAnalysisComponent->clearHorizontalVisualization();
+        DBG("GuitarPracticeComponent: Clearing horizontal visualization on monitoring disabled");
+    }
+    
     // 타이머 제어 - 마이크 모니터링에 따라 처리
     if (shouldEnable && !isTimerRunning())
     {
@@ -1071,7 +1161,7 @@ void GuitarPracticeComponent::enableMicrophoneMonitoring(bool shouldEnable)
     {
         // 마이크 모니터링 비활성화 시 타이머 상태 확인
         // 다른 활성 기능(재생, 녹음, 분석)이 없을 때만 타이머 중지
-        bool canStopTimer = !audioModel.isPlaying() && !isRecording() && analyzeButton.isEnabled();
+        bool canStopTimer = !audioModel.isPlaying() && analyzeButton.isEnabled();
         
         if (canStopTimer)
         {
