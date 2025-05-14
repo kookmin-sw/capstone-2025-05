@@ -739,10 +739,12 @@ void GuitarPracticeComponent::timerCallback()
         // 시각화를 위한 오디오 버퍼 준비 (1024 샘플, 한 번만 할당)
         static juce::AudioBuffer<float> visualizationBuffer(2, 1024);
         
-        // 재생 중인 경우에만 AudioTap에서 데이터 읽기 및 시각화 처리
+        // 재생 중이거나 마이크 모니터링이 활성화된 경우 AudioTap에서 데이터 읽기 및 시각화 처리
         bool isPlaying = audioModel.isPlaying();
+        bool isMonitoring = microphoneMonitoringEnabled;
         int samplesRead = 0;
         
+        // 재생 데이터 처리 (재생 중일 때만)
         if (isPlaying) {
             // AudioTap에서 재생 데이터 직접 읽기
             samplesRead = audioController->getAudioTap().readPlayback(visualizationBuffer);
@@ -752,26 +754,17 @@ void GuitarPracticeComponent::timerCallback()
                 performanceAnalysisComponent->pushAudioBuffer(visualizationBuffer);
             }
         }
-        else {
-            // 재생 중이 아닐 때는 시각화 초기화 (비우기)
-            // 마지막 시각화 결과가 남아있는 것을 방지
+        else if (!isPlaying && !isMonitoring && !isRecording()) {
+            // 재생 중이 아니고 모니터링도 꺼져 있고 녹음 중이 아닐 때만 시각화 초기화
             performanceAnalysisComponent->clearVisualization();
-        }
-        
-        // 샘플 읽기 결과를 간헐적으로 로그에 기록 (매 30프레임마다)
-        static int logCounter = 0;
-        if (++logCounter >= 30) {
-            logCounter = 0;
-            DBG("GuitarPracticeComponent: visualizationBuffer - samplesRead = " + juce::String(samplesRead) + 
-                ", isPlaying = " + (isPlaying ? "true" : "false"));
         }
         
         // 마이크 입력 데이터 가져오기
         static juce::AudioBuffer<float> micBuffer(2, 1024);
         int micSamplesRead = audioController->getAudioTap().readMicrophone(micBuffer);
         
-        // 마이크 데이터가 있으면 수평 시각화 컴포넌트에 전달
-        if (micSamplesRead > 0)
+        // 마이크 데이터가 있고, 마이크 모니터링이 활성화되어 있거나 녹음 중일 때 시각화
+        if (micSamplesRead > 0 && (isMonitoring || isRecording())) 
         {
             performanceAnalysisComponent->pushMicrophoneBuffer(micBuffer);
         }
@@ -1067,18 +1060,28 @@ void GuitarPracticeComponent::enableMicrophoneMonitoring(bool shouldEnable)
                                   shouldEnable ? juce::Colours::green : MapleTheme::getHighlightColour());
     }
     
-    // 타이머 시작/중지 - 마이크 모니터링 상태에 따라 처리
+    // 타이머 제어 - 마이크 모니터링에 따라 처리
     if (shouldEnable && !isTimerRunning())
     {
         // 마이크 모니터링이 활성화되었고 타이머가 실행 중이 아니면 시작
         startTimer(30); // 30ms 간격 (약 33fps)
         DBG("GuitarPracticeComponent: Started timer for microphone visualization");
     }
-    else if (!shouldEnable && !audioModel.isPlaying() && !isRecording() && analyzeButton.isEnabled())
+    else if (!shouldEnable)
     {
-        // 마이크 모니터링이 비활성화되고, 재생 중이 아니고, 녹음 중이 아니고, 분석 중이 아니면 타이머 중지
-        stopTimer();
-        DBG("GuitarPracticeComponent: Stopped timer - microphone monitoring disabled");
+        // 마이크 모니터링 비활성화 시 타이머 상태 확인
+        // 다른 활성 기능(재생, 녹음, 분석)이 없을 때만 타이머 중지
+        bool canStopTimer = !audioModel.isPlaying() && !isRecording() && analyzeButton.isEnabled();
+        
+        if (canStopTimer)
+        {
+            stopTimer();
+            DBG("GuitarPracticeComponent: Stopped timer - no active functions");
+        }
+        else
+        {
+            DBG("GuitarPracticeComponent: Keeping timer running - other active functions exist");
+        }
     }
 }
 
