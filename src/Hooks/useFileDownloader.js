@@ -1,5 +1,6 @@
 // src/hooks/useFileDownloader.js
 import axios from 'axios';
+import swal from 'sweetalert';
 
 export default function useFileDownloader() {
   const downloadFile = async (url, filename) => {
@@ -16,8 +17,20 @@ export default function useFileDownloader() {
 
       URL.revokeObjectURL(link.href);
     } catch (error) {
-      console.error('파일 다운로드 실패:', error);
-      alert('다운로드에 실패했습니다.');
+      if (error.status === 404) {
+        swal({
+          text: '파일이 존재하지 않습니다😥',
+          icon: 'info',
+          buttons: {
+            confirm: {
+              text: '확인',
+              className: 'custom-confirm-button',
+            },
+          },
+        });
+        return;
+      }
+      console.log(error, '에러처리');
     }
   };
 

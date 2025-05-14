@@ -28,3 +28,6 @@
     overflow: visible !important;
   }
 }
+@page {
+  size: landscape;
+}

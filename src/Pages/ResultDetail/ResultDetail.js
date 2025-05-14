@@ -5,21 +5,17 @@ import Box from '../../Components/Box/Box.js';
 import Music from '../../Assets/MyPage/Vector.svg';
 import Information from '../../Assets/MyPage/sidebar_profile.svg';
 import Setting from '../../Assets/MyPage/Setting.svg';
-import 음반 from '../../Assets/Main/음반.svg';
 import PerformanceChart from '../../Components/Chart/PerformanceChart.js';
 import BeatChart from '../../Components/Chart/beatChart.js';
 import TechniqueChart from '../../Components/Chart/techniqueChart.js';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../../Context/AuthContext.js';
-import AudioPlayer from '../../Components/Audio/AudioPlayer.js';
 import { FaPrint } from 'react-icons/fa6';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSongByIdQuery } from '../../Hooks/Audio/get/getSongById.js';
 import CircularProgressBar from '../../Components/Graph/CircularProgressBar.js';
 import useFileDownloader from '../../Hooks/useFileDownloader.js';
-import mediaApi from '../../Utils/audioApi.js';
-import Button from '../../Components/Button/Button.js';
 
 const ANALYSIS_URL = process.env.REACT_APP_ANALYSIS_URL;
 const MEDIA_URL = process.env.REACT_APP_MEDIA_URL;
@@ -31,7 +27,10 @@ export default function ResultDetail() {
   const typeName = location.type;
   const song_id = location.song_id; //location.song_id
   const user_id = typeName === 'userResults' ? uid : location.uid; //type이 userResult인 경우만 uid가 내 계정
+
+  // 파일 다운로드 훅
   const downloadFile = useFileDownloader();
+
   const { data: songData } = useSongByIdQuery(song_id);
   console.log(songData, '노래정보');
 
