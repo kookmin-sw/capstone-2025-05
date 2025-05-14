@@ -67,15 +67,15 @@ jobs:
             echo "REACT_APP_SPOTIFY_REDIRECT_URI=https://maple.ne.kr/main" >> .env
             echo "PUBLIC_URL=/" >> .env
             
-            docker rm -f maple-client maple-api 2>/dev/null || true
+            sudo docker rm -f maple-client maple-api 2>/dev/null || true
             
-            docker image prune -f
-            docker container prune -f
+            sudo docker image prune -f
+            sudo docker container prune -f
             
-            docker compose stop maple-client maple-api
+            sudo docker compose stop maple-client maple-api
             
-            docker image rm -f ${DOCKER_USERNAME}/maple-client:latest ${DOCKER_USERNAME}/maple-api:latest 2>/dev/null || true
+            sudo docker image rm -f ${DOCKER_USERNAME}/maple-client:latest ${DOCKER_USERNAME}/maple-api:latest 2>/dev/null || true
             
-            docker compose pull --no-parallel
+            sudo docker compose pull --no-parallel
             
-            docker compose up -d --build --force-recreate
+            sudo docker compose up -d --build --force-recreate
