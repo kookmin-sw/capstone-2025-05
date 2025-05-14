@@ -157,6 +157,7 @@ public:
     // 오디오 데이터 설정 - 원본 오디오 훼손 방지 및 최적화
     void pushBuffer(const juce::AudioBuffer<float>& buffer)
     {
+        DBG("pushBuffer size: " + juce::String(buffer.getNumSamples()));
         const juce::ScopedLock sl(audioDataLock);
         
         // 버퍼 정보 가져오기

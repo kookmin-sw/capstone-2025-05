@@ -739,13 +739,26 @@ void GuitarPracticeComponent::timerCallback()
         // 시각화를 위한 오디오 버퍼 준비 (1024 샘플, 한 번만 할당)
         static juce::AudioBuffer<float> visualizationBuffer(2, 1024);
         
-        // AudioTap에서 재생 데이터만 직접 읽기 - 소스 타입 확인 필요 없음
-        int samplesRead = audioController->getAudioTap().readPlayback(visualizationBuffer);
+        // 재생 중인 경우에만 AudioTap에서 데이터 읽기 및 시각화 처리
+        bool isPlaying = audioModel.isPlaying();
+        int samplesRead = 0;
         
-        // 데이터가 있으면 3D 시각화 컴포넌트에 전달 (재생 오디오 데이터)
-        if (samplesRead > 0)
-        {
-            performanceAnalysisComponent->pushAudioBuffer(visualizationBuffer);
+        if (isPlaying) {
+            // AudioTap에서 재생 데이터 직접 읽기
+            samplesRead = audioController->getAudioTap().readPlayback(visualizationBuffer);
+            
+            // 샘플이 있으면 시각화 컴포넌트에 전달
+            if (samplesRead > 0) {
+                performanceAnalysisComponent->pushAudioBuffer(visualizationBuffer);
+            }
+        }
+        
+        // 샘플 읽기 결과를 간헐적으로 로그에 기록 (매 30프레임마다)
+        static int logCounter = 0;
+        if (++logCounter >= 30) {
+            logCounter = 0;
+            DBG("GuitarPracticeComponent: visualizationBuffer - samplesRead = " + juce::String(samplesRead) + 
+                ", isPlaying = " + (isPlaying ? "true" : "false"));
         }
         
         // 마이크 입력 데이터 가져오기

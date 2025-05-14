@@ -94,7 +94,35 @@ public:
      */
     int readPlayback(juce::AudioBuffer<float>& buffer)
     {
-        return readFromFifo(playbackFifo, playbackBuffer, buffer);
+        // FIFO에서 데이터 읽기 시도
+        int samplesRead = readFromFifo(playbackFifo, playbackBuffer, buffer);
+        
+        // 읽은 데이터가 없고 이전에 데이터가 있었다면 최근 데이터 유지
+        if (samplesRead == 0 && hasPlaybackData)
+        {
+            // 마지막으로 성공적으로 읽은 데이터의 복사본을 사용
+            buffer.makeCopyOf(lastPlaybackBuffer);
+            
+            // 더 이상 반복되지 않도록 재생 상태를 추적하기 위한 카운터
+            if (++emptyReadCounter > 10)
+            {
+                // 10번 이상 빈 읽기가 발생하면 이전 데이터 재사용 중지
+                hasPlaybackData = false;
+                emptyReadCounter = 0;
+            }
+            
+            // 마지막 성공 데이터 반환
+            return lastPlaybackBuffer.getNumSamples();
+        }
+        else if (samplesRead > 0)
+        {
+            // 성공적으로 읽었으면 마지막 데이터 저장
+            lastPlaybackBuffer.makeCopyOf(buffer);
+            hasPlaybackData = true;
+            emptyReadCounter = 0;
+        }
+        
+        return samplesRead;
     }
 
     /**
@@ -159,6 +187,11 @@ private:
     // 데이터 읽기용 임시 버퍼 (GUI 스레드에서 사용)
     juce::AudioBuffer<float> tempBuffer;
     
+    // 마지막으로 성공적으로 읽은 재생 데이터 저장용 버퍼
+    juce::AudioBuffer<float> lastPlaybackBuffer{2, 1024};
+    bool hasPlaybackData = false;
+    int emptyReadCounter = 0;
+    
     // 현재 활성화된 오디오 소스 타입
     SourceType currentSourceType;
     
@@ -173,11 +206,6 @@ private:
     void writeToFifo(juce::AbstractFifo& fifo, juce::AudioBuffer<float>& buffer,
                     const float* const* inputChannelData, int numChannels, int numSamples)
     {
-        // 호출 빈도 조절 (모든 블록을 처리할 필요 없음)
-        static int callCounter = 0;
-        if ((++callCounter % 2) != 0) // 절반만 처리
-            return;
-
         // 채널 수 확인 및 제한
         const int channelsToProcess = juce::jmin(numChannels, buffer.getNumChannels());
         if (channelsToProcess <= 0 || numSamples <= 0)

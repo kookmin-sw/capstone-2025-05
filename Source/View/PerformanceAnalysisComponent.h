@@ -153,6 +153,7 @@ public:
     // 오디오 데이터를 시각화 컴포넌트로 전달하는 메서드 (재생 데이터용)
     void pushAudioBuffer(const juce::AudioBuffer<float>& buffer)
     {
+        DBG("pushAudioBuffer size: " + juce::String(buffer.getNumSamples()));
         visualiserComponent.pushBuffer(buffer);
     }
     

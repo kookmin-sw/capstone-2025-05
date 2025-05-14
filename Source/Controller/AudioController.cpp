@@ -267,19 +267,31 @@ void AudioController::audioDeviceIOCallbackWithContext(const float* const* input
         }
         
         // 재생 중인 오디오 데이터를 AudioTap에 전달 (시각화용)
-        const float* outputChannelPtrs[2] = { nullptr, nullptr };
-        if (numOutputChannels >= 1)
-            outputChannelPtrs[0] = outputBuffer.getReadPointer(0);
-        if (numOutputChannels >= 2)
-            outputChannelPtrs[1] = outputBuffer.getReadPointer(1);
-        else if (numOutputChannels == 1)
-            outputChannelPtrs[1] = outputBuffer.getReadPointer(0); // 모노 출력을 스테레오로 복제
-        
-        // 실제 오디오 데이터가 있는지 확인 
-        bool hasAudioData = (outputBuffer.getMagnitude(0, numSamples) > 0.0001f);
-        if (hasAudioData) {
-            // 재생 오디오 데이터를 AudioTap에 전달 (writePlayback 메서드 사용)
-            audioTap.writePlayback(outputChannelPtrs, 2, numSamples);
+        // 재생 중이면 매그니튜드와 상관없이 항상 데이터 전달
+        if (isPlaying) {
+            // 출력 채널 포인터 설정
+            const float* outputChannelPtrs[2] = { nullptr, nullptr };
+            if (numOutputChannels >= 1)
+                outputChannelPtrs[0] = outputBuffer.getReadPointer(0);
+            if (numOutputChannels >= 2)
+                outputChannelPtrs[1] = outputBuffer.getReadPointer(1);
+            else if (numOutputChannels == 1)
+                outputChannelPtrs[1] = outputBuffer.getReadPointer(0);
+            
+            // 항상 데이터 전달(재생 중 상태를 AudioTap에 강제로 전달)
+            if (outputChannelPtrs[0] != nullptr) {
+                // writeToFifo에서 callCounter 로직이 제거되었으므로 한 번만 호출
+                audioTap.writePlayback(outputChannelPtrs, 2, numSamples);
+                
+                if (shouldLog) {
+                    float magnitude = outputBuffer.getMagnitude(0, numSamples);
+                    DBG("AudioController: Playing - Data sent to AudioTap, buffer size: " + 
+                        juce::String(numSamples) + ", magnitude: " + juce::String(magnitude));
+                }
+            }
+        }
+        else if (shouldLog) {
+            DBG("AudioController: Not playing - No data sent to AudioTap");
         }
         
         // 디버깅 정보
