@@ -64,7 +64,7 @@ public:
         visualiserComponent.setBounds(visualiserArea.reduced(5));
         
         // 앨범 썸네일 영역 (왼쪽 영역에 배치)
-        albumThumbnail.setBounds(bounds.reduced(40));
+        albumThumbnail.setBounds(bounds.reduced(80));
     }
     
     // ContentController 설정
