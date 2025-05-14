@@ -44,6 +44,9 @@ MainComponent::MainComponent()
     contentModel = std::make_shared<ContentModel>();
     contentController = std::make_shared<ContentController>(*contentModel, *this, *guitarPracticeComponent);
     
+    // GuitarPracticeController에 ContentController 설정
+    guitarPracticeComponent->getController()->setContentController(contentController);
+    
     DBG("MainComponent - MVC components initialized");
     
     // ContentPanelComponent에 ContentController 설정

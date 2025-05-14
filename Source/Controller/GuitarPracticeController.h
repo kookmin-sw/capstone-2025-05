@@ -1,13 +1,15 @@
 #pragma once
 #include <JuceHeader.h>
-#include "Model/AudioModel.h"
-#include "Model/TabPlayer.h"
+#include "../Model/AudioModel.h"
+#include "../Model/TabPlayer.h"
+#include "../API/SongsAPIService.h"
+#include "../Controller/ContentController.h"
 #include "Model/gp_parser.h"
 #include "Event/EventBus.h"
 
 // 전방 선언
 class GuitarPracticeComponent;
-class SongsAPIService;
+class ContentController;
 
 /**
  * GuitarPracticeController - 기타 연습 기능의 Controller 역할
@@ -50,6 +52,9 @@ public:
     // View 참조 설정 (순환 참조 방지를 위해 약한 참조 사용)
     void setView(GuitarPracticeComponent* view) { this->view = view; }
     
+    // ContentController 설정 메서드 추가
+    void setContentController(std::shared_ptr<ContentController> controller) { contentController = controller; }
+    
     // TabPlayer 접근자
     TabPlayer& getTabPlayer() { return player; }
     
@@ -58,6 +63,9 @@ public:
     
     // 재생 상태 확인
     bool isPlaying() const { return audioModel.isPlaying(); }
+    
+    // ContentController 접근자 추가
+    ContentController* getContentController() const { return contentController.get(); }
     
 private:
     // 분석 스레드 결과 처리 메서드
@@ -82,6 +90,9 @@ private:
     AudioModel& audioModel;
     juce::AudioDeviceManager& deviceManager;
     GuitarPracticeComponent* view = nullptr; // 약한 참조
+    
+    // ContentController 멤버 변수 추가
+    std::shared_ptr<ContentController> contentController;
     
     // API 서비스
     std::unique_ptr<SongsAPIService> apiService;

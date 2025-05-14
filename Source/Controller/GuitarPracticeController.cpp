@@ -2,11 +2,10 @@
 #include "View/GuitarPracticeComponent.h"
 #include "Util/EnvLoader.h"
 #include "API/SongsAPIService.h"
-#include "Controller/ContentController.h"
 #include "Event/Event.h"
 
-GuitarPracticeController::GuitarPracticeController(AudioModel& model, juce::AudioDeviceManager& deviceManager)
-    : audioModel(model), deviceManager(deviceManager), player()
+GuitarPracticeController::GuitarPracticeController(AudioModel& audioModel, juce::AudioDeviceManager& deviceManager)
+    : audioModel(audioModel), deviceManager(deviceManager), contentController(nullptr), player()
 {
     DBG("GuitarPracticeController - constructor start");
     

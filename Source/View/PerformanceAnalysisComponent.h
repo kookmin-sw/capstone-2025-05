@@ -322,10 +322,84 @@ private:
     // ContentController를 통해 앨범 썸네일 로드
     void loadAlbumThumbnailForSong(const juce::String& songId)
     {
-        if (contentController == nullptr || songId.isEmpty())
+        if (songId.isEmpty())
             return;
             
         DBG("PerformanceAnalysisComponent::loadAlbumThumbnailForSong - Loading thumbnail for songId: " + songId);
+        
+        // 캐시 디렉토리에서 이미지 파일 찾기 시도
+        juce::File cacheDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                             .getChildFile("MapleClientDesktop/cache/images");
+        
+        // 캐시 디렉토리가 없다면 생성
+        if (!cacheDir.exists())
+        {
+            bool dirCreated = cacheDir.createDirectory();
+            
+            // 실패했다면 재귀적으로 상위 디렉토리부터 생성 시도
+            if (!dirCreated)
+            {
+                // 상위 경로 차례대로 생성
+                juce::File parentDir = cacheDir.getParentDirectory();
+                while (!parentDir.exists() && parentDir != juce::File())
+                {
+                    parentDir.createDirectory();
+                    parentDir = parentDir.getParentDirectory();
+                }
+                
+                // 다시 생성 시도
+                dirCreated = cacheDir.createDirectory();
+                
+                // 하위 디렉토리 생성
+                if (dirCreated)
+                {
+                    // 상위 폴더들이 생성되었으므로 다시 시도
+                    cacheDir.createDirectory();
+                }
+            }
+            
+            DBG("PerformanceAnalysisComponent::loadAlbumThumbnailForSong - Creating cache directory: " + 
+                juce::String(dirCreated ? "success" : "failed") + " - " + cacheDir.getFullPathName());
+        }
+        
+        // 가능한 이미지 확장자 확인
+        juce::Array<juce::String> possibleExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp" };
+        juce::File cachedImageFile;
+        
+        // songId_thumbnail 패턴의 파일 찾기
+        for (const auto& ext : possibleExtensions)
+        {
+            juce::File testFile = cacheDir.getChildFile(songId + "_thumbnail" + ext);
+            if (testFile.existsAsFile())
+            {
+                cachedImageFile = testFile;
+                break;
+            }
+        }
+        
+        // 캐시된 이미지가 있으면 로드
+        if (cachedImageFile.existsAsFile())
+        {
+            DBG("PerformanceAnalysisComponent::loadAlbumThumbnailForSong - Found cached image: " + cachedImageFile.getFullPathName());
+            juce::Image cachedImage = juce::ImageFileFormat::loadFrom(cachedImageFile);
+            
+            if (cachedImage.isValid())
+            {
+                DBG("PerformanceAnalysisComponent::loadAlbumThumbnailForSong - Successfully loaded cached image");
+                setAlbumThumbnail(cachedImage);
+                return;
+            }
+            // 이미지 로드 실패 시 계속 진행
+            DBG("PerformanceAnalysisComponent::loadAlbumThumbnailForSong - Failed to load cached image, trying ContentController");
+        }
+        
+        // ContentController가 없으면 기본 이미지 표시
+        if (contentController == nullptr)
+        {
+            // 로딩 실패 시 기본 이미지 표시
+            createPlaceholderThumbnail(songId);
+            return;
+        }
         
         // 로딩 상태 표시
         juce::Image loadingImage(juce::Image::RGB, 300, 300, true);

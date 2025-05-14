@@ -999,10 +999,26 @@ void GuitarPracticeComponent::handleSongLoadedEvent(const SongLoadedEvent& event
 {
     DBG("GuitarPracticeComponent: Handling SongLoadedEvent for song: " + event.getSongId());
     
+    // 현재 곡 ID 저장
+    juce::String songId = event.getSongId();
+    
     // UI 업데이트
-    juce::MessageManager::callAsync([this]() {
+    juce::MessageManager::callAsync([this, songId]() {
         playButton.setEnabled(true);
         recordButton.setEnabled(true);
+        
+        // 앨범 썸네일 업데이트
+        if (performanceAnalysisComponent)
+        {
+            // ContentController 설정 (이미지 로드를 위해 필요)
+            if (controller && controller->getContentController()) {
+                performanceAnalysisComponent->setContentController(controller->getContentController());
+            }
+            
+            // 앨범 썸네일 설정
+            performanceAnalysisComponent->setAlbumThumbnailForSong(songId);
+            DBG("GuitarPracticeComponent: Updated album thumbnail for song: " + songId);
+        }
         
         // ScoreComponent 업데이트
         if (scoreComponent != nullptr) {
