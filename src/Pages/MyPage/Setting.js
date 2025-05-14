@@ -232,7 +232,6 @@ export default function Admin() {
 
             <div className="flex justify-center mb-10">
               <img
-                key={profilePic}
                 src={profilePic}
                 alt="프로필"
                 className="w-40 h-40 rounded-full cursor-pointer"

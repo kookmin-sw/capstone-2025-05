@@ -142,7 +142,7 @@ export default function Beginner() {
           </div>
         </div>
       </div>
-      <Footer className="mt-auto w-full" />
+      <Footer className="mt-auto w-full" email={'maple@gmail.com'} />
     </div>
   );
 }
