@@ -101,7 +101,25 @@ public:
     
     ~MapleHorizontalAudioVisualiserComponent() override
     {
+        // 타이머 중지
         stopTimer();
+        
+        // 오디오 데이터 락 획득 후 데이터 초기화
+        const juce::ScopedLock sl(audioDataLock);
+        
+        // 데이터 구조 안전하게 정리
+        waveformData.clear();
+        frequencyData.clearQuick();
+        smoothedFrequencyData.clear();
+        interpolatedData.clear();
+        fftData.clear();
+        fftDataFifo.clear();
+        peakHoldTimes.clear();
+        peakLevels.clear();
+        
+        // 모든 변수를 안전한 초기 상태로 리셋
+        audioDataChanged = false;
+        fifoIndex = 0;
     }
     
     void paint(juce::Graphics& g) override
@@ -156,8 +174,15 @@ public:
     
     void timerCallback() override
     {
-        // 피크 홀드 시간 업데이트
-        updatePeakHolds();
+        // 타이머가 중지된 경우 즉시 리턴
+        if (!isTimerRunning())
+            return;
+            
+        // 락을 획득하고 피크 홀드 시간 업데이트
+        {
+            const juce::ScopedLock sl(audioDataLock);
+            updatePeakHolds();
+        }
         
         // 항상 repaint 호출하여 애니메이션 유지
         repaint();
@@ -171,12 +196,16 @@ public:
     // 피크 홀드 업데이트
     void updatePeakHolds()
     {
-        const juce::ScopedLock sl(audioDataLock);
+        // 데이터 범위 확인
+        if (interpolatedData.empty() || peakHoldTimes.empty() || peakLevels.empty())
+            return;
+            
+        // 스코프 락이 호출자에 의해 제공되므로 여기서는 사용하지 않음
         
         // 각 밴드의 피크 레벨 업데이트
         for (int band = 0; band < numBands; ++band)
         {
-            if (band >= interpolatedData.size())
+            if (band >= interpolatedData.size() || band >= peakHoldTimes.size() || band >= peakLevels.size())
                 continue;
                 
             float currentLevel = interpolatedData[band];
@@ -206,85 +235,112 @@ public:
     // 오디오 데이터 설정 - 원본 오디오 훼손 방지 및 최적화
     void pushBuffer(const juce::AudioBuffer<float>& buffer)
     {
+        // 타이머가 중지된 경우 처리 안함
+        if (!isTimerRunning())
+            return;
+            
         const juce::ScopedLock sl(audioDataLock);
         
-        // 버퍼 정보 가져오기
-        auto numChannels = juce::jmin(buffer.getNumChannels(), 2);
-        auto numSamples = buffer.getNumSamples();
-        
-        if (numChannels == 0 || numSamples == 0)
-            return;
-        
-        // 타이밍 디버깅
-        auto startTime = juce::Time::getMillisecondCounterHiRes();
-        
-        // 파형 표시용 데이터 저장
-        waveformData.setSize(numChannels, numSamples, false, false, true);
-        
-        // 데이터 복사 (소유권 이전)
-        for (int ch = 0; ch < numChannels; ++ch)
-        {
-            waveformData.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+        try {
+            // 버퍼 정보 가져오기
+            auto numChannels = juce::jmin(buffer.getNumChannels(), 2);
+            auto numSamples = buffer.getNumSamples();
+            
+            if (numChannels == 0 || numSamples == 0)
+                return;
+                
+            // 타이밍 디버깅
+            auto startTime = juce::Time::getMillisecondCounterHiRes();
+            
+            // 파형 표시용 데이터 저장
+            waveformData.setSize(numChannels, numSamples, false, false, true);
+            
+            // 데이터 복사 (소유권 이전)
+            for (int ch = 0; ch < numChannels; ++ch)
+            {
+                waveformData.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+            }
+            
+            // FFT 계산을 위해 단일 채널만 사용
+            const float* samples = buffer.getReadPointer(0);
+            
+            // 모든 샘플을 FIFO로 푸시
+            for (int i = 0; i < numSamples; ++i)
+            {
+                if (fifoIndex >= fftSize)
+                    fifoIndex = 0;
+                    
+                if (fifoIndex < fftDataFifo.size())
+                    fftDataFifo[fifoIndex++] = samples[i];
+            }
+            
+            // FFT 계산 (FIFO에 충분한 데이터가 있는 경우만)
+            calculateFFT();
+            
+            auto endTime = juce::Time::getMillisecondCounterHiRes();
+            //DBG("MapleHorizontalAudioVisualiserComponent: FFT 계산 시간: " + juce::String(endTime - startTime) + "ms");
         }
-        
-        // FFT 계산을 위해 단일 채널만 사용
-        const float* samples = buffer.getReadPointer(0);
-        
-        // 모든 샘플을 FIFO로 푸시
-        for (int i = 0; i < numSamples; ++i)
-        {
-            pushNextSampleIntoFifo(samples[i]);
+        catch (const std::exception& e) {
+            // 예외 발생 시 안전하게 처리
+            jassertfalse; // 디버그 빌드에서 알림
         }
-        
-        // FFT 계산 (FIFO에 충분한 데이터가 있는 경우만)
-        calculateFFT();
-        
-        auto endTime = juce::Time::getMillisecondCounterHiRes();
-        //DBG("MapleHorizontalAudioVisualiserComponent: FFT 계산 시간: " + juce::String(endTime - startTime) + "ms");
     }
     
     // 시각화 데이터 초기화 (재생 중지 시 호출)
     void clear()
     {
-        const juce::ScopedLock sl(audioDataLock);
-        
-        // FFT와 파형 데이터 초기화
-        for (int i = 0; i < fftSize * 2; ++i)
-            fftData[i] = 0.0f;
+        // 타이머가 중지된 경우 무시
+        if (!isTimerRunning())
+            return;
             
-        for (int i = 0; i < fftSize; ++i)
-            fftDataFifo[i] = 0.0f;
+        try {
+            const juce::ScopedLock sl(audioDataLock);
             
-        // 파형 데이터 초기화
-        waveformData.clear();
-        
-        // 주파수 데이터 초기화
-        for (int i = 0; i < numBands; ++i)
-            frequencyData.set(i, 0.0f);
+            // FFT와 파형 데이터 초기화
+            for (int i = 0; i < fftSize * 2 && i < fftData.size(); ++i)
+                fftData[i] = 0.0f;
+                
+            for (int i = 0; i < fftSize && i < fftDataFifo.size(); ++i)
+                fftDataFifo[i] = 0.0f;
+                
+            // 파형 데이터 초기화
+            waveformData.clear();
             
-        // 스무스 데이터 초기화
-        for (int i = 0; i < numBands; ++i)
-            smoothedFrequencyData[i] = 0.0f;
-            
-        // 보간 데이터 초기화
-        for (int i = 0; i < numBands; ++i)
-            interpolatedData[i] = 0.0f;
-            
-        // 피크 홀드 데이터 초기화
-        for (int i = 0; i < numBands; ++i) {
-            peakHoldTimes[i] = 0.0f;
-            peakLevels[i] = 0.0f;
-        }
-            
-        // 이동 평균 히스토리 초기화
-        for (int i = 0; i < movingAverageSize; ++i) {
-            for (int j = 0; j < numBands; ++j) {
-                frequencyHistory.getReference(i).set(j, 0.0f);
+            // 주파수 데이터 초기화
+            for (int i = 0; i < numBands && i < frequencyData.size(); ++i)
+                frequencyData.set(i, 0.0f);
+                
+            // 스무스 데이터 초기화
+            for (int i = 0; i < numBands && i < smoothedFrequencyData.size(); ++i)
+                smoothedFrequencyData[i] = 0.0f;
+                
+            // 보간 데이터 초기화
+            for (int i = 0; i < numBands && i < interpolatedData.size(); ++i)
+                interpolatedData[i] = 0.0f;
+                
+            // 피크 홀드 데이터 초기화
+            for (int i = 0; i < numBands && i < peakHoldTimes.size() && i < peakLevels.size(); ++i) {
+                peakHoldTimes[i] = 0.0f;
+                peakLevels[i] = 0.0f;
             }
+                
+            // 이동 평균 히스토리 초기화
+            for (int i = 0; i < movingAverageSize && i < frequencyHistory.size(); ++i) {
+                auto& history = frequencyHistory.getReference(i);
+                for (int j = 0; j < numBands && j < history.size(); ++j) {
+                    history.set(j, 0.0f);
+                }
+            }
+            
+            // 즉시 다시 그리기 요청
+            fifoIndex = 0;
+        }
+        catch (const std::exception& e) {
+            // 예외 처리
+            jassertfalse;
         }
         
-        // 즉시 다시 그리기 요청
-        fifoIndex = 0;
+        // 화면 갱신
         repaint();
     }
     
@@ -426,21 +482,17 @@ private:
     // FIFO에 샘플 추가
     void pushNextSampleIntoFifo(float sample)
     {
-        // FIFO 인덱스 순환
-        if (fifoIndex == fftSize)
-        {
-            // FIFO가 가득 차면 FFT 계산
-            calculateFFT();
-            fifoIndex = 0;
-        }
-        
-        // 샘플 추가
-        fftDataFifo[fifoIndex++] = sample;
+        // 이제 이 메서드는 사용하지 않음 - pushBuffer에서 직접 구현함
+        jassertfalse; // 이 메서드를 호출하면 안됨
     }
     
     // FFT 계산
     void calculateFFT()
     {
+        // 데이터 범위 확인
+        if (fftData.empty() || fftDataFifo.empty() || frequencyData.isEmpty())
+            return;
+            
         // 한 번에 너무 자주 FFT를 계산하지 않도록 제한 (성능 최적화)
         double currentTimeMs = juce::Time::getMillisecondCounterHiRes();
         if (currentTimeMs - lastFftTimeMs < 16.0) // 약 60fps 제한
@@ -448,201 +500,250 @@ private:
             
         lastFftTimeMs = currentTimeMs;
         
-        // FIFO에서 FFT 데이터 복사
-        std::fill(fftData.begin(), fftData.end(), 0.0f);
-        
-        // 윈도잉 함수 적용 (해닝 윈도우)
-        for (int i = 0; i < fftSize; ++i)
-        {
-            // 해닝 윈도우 계산
-            float window = 0.5f - 0.5f * std::cos(2.0f * juce::MathConstants<float>::pi * i / (fftSize - 1));
-            fftData[i * 2] = fftDataFifo[i] * window;
-        }
-        
-        // FFT 계산
-        fftEngine->performFrequencyOnlyForwardTransform(fftData.data());
-        
-        // 결과 처리
-        juce::Array<float> newFrequencyData;
-        for (int i = 0; i < numBands; ++i)
-            newFrequencyData.add(0.0f);
+        try {
+            // FIFO에서 FFT 데이터 복사
+            std::fill(fftData.begin(), fftData.end(), 0.0f);
             
-        // 각 밴드의 에너지 계산
-        for (int band = 0; band < numBands; ++band)
-        {
-            const auto& range = bandIndexCache[band];
-            int startIdx = range.first;
-            int endIdx = range.second;
-            
-            float sum = 0.0f;
-            int count = 0;
-            
-            for (int fftBin = startIdx; fftBin < endIdx; ++fftBin)
+            // 윈도잉 함수 적용 (해닝 윈도우)
+            for (int i = 0; i < fftSize && i * 2 + 1 < fftData.size(); ++i)
             {
-                sum += fftData[fftBin];
-                count++;
+                // 해닝 윈도우 계산
+                float window = 0.5f - 0.5f * std::cos(2.0f * juce::MathConstants<float>::pi * i / (fftSize - 1));
+                if (i < fftDataFifo.size())
+                    fftData[i * 2] = fftDataFifo[i] * window;
             }
             
-            // 평균 에너지 계산
-            float avg = count > 0 ? sum / count : 0.0f;
+            // FFT 계산
+            fftEngine->performFrequencyOnlyForwardTransform(fftData.data());
             
-            // 스케일링 및 정규화
-            avg = avg * dynamicScaleFactor;
-            
-            // 기타 주파수 대역에 따른 가중치 적용 (기타 음색 최적화)
-            float weight = 1.0f;
-            float normalizedBand = (float)band / numBands;
-            
-            // 기타 주파수 대역별 가중치 설정
-            // 낮은 주파수(80-300Hz): 베이스 줄 강조
-            // 중간 주파수(300-1200Hz): 기타 주요 음역 최대 강조
-            // 높은 주파수(1200-2000Hz): 하모닉스 적당히 강조
-            if (normalizedBand < 0.2f) {
-                // 저주파수 영역 (베이스 줄 - 기타 E, A, D 줄 등)
-                weight = 1.1f + 0.2f * normalizedBand * 5.0f; // 0.2까지 1.1~1.5 사이 증가
-            } 
-            else if (normalizedBand >= 0.2f && normalizedBand < 0.6f) {
-                // 중간 주파수 영역 (기타의 주요 음역 - G, B, E 줄 등)
-                // 사인 곡선으로 중간에 최대값을 갖도록 설정
-                weight = 1.6f + 0.6f * std::sin((normalizedBand - 0.2f) / 0.4f * juce::MathConstants<float>::pi);
-            }
-            else {
-                // 고주파수 영역 (하모닉스 등)
-                weight = 1.4f - 0.7f * (normalizedBand - 0.6f) / 0.4f; // 0.6부터 1.4에서 0.7로 감소
-            }
+            // 결과 처리
+            juce::Array<float> newFrequencyData;
+            for (int i = 0; i < numBands; ++i)
+                newFrequencyData.add(0.0f);
                 
-            avg *= weight;
+            // 각 밴드의 에너지 계산
+            for (int band = 0; band < numBands && band < bandIndexCache.size(); ++band)
+            {
+                const auto& range = bandIndexCache[band];
+                int startIdx = range.first;
+                int endIdx = range.second;
+                
+                if (startIdx < 0 || endIdx >= fftData.size() / 2 || startIdx >= endIdx)
+                    continue;
+                    
+                float sum = 0.0f;
+                int count = 0;
+                
+                for (int fftBin = startIdx; fftBin < endIdx && fftBin < fftData.size() / 2; ++fftBin)
+                {
+                    sum += fftData[fftBin];
+                    count++;
+                }
+                
+                // 평균 에너지 계산
+                float avg = count > 0 ? sum / count : 0.0f;
+                
+                // 스케일링 및 정규화
+                avg = avg * dynamicScaleFactor;
+                
+                // 기타 주파수 대역에 따른 가중치 적용 (기타 음색 최적화)
+                float weight = 1.0f;
+                float normalizedBand = (float)band / numBands;
+                
+                // 기타 주파수 대역별 가중치 설정
+                // 낮은 주파수(80-300Hz): 베이스 줄 강조
+                // 중간 주파수(300-1200Hz): 기타 주요 음역 최대 강조
+                // 높은 주파수(1200-2000Hz): 하모닉스 적당히 강조
+                if (normalizedBand < 0.2f) {
+                    // 저주파수 영역 (베이스 줄 - 기타 E, A, D 줄 등)
+                    weight = 1.1f + 0.2f * normalizedBand * 5.0f; // 0.2까지 1.1~1.5 사이 증가
+                } 
+                else if (normalizedBand >= 0.2f && normalizedBand < 0.6f) {
+                    // 중간 주파수 영역 (기타의 주요 음역 - G, B, E 줄 등)
+                    // 사인 곡선으로 중간에 최대값을 갖도록 설정
+                    weight = 1.6f + 0.6f * std::sin((normalizedBand - 0.2f) / 0.4f * juce::MathConstants<float>::pi);
+                }
+                else {
+                    // 고주파수 영역 (하모닉스 등)
+                    weight = 1.4f - 0.7f * (normalizedBand - 0.6f) / 0.4f; // 0.6부터 1.4에서 0.7로 감소
+                }
+                    
+                avg *= weight;
+                
+                // 결과 저장
+                newFrequencyData.set(band, juce::jlimit(0.0f, 1.0f, avg));
+            }
             
-            // 결과 저장
-            newFrequencyData.set(band, juce::jlimit(0.0f, 1.0f, avg));
+            // 시각적 효과를 위한 스무딩 적용
+            updateSmoothedFrequency(newFrequencyData);
         }
-        
-        // 시각적 효과를 위한 스무딩 적용
-        updateSmoothedFrequency(newFrequencyData);
+        catch (const std::exception& e) {
+            // 예외 발생 시 조용히 처리
+            jassertfalse; // 디버그 빌드에서만 알림
+        }
     }
     
     // 주파수 데이터 스무딩
     void updateSmoothedFrequency(const juce::Array<float>& newData)
     {
+        // 데이터 범위 확인
+        if (newData.isEmpty() || smoothedFrequencyData.empty() || frequencyHistory.isEmpty())
+            return;
+            
         // 전역 변수
         float minThreshold = 0.005f; // 최소 임계값 (노이즈 제거)
         
-        // 이동 평균 업데이트
-        for (int i = 0; i < movingAverageSize - 1; ++i) {
-            frequencyHistory.getReference(i) = frequencyHistory.getReference(i + 1);
-        }
-        frequencyHistory.getReference(movingAverageSize - 1) = newData;
-        
-        // 이동 평균 계산 및 스무딩 적용
-        for (int band = 0; band < numBands; ++band)
-        {
-            // 이동 평균 계산
-            float sum = 0.0f;
-            for (int i = 0; i < movingAverageSize; ++i) {
-                sum += frequencyHistory.getReference(i).getReference(band);
+        try {
+            // 이동 평균 업데이트
+            for (int i = 0; i < movingAverageSize - 1 && i < frequencyHistory.size() - 1; ++i) {
+                frequencyHistory.getReference(i) = frequencyHistory.getReference(i + 1);
             }
-            float avg = sum / movingAverageSize;
             
-            // 이전 값과 현재 값 사이의 부드러운 전이
-            // 새 값이 더 높을 때는 빠르게 상승, 낮을 때는 천천히 감소
-            float smoothingFactor = avg > smoothedFrequencyData[band] ? 0.7f : 0.3f;
+            if (!frequencyHistory.isEmpty())
+                frequencyHistory.getReference(juce::jmin(movingAverageSize - 1, frequencyHistory.size() - 1)) = newData;
             
-            // 활성 주파수에만 반응하기 위한 디케이 효과 추가
-            if (avg < minThreshold && smoothedFrequencyData[band] > 0.0f)
+            // 이동 평균 계산 및 스무딩 적용
+            for (int band = 0; band < numBands && band < smoothedFrequencyData.size(); ++band)
             {
-                // 디케이 효과 적용
-                smoothedFrequencyData[band] = smoothedFrequencyData[band] * 0.85f;
-                if (smoothedFrequencyData[band] < minThreshold)
-                    smoothedFrequencyData[band] = 0.0f;
-            }
-            else
-            {
-                // 정상적인 스무딩
-                smoothedFrequencyData[band] = smoothedFrequencyData[band] * (1.0f - smoothingFactor) + avg * smoothingFactor;
+                // 이동 평균 계산
+                float sum = 0.0f;
+                int validCount = 0;
                 
-                // 전역 감쇠 적용 (자동 감소)
-                if (globalDecayFactor > 0.05f)
-                    smoothedFrequencyData[band] *= (1.02f - globalDecayFactor);
+                for (int i = 0; i < movingAverageSize && i < frequencyHistory.size(); ++i) {
+                    const auto& history = frequencyHistory.getReference(i);
+                    if (band < history.size()) {
+                        sum += history.getReference(band);
+                        validCount++;
+                    }
+                }
+                
+                float avg = validCount > 0 ? sum / validCount : 0.0f;
+                
+                // 이전 값과 현재 값 사이의 부드러운 전이
+                // 새 값이 더 높을 때는 빠르게 상승, 낮을 때는 천천히 감소
+                float smoothingFactor = avg > smoothedFrequencyData[band] ? 0.7f : 0.3f;
+                
+                // 활성 주파수에만 반응하기 위한 디케이 효과 추가
+                if (avg < minThreshold && smoothedFrequencyData[band] > 0.0f)
+                {
+                    // 디케이 효과 적용
+                    smoothedFrequencyData[band] = smoothedFrequencyData[band] * 0.85f;
+                    if (smoothedFrequencyData[band] < minThreshold)
+                        smoothedFrequencyData[band] = 0.0f;
+                }
+                else
+                {
+                    // 정상적인 스무딩
+                    smoothedFrequencyData[band] = smoothedFrequencyData[band] * (1.0f - smoothingFactor) + avg * smoothingFactor;
+                    
+                    // 전역 감쇠 적용 (자동 감소)
+                    if (globalDecayFactor > 0.05f)
+                        smoothedFrequencyData[band] *= (1.02f - globalDecayFactor);
+                }
+                
+                // 주파수 값에 한계 설정
+                smoothedFrequencyData[band] = juce::jmin(0.98f, smoothedFrequencyData[band]);
             }
             
-            // 주파수 값에 한계 설정
-            smoothedFrequencyData[band] = juce::jmin(0.98f, smoothedFrequencyData[band]);
+            // 스무딩된 데이터를 보간하여 더 연속적인 스펙트럼 생성
+            if (useInterpolation)
+                interpolateFrequencyData();
         }
-        
-        // 스무딩된 데이터를 보간하여 더 연속적인 스펙트럼 생성
-        if (useInterpolation)
-            interpolateFrequencyData();
+        catch (const std::exception& e) {
+            // 예외 처리
+            jassertfalse;
+        }
     }
     
     // 주파수 데이터 보간 - 빈 공간 채우기와 연속적인 스펙트럼을 위한 메서드
     void interpolateFrequencyData()
     {
-        // 보간 전 기존 데이터 복사
-        for (int band = 0; band < numBands; ++band)
-            interpolatedData[band] = smoothedFrequencyData[band];
+        // 데이터 범위 확인
+        if (smoothedFrequencyData.empty() || interpolatedData.empty())
+            return;
             
-        // 보간 적용 (0이거나 매우 낮은 값을 주변 값에 기반하여 보정)
-        for (int band = 1; band < numBands - 1; ++band)
-        {
-            // 현재 값이 매우 낮고, 주변 값이 높다면 보간 적용
-            float currentValue = interpolatedData[band];
-            if (currentValue < 0.01f) // 낮은 값 기준점
-            {
-                float prevValue = interpolatedData[band - 1];
-                float nextValue = interpolatedData[band + 1];
+        try {
+            // 보간 전 기존 데이터 복사
+            for (int band = 0; band < numBands && band < smoothedFrequencyData.size() && band < interpolatedData.size(); ++band)
+                interpolatedData[band] = smoothedFrequencyData[band];
                 
-                // 양 옆의 값이 모두 일정 기준 이상일 때만 보간
-                if (prevValue > 0.05f || nextValue > 0.05f)
+            // 보간 적용 (0이거나 매우 낮은 값을 주변 값에 기반하여 보정)
+            for (int band = 1; band < numBands - 1 && band < interpolatedData.size(); ++band)
+            {
+                // 현재 값이 매우 낮고, 주변 값이 높다면 보간 적용
+                float currentValue = interpolatedData[band];
+                if (currentValue < 0.01f) // 낮은 값 기준점
                 {
-                    // 양쪽 값의 가중 평균으로 보간 (가까운 쪽에 더 큰 가중치)
-                    float interpolated = 0.0f;
-                    float weightSum = 0.0f;
+                    float prevValue = band > 0 ? interpolatedData[band - 1] : 0.0f;
+                    float nextValue = band < interpolatedData.size() - 1 ? interpolatedData[band + 1] : 0.0f;
                     
-                    if (prevValue > 0.01f)
+                    // 양 옆의 값이 모두 일정 기준 이상일 때만 보간
+                    if (prevValue > 0.05f || nextValue > 0.05f)
                     {
-                        float weight = 1.0f;
-                        interpolated += prevValue * weight;
-                        weightSum += weight;
-                    }
-                    
-                    if (nextValue > 0.01f)
-                    {
-                        float weight = 1.0f;
-                        interpolated += nextValue * weight;
-                        weightSum += weight;
-                    }
-                    
-                    if (weightSum > 0.0f)
-                    {
-                        // 실제 가중 평균 계산 및 주변 값보다 약간 낮게 설정
-                        interpolated = (interpolated / weightSum) * 0.85f;
-                        interpolatedData[band] = interpolated;
+                        // 양쪽 값의 가중 평균으로 보간 (가까운 쪽에 더 큰 가중치)
+                        float interpolated = 0.0f;
+                        float weightSum = 0.0f;
+                        
+                        if (prevValue > 0.01f)
+                        {
+                            float weight = 1.0f;
+                            interpolated += prevValue * weight;
+                            weightSum += weight;
+                        }
+                        
+                        if (nextValue > 0.01f)
+                        {
+                            float weight = 1.0f;
+                            interpolated += nextValue * weight;
+                            weightSum += weight;
+                        }
+                        
+                        if (weightSum > 0.0f)
+                        {
+                            // 실제 가중 평균 계산 및 주변 값보다 약간 낮게 설정
+                            interpolated = (interpolated / weightSum) * 0.85f;
+                            interpolatedData[band] = interpolated;
+                        }
                     }
                 }
             }
-        }
-        
-        // 추가 스무딩 - 인접 밴드 간 부드러운 전환을 위한 가우시안 블러 효과
-        std::vector<float> tempData = interpolatedData;
-        
-        for (int band = 2; band < numBands - 2; ++band)
-        {
-            // 5-포인트 가우시안 블러 커널 적용 (1,4,6,4,1)/16
-            float blurred = (
-                interpolatedData[band - 2] * 1.0f +
-                interpolatedData[band - 1] * 4.0f +
-                interpolatedData[band]     * 6.0f +
-                interpolatedData[band + 1] * 4.0f +
-                interpolatedData[band + 2] * 1.0f
-            ) / 16.0f;
             
-            // 원래 값과 블러된 값 사이 적절히 블렌딩
-            float blendFactor = 0.3f; // 블러 강도 (0.0 ~ 1.0)
-            tempData[band] = interpolatedData[band] * (1.0f - blendFactor) + blurred * blendFactor;
+            // 추가 스무딩 - 인접 밴드 간 부드러운 전환을 위한 가우시안 블러 효과
+            std::vector<float> tempData = interpolatedData;
+            
+            for (int band = 2; band < numBands - 2 && band < interpolatedData.size(); ++band)
+            {
+                // 5-포인트 가우시안 블러 커널 적용 (1,4,6,4,1)/16
+                float blurred = 0.0f;
+                float weightSum = 0.0f;
+                
+                const float weights[5] = {1.0f, 4.0f, 6.0f, 4.0f, 1.0f};
+                const int offsets[5] = {-2, -1, 0, 1, 2};
+                
+                for (int i = 0; i < 5; ++i) {
+                    int idx = band + offsets[i];
+                    if (idx >= 0 && idx < interpolatedData.size()) {
+                        blurred += interpolatedData[idx] * weights[i];
+                        weightSum += weights[i];
+                    }
+                }
+                
+                if (weightSum > 0.0f) {
+                    blurred /= weightSum;
+                    
+                    // 원래 값과 블러된 값 사이 적절히 블렌딩
+                    float blendFactor = 0.3f; // 블러 강도 (0.0 ~ 1.0)
+                    tempData[band] = interpolatedData[band] * (1.0f - blendFactor) + blurred * blendFactor;
+                }
+            }
+            
+            // 블러 결과를 다시 원래 배열에 복사
+            interpolatedData = tempData;
         }
-        
-        // 블러 결과를 다시 원래 배열에 복사
-        interpolatedData = tempData;
+        catch (const std::exception& e) {
+            // 예외 처리
+            jassertfalse;
+        }
     }
     
     // 수평 주파수 바 그리기
