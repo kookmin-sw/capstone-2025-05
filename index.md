@@ -6,7 +6,7 @@ title: MAPLE
 <h2 id="about" align="center">💡 프로젝트 소개</h2>
 
 <div align="center">
-  <img src="assets/poster.png" alt="포스터" width="600" />
+  <img src="assets/poster.jpg" alt="포스터" width="600" />
 </div>
 
 <h3 align="center">📃 프로젝트 개요</h3>
