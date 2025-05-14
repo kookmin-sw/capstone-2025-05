@@ -19,13 +19,8 @@ public:
         bool isCorrect;     // Whether the note was played correctly
     };
 
-    PerformanceAnalysisComponent() : accuracyMeter(progressValue)
+    PerformanceAnalysisComponent()
     {
-        addAndMakeVisible(accuracyMeter);
-        addAndMakeVisible(titleLabel);
-        addAndMakeVisible(accuracyLabel);
-        addAndMakeVisible(timingLabel);
-        addAndMakeVisible(difficultyLabel);
         addAndMakeVisible(visualiserComponent); // 3D 시각화 컴포넌트 추가
         addAndMakeVisible(horizontalVisualiserComponent); // 수평 시각화 컴포넌트 추가
         addAndMakeVisible(albumThumbnail); // 앨범 썸네일 컴포넌트 추가
@@ -41,39 +36,6 @@ public:
         const float minFreq = 80.0f;   // 최저 주파수 (Hz) - 가장 낮은 E 음 커버
         const float maxFreq = 2000.0f; // 최고 주파수 (Hz) - 하모닉스 포함
         horizontalVisualiserComponent.setFrequencyRange(minFreq, maxFreq);
-        
-        titleLabel.setText("Performance Analysis", juce::dontSendNotification);
-        titleLabel.setFont(juce::Font(18.0f, juce::Font::bold));
-        titleLabel.setJustificationType(juce::Justification::centred);
-        
-        accuracyLabel.setText("Accuracy: Needs analysis", juce::dontSendNotification);
-        accuracyLabel.setJustificationType(juce::Justification::centredLeft);
-        
-        timingLabel.setText("Timing Accuracy: Needs analysis", juce::dontSendNotification);
-        timingLabel.setJustificationType(juce::Justification::centredLeft);
-        
-        difficultyLabel.setText("Difficult sections: Needs analysis", juce::dontSendNotification);
-        difficultyLabel.setJustificationType(juce::Justification::centredLeft);
-        
-        // Set demo data
-        setPerformanceData(0.0f, 0.0f);
-        
-        // Initialize note accuracy data for demo
-        for (int i = 0; i < 32; ++i)
-        {
-            // Generate random accuracy values for demo
-            float accuracy = juce::Random::getSystemRandom().nextFloat();
-            bool isCorrect = accuracy > 0.3f;
-            
-            NoteAccuracy note;
-            note.time = i;
-            note.accuracy = accuracy;
-            note.isCorrect = isCorrect;
-            
-            noteAccuracyData.add(note);
-        }
-        
-        startTimer(30); // Start animation timer
     }
     
     ~PerformanceAnalysisComponent() override
@@ -90,11 +52,8 @@ public:
     {
         auto bounds = getLocalBounds().reduced(15);
         
-        // Title
-        titleLabel.setBounds(bounds.removeFromTop(30));
-        
         // 수평 오디오 시각화 컴포넌트를 하단에 배치
-        auto horizontalVisualiserHeight = 150;
+        auto horizontalVisualiserHeight = 250;
         auto horizontalVisualiserArea = bounds.removeFromBottom(horizontalVisualiserHeight);
         
         // 수평 시각화 컴포넌트 배치 (전체 공간 사용)
@@ -105,7 +64,7 @@ public:
         visualiserComponent.setBounds(visualiserArea.reduced(5));
         
         // 앨범 썸네일 영역 (왼쪽 영역에 배치)
-        albumThumbnail.setBounds(bounds.reduced(5));
+        albumThumbnail.setBounds(bounds.reduced(40));
     }
     
     // ContentController 설정
@@ -195,39 +154,7 @@ public:
     
     void timerCallback() override
     {
-        // Update animation
-        animationOffset += 1.0f;
-        if (animationOffset > 1000.0f)
-            animationOffset = 0.0f;
-            
         // Refresh UI
-        repaint();
-    }
-    
-    void setPerformanceData(float noteAccuracy, float timingAccuracy)
-    {
-        this->noteAccuracy = noteAccuracy;
-        this->timingAccuracy = timingAccuracy;
-        
-        // Update progress value that ProgressBar is watching
-        progressValue = noteAccuracy;
-        
-        // In real implementation, update labels based on analysis results
-        // For now, just display demo values
-        accuracyLabel.setText("Accuracy: " + juce::String(int(noteAccuracy * 100.0f)) + "%", 
-                             juce::dontSendNotification);
-        
-        timingLabel.setText("Timing Accuracy: " + juce::String(int(timingAccuracy * 100.0f)) + "%", 
-                           juce::dontSendNotification);
-                           
-        // In real implementation this would be called after analysis
-        startTimer(30);
-    }
-    
-    // In real implementation, this would be called when note accuracy data is available
-    void setNoteAccuracyData(const juce::Array<NoteAccuracy>& data)
-    {
-        noteAccuracyData = data;
         repaint();
     }
     
@@ -563,15 +490,6 @@ private:
     juce::String currentSongId; // 현재 표시 중인 곡 ID
     Song currentSong; // 현재 표시 중인 Song 객체
     ContentController* contentController = nullptr; // ContentController 참조
-    
-    double progressValue = 0.8; // Value that ProgressBar will watch
-    juce::ProgressBar accuracyMeter; // ProgressBar initialized with progressValue reference in constructor
-    
-    float noteAccuracy = 0.8f;    // Note accuracy (0-1 range)
-    float timingAccuracy = 0.7f;  // Timing accuracy (0-1 range)
-    float animationOffset = 0.0f; // Animation offset
-    
-    juce::Array<NoteAccuracy> noteAccuracyData; // Store individual note accuracy data
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PerformanceAnalysisComponent)
 }; 
