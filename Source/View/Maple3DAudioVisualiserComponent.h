@@ -65,7 +65,23 @@ public:
     
     ~Maple3DAudioVisualiserComponent() override
     {
+        // 타이머 중지
         stopTimer();
+        
+        // 오디오 데이터 락 획득 후 데이터 초기화
+        const juce::ScopedLock sl(audioDataLock);
+        
+        // 데이터 구조 안전하게 정리
+        waveformData.clear();
+        frequencyData.clearQuick();
+        smoothedFrequencyData.clear();
+        fftData.clear();
+        fftDataFifo.clear();
+        
+        // 모든 변수를 안전한 초기 상태로 리셋
+        audioDataChanged = false;
+        fifoIndex = 0;
+        isFadingOut = false;
     }
     
     void paint(juce::Graphics& g) override
@@ -115,6 +131,10 @@ public:
     
     void timerCallback() override
     {
+        // 타이머가 중지된 경우(소멸자에서 stopTimer 호출) 즉시 리턴
+        if (!isTimerRunning())
+            return;
+            
         // 30fps로 제한하여 CPU 사용량 감소
         double currentTime = juce::Time::getMillisecondCounterHiRes();
         double elapsed = currentTime - lastTimerCallTime;
@@ -124,9 +144,36 @@ public:
             
         lastTimerCallTime = currentTime;
         
+        // 페이드 아웃 처리 - 항상 실행
+        if (isFadingOut)
+        {
+            // 페이드 아웃 진행 - 빠른 속도로 페이드 아웃
+            fadeOutFactor -= 0.08f; // 페이드 속도 조절 (더 빠르게)
+            
+            // 페이드 아웃이 완료되면 모든 데이터 초기화
+            if (fadeOutFactor <= 0.0f)
+            {
+                fadeOutFactor = 0.0f;
+                isFadingOut = false;
+                
+                // 실제 데이터 초기화
+                resetData();
+            }
+            
+            // 다시 그리기 요청
+            repaint();
+        }
+        
         // audioDataChanged가 true일 때만 FFT 계산 및 repaint 호출
         if (audioDataChanged)
         {
+            // 새 데이터가 들어왔으므로 페이드 아웃 중단
+            if (isFadingOut)
+            {
+                isFadingOut = false;
+                fadeOutFactor = 1.0f;
+            }
+            
             // GUI 스레드에서 FFT 계산 (락 필요)
             const juce::ScopedLock sl(audioDataLock);
             
@@ -157,58 +204,85 @@ public:
     // 오디오 데이터 설정 - 원본 오디오 훼손 방지 및 최적화
     void pushBuffer(const juce::AudioBuffer<float>& buffer)
     {
-        DBG("pushBuffer size: " + juce::String(buffer.getNumSamples()));
+        // 타이머가 중지되었거나 NULL 버퍼인 경우 무시
+        if (!isTimerRunning() || buffer.getNumSamples() == 0 || buffer.getNumChannels() == 0)
+            return;
+            
         const juce::ScopedLock sl(audioDataLock);
         
-        // 버퍼 정보 가져오기
-        auto numChannels = juce::jmin(buffer.getNumChannels(), 2);
-        auto numSamples = buffer.getNumSamples();
-        
-        if (numChannels == 0 || numSamples == 0)
-            return;
-        
-        // 파형 표시용 데이터 저장 - 버퍼 크기가 변경된 경우에만 리사이즈
-        if (waveformData.getNumChannels() != numChannels || 
-            waveformData.getNumSamples() != numSamples)
-        {
-            waveformData.setSize(numChannels, numSamples, false, false, true);
+        try {
+            // 버퍼 정보 가져오기
+            auto numChannels = juce::jmin(buffer.getNumChannels(), 2);
+            auto numSamples = buffer.getNumSamples();
+            
+            // 파형 표시용 데이터 저장 - 버퍼 크기가 변경된 경우에만 리사이즈
+            if (waveformData.getNumChannels() != numChannels || 
+                waveformData.getNumSamples() != numSamples)
+            {
+                waveformData.setSize(numChannels, numSamples, false, false, true);
+            }
+            
+            // 데이터 복사 (소유권 이전)
+            for (int ch = 0; ch < numChannels; ++ch)
+            {
+                waveformData.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+            }
+            
+            // FFT 계산을 위해 메인 채널 데이터 FIFO에 저장
+            const float* samples = buffer.getReadPointer(0);
+            
+            // 다운샘플링 - 성능 최적화 및 배속 방지
+            int stride = numSamples > fftSize ? numSamples / fftSize : 1;
+            
+            // FIFO 인덱스 초기화
+            fifoIndex = 0;
+            
+            // 다운샘플링된 데이터만 처리
+            for (int i = 0; i < numSamples && fifoIndex < fftSize && fifoIndex < fftDataFifo.size(); i += stride)
+            {
+                fftDataFifo[fifoIndex++] = samples[i];
+            }
+            
+            // 남은 부분을 0으로 채움
+            while (fifoIndex < fftSize && fifoIndex < fftDataFifo.size())
+                fftDataFifo[fifoIndex++] = 0.0f;
+            
+            // 데이터 변경 플래그 설정 - 다음 타이머 콜백에서 FFT 계산
+            audioDataChanged = true;
         }
-        
-        // 데이터 복사 (소유권 이전)
-        for (int ch = 0; ch < numChannels; ++ch)
-        {
-            waveformData.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+        catch (...) {
+            // 예외 발생 시 안전하게 상태 복구
+            fifoIndex = 0;
+            audioDataChanged = false;
         }
-        
-        // FFT 계산을 위해 메인 채널 데이터 FIFO에 저장
-        // (실제 FFT 계산은 GUI 스레드에서 수행)
-        const float* samples = buffer.getReadPointer(0);
-        
-        // 다운샘플링 - 성능 최적화 및 배속 방지
-        int stride = numSamples > fftSize ? numSamples / fftSize : 1;
-        
-        // FIFO 인덱스 초기화
-        fifoIndex = 0;
-        
-        // 다운샘플링된 데이터만 처리
-        for (int i = 0; i < numSamples && fifoIndex < fftSize; i += stride)
-        {
-            fftDataFifo[fifoIndex++] = samples[i];
-        }
-        
-        // 남은 부분을 0으로 채움
-        while (fifoIndex < fftSize)
-            fftDataFifo[fifoIndex++] = 0.0f;
-        
-        // 데이터 변경 플래그 설정 - 다음 타이머 콜백에서 FFT 계산
-        audioDataChanged = true;
     }
     
     // 시각화 데이터 초기화 (재생 중지 시 호출)
     void clear()
     {
+        // 타이머가 중지된 경우 아무것도 하지 않음
+        if (!isTimerRunning())
+            return;
+            
         const juce::ScopedLock sl(audioDataLock);
         
+        // 페이드 아웃 효과 시작
+        startFadeOut();
+        
+        // 즉시 다시 그리기 요청
+        repaint();
+    }
+    
+    // 페이드 아웃 효과 시작
+    void startFadeOut()
+    {
+        isFadingOut = true;
+        fadeOutFactor = 1.0f; // 페이드 시작
+    }
+    
+    // 실제 데이터 초기화 (페이드 아웃 후 호출)
+    void resetData()
+    {
         // FFT와 파형 데이터 초기화
         for (int i = 0; i < fftSize * 2; ++i)
             fftData[i] = 0.0f;
@@ -234,9 +308,10 @@ public:
             }
         }
         
-        // 즉시 다시 그리기 요청
+        fifoIndex = 0;
+        
+        // 상태 업데이트
         audioDataChanged = true;
-        repaint();
     }
     
     // 주파수 스펙트럼 데이터 설정 (외부에서 계산된 경우)
@@ -622,7 +697,10 @@ private:
             float value = smoothedFrequencyData[i];
             
             // 비선형 변환으로 낮은 값은 더 낮게, 높은 값은 더 높게 (지수 1.2)
+            // 페이드 아웃 중이면 페이드 효과 적용
             float barLength = maxBarLength * std::pow(value, 1.2f);
+            if (isFadingOut)
+                barLength *= fadeOutFactor;
             
             // 안쪽과 바깥쪽 좌표 계산
             float innerX = centerX + cosAngle * innerRadius;
@@ -641,6 +719,10 @@ private:
             
             // 색상 alpha/밝기 계산 (주파수 값과 위치에 따라)
             float alpha = juce::jlimit(0.4f, 1.0f, value * 1.8f);
+            // 페이드 아웃 중이면 알파값에 페이드 효과 적용
+            if (isFadingOut)
+                alpha *= fadeOutFactor;
+                
             float brightness = juce::jlimit(0.9f, 2.0f, 1.0f + value * 1.2f);
             
             // 바 각도 위치에 따라 두께 조정 (더 연속적인 느낌)
@@ -688,13 +770,6 @@ private:
             // 3. 끝부분 - 더 밝은 효과 추가
             float glowX = outerX - cosAngle * outerThickness * 0.5f;
             float glowY = outerY - sinAngle * outerThickness * 0.5f;
-            
-            // // 활성도에 따라 더 밝은 효과 (높은 값에서만)
-            // if (value > 0.3f) { // 더 많은 막대에 효과를 적용하기 위해 임계값 낮춤
-            //     // 끝부분에 밝은 글로우 효과
-            //     g.setColour(barColour.withAlpha(alpha * 0.95f).withMultipliedBrightness(2.2f)); // 더 밝은 색상
-            //     g.fillEllipse(glowX - glowSize * 0.22f, glowY - glowSize * 0.22f, glowSize * 0.45f, glowSize * 0.45f); // 약간 더 큰 크기
-            // }
         }
     }
     
@@ -746,6 +821,10 @@ private:
     float globalDecayFactor = 0.0f;
     
     double lastTimerCallTime = 0.0;
+    
+    // 페이드 아웃 관련 상태
+    bool isFadingOut = false;
+    float fadeOutFactor = 1.0f;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Maple3DAudioVisualiserComponent)
 }; 
