@@ -12,7 +12,7 @@ title: MAPLE
 <h3 align="center">📃 프로젝트 개요</h3>
 <div align="center">
   MAPLE(Music Analysis & Performance Learning Environment)는 AI 기술을 활용해<br>
-  기타 연주 실력을 정밀하게 분석하고, 사용자에게 실시간으로 맞춤형 피드백을 제공하는 시스템입니다.<br>
+  기타 연주 실력을 정밀하게 분석하고, 사용자에게 맞춤형 피드백을 제공하는 시스템입니다.<br>
   사용자는 데스크탑 앱에서 자신의 연주 스트리밍을 시작하고,<br>
   웹에서 pitch, rhythm, technique 등의 측면에서<br>
   연주 정확도를 분석하고 시각화된 피드백을 제공합니다.<br>
