@@ -280,95 +280,6 @@ void SongsAPIService::downloadFile(const juce::String& url, const juce::File& de
     });
 }
 
-void SongsAPIService::downloadImage(const juce::String& imageUrl, std::function<void(bool success, juce::Image image)> callback)
-{
-    DBG("SongsAPIService::downloadImage - start for URL: " + imageUrl);
-    
-    juce::Thread::launch([this, imageUrl, callback]()
-    {
-        // URL이 상대경로인지 확인하고 절대경로로 변환
-        juce::String fullUrl;
-        if (imageUrl.startsWith("http"))
-        {
-            fullUrl = imageUrl;
-        }
-        else
-        {
-            // 상대 경로 처리 시 슬래시 추가 여부 확인
-            if (apiBaseUrl.endsWith("/") || imageUrl.startsWith("/"))
-            {
-                // 둘 중 하나가 슬래시로 끝나거나 시작하면 그대로 결합
-                fullUrl = apiBaseUrl + imageUrl;
-            }
-            else
-            {
-                // 둘 다 슬래시가 없으면 슬래시 추가
-                fullUrl = apiBaseUrl + "/" + imageUrl;
-            }
-        }
-        
-        DBG("SongsAPIService::downloadImage - full URL: " + fullUrl);
-        
-        juce::URL url(fullUrl);
-        int statusCode = 0;
-        juce::StringPairArray responseHeaders;
-        
-        // HTTP 요청을 위한 옵션 설정
-        auto options = juce::URL::InputStreamOptions(juce::URL::ParameterHandling::inAddress)
-                .withConnectionTimeoutMs(10000)
-                .withResponseHeaders(&responseHeaders)
-                .withStatusCode(&statusCode);
-                
-        // 입력 스트림 생성
-        std::unique_ptr<juce::InputStream> stream(url.createInputStream(options));
-        
-        if (stream != nullptr)
-        {
-            DBG("SongsAPIService::downloadImage - stream created successfully, status: " + juce::String(statusCode));
-            
-            // 이미지 데이터를 읽어 메모리에 저장
-            juce::MemoryBlock memoryBlock;
-            stream->readIntoMemoryBlock(memoryBlock);
-            
-            // 메모리 블록에서 이미지 생성
-            juce::MemoryInputStream memStream(memoryBlock, false);
-            juce::Image image = juce::ImageFileFormat::loadFrom(memStream);
-            
-            if (image.isValid())
-            {
-                DBG("SongsAPIService::downloadImage - image loaded successfully, size: " + 
-                    juce::String(image.getWidth()) + "x" + juce::String(image.getHeight()));
-                
-                // 메인 스레드에서 콜백 호출
-                juce::MessageManager::callAsync([callback, image]()
-                {
-                    if (callback)
-                        callback(true, image);
-                });
-            }
-            else
-            {
-                DBG("SongsAPIService::downloadImage - failed to create valid image");
-                juce::MessageManager::callAsync([callback]()
-                {
-                    if (callback)
-                        callback(false, juce::Image());
-                });
-            }
-        }
-        else
-        {
-            // 에러 처리
-            DBG("SongsAPIService::downloadImage - failed to create stream, status: " + juce::String(statusCode));
-            juce::MessageManager::callAsync([callback]()
-            {
-                if (callback)
-                    callback(false, juce::Image());
-            });
-        }
-    });
-}
-
 void SongsAPIService::downloadAudioFile(const juce::String& audioUrl, const juce::File& destinationFile,
                                       std::function<void(bool success, juce::String filePath)> callback)
 {
@@ -588,60 +499,84 @@ void SongsAPIService::downloadSongThumbnail(const juce::String& songId, std::fun
     // 썸네일 API 경로 생성 - apiBaseUrl이 이미 /api/v1을 포함하므로 중복을 제거
     juce::String thumbnailUrl = "/songs/" + songId + "/thumbnail";
     
-    juce::Thread::launch([this, thumbnailUrl, callback]()
+    // 캐시 디렉토리에 이미지 파일 경로 생성 (확장자는 서버가 결정하도록 함)
+    juce::File cacheDir = getCacheDirectory().getChildFile("images");
+    juce::File baseImageFile = cacheDir.getChildFile(songId + "_thumbnail");
+    
+    // 가능한 모든 이미지 확장자 체크
+    juce::Array<juce::String> possibleExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp" };
+    juce::File cachedFile;
+    
+    // 캐시된 이미지 파일 찾기
+    for (const auto& ext : possibleExtensions)
     {
-        // URL이 상대경로인지 확인하고 절대경로로 변환
-        juce::String fullUrl;
-        if (thumbnailUrl.startsWith("http"))
+        juce::File testFile = cacheDir.getChildFile(songId + "_thumbnail" + ext);
+        if (testFile.existsAsFile())
         {
-            fullUrl = thumbnailUrl;
+            cachedFile = testFile;
+            break;
+        }
+    }
+    
+    // 이미지가 이미 캐시되어 있는지 확인
+    if (cachedFile.existsAsFile())
+    {
+        DBG("SongsAPIService::downloadSongThumbnail - thumbnail already cached: " + cachedFile.getFullPathName());
+        juce::Image cachedImage = juce::ImageFileFormat::loadFrom(cachedFile);
+        
+        if (cachedImage.isValid())
+        {
+            // 메인 스레드에서 콜백 호출
+            juce::MessageManager::callAsync([callback, cachedImage]()
+            {
+                if (callback)
+                    callback(true, cachedImage);
+            });
+            return;
+        }
+        // 캐시된 이미지가 손상된 경우 삭제하고 다시 다운로드
+        cachedFile.deleteFile();
+    }
+    
+    // URL이 상대경로인지 확인하고 절대경로로 변환
+    juce::String fullUrl;
+    if (thumbnailUrl.startsWith("http"))
+    {
+        fullUrl = thumbnailUrl;
+    }
+    else
+    {
+        // 상대 경로 처리 시 슬래시 추가 여부 확인
+        if (apiBaseUrl.endsWith("/") || thumbnailUrl.startsWith("/"))
+        {
+            // 둘 중 하나가 슬래시로 끝나거나 시작하면 그대로 결합
+            fullUrl = apiBaseUrl + thumbnailUrl;
         }
         else
         {
-            // 상대 경로 처리 시 슬래시 추가 여부 확인
-            if (apiBaseUrl.endsWith("/") || thumbnailUrl.startsWith("/"))
-            {
-                // 둘 중 하나가 슬래시로 끝나거나 시작하면 그대로 결합
-                fullUrl = apiBaseUrl + thumbnailUrl;
-            }
-            else
-            {
-                // 둘 다 슬래시가 없으면 슬래시 추가
-                fullUrl = apiBaseUrl + "/" + thumbnailUrl;
-            }
+            // 둘 다 슬래시가 없으면 슬래시 추가
+            fullUrl = apiBaseUrl + "/" + thumbnailUrl;
         }
-        
-        DBG("SongsAPIService::downloadSongThumbnail - full URL: " + fullUrl);
-        
-        juce::URL url(fullUrl);
-        int statusCode = 0;
-        juce::StringPairArray responseHeaders;
-        
-        // HTTP 요청을 위한 옵션 설정
-        auto options = juce::URL::InputStreamOptions(juce::URL::ParameterHandling::inAddress)
-                .withConnectionTimeoutMs(10000)
-                .withResponseHeaders(&responseHeaders)
-                .withStatusCode(&statusCode);
-                
-        // 입력 스트림 생성
-        std::unique_ptr<juce::InputStream> stream(url.createInputStream(options));
-        
-        if (stream != nullptr)
+    }
+    
+    DBG("SongsAPIService::downloadSongThumbnail - full URL: " + fullUrl);
+    
+    // 파일 다운로드를 사용하여 이미지 저장
+    downloadFile(fullUrl, baseImageFile, [callback, songId, this](bool success, juce::String filePath) {
+        if (success)
         {
-            DBG("SongsAPIService::downloadSongThumbnail - stream created successfully, status: " + juce::String(statusCode));
+            DBG("SongsAPIService::downloadSongThumbnail - downloaded successfully to: " + filePath);
             
-            // 이미지 데이터를 읽어 메모리에 저장
-            juce::MemoryBlock memoryBlock;
-            stream->readIntoMemoryBlock(memoryBlock);
+            // 다운로드된 실제 파일 경로 사용
+            juce::File downloadedFile(filePath);
             
-            // 메모리 블록에서 이미지 생성
-            juce::MemoryInputStream memStream(memoryBlock, false);
-            juce::Image image = juce::ImageFileFormat::loadFrom(memStream);
+            // 파일에서 이미지 로드
+            juce::Image image = juce::ImageFileFormat::loadFrom(downloadedFile);
             
             if (image.isValid())
             {
-                DBG("SongsAPIService::downloadSongThumbnail - image loaded successfully, size: " + 
-                    juce::String(image.getWidth()) + "x" + juce::String(image.getHeight()));
+                DBG("SongsAPIService::downloadSongThumbnail - image loaded successfully from file: " + downloadedFile.getFullPathName() + 
+                    ", size: " + juce::String(image.getWidth()) + "x" + juce::String(image.getHeight()));
                 
                 // 메인 스레드에서 콜백 호출
                 juce::MessageManager::callAsync([callback, image]()
@@ -652,7 +587,7 @@ void SongsAPIService::downloadSongThumbnail(const juce::String& songId, std::fun
             }
             else
             {
-                DBG("SongsAPIService::downloadSongThumbnail - failed to create valid image");
+                DBG("SongsAPIService::downloadSongThumbnail - failed to load valid image from file: " + downloadedFile.getFullPathName());
                 juce::MessageManager::callAsync([callback]()
                 {
                     if (callback)
@@ -662,8 +597,8 @@ void SongsAPIService::downloadSongThumbnail(const juce::String& songId, std::fun
         }
         else
         {
-            // 에러 처리
-            DBG("SongsAPIService::downloadSongThumbnail - failed to create stream, status: " + juce::String(statusCode));
+            // 다운로드 실패
+            DBG("SongsAPIService::downloadSongThumbnail - download failed");
             juce::MessageManager::callAsync([callback]()
             {
                 if (callback)

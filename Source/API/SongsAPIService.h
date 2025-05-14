@@ -26,9 +26,6 @@ public:
     // 썸네일 이미지 다운로드 메서드 추가
     void downloadSongThumbnail(const juce::String& songId, std::function<void(bool success, juce::Image image)> callback);
     
-    // 이미지 다운로드 메서드
-    void downloadImage(const juce::String& imageUrl, std::function<void(bool success, juce::Image image)> callback);
-    
     // 오디오 파일 다운로드 메서드
     void downloadAudioFile(const juce::String& audioUrl, const juce::File& destinationFile, 
                           std::function<void(bool success, juce::String filePath)> callback);

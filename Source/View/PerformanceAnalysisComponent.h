@@ -3,6 +3,8 @@
 #include "LookAndFeel/MapleTheme.h"
 #include "Maple3DAudioVisualiserComponent.h"
 #include "View/MapleHorizontalAudioVisualiserComponent.h"
+#include "../Model/Song.h"
+#include "../Controller/ContentController.h"
 
 // Performance analysis display component
 class PerformanceAnalysisComponent : public juce::Component,
@@ -26,6 +28,7 @@ public:
         addAndMakeVisible(difficultyLabel);
         addAndMakeVisible(visualiserComponent); // 3D 시각화 컴포넌트 추가
         addAndMakeVisible(horizontalVisualiserComponent); // 수평 시각화 컴포넌트 추가
+        addAndMakeVisible(albumThumbnail); // 앨범 썸네일 컴포넌트 추가
         
         // 수평 시각화 컴포넌트의 진폭 감도 조절
         horizontalVisualiserComponent.setDynamicScaleFactor(150.0f); // 기본값 270.0f에서 감소
@@ -101,15 +104,93 @@ public:
         auto visualiserArea = bounds.removeFromRight(bounds.getWidth() * 0.6f);
         visualiserComponent.setBounds(visualiserArea.reduced(5));
         
-        // Metric labels layout
-        auto labelHeight = 25;
-        accuracyMeter.setBounds(bounds.removeFromTop(40));
-        bounds.removeFromTop(10); // Spacing
-        accuracyLabel.setBounds(bounds.removeFromTop(labelHeight));
-        bounds.removeFromTop(5); // Spacing
-        timingLabel.setBounds(bounds.removeFromTop(labelHeight));
-        bounds.removeFromTop(5); // Spacing
-        difficultyLabel.setBounds(bounds.removeFromTop(labelHeight));
+        // 앨범 썸네일 영역 (왼쪽 영역에 배치)
+        albumThumbnail.setBounds(bounds.reduced(5));
+    }
+    
+    // ContentController 설정
+    void setContentController(ContentController* controller)
+    {
+        contentController = controller;
+        
+        // 이미 로드된 곡이 있다면 썸네일 다시 로드 시도
+        if (contentController != nullptr && !currentSongId.isEmpty())
+        {
+            loadAlbumThumbnailForSong(currentSongId);
+        }
+    }
+    
+    // 앨범 썸네일 설정 메서드
+    void setAlbumThumbnail(const juce::Image& image)
+    {
+        albumThumbnail.setImage(image);
+        repaint();
+    }
+    
+    // 앨범 썸네일 설정 메서드 (파일 경로로부터)
+    void setAlbumThumbnailFromFile(const juce::File& file)
+    {
+        if (file.existsAsFile())
+        {
+            juce::Image thumbnailImage = juce::ImageFileFormat::loadFrom(file);
+            if (!thumbnailImage.isNull())
+                setAlbumThumbnail(thumbnailImage);
+        }
+    }
+    
+    // 곡 ID로 앨범 썸네일 설정 (메인 컴포넌트에서 호출)
+    void setAlbumThumbnailForSong(const juce::String& songId)
+    {
+        currentSongId = songId;
+        
+        // ContentController가 없으면 임시 이미지 표시
+        if (contentController == nullptr)
+        {
+            DBG("PerformanceAnalysisComponent::setAlbumThumbnailForSong - ContentController is null, showing placeholder");
+            createPlaceholderThumbnail(songId);
+            return;
+        }
+        
+        loadAlbumThumbnailForSong(songId);
+    }
+    
+    // 곡 객체로 앨범 썸네일 설정
+    void setAlbumThumbnailForSong(const Song& song)
+    {
+        currentSongId = song.getId();
+        currentSong = song;
+        
+        // 이미 캐시된 이미지가 있는지 확인
+        if (song.hasCachedCoverImage())
+        {
+            // 캐시된 이미지 사용
+            DBG("PerformanceAnalysisComponent::setAlbumThumbnailForSong - using cached image");
+            setAlbumThumbnail(song.getCachedCoverImage());
+            return;
+        }
+        
+        // ContentController가 없으면 로컬 파일 또는 임시 이미지 표시
+        if (contentController == nullptr)
+        {
+            // 로컬 썸네일 시도
+            juce::String thumbnailPath = song.getThumbnailPath();
+            if (!thumbnailPath.isEmpty())
+            {
+                juce::File thumbnailFile(thumbnailPath);
+                if (thumbnailFile.existsAsFile())
+                {
+                    setAlbumThumbnailFromFile(thumbnailFile);
+                    return;
+                }
+            }
+            
+            // 로컬 썸네일 실패 시 임시 이미지 표시
+            createPlaceholderThumbnail(song.getTitle(), song.getArtist());
+            return;
+        }
+        
+        // ContentController를 통해 이미지 로드
+        loadAlbumThumbnailForSong(song.getId());
     }
     
     void timerCallback() override
@@ -238,6 +319,92 @@ public:
     }
 
 private:
+    // ContentController를 통해 앨범 썸네일 로드
+    void loadAlbumThumbnailForSong(const juce::String& songId)
+    {
+        if (contentController == nullptr || songId.isEmpty())
+            return;
+            
+        DBG("PerformanceAnalysisComponent::loadAlbumThumbnailForSong - Loading thumbnail for songId: " + songId);
+        
+        // 로딩 상태 표시
+        juce::Image loadingImage(juce::Image::RGB, 300, 300, true);
+        juce::Graphics g(loadingImage);
+        g.fillAll(juce::Colours::darkgrey);
+        g.setColour(juce::Colours::white);
+        g.setFont(16.0f);
+        g.drawText("Loading thumbnail...", loadingImage.getBounds(), juce::Justification::centred, true);
+        setAlbumThumbnail(loadingImage);
+        
+        // Song 객체 생성 또는 가져오기
+        Song tempSong;
+        if (currentSong.getId() == songId)
+        {
+            // 이미 현재 Song 객체가 있으면 사용
+            tempSong = currentSong;
+        }
+        else
+        {
+            // 임시 Song 객체 생성 - ID만 설정
+            tempSong = Song(songId, "", "", "");
+        }
+        
+        // ContentController를 통해 이미지 로드
+        contentController->loadSongCoverImage(tempSong, [this](bool success, const Song& updatedSong) {
+            if (success && updatedSong.hasCachedCoverImage())
+            {
+                // 이미지 로드 성공
+                DBG("PerformanceAnalysisComponent::loadAlbumThumbnailForSong - Image loaded successfully");
+                currentSong = updatedSong; // 업데이트된 Song 저장
+                setAlbumThumbnail(updatedSong.getCachedCoverImage());
+            }
+            else
+            {
+                // 이미지 로드 실패 시 기본 이미지 표시
+                DBG("PerformanceAnalysisComponent::loadAlbumThumbnailForSong - Failed to load image");
+                createPlaceholderThumbnail(updatedSong.getTitle(), updatedSong.getArtist());
+            }
+        });
+    }
+    
+    // 임시 이미지 생성 (ID만 있는 경우)
+    void createPlaceholderThumbnail(const juce::String& songId)
+    {
+        juce::Image placeholderImage(juce::Image::RGB, 300, 300, true);
+        juce::Graphics g(placeholderImage);
+        g.fillAll(juce::Colours::darkgrey);
+        g.setColour(juce::Colours::white);
+        g.setFont(20.0f);
+        g.drawText("Song ID: " + songId, placeholderImage.getBounds().reduced(20), juce::Justification::centred, true);
+        setAlbumThumbnail(placeholderImage);
+    }
+    
+    // 임시 이미지 생성 (제목과 아티스트 정보가 있는 경우)
+    void createPlaceholderThumbnail(const juce::String& title, const juce::String& artist)
+    {
+        juce::Image placeholderImage(juce::Image::RGB, 300, 300, true);
+        juce::Graphics g(placeholderImage);
+        g.fillAll(juce::Colours::darkgrey);
+        
+        // 테두리 그리기
+        g.setColour(juce::Colours::lightgrey);
+        g.drawRect(placeholderImage.getBounds().reduced(5), 2);
+        
+        // 제목 텍스트
+        g.setColour(juce::Colours::white);
+        g.setFont(juce::Font(24.0f, juce::Font::bold));
+        g.drawText(title, placeholderImage.getBounds().reduced(15).removeFromTop(150), 
+                  juce::Justification::centredBottom, true);
+        
+        // 아티스트 텍스트
+        g.setColour(juce::Colours::lightgrey);
+        g.setFont(juce::Font(18.0f));
+        g.drawText(artist, placeholderImage.getBounds().reduced(15).removeFromBottom(150), 
+                  juce::Justification::centredTop, true);
+        
+        setAlbumThumbnail(placeholderImage);
+    }
+
     juce::Label titleLabel;
     juce::Label accuracyLabel;
     juce::Label timingLabel;
@@ -245,6 +412,82 @@ private:
     
     Maple3DAudioVisualiserComponent visualiserComponent; // 3D 시각화 컴포넌트
     MapleHorizontalAudioVisualiserComponent horizontalVisualiserComponent; // 수평 시각화 컴포넌트
+    
+    // 앨범 썸네일 이미지 컴포넌트
+    class AlbumThumbnailComponent : public juce::Component
+    {
+    public:
+        AlbumThumbnailComponent()
+        {
+            // 기본 이미지 생성
+            image = juce::Image(juce::Image::RGB, 300, 300, true);
+            juce::Graphics g(image);
+            g.fillAll(juce::Colours::black);
+            g.setColour(juce::Colours::white);
+            g.drawText("No Album Art", 0, 0, 300, 300, juce::Justification::centred, true);
+        }
+        
+        void paint(juce::Graphics& g) override
+        {
+            auto bounds = getLocalBounds().toFloat().reduced(5.0f);
+            
+            // 이미지 비율 유지하면서 컴포넌트에 맞게 그리기
+            if (!image.isNull())
+            {
+                float imageRatio = image.getWidth() / (float)image.getHeight();
+                float boundsRatio = bounds.getWidth() / bounds.getHeight();
+                
+                juce::Rectangle<float> targetBounds;
+                
+                if (imageRatio > boundsRatio)
+                {
+                    // 이미지가 더 넓은 비율
+                    float height = bounds.getWidth() / imageRatio;
+                    targetBounds = juce::Rectangle<float>(
+                        bounds.getX(),
+                        bounds.getCentreY() - height / 2.0f,
+                        bounds.getWidth(),
+                        height
+                    );
+                }
+                else
+                {
+                    // 이미지가 더 좁은 비율
+                    float width = bounds.getHeight() * imageRatio;
+                    targetBounds = juce::Rectangle<float>(
+                        bounds.getCentreX() - width / 2.0f,
+                        bounds.getY(),
+                        width,
+                        bounds.getHeight()
+                    );
+                }
+                
+                // 이미지 테두리 그리기
+                g.setColour(juce::Colours::white.withAlpha(0.5f));
+                g.drawRoundedRectangle(targetBounds.expanded(2.0f), 3.0f, 1.5f);
+                
+                // 이미지 그리기
+                g.drawImage(image, targetBounds);
+            }
+        }
+        
+        void setImage(const juce::Image& newImage)
+        {
+            if (!newImage.isNull())
+            {
+                image = newImage;
+                repaint();
+            }
+        }
+        
+    private:
+        juce::Image image;
+    };
+    
+    AlbumThumbnailComponent albumThumbnail; // 앨범 썸네일 컴포넌트
+    juce::String currentSongId; // 현재 표시 중인 곡 ID
+    Song currentSong; // 현재 표시 중인 Song 객체
+    ContentController* contentController = nullptr; // ContentController 참조
     
     double progressValue = 0.8; // Value that ProgressBar will watch
     juce::ProgressBar accuracyMeter; // ProgressBar initialized with progressValue reference in constructor

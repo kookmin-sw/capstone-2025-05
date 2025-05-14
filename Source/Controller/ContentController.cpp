@@ -47,73 +47,33 @@ void ContentController::loadSongCoverImage(const Song& song, std::function<void(
         return;
     }
     
-    // 곡 ID 확인
     juce::String songId = song.getId();
-    if (songId.isEmpty())
-    {
-        // ID가 없는 경우 기존 방식으로 이미지 URL 사용
-        juce::String coverImageUrl = song.getCoverImageUrl();
-        if (coverImageUrl.isEmpty())
+
+    // 곡 ID가 있는 경우 썸네일 API 사용
+    DBG("ContentController::loadSongCoverImage - loading thumbnail for song ID: " + songId);
+    
+    // 전용 썸네일 다운로드 메서드 사용
+    contentModel.getAPIService().downloadSongThumbnail(songId, [this, song, callback](bool success, juce::Image image) {
+        Song updatedSong = song;
+        
+        if (success && !image.isNull())
         {
-            DBG("ContentController::loadSongCoverImage - empty cover image URL and no song ID");
+            // 이미지 캐싱
+            DBG("ContentController::loadSongCoverImage - thumbnail downloaded successfully");
+            updatedSong.setCachedCoverImage(image);
+            
+            // 성공 콜백 호출
+            if (callback)
+                callback(true, updatedSong);
+        }
+        else
+        {
+            // 실패 처리
+            DBG("ContentController::loadSongCoverImage - failed to download thumbnail");
             if (callback)
                 callback(false, song);
-            return;
         }
-        
-        DBG("ContentController::loadSongCoverImage - loading from URL: " + coverImageUrl);
-        
-        // API 서비스를 통해 이미지 다운로드 (기존 방식)
-        contentModel.getAPIService().downloadImage(coverImageUrl, [this, song, callback](bool success, juce::Image image) {
-            Song updatedSong = song;
-            
-            if (success && !image.isNull())
-            {
-                // 이미지 캐싱
-                DBG("ContentController::loadSongCoverImage - image downloaded successfully");
-                updatedSong.setCachedCoverImage(image);
-                
-                // 성공 콜백 호출
-                if (callback)
-                    callback(true, updatedSong);
-            }
-            else
-            {
-                // 실패 처리
-                DBG("ContentController::loadSongCoverImage - failed to download image");
-                if (callback)
-                    callback(false, song);
-            }
-        });
-    }
-    else
-    {
-        // 곡 ID가 있는 경우 썸네일 API 사용
-        DBG("ContentController::loadSongCoverImage - loading thumbnail for song ID: " + songId);
-        
-        // 전용 썸네일 다운로드 메서드 사용
-        contentModel.getAPIService().downloadSongThumbnail(songId, [this, song, callback](bool success, juce::Image image) {
-            Song updatedSong = song;
-            
-            if (success && !image.isNull())
-            {
-                // 이미지 캐싱
-                DBG("ContentController::loadSongCoverImage - thumbnail downloaded successfully");
-                updatedSong.setCachedCoverImage(image);
-                
-                // 성공 콜백 호출
-                if (callback)
-                    callback(true, updatedSong);
-            }
-            else
-            {
-                // 실패 처리
-                DBG("ContentController::loadSongCoverImage - failed to download thumbnail");
-                if (callback)
-                    callback(false, song);
-            }
-        });
-    }
+    });
 }
 
 void ContentController::downloadSongAudio(const Song& song, std::function<void(bool success, const juce::String& filePath)> callback)
