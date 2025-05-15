@@ -205,14 +205,14 @@ export default function ResultDetail() {
         ref={printRef}
         className="flex-1 overflow-y-auto p-10 space-y-12 print-area"
       >
-        <div className="flex gap-10">
+        <div className="flex gap-10 h-[532px]">
           <Box
             width="300px"
             height="100%"
             backgroundColor="white"
             overwrite="p-6 shadow-lg h-full"
           >
-            <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center justify-between h-full">
               <div className="w-56 h-56 bg-gray-200 flex items-center justify-center text-gray-400 rounded-md">
                 <img src={specificSong.cover_url} className="" />
               </div>
@@ -220,38 +220,35 @@ export default function ResultDetail() {
                 <h3 className="text-lg font-bold">{specificSong.title}</h3>
                 <p className="text-gray-600">{specificSong.artist}</p>
               </div>
-              {/* <AudioPlayer
-                userAudio={specificSong.original_audio_url}
-                referenceAudio={specificSong.original_audio_url}
-              /> */}
-
-              <button
-                className={
-                  'w-56 h-10 font-bold bg-[#fcc5ae] rounded-[10px] text-white text-center flex items-center justify-center'
-                }
-                onClick={() =>
-                  downloadFile(
-                    `${MEDIA_URL}/songs/${song_id}/audio`,
-                    `${specificSong.title}.wav`,
-                  )
-                }
-              >
-                💿 음원 다운로드
-              </button>
-              <button
-                className={
-                  'w-56 h-10 font-bold bg-[#bf9684] rounded-[10px] text-white'
-                }
-                onClick={() =>
-                  downloadFile(
-                    `${MEDIA_URL}/songs/${song_id}/sheet`,
-                    `${specificSong.title}_악보.gp5`,
-                  )
-                }
-              >
-                📄 악보 다운로드
-              </button>
-              <p className="text-sm text-gray-600 mt-2">
+              <div className="flex flex-col ites-center gap-2 mt-4">
+                <button
+                  className={
+                    'w-56 h-10 font-bold bg-[#fcc5ae] rounded-[10px] text-white text-center flex items-center justify-center'
+                  }
+                  onClick={() =>
+                    downloadFile(
+                      `${MEDIA_URL}/songs/${song_id}/audio`,
+                      `${specificSong.title}.wav`,
+                    )
+                  }
+                >
+                  💿 음원 다운로드
+                </button>
+                <button
+                  className={
+                    'w-56 h-10 font-bold bg-[#bf9684] rounded-[10px] text-white'
+                  }
+                  onClick={() =>
+                    downloadFile(
+                      `${MEDIA_URL}/songs/${song_id}/sheet`,
+                      `${specificSong.title}_악보.gp5`,
+                    )
+                  }
+                >
+                  📄 악보 다운로드
+                </button>
+              </div>
+              <div className="text-sm text-gray-600 mt-4">
                 ※ 다운로드된 gp5 악보 파일은{' '}
                 <a
                   href="https://sourceforge.net/projects/tuxguitar/"
@@ -261,7 +258,7 @@ export default function ResultDetail() {
                   TuxGuitar
                 </a>{' '}
                 또는 Guitar Pro 프로그램으로 열어 PDF로 저장할 수 있어요.
-              </p>
+              </div>
             </div>
           </Box>
 
