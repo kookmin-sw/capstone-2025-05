@@ -19,6 +19,15 @@ body {
   border-radius: 6px;
 }
 
+.swal-footer {
+  text-align: center !important;
+}
+
+.swal-button {
+  display: inline-block;
+  margin: 0 auto;
+}
+
 .custom-spotify-button {
   display: block;
   margin: 0 auto !important; /* 버튼 가운데 정렬 */
