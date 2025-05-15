@@ -21,7 +21,7 @@ export const useSpotifyPlayback = ({
           buttons: {
             confirm: {
               text: 'Spotify 인증하기',
-              className: 'custom-confirm-button',
+              className: 'custom-spotify-button',
             },
           },
         }).then((result) => {

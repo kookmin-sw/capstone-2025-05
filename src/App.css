@@ -19,6 +19,18 @@ body {
   border-radius: 6px;
 }
 
+.custom-spotify-button {
+  display: block;
+  margin: 0 auto !important; /* 버튼 가운데 정렬 */
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 8px;
+  background-color: #a57865 !important;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
 .App {
   margin: 0 auto;
   min-height: 100vh;
