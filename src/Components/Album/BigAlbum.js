@@ -27,7 +27,7 @@ export default function BigAlbum({ record, index }) {
                   : Cover_1
               }
               alt="Album Cover"
-              className="object-cover w-[280px] h-[280px] rounded"
+              className="w-[280px] aspect-square rounded"
             />
           </Link>
           <div className="flex flex-col w-full mt-2 ml-2">
