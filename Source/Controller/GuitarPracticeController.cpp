@@ -420,10 +420,11 @@ void GuitarPracticeController::stopRecording()
 class GuitarPracticeController::AnalysisThread : public juce::ThreadWithProgressWindow
 {
 public:
-    AnalysisThread(const juce::String& url, const juce::File& recording)
+    AnalysisThread(const juce::String& url, const juce::File& recording, const juce::String& songId)
         : juce::ThreadWithProgressWindow("Analyzing Recording...", true, true),
           serverUrl(url),
-          audioFile(recording)
+          audioFile(recording),
+          currentSongId(songId)
     {
     }
     
@@ -462,7 +463,7 @@ public:
             
             // URL 쿼리 파라미터로 설정 (파이썬의 params 처럼)
             url = url.withParameter("user_id", "desktop_user");
-            url = url.withParameter("song_id", "current_song");
+            url = url.withParameter("song_id", currentSongId);
             url = url.withParameter("generate_feedback", "true");
             
             DBG("Full URL with parameters: " + url.toString(true));
@@ -472,7 +473,7 @@ public:
             int statusCode = 0;
             
             // POST 요청 생성 (파일 첨부)
-            url = url.withFileToUpload("file", audioFile, "audio/wav");
+            url = url.withFileToUpload("user_file", audioFile, "audio/wav");
             
             setProgress(0.5);
             setStatusMessage("Sending audio to server...");
@@ -543,7 +544,7 @@ public:
                     return;
                     
                 // 작업 상태 확인 요청
-                juce::URL statusUrl(serverUrl.upToLastOccurrenceOf("/analyze", false, false) + 
+                juce::URL statusUrl(serverUrl.upToLastOccurrenceOf("/compare-with-reference", false, false) + 
                                   "/tasks/" + taskId);
                 
                 // InputStreamOptions 사용
@@ -604,6 +605,7 @@ public:
     
     juce::String serverUrl;
     juce::File audioFile;
+    juce::String currentSongId;
     juce::var statusJson;
     bool analysisCompleted = false;
     juce::String errorMessage;
@@ -631,17 +633,17 @@ void GuitarPracticeController::analyzeRecording(const juce::File& recordingFile)
     
     DBG("[ANALYSIS] Starting analysis with file: " + recordingFile.getFullPathName());
     
-    juce::String serverUrl = EnvLoader::get("MAPLE_ANALYSIS_API_URL") + "analyze";
+    juce::String serverUrl = EnvLoader::get("MAPLE_ANALYSIS_API_URL") + "compare-with-reference";
     
     #ifdef JUCE_DEBUG
-    serverUrl = "http://localhost:8000/api/v1/analyze";
+    serverUrl = "http://localhost:8000/api/v1/compare-with-reference";
     #endif
     
     // Clean up existing thread
     currentAnalysisThread = nullptr;
     
-    // Create new analysis thread
-    currentAnalysisThread = std::make_unique<AnalysisThread>(serverUrl, recordingFile);
+    // Create new analysis thread with current song ID
+    currentAnalysisThread = std::make_unique<AnalysisThread>(serverUrl, recordingFile, currentSongId);
     
     // Set progress window message
     currentAnalysisThread->setStatusMessage("Preparing analysis...");
