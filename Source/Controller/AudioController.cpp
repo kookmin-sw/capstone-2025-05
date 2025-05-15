@@ -12,9 +12,42 @@ AudioController::AudioController(AudioModel& model, juce::AudioDeviceManager& ma
 
     // AmpliTube 프로세서 초기화 - 기본적으로 비활성화 상태로 시작
     ampliTubeProcessor = std::make_unique<AmpliTubeProcessor>();
-    // 명시적 비활성화 설정 (초기 상태 보장)
+    
+    // AmpliTube 초기화 및 준비
     if (ampliTubeProcessor)
+    {
+        DBG("AudioController: Initializing AmpliTube plugin...");
+        bool initialized = ampliTubeProcessor->init();
+        if (initialized)
+        {
+            DBG("AudioController: AmpliTube plugin initialized successfully");
+            
+            // 현재 오디오 디바이스 정보 가져오기
+            auto* device = deviceManager.getCurrentAudioDevice();
+            if (device)
+            {
+                // 샘플 레이트와 버퍼 크기로 준비
+                ampliTubeProcessor->prepareToPlay(device->getCurrentSampleRate(),
+                                                device->getCurrentBufferSizeSamples());
+                DBG("AudioController: AmpliTube prepared with sample rate: " + 
+                    juce::String(device->getCurrentSampleRate()) + 
+                    ", buffer size: " + juce::String(device->getCurrentBufferSizeSamples()));
+            }
+            else
+            {
+                // 기본값으로 준비
+                ampliTubeProcessor->prepareToPlay(44100.0, 512);
+                DBG("AudioController: AmpliTube prepared with default values");
+            }
+        }
+        else
+        {
+            DBG("AudioController: Failed to initialize AmpliTube plugin");
+        }
+        
+        // 명시적 비활성화 설정 (초기 상태 보장)
         ampliTubeProcessor->setProcessingEnabled(false);
+    }
     
     DBG("AudioController: Created with AmpliTube initially DISABLED");
     deviceManager.addAudioCallback(this);
