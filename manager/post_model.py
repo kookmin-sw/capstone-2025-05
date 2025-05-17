@@ -21,7 +21,6 @@ class Comment(BaseModel):
     postid: int
     내용: str
     비밀번호: str
-    작성일시: datetime.datetime
     작성자: str
 
     class Config:
