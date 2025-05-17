@@ -33,13 +33,16 @@ logger = get_task_logger(__name__)
 
 
 @celery_app.task(bind=True, name='workers.tasks.analyze_audio')
-def analyze_audio(self, audio_bytes, request_dict=None):
+def analyze_audio(self, audio_bytes, analysis_type='simple', user_id=None, song_id=None, generate_feedback=False):
     """
     Celery task to analyze audio content.
     
     Parameters:
     - audio_bytes: Binary content of the uploaded audio file
-    - request_dict: Dictionary with additional analysis parameters
+    - analysis_type: Type of analysis to perform
+    - user_id: Optional user identifier
+    - song_id: Optional song identifier
+    - generate_feedback: Whether to generate textual feedback
     
     Returns:
     - Dictionary with analysis results
@@ -48,15 +51,12 @@ def analyze_audio(self, audio_bytes, request_dict=None):
     self.update_state(state='STARTED', meta={'progress': 0})
     
     try:
-        # Process the request dictionary if provided (5%)
+        # Process the request parameters (5%)
         self.update_state(state='PROCESSING', meta={'progress': 5})
-        if request_dict is None:
-            request_dict = {}
-        
-        analysis_type = request_dict.get('analysis_type', 'simple')
-        user_id = request_dict.get('user_id')
-        song_id = request_dict.get('song_id')
-        generate_feedback = request_dict.get('generate_feedback', False)
+        if user_id is None:
+            user_id = ""
+        if song_id is None:
+            song_id = ""
         
         # 오디오 로드 (10%)
         self.update_state(state='PROCESSING', meta={'progress': 10})
