@@ -484,47 +484,66 @@ async def delete_comment(comment_id: str, uid:str = Query(...)):
     comment_ref.delete()
     return {"result_msg" : f"{comment_id}번 댓글이 삭제됐습니다."}
 
-
 @router.post("/comment", tags=["Comment"])
 async def create_comment(comment: Comment):
     global posts_ref, comments_ref
-    
-    print("create_comment >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-    def transaction_create_comment(transaction, db, comment_data):
-        comments_snapshot = comments_ref.order_by("id", direction=firestore.Query.DESCENDING).limit(1).stream()
-        last_comment_id = 0
-        for doc in comments_snapshot:
-            last_comment_id = doc.to_dict().get("id", 0)
-        
-        new_comment_id = last_comment_id + 1
-        comment_data["id"] = new_comment_id
 
-        comment_doc_ref = comments_ref.document(str(new_comment_id).zfill(8))
-        transaction.set(comment_doc_ref, comment_data)
+    print("create_comment >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
-        post_ref = posts_ref.document(str(comment_data["postid"]).zfill(8))
-        transaction.update(post_ref, {"댓글갯수": firestore.Increment(1)})
-
-        return new_comment_id
-
-    comment_data= comment.dict()
+    comment_data = comment.dict()
     now = datetime.datetime.utcnow()
-    comment_data["date"] = now
+    comment_data["date"] = SERVER_TIMESTAMP
+
+    # 프로필 이미지 처리
     if comment_data.get("uid"):
         profile_image = await get_user_profile_image(comment_data["uid"])
         if profile_image:
             comment_data["profile_image"] = profile_image
-    with firestore_db.transaction() as transaction:
-        new_comment_id = transaction_create_comment(transaction, firestore_db, comment_data)
-    if comment_data.get("uid"):
-        uid = comment_data["uid"]
-        post_id_str = str(comment_data["postid"]).zfill(8)
-        firestore.client().collection("my_activity").document(uid).collection("comment").document(str(new_comment_id).zfill(8)).set({
-            "post_id": post_id_str,
-            "date": now.isoformat()
-        })
 
-    return { 'result_msg': f'{"put"} Registered...' }
+    try:
+        db = firestore.client()
+        transaction = db.transaction()
+
+        # 클로저 내부에 comment_data를 캡처
+        @firestore.transactional
+        def run_transaction(transaction):
+            comments_snapshot = comments_ref.order_by("id", direction=firestore.Query.DESCENDING).limit(1).stream()
+            last_comment_id = 0
+            for doc in comments_snapshot:
+                last_comment_id = doc.to_dict().get("id", 0)
+            new_comment_id = last_comment_id + 1
+            comment_data["id"] = new_comment_id
+
+            comment_doc_ref = comments_ref.document(str(new_comment_id).zfill(8))
+            transaction.set(comment_doc_ref, comment_data)
+
+            post_ref = posts_ref.document(str(comment_data["postid"]).zfill(8))
+            transaction.update(post_ref, {"댓글갯수": firestore.Increment(1)})
+
+            return new_comment_id
+
+        new_comment_id = run_transaction(transaction)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="댓글 작성 중 오류 발생")
+
+    # 활동 기록 처리
+    if comment_data.get("uid"):
+        try:
+            uid = comment_data["uid"]
+            post_id_str = str(comment_data["postid"]).zfill(8)
+            firestore.client().collection("my_activity").document(uid).collection("comment").document(
+                str(new_comment_id).zfill(8)
+            ).set({
+                "post_id": post_id_str,
+                "date": now.isoformat()
+            })
+        except Exception as e:
+            print(f"Activity logging error: {e}")
+
+    return {'result_msg': 'put Registered...'}
+
 
 @router.put("/comment/{comment_id}", tags=["Comment"])
 async def modify_post(comment: Comment, comment_id : int):
