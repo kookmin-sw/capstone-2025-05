@@ -6,10 +6,10 @@ from pathlib import Path
 from datetime import datetime
 
 # 서버 URL
-# API_URL = "http://localhost:8000"
-API_URL = "https://analysis.maple.ne.kr"
-SONGS_API_URL = "http://localhost:8000/api/v1/songs"
-# SONGS_API_URL = "https://media.maple.ne.kr/api/v1/songs"
+API_URL = "http://localhost:8000"
+# API_URL = "https://analysis.maple.ne.kr"
+# SONGS_API_URL = "http://localhost:8000/api/v1/songs"
+SONGS_API_URL = "https://media.maple.ne.kr/api/v1/songs"
 # 오디오 파일 디렉터리
 USER_DIR = Path("test/user")  # 테스트 사용자 오디오 파일 디렉토리
 REF_DIR = Path("test/ref")
@@ -130,14 +130,14 @@ def test_analyze(audio_file, song_id, user_id="test-user", generate_feedback=Tru
     
     with open(audio_file, "rb") as f:
         files = {"file": f}
-        params = {
+        data = {
             "user_id": user_id, 
             "song_id": song_id,
             "generate_feedback": "true"  # 항상 GROK 피드백 활성화
         }
         
         print("API 요청 전송 중...")
-        response = requests.post(f"{API_URL}/api/v1/analyze", files=files, params=params)
+        response = requests.post(f"{API_URL}/api/v1/analyze", files=files, data=data)
         print(f"응답 상태 코드: {response.status_code}")
         
         if response.status_code == 200:
