@@ -22,6 +22,7 @@ class Comment(BaseModel):
     내용: str
     비밀번호: str
     작성자: str
+    프로필이미지: Optional[str] = None
 
     class Config:
         orm_mode = True  # SQLAlchemy와 호환될 수 있도록 설정 (기본적으로 DB에서 쿼리한 데이터를 Pydantic 모델로 변환)
