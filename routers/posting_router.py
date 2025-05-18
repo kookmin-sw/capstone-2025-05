@@ -495,10 +495,9 @@ async def create_comment(comment: Comment):
     comment_data["date"] = SERVER_TIMESTAMP
 
     # 프로필 이미지 처리
-    if comment_data.get("uid"):
-        profile_image = await get_user_profile_image(comment_data["uid"])
-        if profile_image:
-            comment_data["profile_image"] = profile_image
+    # 클라이언트에서 직접 받은 값을 사용
+    if comment_data.get("프로필이미지"):
+        comment_data["profile_image"] = comment_data.pop("프로필이미지")
 
     try:
         db = firestore.client()
