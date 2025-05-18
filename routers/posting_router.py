@@ -507,27 +507,32 @@ async def create_comment(comment: Comment):
         # 클로저 내부에 comment_data를 캡처
         @firestore.transactional
         def run_transaction(transaction):
-            comments_snapshot = comments_ref.order_by("id", direction=firestore.Query.DESCENDING).limit(1).stream()
-            last_comment_id = 0
-            for doc in comments_snapshot:
-                last_comment_id = doc.to_dict().get("id", 0)
-            new_comment_id = last_comment_id + 1
-            comment_data["id"] = new_comment_id
+            try:
+                comments_snapshot = comments_ref.order_by("id", direction=firestore.Query.DESCENDING).limit(1).stream()
+                last_comment_id = 0
+                for doc in comments_snapshot:
+                    last_comment_id = doc.to_dict().get("id", 0)
+                new_comment_id = last_comment_id + 1
+                comment_data["id"] = new_comment_id
 
-            comment_doc_ref = comments_ref.document(str(new_comment_id).zfill(8))
-            transaction.set(comment_doc_ref, comment_data)
+                comment_doc_ref = comments_ref.document(str(new_comment_id).zfill(8))
+                transaction.set(comment_doc_ref, comment_data)
 
-            post_ref = posts_ref.document(str(comment_data["postid"]).zfill(8))
-            transaction.update(post_ref, {"댓글갯수": firestore.Increment(1)})
+                post_ref = posts_ref.document(str(comment_data["postid"]).zfill(8))
+                transaction.update(post_ref, {"댓글갯수": firestore.Increment(1)})
 
-            return new_comment_id
+                return new_comment_id
+            except Exception as inner_e:
+                print("[TRANSACTION ERROR]", inner_e)
+                raise
 
         new_comment_id = run_transaction(transaction)
     except Exception as e:
         import traceback
+        print("[ERROR] create_comment 실패")
         traceback.print_exc()
+        print("comment_data", comment_data)
         raise HTTPException(status_code=500, detail="댓글 작성 중 오류 발생")
-
     # 활동 기록 처리
     if comment_data.get("uid"):
         try:
