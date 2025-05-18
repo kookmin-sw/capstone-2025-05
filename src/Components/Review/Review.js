@@ -96,7 +96,7 @@ export default function Review({
           className="mr-2"
         />
       )}
-      <div className="rounded-full overflow-hidden mr-2">
+      <div className="w-[80px] aspect-square rounded-full overflow-hidden mr-2">
         <img
           src={profile_image ? profile_image : fakeImg}
           width="80"
