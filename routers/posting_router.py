@@ -30,7 +30,6 @@ from firebase_admin import firestore, db, storage
 from firebase_admin import credentials, initialize_app
 import json
 from google.cloud.firestore_v1 import FieldFilter
-from google.cloud import storage
 from datetime import timedelta
 from dotenv import load_dotenv
 from manager.firebase_manager import firestore_db, storage_bucket
