@@ -56,9 +56,10 @@ export default function NoticeBoard() {
   //날짜 format//
   function formatDate(dateString) {
     if (!dateString) return '-';
-    const parsed = new Date(dateString);
-    if (isNaN(parsed.getTime())) return '-'; // invalid date
-    return parsed.toISOString().slice(0, 10).replace(/-/g, '.');
+    const match = dateString.match(/(\d{4})년\s*(\d{2})월\s*(\d{2})일/);
+    if (!match) return '-';
+    const [, year, month, day] = match;
+    return `${year}.${month}.${day}`;
   }
 
   // 현재 페이지가 바뀔때마다 session storage에 저장
@@ -105,6 +106,7 @@ export default function NoticeBoard() {
 
     setCurrentData(pageData);
   }, [filteredData, currentPage]);
+  console.log(currentData, '게시판 데이터');
   return (
     <>
       <div className="flex flex-col items-center h-[100svh]">
@@ -189,7 +191,7 @@ export default function NoticeBoard() {
                   {post.작성자}
                 </td>
                 <td className="text-center max-w-[120px] truncate">
-                  {formatDate(Date(post.created_at))}
+                  {formatDate(post.created_at)}
                 </td>
                 <td className="text-center">{post.조회수}</td>
               </tr>

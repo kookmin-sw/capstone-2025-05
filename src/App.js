@@ -9,7 +9,7 @@ import { Hash } from 'lucide-react';
 
 function App() {
   const [token, setToken] = useState(null);
-  const { login } = useAuth();
+  const { uid } = useAuth();
   const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
   const redirectUri = process.env.REACT_APP_SPOTIFY_REDIRECT_URI;
   const scopes = [
@@ -19,6 +19,7 @@ function App() {
     'user-read-playback-state',
     'user-modify-playback-state',
   ];
+  console.log(uid);
 
   const authUrl =
     'https://accounts.spotify.com/authorize' +

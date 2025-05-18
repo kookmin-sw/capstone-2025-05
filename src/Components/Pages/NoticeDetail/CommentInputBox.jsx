@@ -16,9 +16,8 @@ export default function CommentInputBox({
   const handlePostComment = () => {
     setIsPostComment(false);
     const commentData = {
-      uid: uid, //로그인 uid로 해야됨
-      작성일시: new Date().toISOString(), // 현재 시간
-      postid: post.id, // 현재 게시글 ID
+      uid: uid,
+      postid: post.id,
       작성자: '누굴까', // 작성자 이름
       내용: reviewComment.trim(),
       비밀번호: '1234',

@@ -151,7 +151,7 @@ export default function PostActionBar({
     setEditedContent(post.content);
   };
   return (
-    <div className="flex sm:w-[80%] lg:w-[60%] md:w-[70%] justify-between mt-4">
+    <div className="flex w-full justify-between mt-4">
       <div className="flex items-center">
         <button className="mr-2 w-10 h-[40px]" onClick={handleHeartBttn}>
           <img

@@ -3,14 +3,13 @@ import api from '../../Utils/api';
 
 /* 댓글 전송 기능 */
 
-const postComments = ({ uid, 작성일시, postid, 작성자, 내용, 비밀번호 }) => {
+const postComments = ({ uid, postid, 작성자, 내용, 비밀번호 }) => {
   return api.post(`/comment`, {
     //프로필이미지도 추가해야됨
     uid,
     postid,
     내용,
     비밀번호,
-    작성일시,
     작성자,
   });
 };

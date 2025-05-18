@@ -112,8 +112,10 @@ export default function PostHeader({
             />
           ) : (
             <div className="flex justify-between items-center py-2 px-2">
-              <h1 className="text-4xl font-bold align-middle">{post.title}</h1>
-              <div className="flex items-center justify-center">
+              <h1 className="text-2xl sm:text-xl md:text-4xl font-bold truncate break-words w-full sm:w-auto sm:flex-1">
+                {post.title}
+              </h1>
+              <div className="hidden md:flex items-center justify-center shrink-0">
                 {/* 관리자 계정이거나 현재 글이 사용자가 작성한 글 일경우 삭제 가능 */}
                 {(isAdmin || isUser) && (
                   <div className="flex items-center duration-300 ease-in-out hover:scale-[110%]">
@@ -168,18 +170,24 @@ export default function PostHeader({
             </div>
           )}
         </div>
-        <PostMetaTable post={post} />
+        <PostMetaTable
+          post={post}
+          isEditing={isEditing}
+          editedContent={editedContent}
+          setEditedContent={setEditedContent}
+        />
         {isEditing ? (
           <textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="p-2 block mx-auto my-2 w-[98%] h-1/2 border resize-none"
+            className="p-2 block my-2 w-[98%] h-1/2 border resize-none max-w-full"
           />
         ) : (
           <textarea
-            className="mt-6 w-[98%] block mx-auto w-full h-1/2 focus:outline-none focus:border-none resize-none"
+            className="mt-6 w-[98%] block w-full h-1/2 focus:outline-none focus:border-none resize-none max-w-full"
             readOnly
             wrap="soft"
+            style={{ textIndent: '1rem' }}
           >
             {post.content}
           </textarea>

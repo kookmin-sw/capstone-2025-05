@@ -123,29 +123,31 @@ export default function NoticeDetail() {
           setEditedContent={setEditedContent}
         />
         {/*heart버튼과 신고하기 버튼 */}
-        <PostActionBar
-          post={post}
-          uid={uid}
-          liked={liked}
-          setLiked={setLiked}
-          isScrap={isScrap}
-          setIsScrap={setIsScrap}
-          editedTitle={editedTitle}
-          setEditedTitle={setEditedTitle}
-          editedContent={editedContent}
-          setEditedContent={setEditedContent}
-          postLikeMutate={postLikeMutate}
-          setClickLiked={setClickLiked}
-          deletelikeMutate={deletelikeMutate}
-          scrapPostMutate={scrapPostMutate}
-          deleteScrapMutate={deleteScrapMutate}
-          mutate={mutate}
-          setIsEditing={setIsEditing}
-          isEditing={isEditing}
-          clickLiked={clickLiked}
-          likeNum={likeNum}
-          setLikeNum={setLikeNum}
-        />
+        <div className="flex mt-2 sm:w-[80%] lg:w-[60%] md:w-[70%]">
+          <PostActionBar
+            post={post}
+            uid={uid}
+            liked={liked}
+            setLiked={setLiked}
+            isScrap={isScrap}
+            setIsScrap={setIsScrap}
+            editedTitle={editedTitle}
+            setEditedTitle={setEditedTitle}
+            editedContent={editedContent}
+            setEditedContent={setEditedContent}
+            postLikeMutate={postLikeMutate}
+            setClickLiked={setClickLiked}
+            deletelikeMutate={deletelikeMutate}
+            scrapPostMutate={scrapPostMutate}
+            deleteScrapMutate={deleteScrapMutate}
+            mutate={mutate}
+            setIsEditing={setIsEditing}
+            isEditing={isEditing}
+            clickLiked={clickLiked}
+            likeNum={likeNum}
+            setLikeNum={setLikeNum}
+          />
+        </div>
       </section>
 
       {/* 댓글 영역 */}
