@@ -496,8 +496,8 @@ async def create_comment(comment: Comment):
 
     # 프로필 이미지 처리
     # 클라이언트에서 직접 받은 값을 사용
-    if comment_data.get("프로필이미지"):
-        comment_data["profile_image"] = comment_data.pop("프로필이미지")
+    comment_data["profile_image"] = comment_data.get("프로필이미지") or comment_data.get("profile_image")
+
 
     try:
         db = firestore.client()
