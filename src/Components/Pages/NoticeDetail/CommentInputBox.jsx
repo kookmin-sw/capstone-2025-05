@@ -12,14 +12,17 @@ export default function CommentInputBox({
   post,
   postCommentMutate,
   isSelecting,
+  userInfo,
 }) {
+  console.log(userInfo, '사용자 정보');
   const handlePostComment = () => {
     setIsPostComment(false);
     const commentData = {
       uid: uid,
       postid: post.id,
-      작성자: '누굴까', // 작성자 이름
+      작성자: userInfo.data.nickname,
       내용: reviewComment.trim(),
+      프로필이미지: userInfo.data.profile_image_url,
       비밀번호: '1234',
     };
 

@@ -196,7 +196,7 @@ export default function CommentSection({
           comments?.map((item, index) => (
             <Review
               comments={item}
-              fakeImg={item.프로필이미지 == 'profile' ? profile : profile2}
+              profile_image={item.profile_image}
               isSelected={selectedComments.includes(item.id)}
               isSelectable={isSelecting}
               onSelect={() => handleSelectComment(item.id)}

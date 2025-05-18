@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { AiFillAlert, AiFillEdit } from 'react-icons/ai';
 import ReportModal from '../Modal/ReportModal';
 import { useReportCommentMutation } from '../../Hooks/post/reportCommentsMutation';
-import { useEditCommentMutation } from '../../Hooks/put/editCommentMutation'; // ✨ 수정 API 추가
+import { useEditCommentMutation } from '../../Hooks/put/editCommentMutation';
 import swal from 'sweetalert';
-import { comment } from 'postcss';
+import fakeImg from '../../Assets/Images/google_profile2.png';
 
 export default function Review({
   comments,
-  fakeImg,
+  profile_image,
   isSelectable,
   isSelected,
   onSelect,
@@ -97,7 +97,12 @@ export default function Review({
         />
       )}
       <div className="rounded-full overflow-hidden mr-2">
-        <img src={fakeImg} width="80" height="80" className="object-cover" />
+        <img
+          src={profile_image ? profile_image : fakeImg}
+          width="80"
+          height="80"
+          className="object-cover"
+        />
       </div>
       <div className="flex flex-col">
         <strong>{comments.작성자}</strong>

@@ -15,6 +15,8 @@ import PostActionBar from '../../Components/Pages/NoticeDetail/PostActionBar';
 import CommentSection from '../../Components/Pages/NoticeDetail/CommentSection';
 import CommentInputBox from '../../Components/Pages/NoticeDetail/CommentInputBox';
 import CommentAngleButton from '../../Components/Pages/NoticeDetail/CommentAngleButton';
+import { useUserQuery } from '../../Hooks/MyPage/PlayedMusic/useUserInfoQuery';
+import { useRef } from 'react';
 
 // 하트 아이콘 저작권(fariha begum)
 //깃발 아이콘 저작권(Hilmy Abiyyu A.)
@@ -36,6 +38,8 @@ export default function NoticeDetail() {
   const { mutate: deleteScrapMutate } = useDeletePostMutation(); //북마크 취소
   const { mutate: deleteComment } = useDeleteCommentMutation(); //댓글 삭제
   /***************/
+
+  const userInfo = useUserQuery(uid);
 
   const filterComments = (isShow) => {
     setIsLoading(true); // 로딩 시작
@@ -80,6 +84,9 @@ export default function NoticeDetail() {
   const [isScrap, setIsScrap] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const actionBarRef = useRef(null);
+  const [isActionBarVisible, setIsActionBarVisible] = useState(true);
+
   useEffect(() => {
     if (commentsInfo) {
       setComments(commentsInfo);
@@ -99,11 +106,24 @@ export default function NoticeDetail() {
     setIsScrap(scrapStored === 'true');
   }, [post.id, uid]);
 
+  useEffect(() => {
+    if (!actionBarRef.current) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry.contentRect.height;
+      setIsActionBarVisible(height > 440); // 예: 30px보다 작으면 숨김
+    });
+
+    observer.observe(actionBarRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div>
       <section
         id="NoticeBoard"
         className="bg-[F0EDE6] flex flex-col items-center mt-10"
+        ref={actionBarRef}
       >
         {/* 컨텐츠 헤더 */}
         <PostHeader
@@ -123,31 +143,33 @@ export default function NoticeDetail() {
           setEditedContent={setEditedContent}
         />
         {/*heart버튼과 신고하기 버튼 */}
-        <div className="flex mt-2 sm:w-[80%] lg:w-[60%] md:w-[70%]">
-          <PostActionBar
-            post={post}
-            uid={uid}
-            liked={liked}
-            setLiked={setLiked}
-            isScrap={isScrap}
-            setIsScrap={setIsScrap}
-            editedTitle={editedTitle}
-            setEditedTitle={setEditedTitle}
-            editedContent={editedContent}
-            setEditedContent={setEditedContent}
-            postLikeMutate={postLikeMutate}
-            setClickLiked={setClickLiked}
-            deletelikeMutate={deletelikeMutate}
-            scrapPostMutate={scrapPostMutate}
-            deleteScrapMutate={deleteScrapMutate}
-            mutate={mutate}
-            setIsEditing={setIsEditing}
-            isEditing={isEditing}
-            clickLiked={clickLiked}
-            likeNum={likeNum}
-            setLikeNum={setLikeNum}
-          />
-        </div>
+        {isActionBarVisible && (
+          <div className="flex mt-2 sm:w-[80%] lg:w-[60%] md:w-[70%]">
+            <PostActionBar
+              post={post}
+              uid={uid}
+              liked={liked}
+              setLiked={setLiked}
+              isScrap={isScrap}
+              setIsScrap={setIsScrap}
+              editedTitle={editedTitle}
+              setEditedTitle={setEditedTitle}
+              editedContent={editedContent}
+              setEditedContent={setEditedContent}
+              postLikeMutate={postLikeMutate}
+              setClickLiked={setClickLiked}
+              deletelikeMutate={deletelikeMutate}
+              scrapPostMutate={scrapPostMutate}
+              deleteScrapMutate={deleteScrapMutate}
+              mutate={mutate}
+              setIsEditing={setIsEditing}
+              isEditing={isEditing}
+              clickLiked={clickLiked}
+              likeNum={likeNum}
+              setLikeNum={setLikeNum}
+            />
+          </div>
+        )}
       </section>
 
       {/* 댓글 영역 */}
@@ -180,6 +202,7 @@ export default function NoticeDetail() {
           post={post}
           postCommentMutate={postCommentMutate}
           isSelecting={isSelecting}
+          userInfo={userInfo}
         />
         {/* 댓글 펼치기 & 접기 */}
         <CommentAngleButton
