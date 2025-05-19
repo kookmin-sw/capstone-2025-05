@@ -46,18 +46,7 @@
 
 ## 🎬 소개 영상
 
-[📺 MAPLE 시연 영상 보러가기](https://youtu.be/vBwf0QZoc_4)
-<div align="center">
-  <iframe 
-    width="560" 
-    height="315" 
-    src="https://www.youtube.com/embed/vBwf0QZoc_4" 
-    title="YouTube video player" 
-    frameborder="0" 
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-    allowfullscreen>
-  </iframe>
-</div>
+[![MAPLE 시연 영상](https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg)](https://youtu.be/vBwf0QZoc_4)
 
 <br>
 
