@@ -88,15 +88,13 @@ title: MAPLE
 
 <div align="center" style="position: relative; display: inline-block;">
   <a href="https://youtu.be/vBwf0QZoc_4" target="_blank">
-    <!-- 유튜브 썸네일 -->
     <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" style="width: 90%; max-width: 600px;">
-    
-    <!-- 재생 버튼 (중앙 고정) -->
-    <img src="https://i.imgur.com/TxzC70f.png"
+    <img src="assets/play-bttn.svg"
          alt="Play button"
          style="position: absolute; top: 50%; left: 50%; width: 80px; transform: translate(-50%, -50%); opacity: 0.85;" />
   </a>
 </div>
+
 
 
 
