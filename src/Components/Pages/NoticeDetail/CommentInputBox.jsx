@@ -21,13 +21,15 @@ export default function CommentInputBox({
     const commentData = {
       uid: uid,
       postid: post.id,
-      작성자: profile_picture ? userInfo?.data.nickname : 'mapleDG',
+      작성자: userInfo?.data == 'google' ? 'mapleDG' : userInfo?.data.nickname,
       내용: reviewComment.trim(),
-      프로필이미지: profile_picture
-        ? profile_picture
-        : userInfo?.data.profile_image_url,
+      프로필이미지:
+        userInfo?.data == 'google'
+          ? profile_picture
+          : userInfo?.data.profile_image_url,
       비밀번호: '1234',
     };
+    console.log(commentData.프로필이미지);
     postCommentMutate(commentData, {
       onSuccess: () => {
         console.log('댓글 추가 성공');
