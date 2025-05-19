@@ -44,7 +44,7 @@ title: MAPLE
 <li>연주자의 톤, 터치, 리듬감 등을 반영한 피드백 제공</li>
 <li>사용자가 자신의 연주를 업로드하면, 원곡과 얼마나 비슷한지 점수화 및 분석 결과 제공</li>
 </ul>
-<h4 style="margin-top:20px;">③ 연습 데이터 시각화 및 피드백 제</h4>
+<h4 style="margin-top:20px;">③ 연습 데이터 시각화 및 피드백 제공</h4>
 <ul style="text-align: left; display: inline-block; margin-bottom:30px;">
 <li>사용자별 연습 기록 저장 및 발전 과정 시각화</li>
 <li>개인별 연습 리포트 제공, 부족한 부분을 개선할 수 있도록 가이드</li>
@@ -76,16 +76,12 @@ title: MAPLE
 
 </div>
 
----
-
 <h2 id="architecture" align="center">🌐 시스템 구조</h2>
 
 <div align="center">
   <img src="assets/system architecture_01.png" alt="시스템 아키텍처 1" width="400" style="margin-right: 10px;" />
   <img src="assets/system architecture_02.png" alt="시스템 아키텍처 2" width="400" />
 </div>
-
----
 
 <h2 id="demo" align="center">🎬 시연 영상</h2>
 
