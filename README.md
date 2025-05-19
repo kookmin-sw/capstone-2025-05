@@ -47,14 +47,11 @@
 ## 🎬 소개 영상
 
 
-<div align="center" style="position: relative; display: inline-block;">
+<p align="center">
   <a href="https://youtu.be/vBwf0QZoc_4" target="_blank">
-    <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" style="width: 90%; max-width: 600px;">
-    <img src="assets/play-bttn.svg"
-         alt="Play button"
-         style="position: absolute; top: 50%; left: 50%; width: 80px; transform: translate(-50%, -50%); opacity: 0.85;" />
+    <img src="https://i.imgur.com/H2gyKFX.png" alt="MAPLE 시연 영상" style="width: 90%; max-width: 600px;">
   </a>
-</div>
+</p>
 
 <br>
 
