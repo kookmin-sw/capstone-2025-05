@@ -100,10 +100,6 @@ title: MAPLE
 
 
 
-
-
----
-
 <h2 id="contact" align="center">👥 멤버 소개</h2>
 
 <div align="center">
