@@ -84,17 +84,16 @@ title: MAPLE
 </div>
 
 <h2 id="demo" align="center">🎬 시연 영상</h2>
-<div align="center">
-<p align="center">
+<div align="center" style="position: relative; display: inline-block;">
   <a href="https://youtu.be/vBwf0QZoc_4" target="_blank">
-    <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" width="600">
+    <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" style="width: 90%; max-width: 600px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/75/YouTube_social_white_squircle_%282017%29.svg" 
+         alt="Play button"
+         style="position: absolute; top: 50%; left: 50%; width: 80px; transform: translate(-50%, -50%); opacity: 0.8;" />
   </a>
-</p>
 </div>
 
-<div align="center">
-  <p>📌 Coming Soon! 시연 영상은 발표 당일 공개될 예정입니다.</p>
-</div>
+
 
 ---
 
