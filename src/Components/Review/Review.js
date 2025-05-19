@@ -70,6 +70,7 @@ export default function Review({
       비밀번호: comments.비밀번호,
       작성일시: parseDateString(comments.작성일시),
       작성자: comments.작성자,
+      프로필이미지: comments.profile_image,
     };
 
     editComment(
@@ -85,6 +86,8 @@ export default function Review({
       },
     );
   };
+
+  console.log(comments, '댓글 정보');
 
   return (
     <div className="flex items-center mb-8">

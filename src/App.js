@@ -19,7 +19,6 @@ function App() {
     'user-read-playback-state',
     'user-modify-playback-state',
   ];
-  console.log(uid);
 
   const authUrl =
     'https://accounts.spotify.com/authorize' +

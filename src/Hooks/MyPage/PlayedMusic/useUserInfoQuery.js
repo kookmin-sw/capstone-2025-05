@@ -1,18 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../../../Utils/api';
 
-const fetchUser = (uid) => {
-  return api.get(`/get-user-info`, {
-    params: { uid },
-  });
+const fetchUser = async (uid) => {
+  try {
+    const response = await api.get('/get-user-info', {
+      params: { uid },
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 500) {
+      return 'google';
+    }
+    throw error; // 다른 에러는 react-query가 인식하도록 throw
+  }
 };
 
 export const useUserQuery = (uid) => {
-  console.log(uid, 'sd');
   return useQuery({
     queryKey: ['userInfo', uid],
     queryFn: () => fetchUser(uid),
     staleTime: 300000,
-    select: (result) => result.data,
   });
 };

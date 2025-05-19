@@ -14,14 +14,18 @@ export default function CommentInputBox({
   isSelecting,
   userInfo,
 }) {
+  const profile_picture = sessionStorage.getItem('profile_picture');
   const handlePostComment = () => {
     setIsPostComment(false);
     const commentData = {
       uid: uid,
       postid: post.id,
-      작성자: userInfo?.data.nickname,
+      작성자: userInfo == 'google' ? 'mapleDG' : userInfo?.data.nickname,
       내용: reviewComment.trim(),
-      프로필이미지: userInfo?.data.profile_image_url,
+      프로필이미지:
+        userInfo == 'google'
+          ? profile_picture
+          : userInfo?.data.profile_image_url,
       비밀번호: '1234',
     };
     postCommentMutate(commentData, {
