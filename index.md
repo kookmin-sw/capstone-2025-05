@@ -85,15 +85,13 @@ title: MAPLE
 
 <h2 id="demo" align="center">🎬 시연 영상</h2>
 
-<div align="center" style="position: relative; display: inline-block;">
+<h2 align="center">🎬 시연 영상</h2>
+
+<p align="center">
   <a href="https://youtu.be/vBwf0QZoc_4" target="_blank">
-    <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" style="width: 90%; max-width: 600px;">
-  
-    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/YouTube_play_button_icon_(2013-2017).svg"
-         alt="Play button"
-         style="position: absolute; top: 50%; left: 50%; width: 80px; transform: translate(-50%, -50%); opacity: 0.8;" />
+    <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" width="600">
   </a>
-</div>
+</p>
 
 
 
