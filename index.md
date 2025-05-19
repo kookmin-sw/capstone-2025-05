@@ -56,7 +56,7 @@ title: MAPLE
 <li>단순한 박자/음정 분석이 아니라, 연주의 뉘앙스까지 평가 가능</li>
 <li>밴드 합주를 대비한 개별 연습의 효율성을 높일 수 있는 도구 제공</li>
 </ul>
-<div align="center">
+<div align="center" id="tech stack">
 
 <h2>Frontend</h2>
 <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB"/>  
