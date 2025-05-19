@@ -15,6 +15,7 @@ export default function CommentInputBox({
   userInfo,
 }) {
   const profile_picture = sessionStorage.getItem('profile_picture');
+  console.log(userInfo);
   const handlePostComment = () => {
     setIsPostComment(false);
     const commentData = {
