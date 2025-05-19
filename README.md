@@ -108,21 +108,21 @@ docker-compose up --build
 
 | 구성 | 종류 |
 |------|------|
-| Framework | JUCE |
-| Language | C++ |
-| Build System | CMake |
+| Framework | ![JUCE](https://img.shields.io/badge/JUCE-2C2C2C?style=for-the-badge&logo=JUCE&logoColor=white) |
+| Language | ![C++](https://img.shields.io/badge/C++-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white) |
+| Build System | ![CMake](https://img.shields.io/badge/CMake-064F8C?style=for-the-badge&logo=cmake&logoColor=white) |
 
 ### 🧠 AI / 분석
 
 | 구성요소 | 종류 |
 |----------|------|
-| 음정 인식 | FFT 기반 + ML 보정 |
-| 리듬 분석 | Onset Detection + Madmom |
-| 결과 포맷 | JSON 기반 시각화 |
 | Task Queue | ![Celery](https://img.shields.io/badge/Celery-37814A?style=for-the-badge&logo=Celery&logoColor=white) |
 | Message Broker | ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white) |
 | DB | ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white) |
 | Serving | ![BentoML](https://img.shields.io/badge/BentoML-FF5B00?style=for-the-badge&logo=bentoml&logoColor=white) |
+| Pitch Recognition | FFT 기반 + ML 보정 |
+| Rhythm Analysis | Onset Detection + Madmom |
+| Result Format | JSON 기반 시각화 |
 
 <br>
 <br>
