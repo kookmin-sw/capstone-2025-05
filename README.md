@@ -45,7 +45,7 @@
 <br>
 
 ## 🎬 소개 영상
-<h2 align="center">🎬 소개 영상</h2>
+
 
 <p align="center">
   <a href="https://youtu.be/vBwf0QZoc_4" target="_blank">
