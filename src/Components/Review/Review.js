@@ -68,7 +68,7 @@ export default function Review({
       postid: comments.postid,
       내용: editedContent, // 내용만 변경하여 전달
       비밀번호: comments.비밀번호,
-      작성일시: parseDateString(comments.작성일시),
+      작성일시: parseDateString(comments.date),
       작성자: comments.작성자,
       프로필이미지: comments.profile_image,
     };
