@@ -127,6 +127,6 @@ docker-compose up --build
 | <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/송혜원.jpg" width="100px"/> | **송혜원 (팀장)** | Backend, DB 관리 | [@songhyeone](https://github.com/20223096) | won10201@kookmin.ac.kr |
 | <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/신수민.jpg" width="100px"/> | **신수민** | Backend, DB 관리 | [@suminshin](https://github.com/syngrxm) | smcubez48@gmail.com |
 | <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/박재훈.jpg" width="100px"/> | **박재훈 (PM)** | 데스크탑 클라이언트, AI 기반 오디오 분석 서버, CI/CD 파이프라인 구축 | [@jaehoonpark](https://github.com/lovelyoverflow) | hoon20@kookmin.ac.kr |
-| <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/김도경.jpg" width="100px"/> | **김도경** | Frontend, UI/UX 디자인 | [@dokyoungkim](https://github.com/dgKim1) | okdk66833@kookmin.ac.kr |
+| <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/김도경.jpg" width="100px"/> | **김도경** | Frontend, UI/UX 디자인 | [@dokyoungkim](https://github.com/dgKim1) | kimdk3556@gmail.com |
 | <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/박지민.jpg" width="100px"/> | **박지민** | Frontend, UI/UX 디자인 | [@jiminpark](https://github.com/qkrwlalss) | wimiji@kookmin.ac.kr |
 | <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/이정윤.jpg" width="100px"/> | **이정윤** | Frontend, UI/UX 디자인 | [@jungyoonlee](https://github.com/lyun1015) | lyun1015@kookmin.ac.kr |
