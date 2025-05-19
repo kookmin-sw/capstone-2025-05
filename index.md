@@ -84,14 +84,19 @@ title: MAPLE
 </div>
 
 <h2 id="demo" align="center">🎬 시연 영상</h2>
+
 <div align="center" style="position: relative; display: inline-block;">
   <a href="https://youtu.be/vBwf0QZoc_4" target="_blank">
+    <!-- 유튜브 썸네일 -->
     <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" style="width: 90%; max-width: 600px;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/75/YouTube_social_white_squircle_%282017%29.svg" 
+    
+    <!-- 재생 버튼 (중앙 고정) -->
+    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/YouTube_play_button_icon_(2013-2017).svg"
          alt="Play button"
-         style="opacity: 0.8;" />
+         style="position: absolute; top: 50%; left: 50%; width: 80px; transform: translate(-50%, -50%); opacity: 0.8;" />
   </a>
 </div>
+
 
 
 
