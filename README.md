@@ -49,7 +49,7 @@
 
 <p align="center">
   <a href="https://youtu.be/vBwf0QZoc_4" target="_blank">
-    <img src="https://i.imgur.com/H2gyKFX.png" alt="MAPLE 시연 영상" style="width: 90%; max-width: 600px;">
+    <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" width="600">
   </a>
 </p>
 
