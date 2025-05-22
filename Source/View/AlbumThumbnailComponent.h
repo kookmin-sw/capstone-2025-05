@@ -1,7 +1,9 @@
 #pragma once
 #include <JuceHeader.h>
-#include "Model/Song.h"
-#include "Model/SpotifyService.h"
+#include "../Model/Song.h"
+#include "../Model/SpotifyService.h"
+
+class ContentController;
 
 // 앨범 썸네일을 표시하는 컴포넌트
 class AlbumThumbnailComponent : public juce::Component
@@ -11,7 +13,7 @@ public:
         : albumTitle(title), thumbnail(thumbnailImage), albumId("")
     {
         if (thumbnail.isNull())
-            thumbnail = juce::Image(juce::Image::RGB, 150, 150, true);
+            thumbnail = juce::Image(juce::Image::RGB, 200, 200, true);
     }
 
     // 노래 ID 설정 (악보 파일 ID)
@@ -22,6 +24,12 @@ public:
 
     // 노래 정보 설정
     void setSongInfo(const Song& song);
+    
+    // ContentController 설정
+    void setContentController(ContentController* controller);
+    
+    // API에서 커버 이미지 로드
+    void loadCoverImageFromAPI();
 
     void setAlbumId(const juce::String& id) 
     {
@@ -50,4 +58,10 @@ private:
     juce::String albumCoverUrl;
     juce::Image thumbnail;
     bool selected = false;
+    
+    Song song; // 연관된 Song 객체를 보관
+    ContentController* contentController = nullptr;
+    
+    // 기본 썸네일 이미지 생성
+    void createDefaultThumbnail();
 };

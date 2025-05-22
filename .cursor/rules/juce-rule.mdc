@@ -39,4 +39,8 @@ globs:
 - 실시간 ASM/SIMD 최적화 코드가 규칙을 위반할 수 있음. \
 해당 블록마다 이유 주석 필수.
 
+## F. ETC
+- 과도한 추상화 금지.
+- 큰 작업은 단계를 나누어 진행.
+- CMakeLists.txt를 참고해 헤더파일 경로는 상대경로가 아닌 Source를 include path로 인식.
 

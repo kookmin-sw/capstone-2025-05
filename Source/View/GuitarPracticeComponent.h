@@ -10,10 +10,22 @@
 #include "LeftPanel.h"
 #include "RightPanel.h"
 #include "ScoreComponent.h"
+#include "PracticeSettingsComponent.h"
+#include "LookAndFeel/MapleTheme.h"
 
 // 녹음 기능을 위한 전방 선언
 class AudioRecorder;
 class RecordingThumbnail;
+
+// LookAndFeel 클래스들 전방 선언
+class MapleRecordButton;
+class MapleAnalyzeButton; 
+class MaplePlayButton; // Play 버튼용 LookAndFeel 클래스 선언 추가
+
+// 새로운 컴포넌트 추가
+class PerformanceAnalysisComponent;
+class FingeringGuideComponent;
+class PracticeProgressComponent;
 
 class MainComponent;  // 전방 선언
 
@@ -21,14 +33,26 @@ class MainComponent;  // 전방 선언
 // MVC 패턴 중 View 역할만 담당하며, 비즈니스 로직은 Controller에 위임
 class GuitarPracticeComponent : public juce::Component,
                                public IAudioModelListener,  // 오디오 모델 리스너
-                               public IEventListener       // 이벤트 시스템 리스너
+                               public IEventListener,      // 이벤트 시스템 리스너
+                               public juce::Timer,         // 애니메이션을 위한 타이머 추가
+                               public PlaybackStateChangeListener, // ScoreComponent의 재생 상태 변경 리스너
+                               public juce::Slider::Listener // 슬라이더 리스너 추가
 {
 public:
+    // 표시할 악보 아래 컴포넌트 유형
+    enum class BottomViewType {
+        PerformanceAnalysis,
+        FingeringGuide,
+        PracticeProgress,
+        AmpliTubeEditor  // 새로운 뷰 타입 추가
+    };
+    
     GuitarPracticeComponent(MainComponent& mainComponent);
     ~GuitarPracticeComponent() override;
     
     void paint(juce::Graphics& g) override;
     void resized() override;
+    bool keyPressed(const juce::KeyPress& key) override; // 키보드 입력 처리
     
     // IAudioModelListener 인터페이스 구현
     void onPlayStateChanged(bool isPlaying) override;
@@ -38,6 +62,12 @@ public:
     
     // IEventListener 인터페이스 구현
     bool onEvent(const Event& event) override;
+    
+    // PlaybackStateChangeListener 인터페이스 구현
+    void onPlaybackStateChanged(bool isPlaying) override;
+    
+    // Timer 인터페이스 구현
+    void timerCallback() override;
     
     // 곡 선택 관련 메서드 (UI에서 호출됨)
     void loadSong(const juce::String& songId);
@@ -50,8 +80,38 @@ public:
     // 오디오 분석 메서드 (UI에서 호출됨)
     void analyzeRecording();
     
+    // 마이크 모니터링 관련 메서드
+    void enableMicrophoneMonitoring(bool shouldEnable);
+    bool isMicrophoneMonitoringEnabled() const { return microphoneMonitoringEnabled; }
+    void toggleMicrophoneMonitoring();
+    void setMicrophoneGain(float gain);
+    float getMicrophoneGain() const;
+    
+    // Slider::Listener 인터페이스 구현
+    void sliderValueChanged(juce::Slider* slider) override;
+    
     // UI 업데이트 메서드
     void updateUI();
+    
+    // 하단 뷰 전환 메서드
+    void switchBottomView(BottomViewType viewType);
+    
+    // 현재 하단 뷰 가져오기
+    BottomViewType getCurrentBottomView() const { return currentBottomView; }
+    
+    // 오디오 디바이스 매니저 접근자
+    juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
+    
+    // 컨트롤러 접근자
+    GuitarPracticeController* getController() const { return controller.get(); }
+    
+    // AmpliTube 이펙트 관련 메서드 추가
+    void enableAmpliTubeEffect(bool shouldEnable);
+    bool isAmpliTubeEffectEnabled() const;
+    void toggleAmpliTubeEffect();
+    
+    // 시각화 정리를 위한 헬퍼 메서드
+    void startCleanupTimer();
     
 private:
     // 이벤트 핸들러 메서드
@@ -65,6 +125,12 @@ private:
     void updateVolumeDisplay(float volume);
     void updatePositionDisplay(double positionInSeconds);
     void togglePlayback();  // UI 이벤트 핸들러
+    
+    // 하단 뷰 가시성 업데이트
+    void updateBottomViewVisibility();
+    
+    // 뷰 전환 버튼 상태 업데이트
+    void updateViewButtonStates();
 
     MainComponent& mainComponent;
     
@@ -82,6 +148,12 @@ private:
     std::unique_ptr<LeftPanel> leftPanel;
     std::unique_ptr<RightPanel> rightPanel;
     std::unique_ptr<ScoreComponent> scoreComponent;
+    std::unique_ptr<PracticeSettingsComponent> practiceSettingsComponent;
+    
+    // 새로운 컴포넌트들
+    std::unique_ptr<PerformanceAnalysisComponent> performanceAnalysisComponent;
+    std::unique_ptr<FingeringGuideComponent> fingeringGuideComponent;
+    std::unique_ptr<PracticeProgressComponent> practiceProgressComponent;
 
     // 녹음 관련 컴포넌트
     std::unique_ptr<RecordingThumbnail> recordingThumbnail;
@@ -91,7 +163,35 @@ private:
     juce::TextButton analyzeButton;
     juce::File lastRecording;
     
+    // 커스텀 LookAndFeel 인스턴스
+    std::unique_ptr<MapleRecordButton> recordButtonLookAndFeel;
+    std::unique_ptr<MapleAnalyzeButton> analyzeButtonLookAndFeel;
+    std::unique_ptr<MaplePlayButton> playButtonLookAndFeel; // Play 버튼용 LookAndFeel 추가
+    
     // UI 컨트롤
-    juce::TextButton playButton;
+    juce::TextButton playButton; // 세련된 디자인이 적용될 예정
     juce::Label positionLabel;
+    
+    // 뷰 전환 버튼
+    juce::TextButton analysisViewButton;
+    juce::TextButton fingeringViewButton;
+    juce::TextButton progressViewButton;
+    juce::TextButton ampliTubeViewButton;  // 새로운 버튼 추가
+    
+    // 마이크 모니터링 관련 컨트롤
+    juce::ToggleButton micMonitorButton;
+    juce::Slider micGainSlider;
+    juce::Label micGainLabel;
+    bool microphoneMonitoringEnabled = false;
+    
+    // 현재 표시 중인 하단 뷰
+    BottomViewType currentBottomView = BottomViewType::PerformanceAnalysis;
+    
+    // AmpliTube 이펙트 에디터 컨테이너
+    std::unique_ptr<juce::Component> ampliTubeEditorContainer;
+    juce::ToggleButton ampliTubeEnableButton;  // 이펙트 활성화 토글 버튼
+
+    // 타이머 관련 변수
+    uint32_t time = 0;
+    float recordingSeconds = 0.0f;
 };

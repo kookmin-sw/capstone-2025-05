@@ -2,6 +2,14 @@
 #include <JuceHeader.h>
 #include "Model/TabPlayer.h"
 
+// 재생 상태 변경 리스너 인터페이스
+class PlaybackStateChangeListener
+{
+public:
+    virtual ~PlaybackStateChangeListener() = default;
+    virtual void onPlaybackStateChanged(bool isPlaying) = 0;
+};
+
 class ScoreComponent : public juce::Component,
                       public juce::Timer
 {
@@ -19,13 +27,44 @@ public:
     
     // 악보 업데이트 메서드 추가
     void updateScore();
+    
+    // 재생 상태 변경 리스너 설정
+    void setPlaybackStateChangeListener(PlaybackStateChangeListener* listener)
+    {
+        playbackListener = listener;
+    }
+    
+    // 악보의 실제 필요한 크기를 반환
+    juce::Rectangle<int> getScoreContentBounds() const
+    {
+        // scoreContent의 실제 경계를 반환
+        return {0, 0, static_cast<int>(scoreContent.getWidth()), 
+                      static_cast<int>(scoreContent.getHeight())};
+    }
 
 private:
     void timerCallback() override; // 재생 위치 업데이트를 위해 주기적 호출
+    void notifyPlaybackStateChanged(bool isPlaying); // 리스너에게 상태 변경 통지
 
     TabPlayer& tabPlayer; // TabPlayer 참조
+    PlaybackStateChangeListener* playbackListener = nullptr;
+    
+    // 스코어 콘텐츠 컴포넌트 - 악보 내용을 실제로 그림
+    class ScoreContentComponent : public juce::Component
+    {
+    public:
+        ScoreContentComponent(ScoreComponent& parent, TabPlayer& player) 
+            : owner(parent), tabPlayer(player) {}
+        
+        void paint(juce::Graphics& g) override;
+        
+    private:
+        ScoreComponent& owner;
+        TabPlayer& tabPlayer;
+    };
+    
+    ScoreContentComponent scoreContent { *this, tabPlayer };
     juce::Viewport viewport; // 스크롤 가능한 뷰
-    juce::Component scoreContent; // 실제 악보 콘텐츠
 
     // 렌더링 관련 상수
     const float stringSpacing = 20.0f;
@@ -33,5 +72,6 @@ private:
     const float xOffset = 20.0f;
     const float yOffset = 50.0f;
 
+    friend class ScoreContentComponent;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ScoreComponent)
 };

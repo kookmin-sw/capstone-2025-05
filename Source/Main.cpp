@@ -13,7 +13,15 @@ public:
     {
         setUsingNativeTitleBar(true);
         setContentOwned(new MainComponent(), true);
-        centreWithSize(1920, 1200);
+        
+        // 풀스크린으로 시작
+        setFullScreen(true);
+        
+        // 백업으로 화면에 맞게 설정 (풀스크린이 안 되는 경우)
+        juce::Desktop::getInstance().getDisplays().getMainDisplay().userArea.getWidth();
+        juce::Rectangle<int> area = juce::Desktop::getInstance().getDisplays().getMainDisplay().userArea;
+        centreWithSize(area.getWidth(), area.getHeight());
+        
         setVisible(true);
     }
 

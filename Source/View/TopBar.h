@@ -15,11 +15,13 @@ public:
     void resized() override;
 
 private:
-    juce::TextButton recordButton{"Record"};
-    juce::TextButton loadButton{"Load Original"};
-
-    std::unique_ptr<juce::FileChooser> fileChooser;
     GuitarPracticeComponent &parentComponent;
+    
+    // 뒤로가기 버튼
+    juce::TextButton backButton;
+    
+    // 오디오 설정 버튼
+    juce::TextButton audioSettingsButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TopBar)
 };

@@ -1,12 +1,15 @@
 #pragma once
 #include <JuceHeader.h>
-#include "Model/AudioModel.h"
-#include "Model/TabPlayer.h"
+#include "../Model/AudioModel.h"
+#include "../Model/TabPlayer.h"
+#include "../API/SongsAPIService.h"
+#include "../Controller/ContentController.h"
 #include "Model/gp_parser.h"
 #include "Event/EventBus.h"
 
 // 전방 선언
 class GuitarPracticeComponent;
+class ContentController;
 
 /**
  * GuitarPracticeController - 기타 연습 기능의 Controller 역할
@@ -31,6 +34,12 @@ public:
     void stopPlayback();
     void togglePlayback();
     
+    // 음원 파일 재생 관련 메서드
+    bool loadAudioFile(const juce::File& audioFile);
+    void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill);
+    void releaseResources();
+    
     // 녹음 관련 메서드
     void startRecording();
     void stopRecording();
@@ -43,8 +52,23 @@ public:
     // View 참조 설정 (순환 참조 방지를 위해 약한 참조 사용)
     void setView(GuitarPracticeComponent* view) { this->view = view; }
     
+    // ContentController 설정 메서드 추가
+    void setContentController(std::shared_ptr<ContentController> controller) { contentController = controller; }
+    
     // TabPlayer 접근자
     TabPlayer& getTabPlayer() { return player; }
+    
+    // 현재 로드된 곡 ID 반환
+    juce::String getCurrentSongId() const { return currentSongId; }
+    
+    // 현재 선택된 곡 ID 관련 메서드
+    void setCurrentSongId(const juce::String& songId) { currentSongId = songId; }
+    
+    // 재생 상태 확인
+    bool isPlaying() const { return audioModel.isPlaying(); }
+    
+    // ContentController 접근자 추가
+    ContentController* getContentController() const { return contentController.get(); }
     
 private:
     // 분석 스레드 결과 처리 메서드
@@ -56,17 +80,42 @@ private:
     void publishSongLoadedEvent(const juce::String& songId);
     void publishSongLoadFailedEvent(const juce::String& songId, const juce::String& errorMessage);
     
+    // 내부 분석 진행 확인 메서드
+    void checkAnalysisProgress();
+    
+    // API로 녹음 파일 분석
+    void sendRecordingForAnalysis(const juce::File& recordingFile);
+    
+    // TabFile의 JSON 표현 생성
+    juce::String getTabFileInfo() const;
+    
     // 모델 및 뷰 참조
     AudioModel& audioModel;
     juce::AudioDeviceManager& deviceManager;
     GuitarPracticeComponent* view = nullptr; // 약한 참조
     
+    // ContentController 멤버 변수 추가
+    std::shared_ptr<ContentController> contentController;
+    
+    // API 서비스
+    std::unique_ptr<SongsAPIService> apiService;
+    
     // Guitar Pro 파서 및 플레이어
     std::unique_ptr<gp_parser::Parser> parserPtr;
     TabPlayer player;
     
+    // 오디오 파일 재생을 위한 컴포넌트
+    juce::AudioFormatManager formatManager;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+    juce::AudioTransportSource transportSource;
+    juce::File currentAudioFile;
+    bool warnedAboutNoSource = false; // 오디오 소스가 null일 때 한 번만 경고를 출력하기 위한 플래그
+    
     // 녹음 관련 상태
     juce::File lastRecordingFile;
+    
+    // 현재 곡 ID
+    juce::String currentSongId;
     
     // 분석 스레드
     std::unique_ptr<AnalysisThread> currentAnalysisThread;
