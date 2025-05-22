@@ -713,7 +713,7 @@ void GuitarPracticeComponent::startRecording()
     recordingThumbnail->setDisplayFullThumbnail(false);
     
     // 녹음 중 애니메이션 시작
-    startTimer(100); // 100ms 간격으로 타이머 시작
+    // startTimer(100); // 100ms 간격으로 타이머 시작
 }
 
 void GuitarPracticeComponent::stopRecording()
@@ -750,7 +750,7 @@ void GuitarPracticeComponent::stopRecording()
     // 타이머는 마이크 모니터링이나 재생 중이 아닐 때만 중지
     if (!microphoneMonitoringEnabled && !audioModel.isPlaying())
     {
-        stopTimer();
+        // stopTimer();
         DBG("GuitarPracticeComponent: Stopped timer after recording");
     }
     else
