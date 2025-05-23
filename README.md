@@ -48,7 +48,7 @@
 
 
 <p align="center">
-  <a href="https://youtu.be/vBwf0QZoc_4" target="_blank">
+  <a href="https://youtu.be/byhTfeD_GQI?si=p9s83QKfJK4S6Ueu" target="_blank">
     <img src="https://img.youtube.com/vi/vBwf0QZoc_4/0.jpg" alt="MAPLE 시연 영상" width="600">
   </a>
 </p>
