@@ -3,6 +3,7 @@ layout: default
 title: MAPLE
 ---
 
+
 <style>
   body {
     font-family: 'Noto Sans KR', sans-serif;
@@ -23,18 +24,27 @@ title: MAPLE
     margin-bottom: 40px;
   }
   .hero-section {
+    width: 100vw;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     background-size: cover;
     background-position: center;
-    padding: 140px 20px;
+    background-repeat: no-repeat;
+    position: relative;
     color: white;
     text-align: center;
-    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
   }
   .hero-section::after {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.5);
+    z-index: 0;
   }
   .hero-section > * {
     position: relative;
