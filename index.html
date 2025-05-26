@@ -70,6 +70,34 @@ title: MAPLE
   .hero-section a:hover {
     background: rgba(255, 255, 255, 0.1);
   }
+
+
+  .text-block {
+    max-width: 800px;
+    margin: 0 auto 60px auto;
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  .text-block h2 {
+    font-size: 28px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #222;
+  }
+  .text-block h2::before {
+    content: attr(data-icon);
+    font-size: 26px;
+  }
+  .text-block p {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 16px;
+    line-height: 1.8;
+  }
 </style>
 
 
@@ -77,15 +105,15 @@ title: MAPLE
 
 
 <section class="hero-body" style="display: flex; flex-direction: column; align-items: center;min-height: 100vh;">
-<div style="max-width: 700px; margin: 0 auto; padding: 20px;"class="container content">
+<div style="max-width: 900px; margin: 0 auto; padding: 20px;"class="container content">
 
   <h2 id="about" align="center" style="text-align: left;">💡 프로젝트 소개</h2>
   <hr style="margin-top: 20px; border: none; border-top: 2px solid #ddd;" />
-  <img src="assets/poster.jpg" alt="포스터" width="600" />
+  <img src="assets/poster.jpg" alt="포스터" width="800" />
 </div>
 
 
-<div style="max-width: 700px; margin: 0 auto; padding: 20px;" class="container content">
+<div style="max-width: 900px; margin: 0 auto; padding: 20px;" class="container content text-block">
   <h2 align="center" style="text-align: left;">📃 프로젝트 개요</h2>
   <hr style="margin-top: 20px; border: none; border-top: 2px solid #ddd;" />
   MAPLE(Music Analysis & Performance Learning Environment)는 AI 기술을 활용해<br>
@@ -108,12 +136,12 @@ title: MAPLE
 
 
 
-<div style="max-width: 700px; margin: 0 auto; padding: 20px;"class="container content">
+<div style="max-width: 900px; margin: 0 auto; padding: 20px;"class="container content">
   <h2 style="text-align: left;">🔑 주요 기능</h2>
   <hr style="margin-top: 20px; border: none; border-top: 2px solid #ddd;" />
 <div style="display: flex; flex-direction: column;">
   
-  <div style="max-width: 700px;">
+  <div style="max-width: 900px;">
     <h4 style="margin-bottom: 10px;text-align: left;">① 실시간 연주 분석 및 피드백</h4>
     <ul style="text-align: left; margin-bottom: 30px;">
       <li>사용자의 연주를 녹음하여 박자, 음정, 코드 정확도를 분석</li>
@@ -143,12 +171,12 @@ title: MAPLE
 </div>
 </div>
 
-<div style="width: 100%; max-width: 700px; margin: 0 auto; padding: 20px;" id="tech-stack">
+<div style="width: 100%; max-width: 900px; margin: 0 auto; padding: 20px;" id="tech-stack">
 <h2 style="text-align: left;">🛠️ 기술 스택</h2>
   <hr style="margin-top: 20px; border: none; border-top: 2px solid #ddd;" />
 <h3 style="text-align: left;">🎨 Frontend</h3>
 
-<table style="border-collapse: collapse; margin: 0 auto;max-width:700px">
+<table style="border-collapse: collapse; margin: 0 auto;max-width:900px">
   <thead>
     <tr>
       <th style="border: 1px solid #ddd; padding: 8px;">역할</th>
@@ -205,7 +233,7 @@ title: MAPLE
 
 <h3 style="text-align: left;">⚙ 백엔드</h3>
 
-<table style="border-collapse: collapse; margin: 0 auto;max-width:700px">
+<table style="border-collapse: collapse; margin: 0 auto;max-width:900px">
   <thead>
     <tr>
       <th style="border: 1px solid #ddd; padding: 8px;">역할</th>
@@ -237,7 +265,7 @@ title: MAPLE
 
 <h3 style="text-align: left;">🖥 데스크탑 앱</h3>
 
-<table style="border-collapse: collapse; margin: 0 auto;max-width:700px">
+<table style="border-collapse: collapse; margin: 0 auto;max-width:900px">
   <thead>
     <tr>
       <th style="border: 1px solid #ddd; padding: 8px;">구성</th>
@@ -268,7 +296,7 @@ title: MAPLE
 
 <h3 style="text-align: left;">🧠 AI / 분석</h3>
 
-<table style="border-collapse: collapse; margin: 0 auto;max-width:700px">
+<table style="border-collapse: collapse; margin: 0 auto;max-width:900px">
   <thead>
     <tr>
       <th style="border: 1px solid #ddd; padding: 8px;">구성요소</th>
@@ -317,7 +345,7 @@ title: MAPLE
 
 </div>
 
-<div style="width: 100%; max-width: 700px; margin: 0 auto; padding: 20px;">
+<div style="width: 100%; max-width: 900px; margin: 0 auto; padding: 20px;">
   <h2 id="architecture" style="text-align: left;">🌐 시스템 구조</h2>
   <hr style="margin-top: 20px; border: none; border-top: 2px solid #ddd;" />
 <div style="display: flex; flex-direction: column; align-items: center;">
@@ -327,7 +355,7 @@ title: MAPLE
 </div>
 
   
-<div style="width: 100%; max-width: 700px; margin: 0 auto; padding: 20px;">
+<div style="width: 100%; max-width: 900px; margin: 0 auto; padding: 20px;">
   <h2 id="demo" style="text-align: left;">🎬 시연 영상</h2>
   <hr style="margin-top: 20px; border: none; border-top: 2px solid #ddd;" />
   <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
@@ -343,7 +371,7 @@ title: MAPLE
 
 
 
-<div style="max-width: 700px; margin: 0 auto; padding: 20px;"class="container content">
+<div style="max-width: 900px; margin: 0 auto; padding: 20px;"class="container content">
   <h2 id="contact" align="center" style="text-align: left;">👥 멤버 소개</h2>
   <hr style="margin-top: 20px; border: none; border-top: 2px solid #ddd;" />
 <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 20px;">
