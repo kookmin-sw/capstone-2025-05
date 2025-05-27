@@ -17,6 +17,7 @@
 6️⃣ [🌐 시스템 아키텍처](#-시스템-아키텍처)  
 7️⃣ [🛠 기술 스택](#-기술-스택)  
 8️⃣ [👨‍👨‍👦‍👦 팀원 소개](#-팀원-소개)  
+9️⃣ [📁 관련 자료](#-관련-자료)  
 
 <br>
 
@@ -135,3 +136,12 @@ docker-compose up --build
 | <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/김도경.jpg" width="100px"/> | **김도경** | Frontend, UI/UX 디자인 | [@dokyoungkim](https://github.com/dgKim1) | kimdk3556@gmail.com |
 | <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/박지민.jpg" width="100px"/> | **박지민** | Frontend, UI/UX 디자인 | [@jiminpark](https://github.com/qkrwlalss) | wimiji@kookmin.ac.kr |
 | <img src="https://raw.githubusercontent.com/kookmin-sw/capstone-2025-05/master/assets/이정윤.jpg" width="100px"/> | **이정윤** | Frontend, UI/UX 디자인 | [@jungyoonlee](https://github.com/lyun1015) | lyun1015@kookmin.ac.kr |
+
+
+<br>
+
+## 📁 관련 자료
+
+- 📄 [중간 발표 자료](https://github.com/kookmin-sw/capstone-2025-05/raw/master/assets/5조 MAPLE 중간발표.pdf)
+- 📄 [최 발표 자료](https://github.com/kookmin-sw/capstone-2025-05/raw/master/assets/MAPLE 최종발표.pdf)
+- 📑 [프로젝트 보고서 (PDF)](https://github.com/kookmin-sw/capstone-2025-05/releases/download/수행결과보고서v1.0/MAPLE.pdf)
