@@ -143,5 +143,5 @@ docker-compose up --build
 ## 📁 관련 자료
 
 - 📄 [중간 발표 자료](https://github.com/kookmin-sw/capstone-2025-05/raw/master/assets/5%EC%A1%B0%20MAPLE%20%EC%A4%91%EA%B0%84%EB%B0%9C%ED%91%9C.pdf)
-- 📄 [최 발표 자료](https://github.com/kookmin-sw/capstone-2025-05/raw/master/assets/MAPLE%20%EC%B5%9C%EC%A2%85%EB%B0%9C%ED%91%9C.pdf)
+- 📄 [최종 발표 자료](https://github.com/kookmin-sw/capstone-2025-05/raw/master/assets/MAPLE%20%EC%B5%9C%EC%A2%85%EB%B0%9C%ED%91%9C.pdf)
 - 📑 [프로젝트 보고서](https://github.com/kookmin-sw/capstone-2025-05/releases/download/수행결과보고서v1.0/MAPLE.pdf)
