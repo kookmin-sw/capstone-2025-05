@@ -89,6 +89,13 @@ jobs:
             echo "GROK_API_URL=${{ secrets.GROK_API_URL }}" >> analysis.env
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> analysis.env
             echo "MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}" >> analysis.env
+
+            echo "GPU_INFERENCE_SERVICE_URL=${{ secrets.GPU_INFERENCE_SERVICE_URL }}" >> analysis.env
+            echo "GPU_REQUEST_TIMEOUT=${{ secrets.GPU_REQUEST_TIMEOUT }}" >> analysis.env
+            echo "GPU_BATCH_SIZE=${{ secrets.GPU_BATCH_SIZE }}" >> analysis.env
+            echo "ELICE_CLOUD_HOST=${{ secrets.ELICE_CLOUD_HOST }}" >> analysis.env
+            echo "ELICE_CLOUD_USER=${{ secrets.ELICE_CLOUD_USER }}" >> analysis.env
+            echo "ELICE_CLOUD_PORT=${{ secrets.ELICE_CLOUD_PORT }}" >> analysis.env
             
             docker rm -f maple-analysis-service maple-media-server 2>/dev/null || true
             
